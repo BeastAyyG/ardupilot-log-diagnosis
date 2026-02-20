@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-A lightweight, object-oriented Python prototype developed for the **GSoC 2025: Project 5 (AI-Assisted Log Diagnosis)** application. 
+A lightweight, object-oriented Python prototype developed for the **GSoC 2026: Project 5 (AI-Assisted Log Diagnosis)** application. 
 
 This repository demonstrates a foundational pipeline for parsing ArduPilot DataFlash `.BIN` logs, extracting statistical telemetry features, and applying heuristic rules to diagnose common hardware and configuration issues.
 
@@ -67,5 +67,5 @@ python3 diagnosis_engine.py path/to/your_flight.BIN
 ```
 
 ## 👨‍💻 Author
-**BeastAyyG** - GSoC 2025 Applicant
+**BeastAyyG** - GSoC 2026 Applicant
 *Built to understand the ArduPilot ecosystem and establish a baseline for Project 5.*
