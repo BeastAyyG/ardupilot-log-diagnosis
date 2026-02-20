@@ -31,13 +31,13 @@ class HybridEngine:
                 evidence.extend(ml_dict[ftype].get("evidence", []))
                 
             if rule_conf > 0 and ml_prob > 0:
-                final = max(ml_prob, rule_conf)
+                final = 0.7 * ml_prob + 0.3 * rule_conf + 0.05
                 method = "rule+ml"
             elif ml_prob > 0:
-                final = ml_prob
+                final = ml_prob * 0.8
                 method = "ml"
             elif rule_conf > 0:
-                final = rule_conf * 0.3 # Heavy discount if ML doesn't agree
+                final = rule_conf * 0.85
                 method = "rule"
             else:
                 continue
@@ -58,11 +58,13 @@ class HybridEngine:
             
         merged_diagnoses.sort(key=lambda x: x["confidence"], reverse=True)
         
-        # Filter: keep only the absolute highest confidence diagnosis
-        # to strictly emulate root cause isolation for benchmarking
+        # Filter: keep the highest confidence, only keep others if confidence > 0.4 
+        # to prevent symptom cascading (e.g. vibration causing compass warnings)
         if merged_diagnoses:
-            return [merged_diagnoses[0]]
-            
-        return []
+            filtered_diagnoses = [merged_diagnoses[0]]
+            for d in merged_diagnoses[1:]:
+                if d["confidence"] > 0.4:
+                    filtered_diagnoses.append(d)
+            return filtered_diagnoses
             
         return []
