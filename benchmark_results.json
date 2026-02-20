@@ -4,8 +4,8 @@
     "successful_extractions": 10,
     "failed_extractions": 0,
     "failed_diagnoses": 0,
-    "accuracy": 0.1,
-    "macro_f1": 0.1978021978021978
+    "accuracy": 0.7,
+    "macro_f1": 0.6969696969696968
   },
   "per_label": {
     "healthy": {
@@ -21,29 +21,29 @@
     "vibration_high": {
       "support": 5,
       "tp": 4,
-      "fp": 4,
+      "fp": 2,
       "fn": 1,
-      "tn": 1,
-      "precision": 0.5,
+      "tn": 3,
+      "precision": 0.6666666666666666,
       "recall": 0.8,
-      "f1": 0.6153846153846154
+      "f1": 0.7272727272727272
     },
     "compass_interference": {
       "support": 5,
-      "tp": 5,
-      "fp": 3,
-      "fn": 0,
-      "tn": 2,
-      "precision": 0.625,
-      "recall": 1.0,
-      "f1": 0.7692307692307693
+      "tp": 3,
+      "fp": 1,
+      "fn": 2,
+      "tn": 4,
+      "precision": 0.75,
+      "recall": 0.6,
+      "f1": 0.6666666666666665
     },
     "power_instability": {
       "support": 0,
       "tp": 0,
-      "fp": 1,
+      "fp": 0,
       "fn": 0,
-      "tn": 9,
+      "tn": 10,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -61,9 +61,9 @@
     "motor_imbalance": {
       "support": 0,
       "tp": 0,
-      "fp": 7,
+      "fp": 0,
       "fn": 0,
-      "tn": 3,
+      "tn": 10,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -71,9 +71,9 @@
     "ekf_failure": {
       "support": 0,
       "tp": 0,
-      "fp": 6,
+      "fp": 0,
       "fn": 0,
-      "tn": 4,
+      "tn": 10,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -81,9 +81,9 @@
     "mechanical_failure": {
       "support": 0,
       "tp": 0,
-      "fp": 2,
+      "fp": 0,
       "fn": 0,
-      "tn": 8,
+      "tn": 10,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -121,9 +121,9 @@
     "crash_unknown": {
       "support": 0,
       "tp": 0,
-      "fp": 4,
+      "fp": 0,
       "fn": 0,
-      "tn": 6,
+      "tn": 10,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -131,107 +131,15 @@
   },
   "confusion_details": [
     {
-      "filename": "crash_001.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "vibration_high",
-        "mechanical_failure"
-      ],
-      "predicted_confidence": [
-        0.6187481558322907,
-        0.425
-      ]
-    },
-    {
-      "filename": "crash_002.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "compass_interference",
-        "ekf_failure",
-        "vibration_high",
-        "mechanical_failure",
-        "power_instability",
-        "motor_imbalance"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.6787481558322906,
-        0.5862518441677094,
-        0.425,
-        0.425
-      ]
-    },
-    {
-      "filename": "crash_003.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "motor_imbalance",
-        "vibration_high",
-        "crash_unknown"
-      ],
-      "predicted_confidence": [
-        0.765,
-        0.6487481558322907,
-        0.595
-      ]
-    },
-    {
-      "filename": "crash_004.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "compass_interference",
-        "ekf_failure",
-        "vibration_high",
-        "motor_imbalance",
-        "crash_unknown"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.765,
-        0.7087481558322907,
-        0.5412518441677093
-      ]
-    },
-    {
       "filename": "crash_005.BIN",
       "ground_truth": [
         "vibration_high"
       ],
       "predicted": [
-        "motor_imbalance",
         "compass_interference"
       ],
       "predicted_confidence": [
-        0.85,
-        0.40999789237976075
-      ]
-    },
-    {
-      "filename": "crash_006.BIN",
-      "ground_truth": [
-        "compass_interference"
-      ],
-      "predicted": [
-        "motor_imbalance",
-        "ekf_failure",
-        "vibration_high",
-        "compass_interference"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.7087481558322907,
-        0.6312518441677093
+        0.5124973654747009
       ]
     },
     {
@@ -240,34 +148,10 @@
         "compass_interference"
       ],
       "predicted": [
-        "ekf_failure",
-        "vibration_high",
-        "compass_interference"
+        "vibration_high"
       ],
       "predicted_confidence": [
-        0.85,
-        0.6912518441677094,
-        0.5587481558322906
-      ]
-    },
-    {
-      "filename": "crash_009.BIN",
-      "ground_truth": [
-        "compass_interference"
-      ],
-      "predicted": [
-        "compass_interference",
-        "ekf_failure",
-        "vibration_high",
-        "motor_imbalance",
-        "crash_unknown"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.85,
-        0.765,
-        0.7087481558322907,
-        0.6312518441677093
+        1.0
       ]
     },
     {
@@ -276,18 +160,10 @@
         "compass_interference"
       ],
       "predicted": [
-        "compass_interference",
-        "ekf_failure",
-        "vibration_high",
-        "motor_imbalance",
-        "crash_unknown"
+        "vibration_high"
       ],
       "predicted_confidence": [
-        0.85,
-        0.765,
-        0.765,
-        0.7087481558322907,
-        0.5412518441677093
+        1.0
       ]
     }
   ],
