@@ -1,0 +1,95 @@
+"""Shared constants for ArduPilot log diagnosis."""
+
+VALID_LABELS = [
+    "healthy",
+    "vibration_high",
+    "compass_interference", 
+    "power_instability",
+    "gps_quality_poor",
+    "motor_imbalance",
+    "ekf_failure",
+    "mechanical_failure",
+    "brownout",
+    "pid_tuning_issue",
+    "rc_failsafe",
+    "crash_unknown"
+]
+
+FEATURE_NAMES = [
+    "vibe_x_mean", "vibe_y_mean", "vibe_z_mean",
+    "vibe_x_max", "vibe_y_max", "vibe_z_max", "vibe_z_std", "vibe_clip_total",
+    "mag_field_mean", "mag_field_max", "mag_field_range", "mag_field_std",
+    "mag_x_range", "mag_y_range",
+    "bat_volt_min", "bat_volt_max", "bat_volt_range", "bat_volt_std",
+    "bat_curr_mean", "bat_curr_max", "bat_curr_std",
+    "bat_margin", "bat_sag_ratio",
+    "gps_hdop_mean", "gps_hdop_max", "gps_nsats_mean", "gps_nsats_min", "gps_fix_pct",
+    "motor_spread_mean", "motor_spread_max", "motor_spread_std",
+    "motor_output_mean", "motor_output_std", "motor_max_output", "motor_hover_ratio",
+    "att_roll_std", "att_pitch_std", "att_roll_max", "att_pitch_max", "att_desroll_err",
+    "ekf_vel_var_mean", "ekf_vel_var_max", "ekf_pos_var_mean", "ekf_pos_var_max",
+    "ekf_hgt_var_mean", "ekf_hgt_var_max", "ekf_compass_var_mean", "ekf_compass_var_max",
+    "ekf_flags_error_pct", "ekf_lane_switch_count",
+    "imu_acc_x_std", "imu_acc_y_std", "imu_acc_z_std",
+    "imu_gyr_x_std", "imu_gyr_y_std", "imu_gyr_z_std",
+    "ctrl_thr_out_mean", "ctrl_thr_hover_ratio", "ctrl_alt_error_max",
+    "ctrl_alt_error_std", "ctrl_climb_rate_std",
+    "sys_long_loops", "sys_max_loop_time", "sys_cpu_load_mean", "sys_internal_errors",
+    "sys_vcc_min", "sys_vcc_range", "sys_vservo_min",
+    "evt_error_count", "evt_failsafe_count", "evt_mode_change_count",
+    "evt_unexpected_mode_changes", "evt_crash_detected", "evt_gps_lost_count",
+    "fft_dominant_freq_x", "fft_dominant_freq_y", "fft_dominant_freq_z",
+    "fft_peak_power_x", "fft_peak_power_y", "fft_peak_power_z",
+    "fft_noise_floor"
+]
+
+DEFAULT_THRESHOLDS = {
+    "vibe_max_warn": 30.0,
+    "vibe_max_fail": 60.0,
+    "vibe_clip_limit": 0,
+    "mag_range_limit": 200.0,
+    "mag_std_limit": 50.0,
+    "bat_volt_range_limit": 2.0,
+    "gps_hdop_limit": 2.0,
+    "gps_nsats_min": 6,
+    "motor_spread_limit": 200.0,
+    "ekf_variance_warn": 0.5,
+    "ekf_variance_fail": 1.0,
+    "powr_vcc_min": 4.5
+}
+
+ERR_SUBSYSTEM_MAP = {
+    1: "MAIN", 2: "RADIO", 3: "COMPASS", 5: "FAILSAFE_RADIO",
+    6: "FAILSAFE_BATT", 8: "FAILSAFE_GCS", 9: "FAILSAFE_FENCE",
+    10: "FLIGHT_MODE", 11: "GPS", 12: "CRASH_CHECK",
+    13: "FLIP", 15: "PARACHUTES", 16: "EKFCHECK",
+    17: "FAILSAFE_EKFINAV", 18: "BARO", 19: "CPU",
+    20: "FAILSAFE_ADSB", 21: "TERRAIN", 22: "NAVIGATION",
+    23: "FAILSAFE_TERRAIN", 24: "EKF_PRIMARY",
+    25: "THRUST_LOSS_CHECK", 26: "FAILSAFE_SENSORS",
+    27: "FAILSAFE_LEAK", 28: "PILOT_INPUT",
+    29: "FAILSAFE_VIBE", 30: "INTERNAL_ERROR",
+    31: "FAILSAFE_DEADRECKON"
+}
+
+ERR_AUTO_LABEL_MAP = {
+    3: "compass_interference",
+    6: "power_instability",
+    11: "gps_quality_poor",
+    12: "crash_detected",
+    16: "ekf_failure",
+    17: "ekf_failure",
+    24: "ekf_failure",
+    25: "motor_imbalance",
+    29: "vibration_high"
+}
+
+MODE_NAMES = {
+    0: "Stabilize", 1: "Acro", 2: "AltHold", 3: "Auto",
+    4: "Guided", 5: "Loiter", 6: "RTL", 7: "Circle",
+    9: "Land", 16: "PosHold", 17: "Brake", 21: "SmartRTL"
+}
+
+EV_NAMES = {
+    19: "GPS_LOST" # Based on the prompt evt_gps_lost_count count of EV id=19
+}

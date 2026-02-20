@@ -1,71 +1,50 @@
-# ArduPilot Log Diagnosis Prototype 
+# ArduPilot AI Log Diagnosis
 
-![ArduPilot](https://img.shields.io/badge/Platform-ArduPilot-blue.svg)
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+## What It Does
+An agentic AI and rule-based diagnostic engine for analyzing ArduPilot .BIN dataflash logs. Extracts 60+ critical flight telemetry features and uses a hybrid rule/ML intelligence engine to determine whether a flight is healthy or suffering from one of a dozen critical conditions, such as high vibrations, compass interference, and EKF failures.
 
-A lightweight, object-oriented Python prototype developed for the **GSoC 2026: Project 5 (AI-Assisted Log Diagnosis)** application. 
-
-This repository demonstrates a foundational pipeline for parsing ArduPilot DataFlash `.BIN` logs, extracting statistical telemetry features, and applying heuristic rules to diagnose common hardware and configuration issues.
-
-## 🚀 Key Capabilities
-
-- **Robust Data Ingestion:** Uses `pymavlink` to parse raw telemetry streams including `VIBE`, `MAG`, `BAT`, `GPS`, and `RCOU`.
-- **Statistical Feature Extraction:** Aggregates time-series data into actionable features (e.g., max vibrations, voltage sags, magnetic field variance).
-- **Explainable Inference Engine:** Runs a deterministic ruleset against the extracted features to identify:
-  - 🚁 **Vibration Issues** (Imbalanced props, loose mounts)
-  - 🧲 **Compass Interference** (Wiring proximity, calibration issues)
-  - 🔋 **Power Issues** (Voltage sags, battery health)
-  - 🛰️ **GPS Degradation** (High HDOP, low satellite count)
-  - ⚖️ **Motor Imbalance** (Twisted mounts, CG issues)
-- **Confidence Scoring:** Outputs a formatted diagnostic report weighted by the severity and number of triggered heuristics.
-
-## 🛠️ System Architecture
-
-The codebase is structured using an Object-Oriented approach for modularity and future expansion into a Machine Learning pipeline:
-
-1. `log_parser.py`: Scans the `.BIN` file and summarizes available message frequencies.
-2. `feature_extractor.py`: Aggregates the raw MAVLink data into a flattened JSON structure of mathematical features.
-3. `diagnosis_engine.py`: Correlates the extracted features against known failure thresholds and outputs human-readable recommendations.
-
-## ⚙️ Quick Start
-
-### 1. Install Dependencies
+## Quick Start
 ```bash
 pip install -r requirements.txt
+python -m src.cli.main analyze flight.BIN
 ```
 
-### 2. Extract Features
-To parse a `.BIN` file and save its statistical features to a JSON file:
+## Sample Output
+```
+╔═══════════════════════════════════════╗
+║  ArduPilot Log Diagnosis Report       ║
+╠═══════════════════════════════════════╣
+║  Log:      flight.BIN                 ║
+║  Duration: 5m 42s                     ║
+║  Vehicle:  ArduCopter 4.5.1           ║
+╚═══════════════════════════════════════╝
+
+CRITICAL — VIBRATION_HIGH (95%)
+  vibe_z_max = 67.8 (limit: 30.0)
+  vibe_clip_total = 145 (limit: 0)
+  Method: rule + ML
+  Fix: Balance/replace propellers.
+
+Overall: NOT SAFE TO FLY
+```
+
+## Features Extracted
+- **Vibration**: vibe_x/y/z_mean, max, std
+- **Compass**: mag_field_mean, range, std
+- **Power**: bat_volt_min, max, curr_mean
+- **GPS**: hdop_mean, nsats_min
+- **Motors**: spread_max, hover_ratio
+- **EKF**: variances, lane switches
+- **Control**: alt_error, thrust ratio
+
+## Benchmarking
 ```bash
-python3 feature_extractor.py path/to/your_flight.BIN
+python -m src.cli.main benchmark
 ```
 
-### 3. Run Diagnostic Engine
-To run the full pipeline and print a formatted health report:
-```bash
-python3 diagnosis_engine.py path/to/your_flight.BIN
-```
+## Current Limitations
+- Rule-based testing only available until ML dataset is generated
+- ML model degrading gracefully without missing files
 
-## 📊 Example Output
-```text
-============================================================
-                 LOG DIAGNOSIS REPORT
-============================================================
-
-[100%] VIBRATION_ISSUE
-  -> vibe_x_max = 45.20 (threshold: > 30.0)
-  -> vibe_y_max = 52.10 (threshold: > 30.0)
-  -> clip_total = 12.00 (threshold: > 0.0)
-  Fix: Balance propellers, tighten motor mounts, or improve flight controller damping.
-
-[50%] POWER_ISSUE
-  -> volt_min = 9.80 (threshold: < 10.5)
-  Fix: Check battery health, internal resistance, and verify power module calibration.
-
-============================================================
-```
-
-## 👨‍💻 Author
-**BeastAyyG** - GSoC 2026 Applicant
-*Built to understand the ArduPilot ecosystem and establish a baseline for Project 5.*
+## Contributing Logs
+See `download_logs.md` for how to add crash logs to the benchmark dataset.

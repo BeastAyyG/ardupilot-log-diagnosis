@@ -1,0 +1,8 @@
+dataset/*.BIN
+models/*.joblib
+training/*.csv
+__pycache__/
+*.pyc
+.env
+venv/
+.pytest_cache/

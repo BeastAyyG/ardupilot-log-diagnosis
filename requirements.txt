@@ -1,4 +1,8 @@
 pymavlink
 numpy
+scipy
+pytest
 scikit-learn
-matplotlib
+xgboost
+joblib
+pyyaml

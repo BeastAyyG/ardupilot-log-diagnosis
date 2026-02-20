@@ -1,0 +1,31 @@
+vibration:
+  vibe_max_warn: 30.0
+  vibe_max_fail: 60.0
+  clip_limit: 0
+
+compass:
+  mag_range_limit: 200.0
+  mag_std_limit: 50.0
+
+power:
+  volt_range_limit: 2.0
+  volt_min_absolute: 10.0
+  vcc_min: 4.5
+
+gps:
+  hdop_limit: 2.0
+  nsats_min: 6
+  fix_pct_min: 0.95
+
+motors:
+  spread_limit: 200.0
+  spread_mean_limit: 100.0
+
+ekf:
+  variance_warn: 0.5
+  variance_fail: 1.0
+  flags_error_limit: 0.1
+
+system:
+  long_loops_limit: 50
+  cpu_load_limit: 80
