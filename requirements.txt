@@ -1,0 +1,4 @@
+pymavlink
+numpy
+scikit-learn
+matplotlib
