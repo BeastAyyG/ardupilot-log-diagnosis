@@ -150,12 +150,12 @@
         "vibration_high"
       ],
       "predicted": [
-        "compass_interference",
-        "ekf_failure",
-        "vibration_high",
         "mechanical_failure",
+        "compass_interference",
+        "vibration_high",
+        "motor_imbalance",
         "power_instability",
-        "motor_imbalance"
+        "ekf_failure"
       ],
       "predicted_confidence": [
         0.85,
@@ -172,9 +172,9 @@
         "vibration_high"
       ],
       "predicted": [
-        "motor_imbalance",
+        "crash_unknown",
         "vibration_high",
-        "crash_unknown"
+        "motor_imbalance"
       ],
       "predicted_confidence": [
         0.765,
@@ -189,10 +189,10 @@
       ],
       "predicted": [
         "compass_interference",
-        "ekf_failure",
         "vibration_high",
+        "crash_unknown",
         "motor_imbalance",
-        "crash_unknown"
+        "ekf_failure"
       ],
       "predicted_confidence": [
         0.85,
@@ -208,8 +208,8 @@
         "vibration_high"
       ],
       "predicted": [
-        "motor_imbalance",
-        "compass_interference"
+        "compass_interference",
+        "motor_imbalance"
       ],
       "predicted_confidence": [
         0.85,
@@ -222,10 +222,10 @@
         "compass_interference"
       ],
       "predicted": [
-        "motor_imbalance",
         "ekf_failure",
-        "vibration_high",
-        "compass_interference"
+        "compass_interference",
+        "motor_imbalance",
+        "vibration_high"
       ],
       "predicted_confidence": [
         0.85,
@@ -241,8 +241,8 @@
       ],
       "predicted": [
         "ekf_failure",
-        "vibration_high",
-        "compass_interference"
+        "compass_interference",
+        "vibration_high"
       ],
       "predicted_confidence": [
         0.85,
@@ -257,10 +257,10 @@
       ],
       "predicted": [
         "compass_interference",
-        "ekf_failure",
         "vibration_high",
+        "crash_unknown",
         "motor_imbalance",
-        "crash_unknown"
+        "ekf_failure"
       ],
       "predicted_confidence": [
         0.85,
@@ -277,10 +277,10 @@
       ],
       "predicted": [
         "compass_interference",
-        "ekf_failure",
         "vibration_high",
+        "crash_unknown",
         "motor_imbalance",
-        "crash_unknown"
+        "ekf_failure"
       ],
       "predicted_confidence": [
         0.85,
