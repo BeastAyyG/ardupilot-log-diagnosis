@@ -1,0 +1,48 @@
+import os
+from pymavlink import mavutil
+import pandas as pd
+
+# Path to your SITL log
+LOG_PATH = os.path.expanduser("~/ardupilot/logs/00000001.BIN")
+
+def process_log(path):
+    print(f"Opening Log: {path}")
+    mlog = mavutil.mavlink_connection(path)
+    data = []
+    
+    while True:
+        # We are looking for Battery (BAT) and Vibration (VIBE) messages
+        m = mlog.recv_match(type=['BAT', 'VIBE'])
+        if m is None:
+            break
+        
+        msg_type = m.get_type()
+        
+        if msg_type == 'BAT':
+            data.append({
+                'Type': 'Battery',
+                'TimeUS': m.TimeUS,
+                'Volt': m.Volt,
+                'Curr': m.Curr
+            })
+        elif msg_type == 'VIBE':
+            data.append({
+                'Type': 'Vibration',
+                'TimeUS': m.TimeUS,
+                'VibeX': m.VibeX,
+                'VibeY': m.VibeY,
+                'VibeZ': m.VibeZ
+            })
+            
+    return pd.DataFrame(data)
+
+# Execution
+if os.path.exists(LOG_PATH):
+    df = process_log(LOG_PATH)
+    print("\n--- AI Data Preview ---")
+    print(df.head(10))
+    # Save for your ML model
+    df.to_csv("flight_data_for_ai.csv", index=False)
+    print("\nSaved to: flight_data_for_ai.csv")
+else:
+    print("Log file not found! Check the path.")
