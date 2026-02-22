@@ -1,10 +1,11 @@
 from .rule_engine import RuleEngine
 from .ml_classifier import MLClassifier
+from typing import Optional
 
 class HybridEngine:
     """Combines RuleEngine + MLClassifier results."""
     
-    def __init__(self, rule_engine: RuleEngine = None, ml_classifier: MLClassifier = None):
+    def __init__(self, rule_engine: Optional[RuleEngine] = None, ml_classifier: Optional[MLClassifier] = None):
         self.rules = rule_engine or RuleEngine()
         self.ml = ml_classifier or MLClassifier()
         
@@ -27,7 +28,7 @@ class HybridEngine:
             evidence = []
             if ftype in rule_dict:
                 evidence.extend(rule_dict[ftype].get("evidence", []))
-            if ftype in ml_dict and not rule_dict:
+            if ftype in ml_dict and ftype not in rule_dict:
                 evidence.extend(ml_dict[ftype].get("evidence", []))
                 
             if rule_conf > 0 and ml_prob > 0:

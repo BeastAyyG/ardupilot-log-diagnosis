@@ -60,3 +60,21 @@ ardupilot-log-diagnosis/
 - [ ] **Integration Tests:** Verify full pipeline (`.BIN` → parsing → output).
 - [ ] **Socratic rules check:** Verified structure and logic.
 - [ ] **ML Check:** Run cross-validation manually on dataset.
+
+## 8. Data Provenance and Curation
+- Legacy companion-health artifacts are migrated into `companion_health/data/health_monitor/`.
+- Companion-health dataset quality is validated through
+  `companion_health/scripts/integrate_legacy_health_monitor.py` with:
+  - schema checks,
+  - class-balance checks,
+  - duplicate detection,
+  - numeric range reporting.
+- Companion-health data remains separate from diagnosis benchmark labels.
+- Ground-truth metadata is synchronized by `training/refresh_ground_truth_metadata.py`.
+- Project boundary validation is enforced by `training/validate_project_boundaries.py`.
+- Training dataset generation supports confidence-based filtering via
+  `python training/build_dataset.py --min-confidence <level>`.
+- External benchmark batches can be clean-imported with
+  `python -m src.cli.main import-clean --source-root <path> --output-root <path>`.
+- Clean import emits immutable provenance artifacts (inventory, rejected files,
+  hash-based dedupe manifest, benchmark-ready ground truth subset).

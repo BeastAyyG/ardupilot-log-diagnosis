@@ -17,9 +17,12 @@
       "rc_failsafe",
       "crash_unknown"
     ],
-    "last_updated": "2025-01-01",
-    "total_logs": 3,
-    "label_distribution": {}
+    "last_updated": "2026-02-22",
+    "total_logs": 10,
+    "label_distribution": {
+      "compass_interference": 5,
+      "vibration_high": 5
+    }
   },
   "logs": [
     {

@@ -2,11 +2,34 @@ import argparse
 import sys
 import os
 import json
+from pathlib import Path
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.rule_engine import RuleEngine
+from src.diagnosis.decision_policy import evaluate_decision
 from .formatter import DiagnosisFormatter
+
+
+def _find_latest_clean_benchmark():
+    root = Path("data/clean_imports")
+    if not root.exists():
+        return None, None
+
+    candidates = sorted(
+        root.glob("*/benchmark_ready/ground_truth.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        return None, None
+
+    gt_path = candidates[0]
+    dataset_dir = gt_path.parent / "dataset"
+    if not dataset_dir.exists():
+        return None, None
+
+    return str(dataset_dir), str(gt_path)
 
 def cmd_analyze(args):
     parser = LogParser(args.logfile)
@@ -21,14 +44,15 @@ def cmd_analyze(args):
         engine = HybridEngine()
         
     diagnoses = engine.diagnose(features)
+    decision = evaluate_decision(diagnoses)
     
     formatter = DiagnosisFormatter()
     metadata = features.get("_metadata", {})
     
     if args.json:
-        output = formatter.format_json(diagnoses, metadata, features)
+        output = formatter.format_json(diagnoses, metadata, features, decision=decision)
     else:
-        output = formatter.format_terminal(diagnoses, metadata)
+        output = formatter.format_terminal(diagnoses, metadata, decision=decision)
         
     if args.output:
         with open(args.output, "w") as f:
@@ -49,15 +73,87 @@ def cmd_features(args):
 def cmd_benchmark(args):
     from src.benchmark.suite import BenchmarkSuite
     from src.benchmark.reporter import BenchmarkReporter
+
+    dataset_dir = args.dataset_dir
+    ground_truth = args.ground_truth
+
+    default_args_used = args.dataset_dir == "dataset/" and args.ground_truth == "ground_truth.json"
+    default_available = Path(args.dataset_dir).exists() and Path(args.ground_truth).exists()
+
+    if default_args_used and not default_available:
+        fallback_dataset, fallback_gt = _find_latest_clean_benchmark()
+        if fallback_dataset and fallback_gt:
+            dataset_dir = fallback_dataset
+            ground_truth = fallback_gt
+            print(f"Using latest clean-import benchmark set: {ground_truth}")
     
-    suite = BenchmarkSuite(engine=args.engine)
+    suite = BenchmarkSuite(
+        dataset_dir=dataset_dir,
+        ground_truth_path=ground_truth,
+        engine=args.engine,
+        include_non_trainable=args.include_non_trainable,
+    )
     results = suite.run()
     
     reporter = BenchmarkReporter()
     reporter.print_terminal(results)
-    reporter.save_markdown(results, "benchmark_results.md")
-    reporter.save_json(results, "benchmark_results.json")
-    print("\nSaved benchmark_results.md and benchmark_results.json")
+    md_path = f"{args.output_prefix}.md"
+    json_path = f"{args.output_prefix}.json"
+    reporter.save_markdown(results, md_path)
+    reporter.save_json(results, json_path)
+    print(f"\nSaved {md_path} and {json_path}")
+
+
+def cmd_import_clean(args):
+    from src.data.clean_import import run_clean_import
+
+    summary = run_clean_import(
+        source_root=args.source_root,
+        output_root=args.output_root,
+        copy_files=not args.no_copy,
+    )
+
+    counts = summary.get("counts", {})
+    artifacts = summary.get("artifacts", {})
+    print("Clean import complete.")
+    print(f"Source: {summary.get('source_root')}")
+    print(f"Output: {summary.get('output_root')}")
+    print(f"Total .bin files: {counts.get('total_bin_files', 0)}")
+    print(f"Unique parseable logs: {counts.get('unique_parseable_after_dedupe', 0)}")
+    print(f"Verified labeled: {counts.get('verified_labeled', 0)}")
+    print(f"Provisional labeled: {counts.get('provisional_labeled', 0)}")
+    print(f"Verified unlabeled: {counts.get('verified_unlabeled', 0)}")
+    print(f"Rejected non-log: {counts.get('rejected_nonlog', 0)}")
+    print(f"Benchmark-trainable: {counts.get('benchmark_trainable', 0)}")
+    print(f"Proof markdown: {artifacts.get('proof_markdown')}")
+
+
+def cmd_collect_forum(args):
+    from src.data.forum_collector import collect_forum_logs
+
+    query_overrides = None
+    if args.queries_json:
+        with open(args.queries_json, "r") as f:
+            query_overrides = json.load(f)
+
+    summary = collect_forum_logs(
+        output_root=args.output_root,
+        max_per_query=args.max_per_query,
+        max_topics_per_query=args.max_topics_per_query,
+        sleep_ms=args.sleep_ms,
+        include_zip=not args.no_zip,
+        query_overrides=query_overrides,
+    )
+
+    print("Forum collection complete.")
+    print(f"Output root: {summary.get('output_root')}")
+    print(f"Rows: {summary.get('rows', 0)}")
+    print(f"Downloaded: {summary.get('downloaded', 0)}")
+    print(f"Not-log payload: {summary.get('not_log_payload', 0)}")
+    print(f"Download failed: {summary.get('download_failed', 0)}")
+    artifacts = summary.get("artifacts", {})
+    print(f"Manifest CSV: {artifacts.get('manifest_csv')}")
+    print(f"Summary JSON: {artifacts.get('summary_json')}")
 
 def cmd_batch(args):
     directory = args.directory
@@ -163,12 +259,37 @@ def main():
     
     p_benchmark = subparsers.add_parser("benchmark", help="Run benchmark suite")
     p_benchmark.add_argument("--engine", choices=["rule", "ml", "hybrid"], default="hybrid", help="Engine to benchmark")
+    p_benchmark.add_argument("--dataset-dir", default="dataset/", help="Directory containing benchmark .BIN files")
+    p_benchmark.add_argument("--ground-truth", default="ground_truth.json", help="Ground truth JSON path")
+    p_benchmark.add_argument("--output-prefix", default="benchmark_results", help="Output filename prefix (without extension)")
+    p_benchmark.add_argument("--include-non-trainable", action="store_true", help="Include entries marked trainable=false")
     
     p_batch = subparsers.add_parser("batch", help="Batch analyze directory")
     p_batch.add_argument("directory", help="Directory containing .BIN files")
     
     p_label = subparsers.add_parser("label", help="Interactive labeling tool")
     p_label.add_argument("logfile", help="Path to .BIN file")
+
+    p_import = subparsers.add_parser("import-clean", help="Clean import external log batch with provenance manifests")
+    p_import.add_argument("--source-root", required=True, help="Source directory to scan")
+    p_import.add_argument(
+        "--output-root",
+        default="data/clean_imports/latest",
+        help="Output directory for cleaned logs and manifests",
+    )
+    p_import.add_argument("--no-copy", action="store_true", help="Generate manifests only, do not copy files")
+
+    p_collect = subparsers.add_parser("collect-forum", help="Collect candidate logs from discuss.ardupilot.org")
+    p_collect.add_argument(
+        "--output-root",
+        default="data/raw_downloads/forum_batch",
+        help="Output folder for downloaded files and manifest",
+    )
+    p_collect.add_argument("--max-per-query", type=int, default=20, help="Maximum downloads per label query")
+    p_collect.add_argument("--max-topics-per-query", type=int, default=60, help="Maximum forum topics scanned per query")
+    p_collect.add_argument("--sleep-ms", type=int, default=250, help="Delay between download requests in milliseconds")
+    p_collect.add_argument("--no-zip", action="store_true", help="Skip zip attachments")
+    p_collect.add_argument("--queries-json", help="Path to JSON map of label->search query")
     
     parsed_args = parser.parse_args()
     
@@ -182,6 +303,10 @@ def main():
         cmd_batch(parsed_args)
     elif parsed_args.command == "label":
         cmd_label(parsed_args)
+    elif parsed_args.command == "import-clean":
+        cmd_import_clean(parsed_args)
+    elif parsed_args.command == "collect-forum":
+        cmd_collect_forum(parsed_args)
 
 if __name__ == "__main__":
     main()

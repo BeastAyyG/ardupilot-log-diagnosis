@@ -1,0 +1,7 @@
+{
+  "vibration_high": "high vibration crash .bin",
+  "compass_interference": "compass variance crash .bin",
+  "motor_imbalance": "motor desync thrust imbalance .bin",
+  "gps_quality_poor": "gps glitch hdop crash .bin",
+  "ekf_failure": "ekf variance failsafe crash .bin"
+}

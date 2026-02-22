@@ -1,7 +1,11 @@
 import os
 import json
 import numpy as np
-import joblib
+
+try:
+    import joblib
+except Exception:
+    joblib = None
 
 class MLClassifier:
     """Trained ML model for failure classification."""
@@ -13,6 +17,9 @@ class MLClassifier:
         self.labels_path = os.path.join(model_dir, "label_columns.json")
         
         self.available = False
+        if joblib is None:
+            return
+
         if os.path.exists(self.model_path) and os.path.exists(self.scaler_path):
             try:
                 self.model = joblib.load(self.model_path)
@@ -22,7 +29,7 @@ class MLClassifier:
                 with open(self.labels_path, 'r') as f:
                     self.label_columns = json.load(f)
                 self.available = True
-            except Exception as e:
+            except Exception:
                 self.available = False
 
     def predict(self, features: dict) -> list:

@@ -9,6 +9,22 @@ pip install -r requirements.txt
 python -m src.cli.main analyze flight.BIN
 ```
 
+## Run on GitHub Codespaces
+If your laptop is slow, run everything in Codespaces.
+
+1) Open the repo in GitHub and click **Code -> Codespaces -> Create codespace on main**.
+2) Wait for container setup to finish (`.devcontainer/devcontainer.json` installs dependencies automatically).
+3) Run the same commands in the Codespaces terminal.
+
+Recommended first commands:
+
+```bash
+pytest -q
+python -m src.cli.main collect-forum --output-root "data/raw_downloads/forum_batch_01" --max-per-query 25 --max-topics-per-query 80 --sleep-ms 50 --no-zip
+python -m src.cli.main import-clean --source-root "data/raw_downloads/forum_batch_01" --output-root "data/clean_imports/forum_batch_01"
+python -m src.cli.main benchmark --dataset-dir "data/clean_imports/forum_batch_01/benchmark_ready/dataset" --ground-truth "data/clean_imports/forum_batch_01/benchmark_ready/ground_truth.json"
+```
+
 ## Sample Output
 ```
 ╔═══════════════════════════════════════╗
@@ -73,6 +89,19 @@ See `benchmark_results.md` for full analysis.
 python -m src.cli.main benchmark
 ```
 
+If `dataset/` + `ground_truth.json` are unavailable, the benchmark command
+automatically falls back to the latest clean-imported benchmark subset under
+`data/clean_imports/*/benchmark_ready/`.
+
+You can benchmark against a specific imported batch:
+
+```bash
+python -m src.cli.main benchmark \
+  --dataset-dir data/clean_imports/flight_logs_dataset_2026-02-22/benchmark_ready/dataset \
+  --ground-truth data/clean_imports/flight_logs_dataset_2026-02-22/benchmark_ready/ground_truth.json \
+  --output-prefix data/clean_imports/flight_logs_dataset_2026-02-22/benchmark_ready/benchmark_results
+```
+
 ## Current Limitations
 - Rule-based testing only available until ML dataset is generated
 - ML model degrading gracefully without missing files
@@ -80,3 +109,109 @@ python -m src.cli.main benchmark
 
 ## Contributing Logs
 See `download_logs.md` for how to add crash logs to the benchmark dataset.
+
+## Clean Import (Production-Safe)
+Use the app command below to ingest an external log folder with strict
+provenance checks, SHA256 dedupe, non-log rejection, and benchmark-ready output.
+
+```bash
+python -m src.cli.main import-clean \
+  --source-root "/home/ayyg/Downloads/flight_logs_dataset_2026-02-22" \
+  --output-root "data/clean_imports/flight_logs_dataset_2026-02-22"
+```
+
+Generated artifacts include:
+- `data/clean_imports/flight_logs_dataset_2026-02-22/manifests/source_inventory.csv`
+- `data/clean_imports/flight_logs_dataset_2026-02-22/manifests/clean_import_manifest.csv`
+- `data/clean_imports/flight_logs_dataset_2026-02-22/manifests/rejected_manifest.csv`
+- `data/clean_imports/flight_logs_dataset_2026-02-22/manifests/provenance_proof.md`
+- `data/clean_imports/flight_logs_dataset_2026-02-22/benchmark_ready/ground_truth.json`
+
+## Benchmark Data Provenance (Latest Batch)
+Source folder used:
+- `/home/ayyg/Downloads/flight_logs_dataset_2026-02-22`
+
+Validated summary:
+- Total `.bin` files scanned: `27`
+- Parse-valid logs (pre-dedupe): `19`
+- Unique parse-valid logs (SHA256 dedupe): `13`
+- Rejected non-log `.bin` payloads: `8`
+- Unique ZIP archives: `2` (SITL lineage, excluded from production benchmark training)
+- Benchmark-trainable logs: `2`
+
+Verified labeled logs with source proof:
+- `log_01_VIBE_HIGH.bin` -> `vibration_high`
+  - Thread: `https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863`
+  - Download URL: `https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ`
+- `log_10_MAG_INTERFERENCE_1.bin` -> `compass_interference`
+  - Thread: `https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273`
+  - Download URL: `https://drive.google.com/uc?export=download&id=1z5wB1v8-RY6pFT-gDKsG_vkxZFF54oi_`
+
+Provisional (kept out of production benchmark labels):
+- `log_05_ESC_DESYNC_1.bin` (raw label: `ESC_DESYNC`)
+- `log_11_ESC_DESYNC.bin` (raw label: `ESC_DESYNC`)
+
+Full mentor-facing proof report:
+- `data/clean_imports/flight_logs_dataset_2026-02-22/manifests/provenance_proof.md`
+
+## Data Curation Workflow
+To keep project boundaries clear, there are two separate flows:
+
+1) Companion-health app data migration (separate app area):
+
+```bash
+python companion_health/scripts/integrate_legacy_health_monitor.py
+```
+
+2) Main diagnosis benchmark import from downloaded log folder:
+
+```bash
+python training/import_clean_batch.py \
+  --source-root "/home/ayyg/Downloads/flight_logs_dataset_2026-02-22" \
+  --output-root "data/clean_imports/flight_logs_dataset_2026-02-22"
+```
+
+To collect more candidate logs directly from forum search before clean import:
+
+```bash
+python -m src.cli.main collect-forum \
+  --output-root "data/raw_downloads/forum_batch_01" \
+  --max-per-query 25 \
+  --max-topics-per-query 80
+
+# optional custom query set
+python -m src.cli.main collect-forum \
+  --output-root "data/raw_downloads/forum_batch_02" \
+  --queries-json "docs/forum_queries.example.json"
+
+python -m src.cli.main import-clean \
+  --source-root "data/raw_downloads/forum_batch_01" \
+  --output-root "data/clean_imports/forum_batch_01"
+```
+
+Companion-health output location:
+- `companion_health/data/health_monitor/`
+
+Main diagnosis clean-import output location:
+- `data/clean_imports/<batch_name>/`
+
+Main diagnosis metadata refresh:
+
+```bash
+python training/refresh_ground_truth_metadata.py
+```
+
+Boundary validation (diagnosis app vs companion-health app):
+
+```bash
+python training/validate_project_boundaries.py
+```
+
+You can then build ML datasets with confidence filtering:
+
+```bash
+python training/build_dataset.py --min-confidence medium
+```
+
+By default, `build_dataset.py` excludes records marked `trainable=false`.
+Use `--include-non-trainable` only for experiments.

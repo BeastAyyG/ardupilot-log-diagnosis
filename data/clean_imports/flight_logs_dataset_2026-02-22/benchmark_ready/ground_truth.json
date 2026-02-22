@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "flight_logs_dataset_2026-02-22",
+    "generated_at_utc": "2026-02-22T12:42:59.058522+00:00",
+    "total_logs": 2,
+    "label_distribution": {
+      "compass_interference": 1,
+      "vibration_high": 1
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_10_MAG_INTERFERENCE_1.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Disable the internal compass and use MAGFIT to calibrate the external.",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_01_VIBE_HIGH.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Vibrations are very bad, you'll need to fix whatever is causing that first.",
+      "confidence": "medium"
+    }
+  ]
+}

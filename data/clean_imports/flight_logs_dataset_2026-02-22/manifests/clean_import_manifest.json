@@ -1,0 +1,524 @@
+[
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1005_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1005_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1005_DISCOVERED_1.bin",
+    "size_bytes": 3268608,
+    "sha256": "0981e19b7dc74b0c6e8c55779b4a339b2c4619c632d585e2f96e29ef5931d1a1",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1005_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 62
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1003_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1003_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1003_DISCOVERED_1.bin",
+    "size_bytes": 585728,
+    "sha256": "1139d40b346f2087a1e6321eeca473486ba32c8b1ae089542ba8be41fe2596e4",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1003_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 60
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1007_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1007_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1007_DISCOVERED_1.bin",
+    "size_bytes": 24483104,
+    "sha256": "335e9881ac2934b49da7a13c9d093cf2b2a909957338e66fa9566c4ca179c37d",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1007_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 48
+  },
+  {
+    "category": "provisional_labeled",
+    "file_name": "log_11_ESC_DESYNC.bin",
+    "source_path": "log_11_ESC_DESYNC.bin",
+    "source_relative_path": "log_11_ESC_DESYNC.bin",
+    "size_bytes": 12857268,
+    "sha256": "43bd1475d82ee3a0a719faf501aea0b29645dc8af299190143677735f7b8e6cb",
+    "duplicate_count": 2,
+    "duplicate_sources": [
+      "fast_mode_downloads/log_11_ESC_DESYNC.bin",
+      "log_11_ESC_DESYNC.bin"
+    ],
+    "raw_label": "ESC_DESYNC",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=0",
+    "resolved_download_url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "fast_mode_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "ESC_DESYNC",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=0",
+        "resolved_url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=1"
+      },
+      {
+        "manifest": "download_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "ESC_DESYNC",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=0",
+        "resolved_url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 68
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1001_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1001_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1001_DISCOVERED_1.bin",
+    "size_bytes": 32616448,
+    "sha256": "65459319cb48adfccc7b0263fcaedd9fa38f013e6a4ced57f7080ea8f72dff77",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1001_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 63
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_10_MAG_INTERFERENCE_1.bin",
+    "source_path": "crawler_downloads/log_10_MAG_INTERFERENCE_1.bin",
+    "source_relative_path": "crawler_downloads/log_10_MAG_INTERFERENCE_1.bin",
+    "size_bytes": 1830912,
+    "sha256": "66bbaf391960e4f5244e723b4aa7c4bd5cabc9b38a3957d781dd1d99192ca5b3",
+    "duplicate_count": 2,
+    "duplicate_sources": [
+      "crawler_downloads/log_10_MAG_INTERFERENCE_1.bin",
+      "crawler_downloads_v2/log_10_MAG_INTERFERENCE_1.bin"
+    ],
+    "raw_label": "MAG_INTERFERENCE",
+    "mapped_label": "compass_interference",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+    "resolved_download_url": "https://drive.google.com/uc?export=download&id=1z5wB1v8-RY6pFT-gDKsG_vkxZFF54oi_",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "MAG_INTERFERENCE",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1z5wB1v8-RY6pFT-gDKsG_vkxZFF54oi_"
+      },
+      {
+        "manifest": "crawler_manifest_v2.csv",
+        "status": "downloaded",
+        "label_raw": "MAG_INTERFERENCE",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1z5wB1v8-RY6pFT-gDKsG_vkxZFF54oi_"
+      }
+    ],
+    "expert_username": "Yuri_Rage",
+    "expert_quote": "Disable the internal compass and use MAGFIT to calibrate the external.",
+    "parse_message_count": 3000,
+    "parse_message_types": 52
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1002_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1002_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1002_DISCOVERED_1.bin",
+    "size_bytes": 5383168,
+    "sha256": "6812222a6786acec0427b757a9a036aab23777e2fb969a4e1a3bf6e0a170baec",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1002_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 50
+  },
+  {
+    "category": "provisional_labeled",
+    "file_name": "log_05_ESC_DESYNC_1.bin",
+    "source_path": "crawler_downloads/log_05_ESC_DESYNC_1.bin",
+    "source_relative_path": "crawler_downloads/log_05_ESC_DESYNC_1.bin",
+    "size_bytes": 32449289,
+    "sha256": "6c5448a716099819e2ce082a570476b1042000850fdb8633d492a453893d2727",
+    "duplicate_count": 2,
+    "duplicate_sources": [
+      "crawler_downloads/log_05_ESC_DESYNC_1.bin",
+      "crawler_downloads_v2/log_05_ESC_DESYNC_1.bin"
+    ],
+    "raw_label": "ESC_DESYNC",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/cube-orange-motor-6-fails/111390",
+    "resolved_download_url": "https://drive.google.com/uc?export=download&id=1y5-Uz-PbJPKp_2I0tQkvYNZywRj0FodX",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "ESC_DESYNC",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/cube-orange-motor-6-fails/111390",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1y5-Uz-PbJPKp_2I0tQkvYNZywRj0FodX"
+      },
+      {
+        "manifest": "crawler_manifest_v2.csv",
+        "status": "downloaded",
+        "label_raw": "ESC_DESYNC",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/cube-orange-motor-6-fails/111390",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1y5-Uz-PbJPKp_2I0tQkvYNZywRj0FodX"
+      }
+    ],
+    "expert_username": "xfacta",
+    "expert_quote": "more likely there was a desync or slipping prop.",
+    "parse_message_count": 3000,
+    "parse_message_types": 60
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_01_VIBE_HIGH.bin",
+    "source_path": "log_01_VIBE_HIGH.bin",
+    "source_relative_path": "log_01_VIBE_HIGH.bin",
+    "size_bytes": 1540096,
+    "sha256": "c648fe37de19bce0d6985ae04299af192287f9bd3009cbd5c69c56158cebc706",
+    "duplicate_count": 4,
+    "duplicate_sources": [
+      "crawler_downloads/log_01_VIBE_HIGH_1.bin",
+      "crawler_downloads_v2/log_01_VIBE_HIGH_1.bin",
+      "fast_mode_downloads/log_01_VIBE_HIGH.bin",
+      "log_01_VIBE_HIGH.bin"
+    ],
+    "raw_label": "VIBE_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+    "resolved_download_url": "https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBE_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ"
+      },
+      {
+        "manifest": "crawler_manifest_v2.csv",
+        "status": "downloaded",
+        "label_raw": "VIBE_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ"
+      },
+      {
+        "manifest": "fast_mode_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBE_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://drive.google.com/file/d/1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ/view",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ"
+      },
+      {
+        "manifest": "download_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBE_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://drive.google.com/file/d/1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ/view",
+        "resolved_url": "https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ"
+      }
+    ],
+    "expert_username": "xfacta",
+    "expert_quote": "Vibrations are very bad, you'll need to fix whatever is causing that first.",
+    "parse_message_count": 3000,
+    "parse_message_types": 53
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1004_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1004_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1004_DISCOVERED_1.bin",
+    "size_bytes": 711781,
+    "sha256": "c6ec9e9f0006096351de6338a9384f19d0398fb101f1ebd722d6987b3c2196b6",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1004_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 43
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1009_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1009_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1009_DISCOVERED_1.bin",
+    "size_bytes": 5418808,
+    "sha256": "c8bfdfdd381ab1db9e3aba0eb966df96a656d32bad97b53e36162e074b20308d",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1009_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 65
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1000_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1000_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1000_DISCOVERED_1.bin",
+    "size_bytes": 8908800,
+    "sha256": "de9643c72dd4a59e965de0838dbfe37b1101cf27bc3a88483fbbea2321867023",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1000_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 69
+  },
+  {
+    "category": "verified_unlabeled",
+    "file_name": "log_1010_DISCOVERED_1.bin",
+    "source_path": "discovered_downloads_v2/log_1010_DISCOVERED_1.bin",
+    "source_relative_path": "discovered_downloads_v2/log_1010_DISCOVERED_1.bin",
+    "size_bytes": 7814656,
+    "sha256": "feba377ace4444b132ca77fb297f31771b8ae336885ed5a64389c048b0d23c2b",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "discovered_downloads_v2/log_1010_DISCOVERED_1.bin"
+    ],
+    "raw_label": "",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "unknown",
+    "source_url": "",
+    "resolved_download_url": "",
+    "provenance_status": "",
+    "provenance_records": [],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 57
+  },
+  {
+    "category": "excluded_synthetic",
+    "file_name": "log_18_EKF_FAILSAFE.zip",
+    "source_path": "log_18_EKF_FAILSAFE.zip",
+    "source_relative_path": "log_18_EKF_FAILSAFE.zip",
+    "size_bytes": 2768998,
+    "sha256": "17a8b3a915cb9e216936f65cea803528dc5ea9d272ad5e96a4ba4acdefedde4f",
+    "duplicate_count": 4,
+    "duplicate_sources": [
+      "crawler_downloads/log_18_EKF_FAILSAFE_1.zip",
+      "crawler_downloads_v2/log_18_EKF_FAILSAFE_1.zip",
+      "fast_mode_downloads/log_18_EKF_FAILSAFE.zip",
+      "log_18_EKF_FAILSAFE.zip"
+    ],
+    "raw_label": "EKF_FAILSAFE",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "SITL_Simulation",
+    "source_url": "https://github.com/ArduPilot/ardupilot/issues/24445",
+    "resolved_download_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/issues/24445",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip"
+      },
+      {
+        "manifest": "crawler_manifest_v2.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/issues/24445",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip"
+      },
+      {
+        "manifest": "fast_mode_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip"
+      },
+      {
+        "manifest": "download_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223288/logs.zip"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 0,
+    "parse_message_types": 0
+  },
+  {
+    "category": "excluded_synthetic",
+    "file_name": "log_17_EKF_FAILSAFE.zip",
+    "source_path": "log_17_EKF_FAILSAFE.zip",
+    "source_relative_path": "log_17_EKF_FAILSAFE.zip",
+    "size_bytes": 4485535,
+    "sha256": "bc8cfca5a523f5dc54a09d627161afdb606af553e468bd300bde44f27f8bd2de",
+    "duplicate_count": 4,
+    "duplicate_sources": [
+      "crawler_downloads/log_17_EKF_FAILSAFE_1.zip",
+      "crawler_downloads_v2/log_17_EKF_FAILSAFE_1.zip",
+      "fast_mode_downloads/log_17_EKF_FAILSAFE.zip",
+      "log_17_EKF_FAILSAFE.zip"
+    ],
+    "raw_label": "EKF_FAILSAFE",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "SITL_Simulation",
+    "source_url": "https://github.com/ArduPilot/ardupilot/issues/24445",
+    "resolved_download_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/issues/24445",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip"
+      },
+      {
+        "manifest": "crawler_manifest_v2.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/issues/24445",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip"
+      },
+      {
+        "manifest": "fast_mode_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip"
+      },
+      {
+        "manifest": "download_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "EKF_FAILSAFE",
+        "source_type": "SITL_Simulation",
+        "thread_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip",
+        "resolved_url": "https://github.com/ArduPilot/ardupilot/files/12223207/logs_3.zip"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 0,
+    "parse_message_types": 0
+  }
+]

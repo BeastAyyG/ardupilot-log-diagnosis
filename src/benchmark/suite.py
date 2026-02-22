@@ -10,10 +10,17 @@ from src.diagnosis.hybrid_engine import HybridEngine
 class BenchmarkSuite:
     """Runs diagnosis engine against labeled dataset and produces accuracy metrics."""
     
-    def __init__(self, dataset_dir: str = "dataset/", ground_truth_path: str = "ground_truth.json", engine: str = "hybrid"):
+    def __init__(
+        self,
+        dataset_dir: str = "dataset/",
+        ground_truth_path: str = "ground_truth.json",
+        engine: str = "hybrid",
+        include_non_trainable: bool = False,
+    ):
         self.dataset_dir = dataset_dir
         self.ground_truth_path = ground_truth_path
         self.engine_type = engine
+        self.include_non_trainable = include_non_trainable
         
         if self.engine_type == "rule":
             self.engine = RuleEngine()
@@ -36,6 +43,9 @@ class BenchmarkSuite:
         pipeline = FeaturePipeline()
         
         for log_entry in logs:
+            if not self.include_non_trainable and log_entry.get("trainable") is False:
+                continue
+
             filename = log_entry["filename"]
             ground_truth = log_entry["labels"]
             filepath = os.path.join(self.dataset_dir, filename)
@@ -57,9 +67,15 @@ class BenchmarkSuite:
                 
             try:
                 if self.engine_type == "ml":
-                    predictions = self.engine.predict(features)
+                    if isinstance(self.engine, MLClassifier):
+                        predictions = self.engine.predict(features)
+                    else:
+                        predictions = []
                 else:
-                    predictions = self.engine.diagnose(features)
+                    if isinstance(self.engine, (RuleEngine, HybridEngine)):
+                        predictions = self.engine.diagnose(features)
+                    else:
+                        predictions = []
                     
                 results.add_result(filename, ground_truth, predictions, len(features))
             except Exception as e:
