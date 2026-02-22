@@ -1,0 +1,13 @@
+{
+  "vibration_high": "high vibration crash .bin",
+  "compass_interference": "compass interference yaw reset crash .bin",
+  "gps_quality_poor": "gps glitch hdop crash .bin",
+  "power_instability": "battery sag voltage drop crash .bin",
+  "motor_imbalance": "motor desync thrust imbalance crash .bin",
+  "ekf_failure": "ekf variance lane switch failsafe crash .bin",
+  "brownout": "brownout reboot power loss crash .bin",
+  "rc_failsafe": "radio failsafe rc link loss crash .bin",
+  "pid_tuning_issue": "oscillation pid tuning unstable copter .bin",
+  "mechanical_failure": "broken arm prop damage mechanical failure crash .bin",
+  "crash_unknown": "unexpected crash no obvious cause .bin"
+}

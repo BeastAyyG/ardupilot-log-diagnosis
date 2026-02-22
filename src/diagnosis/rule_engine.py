@@ -208,23 +208,32 @@ class RuleEngine:
         evidence = []
         conf = 0.0
         failure = "motor_imbalance"
-        
-        if spread_max > lim_spr:
-            conf += 0.5
+
+        if spread_max >= (lim_spr * 1.25):
+            conf += 0.55
+            evidence.append({"feature": "motor_spread_max", "value": spread_max, "threshold": lim_spr * 1.25, "direction": "above"})
+        elif spread_max > lim_spr:
+            conf += 0.35
             evidence.append({"feature": "motor_spread_max", "value": spread_max, "threshold": lim_spr, "direction": "above"})
-        if spread_mean > lim_mean:
-            conf += 0.4
+
+        if spread_mean >= (lim_mean * 1.4):
+            conf += 0.35
+            evidence.append({"feature": "motor_spread_mean", "value": spread_mean, "threshold": lim_mean * 1.4, "direction": "above"})
+        elif spread_mean > lim_mean:
+            conf += 0.2
             evidence.append({"feature": "motor_spread_mean", "value": spread_mean, "threshold": lim_mean, "direction": "above"})
-            
-        if spread_std > 50 and roll_std < 5:
-            conf += 0.2
-        elif spread_std < 30 and roll_std > 10:
+
+        if spread_std > 60 and roll_std < 4:
+            conf += 0.1
+        elif spread_std < 25 and roll_std > 10:
             failure = "pid_tuning_issue"
-            conf += 0.2
-            
+            conf += 0.25
+
         if not evidence: return None
+        if conf < 0.55:
+            return None
         conf = min(conf, 1.0)
-        severity = "critical" if conf > 0.7 else "warning"
+        severity = "critical" if conf > 0.75 else "warning"
         
         return {
             "failure_type": failure, "confidence": conf, "severity": severity,
@@ -250,28 +259,36 @@ class RuleEngine:
         variances_over_warn = 0
         
         for name, val in [("ekf_vel_var", vv), ("ekf_pos_var", pv), ("ekf_compass_var", cv)]:
-            if val > lim_fail:
-                conf = 0.7
+            if val > (lim_fail * 1.5):
+                conf = max(conf, 0.8)
+                variances_over_fail += 1
+                evidence.append({"feature": f"{name}_max", "value": val, "threshold": lim_fail * 1.5, "direction": "above"})
+            elif val > lim_fail:
+                conf = max(conf, 0.55)
                 variances_over_fail += 1
                 evidence.append({"feature": f"{name}_max", "value": val, "threshold": lim_fail, "direction": "above"})
             elif val > 0.8:
                 variances_over_warn += 1
-                
-        if variances_over_warn >= 2 or variances_over_fail >= 2:
-            conf = max(conf, 0.8)
-            
+
+        if variances_over_warn >= 2:
+            conf = max(conf, 0.6)
+        if variances_over_fail >= 2:
+            conf = max(conf, 0.85)
+
         if ls > 0:
-            conf += 0.2
+            conf += 0.15
             evidence.append({"feature": "ekf_lane_switch_count", "value": ls, "threshold": 0, "direction": "above"})
         if fp > 0.1:
             conf += 0.1
             evidence.append({"feature": "ekf_flags_error_pct", "value": fp, "threshold": 0.1, "direction": "above"})
-            
+
         conf = min(conf, 1.0)
         if conf == 0.0: return None
-        
+        if conf < 0.7 and variances_over_fail < 2 and ls == 0 and fp <= 0.2:
+            return None
+
         return {
-            "failure_type": "ekf_failure", "confidence": conf, "severity": "critical",
+            "failure_type": "ekf_failure", "confidence": conf, "severity": "critical" if conf >= 0.8 else "warning",
             "detection_method": "rule", "evidence": evidence,
             "recommendation": FAILURE_RECOMMENDATIONS["ekf_failure"]
         }
@@ -286,19 +303,23 @@ class RuleEngine:
         
         evidence = []
         conf = 0.0
-        if ll > lim_ll:
+        if ll > (lim_ll * 2):
             conf += 0.4
-            evidence.append({"feature": "sys_long_loops", "value": ll, "threshold": lim_ll, "direction": "above"})
-        if cpu > lim_cpu:
-            conf += 0.5
-            evidence.append({"feature": "sys_cpu_load_mean", "value": cpu, "threshold": lim_cpu, "direction": "above"})
+            evidence.append({"feature": "sys_long_loops", "value": ll, "threshold": lim_ll * 2, "direction": "above"})
+        if cpu > (lim_cpu + 10):
+            conf += 0.45
+            evidence.append({"feature": "sys_cpu_load_mean", "value": cpu, "threshold": lim_cpu + 10, "direction": "above"})
         if ie > 0:
-            conf += 0.8
+            conf += 0.7
             evidence.append({"feature": "sys_internal_errors", "value": ie, "threshold": 0, "direction": "above"})
-            
+
         if not evidence: return None
+        if ie <= 0 and len(evidence) < 2:
+            return None
         conf = min(conf, 1.0)
-        severity = "critical" if conf > 0.7 else "warning"
+        if conf < 0.7:
+            return None
+        severity = "critical" if conf > 0.85 else "warning"
         
         return {
             "failure_type": "mechanical_failure", "confidence": conf, "severity": severity,
@@ -313,11 +334,12 @@ class RuleEngine:
         auto_labels = features.get("auto_labels", features.get("_evt_auto_labels", []))
         
         if crashes == 0 and failsafes == 0 and not auto_labels: return None
-        
+
         results = []
-        if crashes > 0:
+        if crashes >= 2 or (crashes > 0 and failsafes > 0):
+            crash_conf = 0.85 if crashes >= 2 else 0.7
             results.append({
-                "failure_type": "crash_unknown", "confidence": 0.9, "severity": "critical",
+                "failure_type": "crash_unknown", "confidence": crash_conf, "severity": "critical" if crash_conf >= 0.8 else "warning",
                 "detection_method": "rule", "evidence": [{"feature": "evt_crash_detected", "value": crashes, "threshold": 0, "direction": "above"}],
                 "recommendation": FAILURE_RECOMMENDATIONS["crash_unknown"]
             })
@@ -326,7 +348,7 @@ class RuleEngine:
             for al in set(auto_labels):
                 if al in FAILURE_RECOMMENDATIONS:
                     results.append({
-                        "failure_type": al, "confidence": 0.8, "severity": "critical",
+                        "failure_type": al, "confidence": 0.78, "severity": "critical",
                         "detection_method": "rule", "evidence": [{"feature": "evt_auto_labels", "value": al, "threshold": "", "direction": "exact"}],
                         "recommendation": FAILURE_RECOMMENDATIONS[al]
                     })

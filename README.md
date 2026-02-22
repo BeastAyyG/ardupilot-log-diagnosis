@@ -102,6 +102,30 @@ python -m src.cli.main benchmark \
   --output-prefix data/clean_imports/flight_logs_dataset_2026-02-22/benchmark_ready/benchmark_results
 ```
 
+### Create SHA-Unseen Holdout + Mentor Showcase
+
+Build a holdout set with zero SHA overlap against your training batches, then
+benchmark and generate a progress report with integrity checks and visuals.
+
+```bash
+python training/create_unseen_holdout.py \
+  --exclude-batches forum_batch_local_01 forum_batch_local_02 forum_batch_local_03 \
+  --candidate-batches flight_logs_dataset_2026-02-22 \
+  --output-root data/holdouts/unseen_flight_2026-02-22
+
+python -m src.cli.main benchmark \
+  --engine ml \
+  --dataset-dir data/holdouts/unseen_flight_2026-02-22/dataset \
+  --ground-truth data/holdouts/unseen_flight_2026-02-22/ground_truth.json \
+  --output-prefix data/holdouts/unseen_flight_2026-02-22/benchmark_results_ml
+
+python training/generate_progress_showcase.py \
+  --output docs/progress_showcase.md \
+  --train-batch forum_batch_unique_01 \
+  --train-source-batches forum_batch_local_01 forum_batch_local_02 forum_batch_local_03 \
+  --holdout-root data/holdouts/unseen_flight_2026-02-22
+```
+
 ## Current Limitations
 - Rule-based testing only available until ML dataset is generated
 - ML model degrading gracefully without missing files
@@ -187,6 +211,15 @@ python -m src.cli.main collect-forum \
 python -m src.cli.main import-clean \
   --source-root "data/raw_downloads/forum_batch_01" \
   --output-root "data/clean_imports/forum_batch_01"
+
+# expanded class coverage with one command
+python training/grow_benchmark_dataset.py \
+  --batch-name "forum_batch_expand_01" \
+  --queries-json "docs/forum_queries.expanded.json" \
+  --max-per-query 15 \
+  --max-topics-per-query 80 \
+  --sleep-ms 100 \
+  --no-zip
 ```
 
 Companion-health output location:

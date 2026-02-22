@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 from pymavlink import DFReader
+from src.constants import VALID_LABELS
 
 MANIFEST_FILES = [
     "crawler_manifest.csv",
@@ -135,9 +136,10 @@ def _load_provenance(source_root: Path) -> Dict[str, List[dict]]:
                 .strip()
                 .upper()
             )
-            source_type = (row.get("source_type") or "").strip()
             thread_url = (
                 row.get("thread_url")
+                or row.get("topic_url")
+                or row.get("post_url")
                 or row.get("input_link")
                 or row.get("seed_link")
                 or ""
@@ -145,8 +147,13 @@ def _load_provenance(source_root: Path) -> Dict[str, List[dict]]:
             resolved_url = (
                 row.get("used_url_or_error")
                 or row.get("resolved_url")
+                or row.get("download_url")
                 or ""
             ).strip()
+
+            source_type = (row.get("source_type") or "").strip()
+            if not source_type and "discuss.ardupilot.org" in thread_url:
+                source_type = "ArduPilot_Discuss"
 
             by_saved_file[saved_file].append(
                 {
@@ -160,6 +167,20 @@ def _load_provenance(source_root: Path) -> Dict[str, List[dict]]:
             )
 
     return by_saved_file
+
+
+def _map_label(raw_label: str) -> str:
+    if not raw_label:
+        return ""
+
+    if raw_label in LABEL_MAP:
+        return LABEL_MAP[raw_label]
+
+    normalized = raw_label.strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized in VALID_LABELS:
+        return normalized
+
+    return ""
 
 
 def _load_expert_map(source_root: Path) -> Dict[str, dict]:
@@ -364,7 +385,7 @@ def run_clean_import(
         selected = _choose_provenance(prov_records)
 
         raw_label = (selected or {}).get("label_raw", "")
-        mapped_label = LABEL_MAP.get(raw_label, "")
+        mapped_label = _map_label(raw_label)
         source_type = (selected or {}).get("source_type", "unknown")
         thread_url = (selected or {}).get("thread_url", "")
         resolved_url = (selected or {}).get("resolved_url", "")

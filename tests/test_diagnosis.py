@@ -1,4 +1,5 @@
 import pytest
+from typing import Any, cast
 from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.constants import FEATURE_NAMES
@@ -83,3 +84,33 @@ def test_diagnosis_output_format():
         assert "detection_method" in d
         assert "evidence" in d
         assert "recommendation" in d
+
+
+def test_rule_single_crash_event_is_not_auto_crash_unknown():
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({"evt_crash_detected": 1.0, "evt_failsafe_count": 0.0})
+    result = engine.diagnose(features)
+    assert all(d["failure_type"] != "crash_unknown" for d in result)
+
+
+def test_hybrid_filters_weak_secondary_labels():
+    class StubRuleEngine:
+        def diagnose(self, _features):
+            return [
+                {"failure_type": "vibration_high", "confidence": 0.8, "evidence": []},
+                {"failure_type": "motor_imbalance", "confidence": 0.72, "evidence": []},
+            ]
+
+    class StubMLClassifier:
+        available = True
+
+        def predict(self, _features):
+            return [{"failure_type": "vibration_high", "confidence": 0.82, "evidence": []}]
+
+    engine = HybridEngine(
+        rule_engine=cast(Any, StubRuleEngine()),
+        ml_classifier=cast(Any, StubMLClassifier()),
+    )
+    result = engine.diagnose({})
+    assert [d["failure_type"] for d in result] == ["vibration_high"]
