@@ -1,0 +1,13 @@
+{
+  "vibration_high": "vibe clip arducopter .bin",
+  "compass_interference": "ekf yaw reset compass variance arducopter .bin",
+  "gps_quality_poor": "gps glitch failsafe arducopter .bin",
+  "power_instability": "battery sag voltage drop brownout arducopter .bin",
+  "motor_imbalance": "motor desync yaw spin arducopter .bin",
+  "ekf_failure": "ekf lane switch variance failsafe arducopter .bin",
+  "brownout": "flight controller reboot brownout arducopter .bin",
+  "rc_failsafe": "rc radio link loss failsafe arducopter .bin",
+  "pid_tuning_issue": "oscillation pid tuning unstable copter .bin",
+  "mechanical_failure": "propeller damage broken arm crash arducopter .bin",
+  "crash_unknown": "sudden crash no error cause arducopter .bin"
+}

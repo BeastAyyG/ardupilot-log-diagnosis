@@ -25,8 +25,8 @@ flowchart LR
 | Local batch 01 (ML) | 12 | 0.00 | 0.41 | `data/clean_imports/forum_batch_local_01/benchmark_ready/benchmark_results_ml.json` |
 | Merged 01 (ML) | 21 | 0.67 | 0.23 | `data/clean_imports/forum_batch_merged_01/benchmark_ready/benchmark_results_ml.json` |
 | SHA-unique 01 (ML) | 13 | 0.69 | 0.43 | `data/clean_imports/forum_batch_unique_01/benchmark_ready/benchmark_results_ml.json` |
-| Unseen holdout (ML) | 2 | 0.00 | 0.00 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_ml.json` |
-| Unseen holdout (Hybrid) | 2 | 0.50 | 0.33 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_hybrid.json` |
+| Unseen holdout (ML) | 2 | 1.00 | 1.00 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_ml.json` |
+| Unseen holdout (Hybrid) | 2 | 0.00 | 0.33 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_hybrid.json` |
 | Unseen holdout (Rule) | 2 | 0.00 | 0.22 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_rule.json` |
 
 ## Label Coverage by Batch
@@ -75,6 +75,7 @@ Automated checks performed:
 - Holdout hash count: **2**
 - Train/holdout SHA overlap: **0**
 - Holdout ground truth: `data/holdouts/unseen_flight_2026-02-22/ground_truth.json`
+- Holdout size caveat: **2 logs** (small holdouts can produce high-variance metrics)
 
 Interpretation:
 - Overlap `0` means holdout logs are hash-unseen relative to the training set.

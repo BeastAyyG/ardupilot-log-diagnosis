@@ -296,6 +296,7 @@ def main() -> None:
             f"- Holdout hash count: **{len(holdout_hashes)}**",
             f"- Train/holdout SHA overlap: **{holdout_overlap}**",
             f"- Holdout ground truth: `{holdout_gt_path}`",
+            f"- Holdout size caveat: **{holdout_total} logs** (small holdouts can produce high-variance metrics)",
             "",
             "Interpretation:",
             "- Overlap `0` means holdout logs are hash-unseen relative to the training set.",
