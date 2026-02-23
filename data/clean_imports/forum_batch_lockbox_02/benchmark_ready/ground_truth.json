@@ -1,0 +1,132 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "forum_batch_lockbox_02",
+    "generated_at_utc": "2026-02-22T20:43:41.883815+00:00",
+    "total_logs": 11,
+    "label_distribution": {
+      "rc_failsafe": 4,
+      "vibration_high": 7
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0007_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0010_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0004_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0001_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0003_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0011_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/no-rc-receiver-lockup-between-flight-controller-and-receiver/45811",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0005_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0006_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0009_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0008_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0002_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    }
+  ]
+}

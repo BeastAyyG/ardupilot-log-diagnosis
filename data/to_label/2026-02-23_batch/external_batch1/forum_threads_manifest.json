@@ -1,0 +1,40 @@
+[
+  {
+    "thread_url": "https://discuss.ardupilot.org/t/second-flight-and-a-brownout-with-crash/9485",
+    "topic_id": 9485,
+    "post_number": 3,
+    "attachment_url": "https://www.dropbox.com/s/0kdz5yc0kn4eyi8/4%2004.06.2016.%2018-47-22.bin?dl=0",
+    "download_url": "https://www.dropbox.com/s/0kdz5yc0kn4eyi8/4%2004.06.2016.%2018-47-22.bin?dl=1",
+    "status": "not_log_payload",
+    "saved_file": "",
+    "kind": "html",
+    "bytes": 93994,
+    "error": "",
+    "final_url": "https://www.dropbox.com/s/0kdz5yc0kn4eyi8/4%2004.06.2016.%2018-47-22.bin?dl=1"
+  },
+  {
+    "thread_url": "https://discuss.ardupilot.org/t/pixhawk-1-midair-reboot/17918",
+    "topic_id": 17918,
+    "post_number": 4,
+    "attachment_url": "https://discuss.ardupilot.org/uploads/default/original/2X/e/eba35a6eb069036a4eb96cf53730cdd6ca200330.BIN",
+    "download_url": "https://discuss.ardupilot.org/uploads/default/original/2X/e/eba35a6eb069036a4eb96cf53730cdd6ca200330.BIN",
+    "status": "downloaded",
+    "saved_file": "batch1_17918_001.bin",
+    "kind": "bin",
+    "bytes": 868352,
+    "error": "",
+    "final_url": "https://discuss.ardupilot.org/uploads/default/original/2X/e/eba35a6eb069036a4eb96cf53730cdd6ca200330.BIN"
+  },
+  {
+    "thread_url": "https://discuss.ardupilot.org/t/esc-desync-on-copter-4-5/",
+    "json_url": "https://discuss.ardupilot.org/t/esc-desync-on-copter-4-5.json",
+    "status": "topic_failed",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "thread_url": "https://discuss.ardupilot.org/t/copter-4-5-0-rc1-is-now-available/",
+    "json_url": "https://discuss.ardupilot.org/t/copter-4-5-0-rc1-is-now-available.json",
+    "status": "topic_failed",
+    "error": "HTTP Error 404: Not Found"
+  }
+]

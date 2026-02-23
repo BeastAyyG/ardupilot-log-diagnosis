@@ -1,0 +1,447 @@
+{
+  "metadata": {
+    "description": "Real-only training pool (verified + manual review)",
+    "generated_at_utc": "2026-02-23T09:04:28.818073+00:00",
+    "total_logs": 42,
+    "label_distribution": {
+      "compass_interference": 8,
+      "ekf_failure": 8,
+      "gps_quality_poor": 1,
+      "motor_imbalance": 7,
+      "pid_tuning_issue": 1,
+      "power_instability": 5,
+      "rc_failsafe": 4,
+      "vibration_high": 8
+    },
+    "source_distribution": {
+      "manual_review": 17,
+      "verified_labeled": 25
+    },
+    "policy": {
+      "fabricated_labels": false,
+      "sha_deduped": true
+    }
+  },
+  "logs": [
+    {
+      "filename": "66bbaf3919__log_10_MAG_INTERFERENCE_1.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Disable the internal compass and use MAGFIT to calibrate the external.",
+      "confidence": "medium"
+    },
+    {
+      "filename": "c648fe37de__log_01_VIBE_HIGH.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Vibrations are very bad, you'll need to fix whatever is causing that first.",
+      "confidence": "medium"
+    },
+    {
+      "filename": "00afa36e54__log_0007_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "12ee853194__log_0009_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-analysis-strange-flight-behavior/33345",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "16c0fe0044__log_0010_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/major-ek2-fail-and-big-crash/19650",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "1820618f38__log_0004_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "33c535f6f0__log_0001_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "7065a3cd0f__log_0003_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "a004f350c2__log_0005_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "a7290a8733__log_0006_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "b0db91ee3d__log_0008_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-drifting-away-crash-log-video/26675",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "b9daccd263__log_0012_gps_quality_poor.bin",
+      "labels": [
+        "gps_quality_poor"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "c1bcef192f__log_0002_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "d74079b8cc__log_0011_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-3-4-rc5-possible-imu-or-compass-issues/11636",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "4dbb9b5fad__log_0009_pid_tuning_issue.bin",
+      "labels": [
+        "pid_tuning_issue"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "0818fe7e5c__log_0010_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "8dda19965d__log_0011_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/no-rc-receiver-lockup-between-flight-controller-and-receiver/45811",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "af2836cad8__log_0009_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "b89fc87fea__log_0008_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "14f3d25271__log_0010_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "5c454779ec__log_0013_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/loiter-issue-no-mag-data-bad-motor-balance/18364",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "694da9f46e__log_0012_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ac-copter-3-7-dev-fell-from-the-sky-crash-log/37800",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "97845b23ea__log_0009_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "db9fa2016d__log_0011_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/large-10kg-payload-drone-crash-on-take-off-please-help/11083",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "f121066e7e__log_0008_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/stil-fw-4-2-0dev-crashes-the-plane-with-ahrs-ekf3-lane-switch-0-message/77702",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "5b811aef3b__batch1_00000028.BIN",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing",
+      "source_type": "forum_linked",
+      "expert_quote": "Hands Free Hectare Rover folder: expert diagnosis indicates strong compass interference leading to EKF switching.",
+      "confidence": "high"
+    },
+    {
+      "filename": "b63f76e62f__batch1_00000021.BIN",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing",
+      "source_type": "forum_linked",
+      "expert_quote": "Hands Free Hectare Rover folder: expert diagnosis indicates severe compass interference behavior.",
+      "confidence": "high"
+    },
+    {
+      "filename": "255373228d__batch1_00000014.BIN",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing",
+      "source_type": "forum_linked",
+      "expert_quote": "Hands Free Hectare Rover folder: compass interference pattern with EKF direction instability.",
+      "confidence": "high"
+    },
+    {
+      "filename": "7351969082__batch1_00000171.BIN",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://github.com/ArduPilot/ardupilot/files/12009217/bug_report_1.zip",
+      "source_type": "github",
+      "expert_quote": "Issue #24262 report: EKF failsafe untriggered with lane/core switching before crash.",
+      "confidence": "high"
+    },
+    {
+      "filename": "860f591dfe__batch1_00000003.BIN",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://github.com/ArduPilot/ardupilot/files/12101758/bin_and_telemetry_logs.zip",
+      "source_type": "github",
+      "expert_quote": "Issue #24262 supplemental bin_and_telemetry_logs package linked to EKF lane-switch crash investigation.",
+      "confidence": "high"
+    },
+    {
+      "filename": "1c18aa3c93__batch1_00000436.BIN",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://github.com/ArduPilot/ardupilot/issues/7119",
+      "source_type": "github",
+      "expert_quote": "Issue #7119: EKF altitude instability beyond rangefinder envelope.",
+      "confidence": "high"
+    },
+    {
+      "filename": "23941a01aa__batch1_midair_reboot_17918.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-1-midair-reboot/17918",
+      "source_type": "forum_linked",
+      "expert_quote": "Pixhawk midair reboot thread diagnosis indicates in-flight brownout/power reset.",
+      "confidence": "high"
+    },
+    {
+      "filename": "277840edde__batch2_crash_4_0_rc3.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267",
+      "source_type": "forum_linked",
+      "expert_quote": "Crash with 4.0.0 RC3 thread: motor 4 failure and imbalance under load discussion.",
+      "confidence": "high"
+    },
+    {
+      "filename": "0981e19b7d__batch2_motor_130060.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/yaw-instability-and-crash-in-loiter-mode-high-vibrations-motor-imbalance-issues/130060",
+      "source_type": "forum_linked",
+      "expert_quote": "Thread title explicitly reports high vibrations and motor imbalance before crash.",
+      "confidence": "high"
+    },
+    {
+      "filename": "c8bfdfdd38__batch2_motor_140246_a.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+      "source_type": "forum_linked",
+      "expert_quote": "Sudden unrecoverable yaw with motor-related investigation in thread.",
+      "confidence": "medium"
+    },
+    {
+      "filename": "07124add06__batch2_motor_140246_b.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+      "source_type": "forum_linked",
+      "expert_quote": "Second log from same sudden-yaw case; thread focuses on motor/imbalance causes.",
+      "confidence": "medium"
+    },
+    {
+      "filename": "335e9881ac__batch2_esc_81059.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/esc-desync-issue-hobbywing-xrotor-pro-60a-tmotor-p60/81059",
+      "source_type": "forum_linked",
+      "expert_quote": "ESC-desync issue thread with motor desync symptoms under load.",
+      "confidence": "high"
+    },
+    {
+      "filename": "87f863ad02__batch2_motor_off_121845.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/motor-turned-off-in-mid-flight/121845",
+      "source_type": "forum_linked",
+      "expert_quote": "Motor turned off in mid flight indicates severe motor thrust imbalance.",
+      "confidence": "high"
+    },
+    {
+      "filename": "8265f254a7__batch2_two_motors_132001.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-after-two-motors-suddenly-stopped/132001",
+      "source_type": "forum_linked",
+      "expert_quote": "Crash after two motors suddenly stopped: direct motor imbalance failure mode.",
+      "confidence": "high"
+    },
+    {
+      "filename": "c5640421c2__batch2_ekf_8931_a.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://github.com/ArduPilot/ardupilot/issues/8931",
+      "source_type": "github",
+      "expert_quote": "Issue #8931 references gyro bias/scale EKF bug and links this replay log.",
+      "confidence": "high"
+    },
+    {
+      "filename": "36c9f718b1__batch2_ekf_8931_b.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://github.com/ArduPilot/ardupilot/issues/8931",
+      "source_type": "github",
+      "expert_quote": "Issue #8931 second linked replay log for EKF drift investigation.",
+      "confidence": "high"
+    },
+    {
+      "filename": "5563ebf18d__batch2_crash_4_0_dropbox.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267",
+      "source_type": "forum_linked",
+      "expert_quote": "Crash with 4.0.0 RC3 thread: severe voltage drop discussed alongside motor failure events.",
+      "confidence": "high"
+    }
+  ]
+}

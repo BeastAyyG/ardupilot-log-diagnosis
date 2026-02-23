@@ -1,0 +1,15 @@
+[
+  {
+    "source_path": "downloads/log_0001_pid_tuning_issue.bin",
+    "relative_path": "downloads/log_0001_pid_tuning_issue.bin",
+    "file_name": "log_0001_pid_tuning_issue.bin",
+    "kind": "bin",
+    "size_bytes": 5607424,
+    "sha256": "4dbb9b5fad2e1da945dd1969dc1632091869e3980391666a75106b47015b5e92",
+    "signature": "binlike",
+    "parse_ok": true,
+    "parse_message_count": 3000,
+    "parse_message_types": 47,
+    "parse_error": ""
+  }
+]

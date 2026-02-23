@@ -1,0 +1,241 @@
+{
+  "log_05_ESC_DESYNC_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/cube-orange-motor-6-fails/111390",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1000_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1001_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1002_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "power_instability",
+    "suggested_secondary": "brownout"
+  },
+  "log_1003_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1004_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1005_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "power_instability",
+    "suggested_secondary": "brownout"
+  },
+  "log_1007_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "power_instability",
+    "suggested_secondary": "brownout"
+  },
+  "log_1009_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "ekf_failure",
+    "suggested_secondary": "compass_interference"
+  },
+  "log_1010_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "compass_interference",
+    "suggested_secondary": "ekf_failure"
+  },
+  "log_11_ESC_DESYNC.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "forum_linked",
+    "url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=0",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "batch1_00000028.BIN": {
+    "label": "compass_interference",
+    "confidence": "high",
+    "reason": "Hands Free Hectare Rover folder: expert diagnosis indicates strong compass interference leading to EKF switching.",
+    "source": "forum_linked",
+    "url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+  },
+  "batch1_00000021.BIN": {
+    "label": "compass_interference",
+    "confidence": "high",
+    "reason": "Hands Free Hectare Rover folder: expert diagnosis indicates severe compass interference behavior.",
+    "source": "forum_linked",
+    "url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+  },
+  "batch1_00000014.BIN": {
+    "label": "compass_interference",
+    "confidence": "high",
+    "reason": "Hands Free Hectare Rover folder: compass interference pattern with EKF direction instability.",
+    "source": "forum_linked",
+    "url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+  },
+  "batch1_00000171.BIN": {
+    "label": "ekf_failure",
+    "confidence": "high",
+    "reason": "Issue #24262 report: EKF failsafe untriggered with lane/core switching before crash.",
+    "source": "github",
+    "url": "https://github.com/ArduPilot/ardupilot/files/12009217/bug_report_1.zip"
+  },
+  "batch1_00000003.BIN": {
+    "label": "ekf_failure",
+    "confidence": "high",
+    "reason": "Issue #24262 supplemental bin_and_telemetry_logs package linked to EKF lane-switch crash investigation.",
+    "source": "github",
+    "url": "https://github.com/ArduPilot/ardupilot/files/12101758/bin_and_telemetry_logs.zip"
+  },
+  "batch1_00000436.BIN": {
+    "label": "ekf_failure",
+    "confidence": "high",
+    "reason": "Issue #7119: EKF altitude instability beyond rangefinder envelope.",
+    "source": "github",
+    "url": "https://github.com/ArduPilot/ardupilot/issues/7119"
+  },
+  "batch1_midair_reboot_17918.bin": {
+    "label": "power_instability",
+    "confidence": "high",
+    "reason": "Pixhawk midair reboot thread diagnosis indicates in-flight brownout/power reset.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/pixhawk-1-midair-reboot/17918"
+  },
+  "batch1_log_0010_ekf_failure.bin": {
+    "label": "ekf_failure",
+    "confidence": "medium",
+    "reason": "Thread indicates repeated EKF lane switching and crash context; query-collected candidate.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859"
+  },
+  "batch1_log_0013_power_instability.bin": {
+    "label": "power_instability",
+    "confidence": "medium",
+    "reason": "Thread mentions loiter instability with no mag data and motor balance/power concerns; query-collected candidate.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/loiter-issue-no-mag-data-bad-motor-balance/18364"
+  },
+  "batch1_log_0011_power_instability.bin": {
+    "label": "power_instability",
+    "confidence": "medium",
+    "reason": "Large payload takeoff crash thread with likely power sag/current stress context; query-collected candidate.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/large-10kg-payload-drone-crash-on-take-off-please-help/11083"
+  },
+  "batch2_crash_4_0_rc3.bin": {
+    "label": "motor_imbalance",
+    "confidence": "high",
+    "reason": "Crash with 4.0.0 RC3 thread: motor 4 failure and imbalance under load discussion.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267"
+  },
+  "batch2_motor_130060.bin": {
+    "label": "motor_imbalance",
+    "confidence": "high",
+    "reason": "Thread title explicitly reports high vibrations and motor imbalance before crash.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/yaw-instability-and-crash-in-loiter-mode-high-vibrations-motor-imbalance-issues/130060"
+  },
+  "batch2_motor_140246_a.bin": {
+    "label": "motor_imbalance",
+    "confidence": "medium",
+    "reason": "Sudden unrecoverable yaw with motor-related investigation in thread.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246"
+  },
+  "batch2_motor_140246_b.bin": {
+    "label": "motor_imbalance",
+    "confidence": "medium",
+    "reason": "Second log from same sudden-yaw case; thread focuses on motor/imbalance causes.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246"
+  },
+  "batch2_esc_81059.bin": {
+    "label": "motor_imbalance",
+    "confidence": "high",
+    "reason": "ESC-desync issue thread with motor desync symptoms under load.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/esc-desync-issue-hobbywing-xrotor-pro-60a-tmotor-p60/81059"
+  },
+  "batch2_motor_off_121845.bin": {
+    "label": "motor_imbalance",
+    "confidence": "high",
+    "reason": "Motor turned off in mid flight indicates severe motor thrust imbalance.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/motor-turned-off-in-mid-flight/121845"
+  },
+  "batch2_two_motors_132001.bin": {
+    "label": "motor_imbalance",
+    "confidence": "high",
+    "reason": "Crash after two motors suddenly stopped: direct motor imbalance failure mode.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/crash-after-two-motors-suddenly-stopped/132001"
+  },
+  "batch2_ekf_8931_a.bin": {
+    "label": "ekf_failure",
+    "confidence": "high",
+    "reason": "Issue #8931 references gyro bias/scale EKF bug and links this replay log.",
+    "source": "github",
+    "url": "https://github.com/ArduPilot/ardupilot/issues/8931"
+  },
+  "batch2_ekf_8931_b.bin": {
+    "label": "ekf_failure",
+    "confidence": "high",
+    "reason": "Issue #8931 second linked replay log for EKF drift investigation.",
+    "source": "github",
+    "url": "https://github.com/ArduPilot/ardupilot/issues/8931"
+  },
+  "batch2_crash_4_0_dropbox.bin": {
+    "label": "power_instability",
+    "confidence": "high",
+    "reason": "Crash with 4.0.0 RC3 thread: severe voltage drop discussed alongside motor failure events.",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267"
+  }
+}

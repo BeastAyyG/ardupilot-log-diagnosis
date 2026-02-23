@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "forum_batch_local_04",
+    "generated_at_utc": "2026-02-22T20:21:41.852561+00:00",
+    "total_logs": 1,
+    "label_distribution": {
+      "pid_tuning_issue": 1
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0001_pid_tuning_issue.bin",
+      "labels": [
+        "pid_tuning_issue"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    }
+  ]
+}

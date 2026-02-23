@@ -1,0 +1,25 @@
+{
+  "ground_truth_path": "data/final_training_dataset_2026-02-23/ground_truth.json",
+  "dataset_dir": "data/final_training_dataset_2026-02-23/dataset",
+  "total_logs": 42,
+  "label_distribution": {
+    "compass_interference": 8,
+    "ekf_failure": 8,
+    "gps_quality_poor": 1,
+    "motor_imbalance": 7,
+    "pid_tuning_issue": 1,
+    "power_instability": 5,
+    "rc_failsafe": 4,
+    "vibration_high": 8
+  },
+  "source_distribution": {
+    "manual_review": 17,
+    "verified_labeled": 25
+  },
+  "verified_candidates": 76,
+  "manual_candidates": 20,
+  "skipped_verified_dupes": 51,
+  "skipped_manual_dupes": 3,
+  "manual_labeled_count": 20,
+  "excluded_batches": []
+}

@@ -1,0 +1,155 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "manual_batch1_extra",
+    "generated_at_utc": "2026-02-23T05:12:02.964978+00:00",
+    "total_logs": 13,
+    "label_distribution": {
+      "compass_interference": 3,
+      "ekf_failure": 3,
+      "gps_quality_poor": 1,
+      "power_instability": 3,
+      "vibration_high": 3
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0005_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-analysis-strange-flight-behavior/33345",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0010_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0006_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/major-ek2-fail-and-big-crash/19650",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0001_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0013_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/loiter-issue-no-mag-data-bad-motor-balance/18364",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0012_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ac-copter-3-7-dev-fell-from-the-sky-crash-log/37800",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0003_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0009_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0004_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-drifting-away-crash-log-video/26675",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0007_gps_quality_poor.bin",
+      "labels": [
+        "gps_quality_poor"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0002_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0011_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/large-10kg-payload-drone-crash-on-take-off-please-help/11083",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0008_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/stil-fw-4-2-0dev-crashes-the-plane-with-ahrs-ekf3-lane-switch-0-message/77702",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    }
+  ]
+}

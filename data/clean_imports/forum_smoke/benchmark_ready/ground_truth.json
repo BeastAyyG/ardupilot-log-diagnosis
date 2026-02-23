@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "forum_smoke",
+    "generated_at_utc": "2026-02-22T14:52:22.764627+00:00",
+    "total_logs": 2,
+    "label_distribution": {
+      "compass_interference": 1,
+      "gps_quality_poor": 1
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0001_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-drifting-away-crash-log-video/26675",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0002_gps_quality_poor.bin",
+      "labels": [
+        "gps_quality_poor"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    }
+  ]
+}

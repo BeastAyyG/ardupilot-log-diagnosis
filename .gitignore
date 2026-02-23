@@ -21,3 +21,15 @@ __pycache__/
 .env
 venv/
 .pytest_cache/
+.venv/
+data/raw_downloads/**
+data/**/dataset/**/*.BIN
+data/**/dataset/**/*.bin
+data/**/benchmark_results*.json
+data/**/benchmark_results*.md
+data/to_label/**/*.BIN
+data/to_label/**/*.bin
+data/to_label/**/*.zip
+data/to_label/**/*.tlog
+data/to_label/**/*.jpg
+colab_data_bundle*.tar.gz

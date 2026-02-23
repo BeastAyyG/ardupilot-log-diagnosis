@@ -1,0 +1,20 @@
+{
+  "ground_truth_path": "data/real_training_pool_2026-02-23/ground_truth.json",
+  "dataset_dir": "data/real_training_pool_2026-02-23/dataset",
+  "total_logs": 19,
+  "label_distribution": {
+    "compass_interference": 5,
+    "gps_quality_poor": 1,
+    "pid_tuning_issue": 1,
+    "rc_failsafe": 4,
+    "vibration_high": 8
+  },
+  "source_distribution": {
+    "verified_labeled": 19
+  },
+  "verified_candidates": 63,
+  "manual_candidates": 0,
+  "skipped_verified_dupes": 44,
+  "skipped_manual_dupes": 0,
+  "manual_labeled_count": 0
+}

@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "forum_batch_local_06",
+    "generated_at_utc": "2026-02-23T06:07:27.794689+00:00",
+    "total_logs": 0,
+    "label_distribution": {},
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": []
+}

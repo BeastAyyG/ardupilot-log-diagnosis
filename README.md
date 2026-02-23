@@ -25,6 +25,29 @@ python -m src.cli.main import-clean --source-root "data/raw_downloads/forum_batc
 python -m src.cli.main benchmark --dataset-dir "data/clean_imports/forum_batch_01/benchmark_ready/dataset" --ground-truth "data/clean_imports/forum_batch_01/benchmark_ready/ground_truth.json"
 ```
 
+## Run on Google Colab
+If your local machine is slow, run benchmarks in Colab CPU runtime.
+
+1) Create a data bundle locally:
+
+```bash
+python training/create_colab_bundle.py \
+  --output colab_data_bundle.tar.gz \
+  --paths data/final_training_dataset_2026-02-23
+```
+
+2) In Colab, clone repo, install requirements, extract bundle, then run:
+
+```bash
+python training/run_all_benchmarks.py \
+  --dataset-dir data/final_training_dataset_2026-02-23/dataset \
+  --ground-truth data/final_training_dataset_2026-02-23/ground_truth.json \
+  --output-dir data/final_training_dataset_2026-02-23
+```
+
+Full walkthrough: `docs/colab_quickstart.md`.
+Kaggle alternative: `docs/kaggle_quickstart.md`.
+
 ## Sample Output
 ```
 ╔═══════════════════════════════════════╗

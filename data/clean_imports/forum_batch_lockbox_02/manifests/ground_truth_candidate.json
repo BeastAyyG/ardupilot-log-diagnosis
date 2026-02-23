@@ -1,0 +1,184 @@
+{
+  "metadata": {
+    "description": "Candidate ground truth generated from clean import",
+    "source_batch": "forum_batch_lockbox_02",
+    "generated_at_utc": "2026-02-22T20:43:41.901228+00:00",
+    "policy": {
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ],
+      "mapped_labels": {
+        "VIBE_HIGH": "vibration_high",
+        "MAG_INTERFERENCE": "compass_interference"
+      },
+      "trainable_only_for_mapped_labels": true
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0007_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "00afa36e545470c4379352efc54c3dffdd81381ae3bae19890a1cfa1c96dec40",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0010_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "RC_FAILSAFE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "0818fe7e5ce3cda47fdf3fef42cb2d02963f354b8b18750fa59edb3d0e035719",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0004_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "1820618f38d81507a1e95ef22f743fbc50817348046d542d9db765ccace2a9d3",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0001_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "33c535f6f0edb143bb85909901be52bd73542206e3116ae9ddf22b1c42606cfb",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0003_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "7065a3cd0fbd3c5ce178964dcbb64979fc878d0900fc5f5cb6f30d60d3d9d794",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0011_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/no-rc-receiver-lockup-between-flight-controller-and-receiver/45811",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "RC_FAILSAFE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "8dda19965da2a82b6a0303fbf2bf8f0ef79451f4a87d0b178bb203c8a7376ff2",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0005_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "a004f350c296ae9f396c8756a95c8b0049913ccc8973c5faf0230eba013ec91d",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0006_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "a7290a8733f121989317d53052b0c6eb58b643dd135938f0c3d3614dbb945d04",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0009_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "RC_FAILSAFE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "af2836cad8f18ca67758f6e45730a2756a37938dfc2f2e2dc6fbb27dca7e5641",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0008_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "RC_FAILSAFE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "b89fc87fea657312f90ca28f92e6108f42bc97cb5c27267df8fc82bdfae690c0",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0002_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "VIBRATION_HIGH",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "c1bcef192fec48c4eadf1da2a5c62215abc035330b9f56bc5b0e8ecd2a78236f",
+      "expert_username": ""
+    }
+  ]
+}

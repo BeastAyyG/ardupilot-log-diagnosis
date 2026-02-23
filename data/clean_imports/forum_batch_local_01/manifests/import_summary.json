@@ -1,0 +1,27 @@
+{
+  "source_root": "/home/ayyg/ardupilot-log-diagnosis/data/raw_downloads/forum_batch_local_01",
+  "output_root": "data/clean_imports/forum_batch_local_01",
+  "generated_at_utc": "2026-02-22T19:01:02.589466+00:00",
+  "counts": {
+    "total_bin_files": 12,
+    "parseable_bin_files": 12,
+    "unique_parseable_after_dedupe": 12,
+    "rejected_nonlog": 0,
+    "zip_files": 0,
+    "unique_zip_files": 0,
+    "verified_labeled": 12,
+    "provisional_labeled": 0,
+    "verified_unlabeled": 0,
+    "benchmark_trainable": 12
+  },
+  "artifacts": {
+    "source_inventory_csv": "data/clean_imports/forum_batch_local_01/manifests/source_inventory.csv",
+    "source_inventory_json": "data/clean_imports/forum_batch_local_01/manifests/source_inventory.json",
+    "clean_import_manifest_csv": "data/clean_imports/forum_batch_local_01/manifests/clean_import_manifest.csv",
+    "clean_import_manifest_json": "data/clean_imports/forum_batch_local_01/manifests/clean_import_manifest.json",
+    "rejected_manifest_csv": "data/clean_imports/forum_batch_local_01/manifests/rejected_manifest.csv",
+    "ground_truth_candidate_json": "data/clean_imports/forum_batch_local_01/manifests/ground_truth_candidate.json",
+    "benchmark_ground_truth_json": "data/clean_imports/forum_batch_local_01/benchmark_ready/ground_truth.json",
+    "proof_markdown": "data/clean_imports/forum_batch_local_01/manifests/provenance_proof.md"
+  }
+}

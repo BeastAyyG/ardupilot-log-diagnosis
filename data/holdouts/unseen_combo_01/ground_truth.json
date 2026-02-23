@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "description": "SHA-unseen holdout generated from clean-import batches",
+    "exclude_batches": [
+      "forum_batch_local_01",
+      "forum_batch_local_02",
+      "forum_batch_local_03"
+    ],
+    "candidate_batches": [
+      "forum_batch_local_04",
+      "forum_batch_local_05",
+      "flight_logs_dataset_2026-02-22"
+    ],
+    "total_logs": 2,
+    "label_distribution": {
+      "compass_interference": 1,
+      "vibration_high": 1
+    },
+    "origin_batch_distribution": {
+      "flight_logs_dataset_2026-02-22": 2
+    },
+    "skipped_overlap": 10,
+    "skipped_missing": 0
+  },
+  "logs": [
+    {
+      "filename": "flight_logs_dataset_2026-02-22__log_10_MAG_INTERFERENCE_1.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+      "source_type": "ArduPilot_Discuss",
+      "confidence": "medium"
+    },
+    {
+      "filename": "flight_logs_dataset_2026-02-22__log_01_VIBE_HIGH.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+      "source_type": "ArduPilot_Discuss",
+      "confidence": "medium"
+    }
+  ]
+}

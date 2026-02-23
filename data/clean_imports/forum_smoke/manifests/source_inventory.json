@@ -1,0 +1,28 @@
+[
+  {
+    "source_path": "downloads/log_0001_compass_interference.bin",
+    "relative_path": "downloads/log_0001_compass_interference.bin",
+    "file_name": "log_0001_compass_interference.bin",
+    "kind": "bin",
+    "size_bytes": 806912,
+    "sha256": "b0db91ee3d6a7f0af25dbc4cf97a65e1287a47d8b91fc4973fd5d555f8aab8c0",
+    "signature": "binlike",
+    "parse_ok": true,
+    "parse_message_count": 3000,
+    "parse_message_types": 42,
+    "parse_error": ""
+  },
+  {
+    "source_path": "downloads/log_0002_gps_quality_poor.bin",
+    "relative_path": "downloads/log_0002_gps_quality_poor.bin",
+    "file_name": "log_0002_gps_quality_poor.bin",
+    "kind": "bin",
+    "size_bytes": 920999,
+    "sha256": "b9daccd2634d195c9a9312b31e6aa43a5a0a775109a04b6eb57afa61d9c081ef",
+    "signature": "binlike",
+    "parse_ok": true,
+    "parse_message_count": 3000,
+    "parse_message_types": 29,
+    "parse_error": ""
+  }
+]

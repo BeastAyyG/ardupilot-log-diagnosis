@@ -1,0 +1,96 @@
+{
+  "requested_count": 10,
+  "added_count": 10,
+  "added_files": [
+    {
+      "file_name": "batch2_crash_4_0_rc3.bin",
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267",
+      "sha256": "277840edde442974dd42fbc53bd285f9a61987da1ebba086d7012fb182be5b10"
+    },
+    {
+      "file_name": "batch2_motor_130060.bin",
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/yaw-instability-and-crash-in-loiter-mode-high-vibrations-motor-imbalance-issues/130060",
+      "sha256": "0981e19b7dc74b0c6e8c55779b4a339b2c4619c632d585e2f96e29ef5931d1a1"
+    },
+    {
+      "file_name": "batch2_motor_140246_a.bin",
+      "label": "motor_imbalance",
+      "confidence": "medium",
+      "url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+      "sha256": "c8bfdfdd381ab1db9e3aba0eb966df96a656d32bad97b53e36162e074b20308d"
+    },
+    {
+      "file_name": "batch2_motor_140246_b.bin",
+      "label": "motor_imbalance",
+      "confidence": "medium",
+      "url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+      "sha256": "07124add06c5b1bdb5c810acce710e20787b806bd6c9f02cd70d6c51bd3011d4"
+    },
+    {
+      "file_name": "batch2_esc_81059.bin",
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/esc-desync-issue-hobbywing-xrotor-pro-60a-tmotor-p60/81059",
+      "sha256": "335e9881ac2934b49da7a13c9d093cf2b2a909957338e66fa9566c4ca179c37d"
+    },
+    {
+      "file_name": "batch2_motor_off_121845.bin",
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/motor-turned-off-in-mid-flight/121845",
+      "sha256": "87f863ad028b2c8b015386e8706239d44bfea2f9aae4a79054740967db3848ff"
+    },
+    {
+      "file_name": "batch2_two_motors_132001.bin",
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/crash-after-two-motors-suddenly-stopped/132001",
+      "sha256": "8265f254a7f6a7d99f3de7463be7249b6d0bb2bf781068c999462cc2f49724dd"
+    },
+    {
+      "file_name": "batch2_ekf_8931_a.bin",
+      "label": "ekf_failure",
+      "confidence": "high",
+      "url": "https://github.com/ArduPilot/ardupilot/issues/8931",
+      "sha256": "c5640421c2230ec25d4113914acb414e2e2929fdf76c802114e2717799da5844"
+    },
+    {
+      "file_name": "batch2_ekf_8931_b.bin",
+      "label": "ekf_failure",
+      "confidence": "high",
+      "url": "https://github.com/ArduPilot/ardupilot/issues/8931",
+      "sha256": "36c9f718b16d9c6f59d18343ecc62940e8cf27a79980383602454ff4e7de44f0"
+    },
+    {
+      "file_name": "batch2_crash_4_0_dropbox.bin",
+      "label": "power_instability",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267",
+      "sha256": "5563ebf18d0357923e0df1dfe70158192bce1fd52397b04d63f84d7ea0c7e42c"
+    }
+  ],
+  "resolved_urls": [
+    "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+    "https://discuss.ardupilot.org/t/crash-after-two-motors-suddenly-stopped/132001",
+    "https://discuss.ardupilot.org/t/crash-with-4-0-0-rc3/50267",
+    "https://discuss.ardupilot.org/t/esc-desync-issue-hobbywing-xrotor-pro-60a-tmotor-p60/81059",
+    "https://discuss.ardupilot.org/t/motor-turned-off-in-mid-flight/121845",
+    "https://discuss.ardupilot.org/t/yaw-instability-and-crash-in-loiter-mode-high-vibrations-motor-imbalance-issues/130060",
+    "https://github.com/ArduPilot/ardupilot/issues/8931"
+  ],
+  "unresolved_requested_urls": [
+    "https://discuss.ardupilot.org/t/esc-desync-on-copter-4-5",
+    "https://discuss.ardupilot.org/t/copter-4-5-esc-desync",
+    "https://github.com/ArduPilot/ardupilot/issues/7119",
+    "https://discuss.ardupilot.org/t/motor-desync-2025",
+    "https://discuss.ardupilot.org/t/copter-4-5-0-rc1-is-now-available",
+    "https://discuss.ardupilot.org/t/healthy-test-flight-log",
+    "https://discuss.ardupilot.org/t/pixhawk-1-midair-reboot/17918",
+    "https://discuss.ardupilot.org/t/second-flight-and-a-brownout-with-crash/9485"
+  ],
+  "note": "Some requested links were 404/private; replacements from active forum threads with direct logs were used for motor_imbalance coverage."
+}

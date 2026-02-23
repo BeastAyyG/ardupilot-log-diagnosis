@@ -1,0 +1,93 @@
+{
+  "selected_target_count": 10,
+  "added_count": 10,
+  "added_files": [
+    {
+      "file_name": "batch1_00000028.BIN",
+      "label": "compass_interference",
+      "confidence": "high",
+      "url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+    },
+    {
+      "file_name": "batch1_00000021.BIN",
+      "label": "compass_interference",
+      "confidence": "high",
+      "url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+    },
+    {
+      "file_name": "batch1_00000014.BIN",
+      "label": "compass_interference",
+      "confidence": "high",
+      "url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+    },
+    {
+      "file_name": "batch1_00000171.BIN",
+      "label": "ekf_failure",
+      "confidence": "high",
+      "url": "https://github.com/ArduPilot/ardupilot/files/12009217/bug_report_1.zip"
+    },
+    {
+      "file_name": "batch1_00000003.BIN",
+      "label": "ekf_failure",
+      "confidence": "high",
+      "url": "https://github.com/ArduPilot/ardupilot/files/12101758/bin_and_telemetry_logs.zip"
+    },
+    {
+      "file_name": "batch1_00000436.BIN",
+      "label": "ekf_failure",
+      "confidence": "high",
+      "url": "https://github.com/ArduPilot/ardupilot/issues/7119"
+    },
+    {
+      "file_name": "batch1_midair_reboot_17918.bin",
+      "label": "power_instability",
+      "confidence": "high",
+      "url": "https://discuss.ardupilot.org/t/pixhawk-1-midair-reboot/17918"
+    },
+    {
+      "file_name": "batch1_log_0010_ekf_failure.bin",
+      "label": "ekf_failure",
+      "confidence": "medium",
+      "url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859"
+    },
+    {
+      "file_name": "batch1_log_0013_power_instability.bin",
+      "label": "power_instability",
+      "confidence": "medium",
+      "url": "https://discuss.ardupilot.org/t/loiter-issue-no-mag-data-bad-motor-balance/18364"
+    },
+    {
+      "file_name": "batch1_log_0011_power_instability.bin",
+      "label": "power_instability",
+      "confidence": "medium",
+      "url": "https://discuss.ardupilot.org/t/large-10kg-payload-drone-crash-on-take-off-please-help/11083"
+    }
+  ],
+  "failed_or_unresolved": [
+    {
+      "url": "https://discuss.ardupilot.org/t/second-flight-and-a-brownout-with-crash/9485",
+      "status": "blocked",
+      "detail": "Dropbox attachment returned CAPTCHA/HTML and could not be fetched as binary in automation."
+    },
+    {
+      "url": "https://discuss.ardupilot.org/t/battery-failsafe-gps-problem-fw-3-2-release/4175",
+      "status": "missing_attachment",
+      "detail": "No .bin/.zip attachment links present in topic JSON posts."
+    },
+    {
+      "url": "https://discuss.ardupilot.org/t/esc-desync-on-copter-4-5/",
+      "status": "not_found",
+      "detail": "Topic URL returns 404."
+    },
+    {
+      "url": "https://discuss.ardupilot.org/t/copter-4-5-0-rc1-is-now-available/",
+      "status": "not_found",
+      "detail": "Topic URL returns 404."
+    },
+    {
+      "url": "https://github.com/ArduPilot/ardupilot/issues/XXXX",
+      "status": "placeholder",
+      "detail": "Placeholder URL without concrete issue number."
+    }
+  ]
+}

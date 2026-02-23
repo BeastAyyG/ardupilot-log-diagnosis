@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "forum_batch_local_02",
+    "generated_at_utc": "2026-02-22T19:27:09.563563+00:00",
+    "total_logs": 9,
+    "label_distribution": {
+      "gps_quality_poor": 1,
+      "pid_tuning_issue": 1,
+      "vibration_high": 7
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0007_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0004_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0001_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0009_pid_tuning_issue.bin",
+      "labels": [
+        "pid_tuning_issue"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0003_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0005_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0006_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0008_gps_quality_poor.bin",
+      "labels": [
+        "gps_quality_poor"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0002_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "log_05_ESC_DESYNC_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "forum_linked",
+    "url": "https://discuss.ardupilot.org/t/cube-orange-motor-6-fails/111390",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1000_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1001_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1002_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "power_instability",
+    "suggested_secondary": "brownout"
+  },
+  "log_1003_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1004_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  },
+  "log_1005_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "power_instability",
+    "suggested_secondary": "brownout"
+  },
+  "log_1007_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "power_instability",
+    "suggested_secondary": "brownout"
+  },
+  "log_1009_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "ekf_failure",
+    "suggested_secondary": "compass_interference"
+  },
+  "log_1010_DISCOVERED_1.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "local_discovery",
+    "url": "N/A",
+    "suggested_label": "compass_interference",
+    "suggested_secondary": "ekf_failure"
+  },
+  "log_11_ESC_DESYNC.bin": {
+    "label": "",
+    "confidence": "",
+    "reason": "",
+    "source": "forum_linked",
+    "url": "https://www.dropbox.com/scl/fi/k7kk0rte8lmfcba8ehw9n/1.bin?rlkey=ul79x33dfrh6ckm32nkjxcdxt&st=p7o79clq&dl=0",
+    "suggested_label": "motor_imbalance",
+    "suggested_secondary": "power_instability"
+  }
+}

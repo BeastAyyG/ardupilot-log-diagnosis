@@ -1,0 +1,68 @@
+[
+  {
+    "category": "excluded_archive",
+    "file_name": "log_0002_gps_quality_poor.zip",
+    "source_path": "downloads/log_0002_gps_quality_poor.zip",
+    "source_relative_path": "downloads/log_0002_gps_quality_poor.zip",
+    "size_bytes": 188260,
+    "sha256": "0cbde84301e19377e082b5e657a310faef0ad955003f40d4a968fb52851a6db2",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0002_gps_quality_poor.zip"
+    ],
+    "raw_label": "GPS_QUALITY_POOR",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/need-help-with-log-analysis-ekf-failsafe-launching-from-throwmode-drop/97141",
+    "resolved_download_url": "https://www.dropbox.com/s/46nvdlau1p6j9ms/00000030.zip?dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "GPS_QUALITY_POOR",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/need-help-with-log-analysis-ekf-failsafe-launching-from-throwmode-drop/97141",
+        "resolved_url": "https://www.dropbox.com/s/46nvdlau1p6j9ms/00000030.zip?dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 0,
+    "parse_message_types": 0
+  },
+  {
+    "category": "excluded_archive",
+    "file_name": "log_0001_gps_quality_poor.zip",
+    "source_path": "downloads/log_0001_gps_quality_poor.zip",
+    "source_relative_path": "downloads/log_0001_gps_quality_poor.zip",
+    "size_bytes": 188924,
+    "sha256": "7a097ffc0b3c0530967ce1c70de347178dbf460fa6055690231398fe7ba2c6d3",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0001_gps_quality_poor.zip"
+    ],
+    "raw_label": "GPS_QUALITY_POOR",
+    "mapped_label": "",
+    "trainable": false,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/need-help-with-log-analysis-ekf-failsafe-launching-from-throwmode-drop/97141",
+    "resolved_download_url": "https://www.dropbox.com/s/ra1nlmtetknkznu/2023-02-20%2011-45-48.zip?dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "GPS_QUALITY_POOR",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/need-help-with-log-analysis-ekf-failsafe-launching-from-throwmode-drop/97141",
+        "resolved_url": "https://www.dropbox.com/s/ra1nlmtetknkznu/2023-02-20%2011-45-48.zip?dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 0,
+    "parse_message_types": 0
+  }
+]

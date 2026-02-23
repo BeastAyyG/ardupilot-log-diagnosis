@@ -1,0 +1,24 @@
+[
+  {
+    "filename": "flight_logs_dataset_2026-02-22__log_10_MAG_INTERFERENCE_1.bin",
+    "labels": [
+      "compass_interference"
+    ],
+    "source_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+    "source_type": "ArduPilot_Discuss",
+    "resolved_download_url": "https://drive.google.com/uc?export=download&id=1z5wB1v8-RY6pFT-gDKsG_vkxZFF54oi_",
+    "sha256": "66bbaf391960e4f5244e723b4aa7c4bd5cabc9b38a3957d781dd1d99192ca5b3",
+    "origin_batch": "flight_logs_dataset_2026-02-22"
+  },
+  {
+    "filename": "flight_logs_dataset_2026-02-22__log_01_VIBE_HIGH.bin",
+    "labels": [
+      "vibration_high"
+    ],
+    "source_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+    "source_type": "ArduPilot_Discuss",
+    "resolved_download_url": "https://drive.google.com/uc?export=download&id=1nNki5GiGJ3-GJOMGMv4MQEwwnopZdgUQ",
+    "sha256": "c648fe37de19bce0d6985ae04299af192287f9bd3009cbd5c69c56158cebc706",
+    "origin_batch": "flight_logs_dataset_2026-02-22"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "ground_truth_path": "data/clean_imports/forum_batch_unique_01/benchmark_ready/ground_truth.json",
+  "dataset_dir": "data/clean_imports/forum_batch_unique_01/benchmark_ready/dataset",
+  "total_entries": 13,
+  "processed": 13,
+  "failed_extraction": 0,
+  "skipped_missing_file": 0,
+  "skipped_low_confidence": 0,
+  "skipped_not_trainable": 0,
+  "min_confidence": "medium",
+  "trainable_only": true,
+  "label_distribution": {
+    "compass_interference": 4,
+    "gps_quality_poor": 1,
+    "pid_tuning_issue": 1,
+    "vibration_high": 7
+  },
+  "source_type_distribution": {
+    "ArduPilot_Discuss": 13
+  },
+  "output_features": "training/features.csv",
+  "output_labels": "training/labels.csv"
+}

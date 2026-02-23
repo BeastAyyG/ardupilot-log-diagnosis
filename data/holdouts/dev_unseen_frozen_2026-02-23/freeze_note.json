@@ -1,0 +1,5 @@
+{
+  "frozen_at_utc": "2026-02-22T20:36:05.529602+00:00",
+  "source_holdout": "data/holdouts/unseen_flight_2026-02-22",
+  "policy": "development holdout frozen; do not use for final lockbox reporting"
+}

@@ -1,0 +1,68 @@
+[
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0001_compass_interference.bin",
+    "source_path": "downloads/log_0001_compass_interference.bin",
+    "source_relative_path": "downloads/log_0001_compass_interference.bin",
+    "size_bytes": 806912,
+    "sha256": "b0db91ee3d6a7f0af25dbc4cf97a65e1287a47d8b91fc4973fd5d555f8aab8c0",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0001_compass_interference.bin"
+    ],
+    "raw_label": "COMPASS_INTERFERENCE",
+    "mapped_label": "compass_interference",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/hexacopter-drifting-away-crash-log-video/26675",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/2X/a/ae37876c5612fc9b39ec4f964e98711c1486eb27.BIN",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "COMPASS_INTERFERENCE",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/hexacopter-drifting-away-crash-log-video/26675",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/default/original/2X/a/ae37876c5612fc9b39ec4f964e98711c1486eb27.BIN"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 42
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0002_gps_quality_poor.bin",
+    "source_path": "downloads/log_0002_gps_quality_poor.bin",
+    "source_relative_path": "downloads/log_0002_gps_quality_poor.bin",
+    "size_bytes": 920999,
+    "sha256": "b9daccd2634d195c9a9312b31e6aa43a5a0a775109a04b6eb57afa61d9c081ef",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0002_gps_quality_poor.bin"
+    ],
+    "raw_label": "GPS_QUALITY_POOR",
+    "mapped_label": "gps_quality_poor",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/2X/a/adab74336ca2529838e73deed416877ddca176de.BIN",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "GPS_QUALITY_POOR",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/default/original/2X/a/adab74336ca2529838e73deed416877ddca176de.BIN"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 29
+  }
+]

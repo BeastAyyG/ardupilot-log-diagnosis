@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "description": "SHA-unseen holdout generated from clean-import batches",
+    "exclude_batches": [
+      "forum_batch_local_01",
+      "forum_batch_local_02",
+      "forum_batch_local_03"
+    ],
+    "candidate_batches": [
+      "forum_batch_lockbox_02"
+    ],
+    "total_logs": 4,
+    "label_distribution": {
+      "rc_failsafe": 4
+    },
+    "origin_batch_distribution": {
+      "forum_batch_lockbox_02": 4
+    },
+    "skipped_overlap": 7,
+    "skipped_missing": 0
+  },
+  "logs": [
+    {
+      "filename": "forum_batch_lockbox_02__log_0010_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+      "source_type": "ArduPilot_Discuss",
+      "confidence": "medium"
+    },
+    {
+      "filename": "forum_batch_lockbox_02__log_0011_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/no-rc-receiver-lockup-between-flight-controller-and-receiver/45811",
+      "source_type": "ArduPilot_Discuss",
+      "confidence": "medium"
+    },
+    {
+      "filename": "forum_batch_lockbox_02__log_0009_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "confidence": "medium"
+    },
+    {
+      "filename": "forum_batch_lockbox_02__log_0008_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "confidence": "medium"
+    }
+  ]
+}

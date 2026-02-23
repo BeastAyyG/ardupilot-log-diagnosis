@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "description": "Candidate ground truth generated from clean import",
+    "source_batch": "forum_batch_local_06",
+    "generated_at_utc": "2026-02-23T06:07:27.795706+00:00",
+    "policy": {
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ],
+      "mapped_labels": {
+        "VIBE_HIGH": "vibration_high",
+        "MAG_INTERFERENCE": "compass_interference"
+      },
+      "trainable_only_for_mapped_labels": true
+    }
+  },
+  "logs": []
+}

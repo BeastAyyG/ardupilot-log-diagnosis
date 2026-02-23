@@ -1,0 +1,35 @@
+[
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0001_pid_tuning_issue.bin",
+    "source_path": "downloads/log_0001_pid_tuning_issue.bin",
+    "source_relative_path": "downloads/log_0001_pid_tuning_issue.bin",
+    "size_bytes": 5607424,
+    "sha256": "4dbb9b5fad2e1da945dd1969dc1632091869e3980391666a75106b47015b5e92",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0001_pid_tuning_issue.bin"
+    ],
+    "raw_label": "PID_TUNING_ISSUE",
+    "mapped_label": "pid_tuning_issue",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+    "resolved_download_url": "https://www.dropbox.com/s/vbfj9poy4plergf/15-Dec-2020-Crash.BIN?dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "PID_TUNING_ISSUE",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+        "resolved_url": "https://www.dropbox.com/s/vbfj9poy4plergf/15-Dec-2020-Crash.BIN?dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 47
+  }
+]

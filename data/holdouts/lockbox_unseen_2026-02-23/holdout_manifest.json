@@ -1,0 +1,46 @@
+[
+  {
+    "filename": "forum_batch_lockbox_02__log_0010_rc_failsafe.bin",
+    "labels": [
+      "rc_failsafe"
+    ],
+    "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+    "source_type": "ArduPilot_Discuss",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/short-url/7Dif4AJuMoDmXUhkloHl8MAlSW4.bin",
+    "sha256": "0818fe7e5ce3cda47fdf3fef42cb2d02963f354b8b18750fa59edb3d0e035719",
+    "origin_batch": "forum_batch_lockbox_02"
+  },
+  {
+    "filename": "forum_batch_lockbox_02__log_0011_rc_failsafe.bin",
+    "labels": [
+      "rc_failsafe"
+    ],
+    "source_url": "https://discuss.ardupilot.org/t/no-rc-receiver-lockup-between-flight-controller-and-receiver/45811",
+    "source_type": "ArduPilot_Discuss",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/3X/e/2/e2de4f96445c41bb39de162da0afc92f96bc265d.BIN",
+    "sha256": "8dda19965da2a82b6a0303fbf2bf8f0ef79451f4a87d0b178bb203c8a7376ff2",
+    "origin_batch": "forum_batch_lockbox_02"
+  },
+  {
+    "filename": "forum_batch_lockbox_02__log_0009_rc_failsafe.bin",
+    "labels": [
+      "rc_failsafe"
+    ],
+    "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+    "source_type": "ArduPilot_Discuss",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/short-url/sB75zhLsNHbvwByMRs0nPqaLtMl.bin",
+    "sha256": "af2836cad8f18ca67758f6e45730a2756a37938dfc2f2e2dc6fbb27dca7e5641",
+    "origin_batch": "forum_batch_lockbox_02"
+  },
+  {
+    "filename": "forum_batch_lockbox_02__log_0008_rc_failsafe.bin",
+    "labels": [
+      "rc_failsafe"
+    ],
+    "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+    "source_type": "ArduPilot_Discuss",
+    "resolved_download_url": "https://www.dropbox.com/s/zmr1y91j84zsoa3/2023-05-11%2017-08-06%28Testing%29.bin?dl=1",
+    "sha256": "b89fc87fea657312f90ca28f92e6108f42bc97cb5c27267df8fc82bdfae690c0",
+    "origin_batch": "forum_batch_lockbox_02"
+  }
+]

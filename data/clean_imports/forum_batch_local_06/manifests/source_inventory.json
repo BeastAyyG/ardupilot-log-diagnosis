@@ -1,0 +1,28 @@
+[
+  {
+    "source_path": "downloads/log_0001_gps_quality_poor.zip",
+    "relative_path": "downloads/log_0001_gps_quality_poor.zip",
+    "file_name": "log_0001_gps_quality_poor.zip",
+    "kind": "zip",
+    "size_bytes": 188924,
+    "sha256": "7a097ffc0b3c0530967ce1c70de347178dbf460fa6055690231398fe7ba2c6d3",
+    "signature": "archive",
+    "parse_ok": false,
+    "parse_message_count": 0,
+    "parse_message_types": 0,
+    "parse_error": "archive"
+  },
+  {
+    "source_path": "downloads/log_0002_gps_quality_poor.zip",
+    "relative_path": "downloads/log_0002_gps_quality_poor.zip",
+    "file_name": "log_0002_gps_quality_poor.zip",
+    "kind": "zip",
+    "size_bytes": 188260,
+    "sha256": "0cbde84301e19377e082b5e657a310faef0ad955003f40d4a968fb52851a6db2",
+    "signature": "archive",
+    "parse_ok": false,
+    "parse_message_count": 0,
+    "parse_message_types": 0,
+    "parse_error": "archive"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "ground_truth_path": "data/real_training_pool_2026-02-23_excl_holdouts/ground_truth.json",
+  "dataset_dir": "data/real_training_pool_2026-02-23_excl_holdouts/dataset",
+  "total_logs": 13,
+  "label_distribution": {
+    "compass_interference": 4,
+    "gps_quality_poor": 1,
+    "pid_tuning_issue": 1,
+    "vibration_high": 7
+  },
+  "source_distribution": {
+    "verified_labeled": 13
+  },
+  "verified_candidates": 42,
+  "manual_candidates": 0,
+  "skipped_verified_dupes": 29,
+  "skipped_manual_dupes": 0,
+  "manual_labeled_count": 0,
+  "excluded_batches": [
+    "flight_logs_dataset_2026-02-22",
+    "forum_batch_lockbox_01",
+    "forum_batch_lockbox_02"
+  ]
+}

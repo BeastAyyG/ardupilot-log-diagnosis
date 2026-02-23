@@ -1,0 +1,266 @@
+[
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0007_vibration_high.bin",
+    "source_path": "downloads/log_0007_vibration_high.bin",
+    "source_relative_path": "downloads/log_0007_vibration_high.bin",
+    "size_bytes": 894088,
+    "sha256": "00afa36e545470c4379352efc54c3dffdd81381ae3bae19890a1cfa1c96dec40",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0007_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/3X/4/d/4d5d0263578b30d894308c2e124f0a2cc3cdc1e6.bin",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/default/original/3X/4/d/4d5d0263578b30d894308c2e124f0a2cc3cdc1e6.bin"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 51
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0004_vibration_high.bin",
+    "source_path": "downloads/log_0004_vibration_high.bin",
+    "source_relative_path": "downloads/log_0004_vibration_high.bin",
+    "size_bytes": 1132316,
+    "sha256": "1820618f38d81507a1e95ef22f743fbc50817348046d542d9db765ccace2a9d3",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0004_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/2X/4/432a250d1ee9eba3884d92235219876f0514a8d1.bin",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/default/original/2X/4/432a250d1ee9eba3884d92235219876f0514a8d1.bin"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 40
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0001_vibration_high.bin",
+    "source_path": "downloads/log_0001_vibration_high.bin",
+    "source_relative_path": "downloads/log_0001_vibration_high.bin",
+    "size_bytes": 987473,
+    "sha256": "33c535f6f0edb143bb85909901be52bd73542206e3116ae9ddf22b1c42606cfb",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0001_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/3X/7/6/76e9fe83154fe88ff318770a60b493056acb5ad0.bin",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/default/original/3X/7/6/76e9fe83154fe88ff318770a60b493056acb5ad0.bin"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 50
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0008_pid_tuning_issue.bin",
+    "source_path": "downloads/log_0008_pid_tuning_issue.bin",
+    "source_relative_path": "downloads/log_0008_pid_tuning_issue.bin",
+    "size_bytes": 5607424,
+    "sha256": "4dbb9b5fad2e1da945dd1969dc1632091869e3980391666a75106b47015b5e92",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0008_pid_tuning_issue.bin"
+    ],
+    "raw_label": "PID_TUNING_ISSUE",
+    "mapped_label": "pid_tuning_issue",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+    "resolved_download_url": "https://www.dropbox.com/s/vbfj9poy4plergf/15-Dec-2020-Crash.BIN?dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "PID_TUNING_ISSUE",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+        "resolved_url": "https://www.dropbox.com/s/vbfj9poy4plergf/15-Dec-2020-Crash.BIN?dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 47
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0003_vibration_high.bin",
+    "source_path": "downloads/log_0003_vibration_high.bin",
+    "source_relative_path": "downloads/log_0003_vibration_high.bin",
+    "size_bytes": 3911181,
+    "sha256": "7065a3cd0fbd3c5ce178964dcbb64979fc878d0900fc5f5cb6f30d60d3d9d794",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0003_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+    "resolved_download_url": "https://www.dropbox.com/s/dunql28hfaatnw6/crash.BIN?dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+        "resolved_url": "https://www.dropbox.com/s/dunql28hfaatnw6/crash.BIN?dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 49
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0005_vibration_high.bin",
+    "source_path": "downloads/log_0005_vibration_high.bin",
+    "source_relative_path": "downloads/log_0005_vibration_high.bin",
+    "size_bytes": 3941630,
+    "sha256": "a004f350c296ae9f396c8756a95c8b0049913ccc8973c5faf0230eba013ec91d",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0005_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+    "resolved_download_url": "https://www.dropbox.com/s/989sciu6lhluz61/Flight%20log.BIN?dl=1",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+        "resolved_url": "https://www.dropbox.com/s/989sciu6lhluz61/Flight%20log.BIN?dl=1"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 34
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0006_vibration_high.bin",
+    "source_path": "downloads/log_0006_vibration_high.bin",
+    "source_relative_path": "downloads/log_0006_vibration_high.bin",
+    "size_bytes": 830387,
+    "sha256": "a7290a8733f121989317d53052b0c6eb58b643dd135938f0c3d3614dbb945d04",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0006_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/default/original/2X/1/1a986c229c77716723b88a520e04cacb91ae6803.BIN",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/default/original/2X/1/1a986c229c77716723b88a520e04cacb91ae6803.BIN"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 40
+  },
+  {
+    "category": "verified_labeled",
+    "file_name": "log_0002_vibration_high.bin",
+    "source_path": "downloads/log_0002_vibration_high.bin",
+    "source_relative_path": "downloads/log_0002_vibration_high.bin",
+    "size_bytes": 879560,
+    "sha256": "c1bcef192fec48c4eadf1da2a5c62215abc035330b9f56bc5b0e8ecd2a78236f",
+    "duplicate_count": 1,
+    "duplicate_sources": [
+      "downloads/log_0002_vibration_high.bin"
+    ],
+    "raw_label": "VIBRATION_HIGH",
+    "mapped_label": "vibration_high",
+    "trainable": true,
+    "source_type": "ArduPilot_Discuss",
+    "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+    "resolved_download_url": "https://discuss.ardupilot.org/uploads/short-url/nXvTLdPIdPX5qTGHEma1Ap4asC5.BIN",
+    "provenance_status": "downloaded",
+    "provenance_records": [
+      {
+        "manifest": "crawler_manifest.csv",
+        "status": "downloaded",
+        "label_raw": "VIBRATION_HIGH",
+        "source_type": "ArduPilot_Discuss",
+        "thread_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+        "resolved_url": "https://discuss.ardupilot.org/uploads/short-url/nXvTLdPIdPX5qTGHEma1Ap4asC5.BIN"
+      }
+    ],
+    "expert_username": "",
+    "expert_quote": "",
+    "parse_message_count": 3000,
+    "parse_message_types": 51
+  }
+]
