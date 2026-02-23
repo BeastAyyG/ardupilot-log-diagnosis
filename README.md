@@ -47,6 +47,8 @@ python training/run_all_benchmarks.py \
 
 Full walkthrough: `docs/colab_quickstart.md`.
 Kaggle alternative: `docs/kaggle_quickstart.md`.
+If Colab cannot find your Drive bundle path, use the troubleshooting section in
+`docs/colab_quickstart.md`.
 
 ## Sample Output
 ```

@@ -57,6 +57,35 @@ This writes:
 - `data/final_training_dataset_2026-02-23/benchmark_results_hybrid.json`
 - `data/final_training_dataset_2026-02-23/benchmark_results_rule.json`
 
+## Troubleshooting: bundle path not found
+
+If Colab shows `cp: cannot stat '/content/drive/MyDrive/ardupilot/...': No such file or directory`,
+the Drive path does not match the actual upload location.
+
+Use these cells to locate the real file path:
+
+```bash
+ls /content/drive
+ls /content/drive/MyDrive
+```
+
+```python
+import os
+
+for base in ["/content/drive/MyDrive", "/content/drive/Shareddrives"]:
+    if not os.path.exists(base):
+        continue
+    for root, _, files in os.walk(base):
+        if "colab_data_bundle.tar.gz" in files:
+            print(os.path.join(root, "colab_data_bundle.tar.gz"))
+```
+
+Then update the copy command to the exact path you found, for example:
+
+```bash
+cp "/content/drive/MyDrive/Colab Notebooks/colab_data_bundle.tar.gz" .
+```
+
 ## 4) Copy results back to Drive
 
 ```bash
