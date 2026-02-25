@@ -30,6 +30,12 @@ class LogParser:
             "status_messages": []
         }
         
+        # Only store messages we actually use in extractors to save memory and time
+        self.INTERESTING_MESSAGE_TYPES = {
+            "VIBE", "MAG", "BAT", "GPS", "RCOU", "XKF4", "NKF4",
+            "PARM", "ERR", "EV", "MODE", "MSG", "CTUN", "ATT", "PM", "FTN1"
+        }
+        
         try:
             log = DFReader.DFReader_binary(self.filepath)
         except Exception as e:
@@ -58,14 +64,17 @@ class LogParser:
                         first_time = time_us
                     last_time = time_us
                     
-                if msg_type not in parsed_data["messages"]:
-                    parsed_data["messages"][msg_type] = []
+                if msg_type in self.INTERESTING_MESSAGE_TYPES:
+                    if msg_type not in parsed_data["messages"]:
+                        parsed_data["messages"][msg_type] = []
                     
-                # Convert message fields to Python native types (dictionary)
-                msg_dict = msg.to_dict()
-                parsed_data["messages"][msg_type].append(msg_dict)
+                    # Convert message fields to Python native types (dictionary)
+                    msg_dict = msg.to_dict()
+                    parsed_data["messages"][msg_type].append(msg_dict)
+                else:
+                    msg_dict = None
                 
-                if msg_type == "MSG":
+                if msg_type == "MSG" and msg_dict:
                     message_text = msg_dict.get('Message', '')
                     parsed_data["status_messages"].append({
                         "time_us": time_us,
@@ -77,12 +86,12 @@ class LogParser:
                         parts = message_text.split()
                         if len(parts) > 1 and parts[0] == "ArduCopter":
                             parsed_data["metadata"]["firmware_version"] = parts[1]
-                elif msg_type == "PARM":
+                elif msg_type == "PARM" and msg_dict:
                     name = msg_dict.get('Name')
                     value = msg_dict.get('Value')
                     if name is not None and value is not None:
                         parsed_data["parameters"][name] = float(value) if isinstance(value, (int, float)) else value
-                elif msg_type == "ERR":
+                elif msg_type == "ERR" and msg_dict:
                     subsys = msg_dict.get('Subsys', 0)
                     ecode = msg_dict.get('ECode', 0)
                     subsys_name = ERR_SUBSYSTEM_MAP.get(subsys, f"UNKNOWN_{subsys}")
@@ -96,7 +105,7 @@ class LogParser:
                         "code": ecode,
                         "auto_label": auto_label
                     })
-                elif msg_type == "EV":
+                elif msg_type == "EV" and msg_dict:
                     ev_id = msg_dict.get('Id', 0)
                     ev_name = EV_NAMES.get(ev_id, f"EVENT_{ev_id}")
                     parsed_data["events"].append({
@@ -104,7 +113,7 @@ class LogParser:
                         "id": ev_id,
                         "name": ev_name
                     })
-                elif msg_type == "MODE":
+                elif msg_type == "MODE" and msg_dict:
                     mode_num = msg_dict.get('ModeNum', msg_dict.get('Mode', 0))
                     reason = msg_dict.get('Reason', 0)
                     mode_name = MODE_NAMES.get(mode_num, f"MODE_{mode_num}")

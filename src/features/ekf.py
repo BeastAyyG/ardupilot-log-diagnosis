@@ -8,7 +8,7 @@ class EKFExtractor(BaseExtractor):
         "ekf_pos_var_mean", "ekf_pos_var_max",
         "ekf_hgt_var_mean", "ekf_hgt_var_max",
         "ekf_compass_var_mean", "ekf_compass_var_max",
-        "ekf_flags_error_pct", "ekf_lane_switch_count"
+        "ekf_flags_error_pct", "ekf_lane_switch_count", "ekf_pos_var_tanomaly"
     ]
     
     def has_data(self) -> bool:
@@ -25,6 +25,7 @@ class EKFExtractor(BaseExtractor):
         sh_vals = [self._safe_value(msg, "SH") for msg in msgs]
         sm_vals = [self._safe_value(msg, "SM") for msg in msgs]
         
+        t_vals = [float(msg.get("TimeUS", msg.get("_timestamp", 0.0))) for msg in msgs]
         pi_vals = [self._safe_value(msg, "PI") for msg in msgs]
         lane_switches = 0
         if pi_vals:
@@ -39,10 +40,10 @@ class EKFExtractor(BaseExtractor):
         bad_ss_count = sum(1 for ss in ss_vals if ss == 0) # Assuming 0 is a bad flag state here for placeholder, in reality it's bitmask
         flags_error_pct = bad_ss_count / len(ss_vals) if ss_vals else 0.0
         
-        sv_stats = self._safe_stats(sv_vals)
-        sp_stats = self._safe_stats(sp_vals)
-        sh_stats = self._safe_stats(sh_vals)
-        sm_stats = self._safe_stats(sm_vals)
+        sv_stats = self._safe_stats(sv_vals, t_vals)
+        sp_stats = self._safe_stats(sp_vals, t_vals, threshold=1.0)
+        sh_stats = self._safe_stats(sh_vals, t_vals)
+        sm_stats = self._safe_stats(sm_vals, t_vals)
         
         return {
             "ekf_vel_var_mean": sv_stats["mean"],
@@ -54,5 +55,6 @@ class EKFExtractor(BaseExtractor):
             "ekf_compass_var_mean": sm_stats["mean"],
             "ekf_compass_var_max": sm_stats["max"],
             "ekf_flags_error_pct": flags_error_pct,
-            "ekf_lane_switch_count": float(lane_switches)
+            "ekf_lane_switch_count": float(lane_switches),
+            "ekf_pos_var_tanomaly": sp_stats["tanomaly"]
         }

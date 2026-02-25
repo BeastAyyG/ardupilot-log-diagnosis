@@ -1,4 +1,5 @@
 pymavlink
+requests
 numpy
 scipy
 pytest
@@ -7,3 +8,7 @@ xgboost
 joblib
 pyyaml
 pandas
+scrapegraph-py
+python-dotenv
+crawlbase
+scraperai

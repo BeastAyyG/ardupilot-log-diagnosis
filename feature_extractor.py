@@ -28,18 +28,26 @@ class FeatureExtractor:
             'motors': {i: [] for i in range(1, 5)}
         }
 
-    def _safe_stats(self, data: List[float], prefix: str) -> Dict[str, float]:
-        """Calculates standard statistics for a given data array safely."""
+    def _safe_stats(self, data: List[tuple], prefix: str) -> Dict[str, float]:
+        """Calculates standard statistics for a given temporal data array safely."""
         result = {}
         if data and len(data) > 0:
-            arr = np.array(data)
+            times = np.array([x[0] for x in data])
+            arr = np.array([x[1] for x in data])
             result[f'{prefix}_mean'] = float(np.mean(arr))
             result[f'{prefix}_max'] = float(np.max(arr))
             result[f'{prefix}_min'] = float(np.min(arr))
             result[f'{prefix}_std'] = float(np.std(arr))
             result[f'{prefix}_range'] = float(np.max(arr) - np.min(arr))
+            
+            max_idx = np.argmax(arr)
+            result[f'{prefix}_tmax'] = float(times[max_idx])
+            
+            threshold = result[f'{prefix}_mean'] + 2 * result[f'{prefix}_std']
+            anomalies = times[arr > threshold]
+            result[f'{prefix}_tanomaly'] = float(anomalies[0]) if len(anomalies) > 0 else -1.0
         else:
-            for stat in ['mean', 'max', 'min', 'std', 'range']:
+            for stat in ['mean', 'max', 'min', 'std', 'range', 'tmax', 'tanomaly']:
                 result[f'{prefix}_{stat}'] = 0.0
         return result
 
@@ -56,30 +64,33 @@ class FeatureExtractor:
                 break
                 
             mtype = msg.get_type()
-            
+            t = getattr(msg, 'TimeUS', getattr(msg, '_timestamp', 0))
+            if t > 1e7:
+                t = t / 1e6
+                
             if mtype == 'VIBE':
-                self.data['vibe_x'].append(msg.VibeX)
-                self.data['vibe_y'].append(msg.VibeY)
-                self.data['vibe_z'].append(msg.VibeZ)
-                self.data['clips'].append(getattr(msg, 'Clip0', 0))
+                self.data['vibe_x'].append((t, msg.VibeX))
+                self.data['vibe_y'].append((t, msg.VibeY))
+                self.data['vibe_z'].append((t, msg.VibeZ))
+                self.data['clips'].append((t, getattr(msg, 'Clip0', 0)))
                 
             elif mtype == 'MAG':
                 # Calculate total magnetic field vector length
                 field = np.sqrt(msg.MagX**2 + msg.MagY**2 + msg.MagZ**2)
-                self.data['mag_field'].append(field)
+                self.data['mag_field'].append((t, field))
                 
             elif mtype == 'BAT':
-                self.data['voltage'].append(msg.Volt)
-                self.data['current'].append(msg.Curr)
+                self.data['voltage'].append((t, msg.Volt))
+                self.data['current'].append((t, msg.Curr))
                 
             elif mtype == 'GPS':
-                self.data['hdop'].append(getattr(msg, 'HDop', 0))
-                self.data['nsats'].append(getattr(msg, 'NSats', 0))
+                self.data['hdop'].append((t, getattr(msg, 'HDop', 0)))
+                self.data['nsats'].append((t, getattr(msg, 'NSats', 0)))
                 
             elif mtype == 'RCOU':
                 # Track outputs for motors 1-4 (typically Quadcopter)
                 for i in range(1, 5):
-                    self.data['motors'][i].append(getattr(msg, f'C{i}', 0))
+                    self.data['motors'][i].append((t, getattr(msg, f'C{i}', 0)))
                     
         return self._compile_features()
 
@@ -91,7 +102,7 @@ class FeatureExtractor:
         features.update(self._safe_stats(self.data['vibe_x'], 'vibe_x'))
         features.update(self._safe_stats(self.data['vibe_y'], 'vibe_y'))
         features.update(self._safe_stats(self.data['vibe_z'], 'vibe_z'))
-        features['clip_total'] = float(sum(self.data['clips']))
+        features['clip_total'] = float(sum([x[1] for x in self.data['clips']]))
         
         # Power & Nav
         features.update(self._safe_stats(self.data['mag_field'], 'mag'))
@@ -103,7 +114,7 @@ class FeatureExtractor:
         # Motors
         motor_data = self.data['motors']
         if all(motor_data[i] for i in range(1, 5)):
-            means = [np.mean(motor_data[i]) for i in range(1, 5)]
+            means = [np.mean([x[1] for x in motor_data[i]]) for i in range(1, 5)]
             features['motor_spread'] = float(max(means) - min(means))
             features['motor_std'] = float(np.std(means))
         else:

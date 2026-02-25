@@ -87,7 +87,36 @@ class HybridEngine:
 
         merged_diagnoses.sort(key=rank, reverse=True)
 
-        # Filter for low-quality symptom cascades.
+        # Temporal Arbiter Filter (Phase 3 Integration)
+        # Disambiguate root cause by selecting the earliest onset symptom to avoid cascading errors.
+        if merged_diagnoses and len(merged_diagnoses) > 1:
+            earliest_time = float('inf')
+            root_cause = None
+            
+            prefix_map = {
+                'vibration_high': 'vibe_z',
+                'compass_interference': 'mag',
+                'power_instability': 'volt',
+                'gps_quality_poor': 'gps_hdop',
+                'motor_imbalance': 'motor_spread',
+                'ekf_failure': 'ekf_pos_var',
+            }
+            
+            for d in merged_diagnoses:
+                ftype = d["failure_type"]
+                prefix = prefix_map.get(ftype)
+                tanomaly = features.get(f'{prefix}_tanomaly', -1.0) if prefix else -1.0
+                
+                # Boost confidence if ML says yes but time was earliest
+                if 0 < tanomaly < earliest_time:
+                    earliest_time = tanomaly
+                    root_cause = d
+                    
+            if root_cause:
+                root_cause["recommendation"] = "[ARB_FILTERED: ROOT CAUSE] " + str(root_cause.get("recommendation", ""))
+                return [root_cause]
+
+        # Filter for low-quality symptom cascades if Temporal Arbiter didn't trigger
         if merged_diagnoses:
             primary = merged_diagnoses[0]
             filtered_diagnoses = [primary]

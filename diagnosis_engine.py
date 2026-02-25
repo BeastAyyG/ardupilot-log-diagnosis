@@ -17,12 +17,11 @@ class DiagnosisEngine:
     
     # Rule syntax: (Feature Key, Operator, Threshold)
     RULES = {
-        'vibration_issue': {
+        'vibration_high': {
             'checks': [
                 ('vibe_x_max', '>', 30.0),
                 ('vibe_y_max', '>', 30.0),
                 ('vibe_z_max', '>', 30.0),
-                ('clip_total', '>', 0.0),
             ],
             'fix': 'Balance propellers, tighten motor mounts, or improve flight controller damping.'
         },
@@ -33,14 +32,14 @@ class DiagnosisEngine:
             ],
             'fix': 'Move compass away from power distribution boards, motors, or high-current wiring.'
         },
-        'power_issue': {
+        'power_instability': {
             'checks': [
                 ('volt_min', '<', 10.5),
                 ('volt_range', '>', 2.0),
             ],
             'fix': 'Check battery health, internal resistance, and verify power module calibration.'
         },
-        'gps_issue': {
+        'gps_failure': {
             'checks': [
                 ('hdop_max', '>', 2.0),
                 ('nsats_min', '<', 8.0),
@@ -98,6 +97,32 @@ class DiagnosisEngine:
                 
         # Sort so highest confidence alerts appear first
         results.sort(key=lambda x: x['confidence'], reverse=True)
+        
+        # Temporal Arbiter (Phase 3 Integration)
+        # Disambiguate root cause by selecting the earliest onset symptom to avoid cascading errors.
+        if len(results) > 1:
+            earliest_time = float('inf')
+            root_cause = None
+            
+            prefix_map = {
+                'vibration_high': 'vibe_z',
+                'compass_interference': 'mag',
+                'power_instability': 'volt',
+                'gps_failure': 'hdop',
+            }
+            
+            for res in results:
+                failure_key = res['failure']
+                prefix = prefix_map.get(failure_key)
+                tanomaly = self.features.get(f'{prefix}_tanomaly', -1.0) if prefix else -1.0
+                
+                if 0 < tanomaly < earliest_time:
+                    earliest_time = tanomaly
+                    root_cause = res
+            
+            if root_cause:
+                root_cause['fix'] = "[ARB_FILTERED: ROOT CAUSE] " + root_cause['fix']
+                results = [root_cause]
         
         # If no issues found, log "healthy"
         if not results:

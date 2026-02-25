@@ -6,7 +6,7 @@ class MotorExtractor(BaseExtractor):
     FEATURE_NAMES = [
         "motor_spread_mean", "motor_spread_max", "motor_spread_std",
         "motor_output_mean", "motor_output_std", "motor_max_output",
-        "motor_hover_ratio"
+        "motor_hover_ratio", "motor_spread_tanomaly"
     ]
     
     def extract(self) -> dict:
@@ -15,6 +15,7 @@ class MotorExtractor(BaseExtractor):
         spread_vals = []
         output_vals = []
         max_output_overall = 0.0
+        t_vals = []
         
         for msg in rcou_msgs:
             # Assuming typically channels 1 to 4 or 8 for motors
@@ -23,7 +24,7 @@ class MotorExtractor(BaseExtractor):
             for k in msg.keys():
                 if k.startswith("C") and k[1:].isdigit():
                     val = self._safe_value(msg, k)
-                    if val > 0:  # Valid motor output typically > 1000
+                    if val > 800:  # Valid motor output typically > 1000, 800 is safe margin
                         channels.append(val)
             
             if channels:
@@ -31,10 +32,11 @@ class MotorExtractor(BaseExtractor):
                 min_ch = min(channels)
                 spread_vals.append(max_ch - min_ch)
                 output_vals.extend(channels)
+                t_vals.append(float(msg.get("TimeUS", msg.get("_timestamp", 0.0))))
                 if max_ch > max_output_overall:
                     max_output_overall = float(max_ch)
                     
-        spread_stats = self._safe_stats(spread_vals)
+        spread_stats = self._safe_stats(spread_vals, t_vals, threshold=200.0)
         output_stats = self._safe_stats(output_vals)
         
         mot_thst_hover = self.parameters.get("MOT_THST_HOVER")
@@ -54,5 +56,6 @@ class MotorExtractor(BaseExtractor):
             "motor_output_mean": output_stats["mean"],
             "motor_output_std": output_stats["std"],
             "motor_max_output": max_output_overall,
-            "motor_hover_ratio": hover_ratio
+            "motor_hover_ratio": hover_ratio,
+            "motor_spread_tanomaly": spread_stats["tanomaly"]
         }

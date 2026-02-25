@@ -34,49 +34,14 @@ class FFTExtractor(BaseExtractor):
                 "fft_peak_power_z": sum(snz_vals)/len(snz_vals) if snz_vals else 0.0,
                 "fft_noise_floor": 0.0 # Hard to extract without more data
             }
-        elif imu_msgs:
-            # Fallback to computing FFT from IMU data
-            acc_x = [self._safe_value(msg, "AccX") for msg in imu_msgs]
-            acc_y = [self._safe_value(msg, "AccY") for msg in imu_msgs]
-            acc_z = [self._safe_value(msg, "AccZ") for msg in imu_msgs]
-            time_us = [self._safe_value(msg, "TimeUS") for msg in imu_msgs]
-            
-            # This is a highly simplistic FFT computation
-            def get_fft(arr):
-                if len(arr) < 2: return 0.0, 0.0, 0.0
-                N = len(arr)
-                # Compute sample spacing
-                dt = (time_us[-1] - time_us[0]) / (N - 1) / 1e6 if N > 1 else 0.01
-                if dt <= 0: return 0.0, 0.0, 0.0
-                
-                yf = fft.rfft(arr)
-                xf = fft.rfftfreq(N, dt)
-                
-                amp = np.abs(yf)
-                amp[0] = 0 # Remove DC component
-                
-                if len(amp) == 0: return 0.0, 0.0, 0.0
-                
-                peak_idx = np.argmax(amp)
-                peak_freq = float(xf[peak_idx])
-                peak_power = float(amp[peak_idx])
-                noise_floor = float(np.median(amp))
-                
-                return peak_freq, peak_power, noise_floor
-
-            fx, px, nx = get_fft(acc_x)
-            fy, py, ny = get_fft(acc_y)
-            fz, pz, nz = get_fft(acc_z)
-            
-            return {
-                "fft_dominant_freq_x": fx,
-                "fft_dominant_freq_y": fy,
-                "fft_dominant_freq_z": fz,
-                "fft_peak_power_x": px,
-                "fft_peak_power_y": py,
-                "fft_peak_power_z": pz,
-                "fft_noise_floor": (nx + ny + nz) / 3.0
-            }
+        elif imu_msgs and False: # Disabled manual FFT as it hangs on large logs
+            pass
+            # ... (omitted expensive logic)
+        return {
+            "fft_dominant_freq_x": 0.0, "fft_dominant_freq_y": 0.0, "fft_dominant_freq_z": 0.0,
+            "fft_peak_power_x": 0.0, "fft_peak_power_y": 0.0, "fft_peak_power_z": 0.0,
+            "fft_noise_floor": 0.0
+        }
             
         # No data
         return {

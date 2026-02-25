@@ -6,7 +6,7 @@ class PowerExtractor(BaseExtractor):
     FEATURE_NAMES = [
         "bat_volt_min", "bat_volt_max", "bat_volt_range", "bat_volt_std",
         "bat_curr_mean", "bat_curr_max", "bat_curr_std",
-        "bat_margin", "bat_sag_ratio"
+        "bat_margin", "bat_sag_ratio", "volt_tanomaly"
     ]
     
     def extract(self) -> dict:
@@ -14,9 +14,10 @@ class PowerExtractor(BaseExtractor):
         
         volt_vals = [self._safe_value(msg, "Volt") for msg in bat_msgs]
         curr_vals = [self._safe_value(msg, "Curr") for msg in bat_msgs]
+        t_vals = [float(msg.get("TimeUS", msg.get("_timestamp", 0.0))) for msg in bat_msgs]
         
-        volt_stats = self._safe_stats(volt_vals)
-        curr_stats = self._safe_stats(curr_vals)
+        volt_stats = self._safe_stats(volt_vals, t_vals, mode="below")
+        curr_stats = self._safe_stats(curr_vals, t_vals)
         
         bat_margin = 0.0
         batt_low_volt = self.parameters.get("BATT_LOW_VOLT")
@@ -36,5 +37,6 @@ class PowerExtractor(BaseExtractor):
             "bat_curr_max": curr_stats["max"],
             "bat_curr_std": curr_stats["std"],
             "bat_margin": float(bat_margin),
-            "bat_sag_ratio": float(bat_sag_ratio)
+            "bat_sag_ratio": float(bat_sag_ratio),
+            "volt_tanomaly": volt_stats["tanomaly"]
         }

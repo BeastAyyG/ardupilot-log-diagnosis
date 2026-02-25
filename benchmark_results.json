@@ -1,11 +1,11 @@
 {
   "overall": {
-    "total_logs": 10,
-    "successful_extractions": 10,
-    "failed_extractions": 0,
+    "total_logs": 13,
+    "successful_extractions": 0,
+    "failed_extractions": 13,
     "failed_diagnoses": 0,
-    "accuracy": 0.1,
-    "macro_f1": 0.1978021978021978
+    "accuracy": 0.0,
+    "macro_f1": 0.0
   },
   "per_label": {
     "healthy": {
@@ -13,37 +13,37 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 10,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     },
     "vibration_high": {
-      "support": 5,
-      "tp": 4,
-      "fp": 4,
-      "fn": 1,
-      "tn": 1,
-      "precision": 0.5,
-      "recall": 0.8,
-      "f1": 0.6153846153846154
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
     },
     "compass_interference": {
-      "support": 5,
-      "tp": 5,
-      "fp": 3,
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
       "fn": 0,
-      "tn": 2,
-      "precision": 0.625,
-      "recall": 1.0,
-      "f1": 0.7692307692307693
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
     },
     "power_instability": {
       "support": 0,
       "tp": 0,
-      "fp": 1,
+      "fp": 0,
       "fn": 0,
-      "tn": 9,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -53,7 +53,7 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 10,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -61,9 +61,9 @@
     "motor_imbalance": {
       "support": 0,
       "tp": 0,
-      "fp": 7,
+      "fp": 0,
       "fn": 0,
-      "tn": 3,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -71,9 +71,9 @@
     "ekf_failure": {
       "support": 0,
       "tp": 0,
-      "fp": 6,
+      "fp": 0,
       "fn": 0,
-      "tn": 4,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -81,9 +81,9 @@
     "mechanical_failure": {
       "support": 0,
       "tp": 0,
-      "fp": 2,
+      "fp": 0,
       "fn": 0,
-      "tn": 8,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -93,7 +93,7 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 10,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -103,7 +103,7 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 10,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -113,7 +113,7 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 10,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -121,175 +121,80 @@
     "crash_unknown": {
       "support": 0,
       "tp": 0,
-      "fp": 4,
+      "fp": 0,
       "fn": 0,
-      "tn": 6,
+      "tn": 0,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     }
   },
-  "confusion_details": [
+  "confusion_details": [],
+  "errors": [
     {
-      "filename": "crash_001.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "vibration_high",
-        "mechanical_failure"
-      ],
-      "predicted_confidence": [
-        0.6187481558322907,
-        0.425
-      ]
+      "filename": "forum_batch_local_01__log_0007_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_002.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "mechanical_failure",
-        "compass_interference",
-        "vibration_high",
-        "motor_imbalance",
-        "power_instability",
-        "ekf_failure"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.6787481558322906,
-        0.5862518441677094,
-        0.425,
-        0.425
-      ]
+      "filename": "forum_batch_local_01__log_0009_compass_interference.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_003.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "crash_unknown",
-        "vibration_high",
-        "motor_imbalance"
-      ],
-      "predicted_confidence": [
-        0.765,
-        0.6487481558322907,
-        0.595
-      ]
+      "filename": "forum_batch_local_01__log_0010_compass_interference.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_004.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "compass_interference",
-        "vibration_high",
-        "crash_unknown",
-        "motor_imbalance",
-        "ekf_failure"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.765,
-        0.7087481558322907,
-        0.5412518441677093
-      ]
+      "filename": "forum_batch_local_01__log_0004_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_005.BIN",
-      "ground_truth": [
-        "vibration_high"
-      ],
-      "predicted": [
-        "compass_interference",
-        "motor_imbalance"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.40999789237976075
-      ]
+      "filename": "forum_batch_local_01__log_0001_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_006.BIN",
-      "ground_truth": [
-        "compass_interference"
-      ],
-      "predicted": [
-        "ekf_failure",
-        "compass_interference",
-        "motor_imbalance",
-        "vibration_high"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.7087481558322907,
-        0.6312518441677093
-      ]
+      "filename": "forum_batch_local_01__log_0003_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_008.BIN",
-      "ground_truth": [
-        "compass_interference"
-      ],
-      "predicted": [
-        "ekf_failure",
-        "compass_interference",
-        "vibration_high"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.6912518441677094,
-        0.5587481558322906
-      ]
+      "filename": "forum_batch_local_01__log_0005_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_009.BIN",
-      "ground_truth": [
-        "compass_interference"
-      ],
-      "predicted": [
-        "compass_interference",
-        "vibration_high",
-        "crash_unknown",
-        "motor_imbalance",
-        "ekf_failure"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.85,
-        0.765,
-        0.7087481558322907,
-        0.6312518441677093
-      ]
+      "filename": "forum_batch_local_01__log_0006_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     },
     {
-      "filename": "crash_010.BIN",
-      "ground_truth": [
-        "compass_interference"
-      ],
-      "predicted": [
-        "compass_interference",
-        "vibration_high",
-        "crash_unknown",
-        "motor_imbalance",
-        "ekf_failure"
-      ],
-      "predicted_confidence": [
-        0.85,
-        0.765,
-        0.765,
-        0.7087481558322907,
-        0.5412518441677093
-      ]
+      "filename": "forum_batch_local_01__log_0008_compass_interference.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
+    },
+    {
+      "filename": "forum_batch_local_01__log_0012_gps_quality_poor.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
+    },
+    {
+      "filename": "forum_batch_local_01__log_0002_vibration_high.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
+    },
+    {
+      "filename": "forum_batch_local_01__log_0011_compass_interference.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
+    },
+    {
+      "filename": "forum_batch_local_02__log_0009_pid_tuning_issue.bin",
+      "error": "File not found",
+      "type": "EXTRACTION_FAILED"
     }
-  ],
-  "errors": []
+  ]
 }

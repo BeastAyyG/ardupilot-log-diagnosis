@@ -33,3 +33,14 @@ data/to_label/**/*.zip
 data/to_label/**/*.tlog
 data/to_label/**/*.jpg
 colab_data_bundle*.tar.gz
+node_modules/
+*.zip
+*.tar.gz
+benchmark_logs/
+extracted_collab_data/
+Collab data.zip
+data/
+extracted_collab_data/
+node_modules/
+*.bin
+*.BIN
