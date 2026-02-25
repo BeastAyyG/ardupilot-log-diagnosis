@@ -6,7 +6,8 @@ class EventExtractor(BaseExtractor):
     FEATURE_PREFIX = "evt_"
     FEATURE_NAMES = [
         "evt_error_count", "evt_failsafe_count", "evt_mode_change_count",
-        "evt_unexpected_mode_changes", "evt_crash_detected", "evt_gps_lost_count"
+        "evt_unexpected_mode_changes", "evt_crash_detected", "evt_gps_lost_count",
+        "evt_radio_failsafe_count", "evt_rc_lost_count"
     ]
     
     def extract(self) -> dict:
@@ -51,15 +52,29 @@ class EventExtractor(BaseExtractor):
             if mode_num in [6, 9] and reason not in [0]: # Assume reason != 0 means system commanded (e.g failsafe)
                 evt_unexpected_mode_changes += 1
                 
+        evt_radio_failsafe_count = 0  # Subsystem 5 = FAILSAFE_RADIO (RC link lost)
+        evt_rc_lost_count = 0  # Mode changes to RTL/Land triggered by radio failsafe
         evt_gps_lost_count = 0
         for msg in ev_msgs:
-            if int(self._safe_value(msg, "Id")) == 19:
+            ev_id = int(self._safe_value(msg, "Id"))
+            if ev_id == 19:
                 evt_gps_lost_count += 1
+            elif ev_id in (25, 26, 27, 28):  # ARMING related, some firmwares use these
+                pass
                 
-        # The auto labels are attached as metadata by the pipeline or can be added to standard dictionary?
-        # The prompt says: "Also produces: evt_auto_labels: list of auto-suggested labels. (This is NOT a feature for ML — it's metadata...)"
-        # We'll just return it in the dict and pipeline will filter it.
-        
+        for msg in err_msgs:
+            subsys = int(self._safe_value(msg, "Subsys"))
+            if subsys == 5:  # FAILSAFE_RADIO = RC signal lost
+                evt_radio_failsafe_count += 1
+                
+        # Also detect failsafe-triggered RTL/Land mode changes.
+        # ArduPilot MODE log: Reason=1 means GCS failsafe, Reason=2 means RC failsafe
+        for msg in mode_msgs:
+            mode_num = int(self._safe_value(msg, "ModeNum", self._safe_value(msg, "Mode")))
+            reason = int(self._safe_value(msg, "Reason", -1))
+            if mode_num in [6, 9] and reason == 2:  # RTL or Land, RC failsafe reason
+                evt_rc_lost_count += 1
+                
         return {
             "evt_error_count": float(evt_error_count),
             "evt_failsafe_count": float(evt_failsafe_count),
@@ -67,5 +82,7 @@ class EventExtractor(BaseExtractor):
             "evt_unexpected_mode_changes": float(evt_unexpected_mode_changes),
             "evt_crash_detected": float(evt_crash_detected),
             "evt_gps_lost_count": float(evt_gps_lost_count),
-            "_evt_auto_labels": evt_auto_labels  # underscore prefix so it's treated as non-numerical metadata
+            "evt_radio_failsafe_count": float(evt_radio_failsafe_count),
+            "evt_rc_lost_count": float(evt_rc_lost_count),
+            "_evt_auto_labels": evt_auto_labels
         }

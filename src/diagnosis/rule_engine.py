@@ -31,6 +31,7 @@ class RuleEngine:
             self._check_motors,
             self._check_ekf,
             self._check_system,
+            self._check_rc_failsafe,
             self._check_events
         ]:
             result = check(features)
@@ -199,8 +200,11 @@ class RuleEngine:
         spread_std = features.get("motor_spread_std", 0.0)
         roll_std = features.get("att_roll_std", 0.0)
         
-        lim_spr = self.thresholds.get("motor_spread_limit", 200.0)
-        lim_mean = self.thresholds.get("spread_mean_limit", 100.0)
+        # Raised significantly: old 200/100 fired on >90% of all flights.
+        # A healthy quad at hover routinely has spread of 100-250 PWM.
+        # True motor imbalance shows sustained high spread.
+        lim_spr = self.thresholds.get("motor_spread_limit", 400.0)   # was 200
+        lim_mean = self.thresholds.get("spread_mean_limit", 200.0)   # was 100
         
         if spread_max <= lim_spr and spread_mean <= lim_mean:
             return None
@@ -209,21 +213,25 @@ class RuleEngine:
         conf = 0.0
         failure = "motor_imbalance"
 
-        if spread_max >= (lim_spr * 1.25):
+        # Require both max AND mean to be elevated for high confidence
+        # This avoids calling a single-spike transient a motor failure
+        both_elevated = spread_max > lim_spr and spread_mean > lim_mean
+        
+        if spread_max >= (lim_spr * 1.5):  # 600+ PWM = very severe
             conf += 0.55
-            evidence.append({"feature": "motor_spread_max", "value": spread_max, "threshold": lim_spr * 1.25, "direction": "above"})
+            evidence.append({"feature": "motor_spread_max", "value": spread_max, "threshold": lim_spr * 1.5, "direction": "above"})
         elif spread_max > lim_spr:
-            conf += 0.35
+            conf += 0.30 if both_elevated else 0.15  # lower if mean is ok
             evidence.append({"feature": "motor_spread_max", "value": spread_max, "threshold": lim_spr, "direction": "above"})
 
-        if spread_mean >= (lim_mean * 1.4):
-            conf += 0.35
-            evidence.append({"feature": "motor_spread_mean", "value": spread_mean, "threshold": lim_mean * 1.4, "direction": "above"})
+        if spread_mean >= (lim_mean * 1.5):  # 300+ sustained mean = definite imbalance
+            conf += 0.40
+            evidence.append({"feature": "motor_spread_mean", "value": spread_mean, "threshold": lim_mean * 1.5, "direction": "above"})
         elif spread_mean > lim_mean:
-            conf += 0.2
+            conf += 0.25
             evidence.append({"feature": "motor_spread_mean", "value": spread_mean, "threshold": lim_mean, "direction": "above"})
 
-        if spread_std > 60 and roll_std < 4:
+        if spread_std > 80 and roll_std < 4:
             conf += 0.1
         elif spread_std < 25 and roll_std > 10:
             failure = "pid_tuning_issue"
@@ -248,9 +256,12 @@ class RuleEngine:
         ls = features.get("ekf_lane_switch_count", 0.0)
         fp = features.get("ekf_flags_error_pct", 0.0)
         
-        lim_fail = self.thresholds.get("ekf_variance_fail", 1.0)
+        # Raised threshold: compass_var > 1.0 fires too easily from motor EMI interference.
+        # Real EKF failure needs 2+ variances high OR a lane switch.
+        lim_fail = self.thresholds.get("ekf_variance_fail", 1.5)   # was 1.0
+        lim_warn = lim_fail * 0.7  # ~1.05
         
-        if vv <= lim_fail and pv <= lim_fail and cv <= lim_fail and ls == 0 and fp < 0.1:
+        if vv <= lim_warn and pv <= lim_warn and cv <= lim_warn and ls == 0 and fp < 0.1:
             return None
             
         conf = 0.0
@@ -260,32 +271,34 @@ class RuleEngine:
         
         for name, val in [("ekf_vel_var", vv), ("ekf_pos_var", pv), ("ekf_compass_var", cv)]:
             if val > (lim_fail * 1.5):
-                conf = max(conf, 0.8)
+                conf = max(conf, 0.85)
                 variances_over_fail += 1
                 evidence.append({"feature": f"{name}_max", "value": val, "threshold": lim_fail * 1.5, "direction": "above"})
             elif val > lim_fail:
-                conf = max(conf, 0.55)
+                conf = max(conf, 0.65)
                 variances_over_fail += 1
                 evidence.append({"feature": f"{name}_max", "value": val, "threshold": lim_fail, "direction": "above"})
-            elif val > 0.8:
+            elif val > lim_warn:
                 variances_over_warn += 1
 
         if variances_over_warn >= 2:
-            conf = max(conf, 0.6)
+            conf = max(conf, 0.55)
         if variances_over_fail >= 2:
-            conf = max(conf, 0.85)
+            conf = max(conf, 0.90)
 
         if ls > 0:
-            conf += 0.15
+            conf += 0.20
             evidence.append({"feature": "ekf_lane_switch_count", "value": ls, "threshold": 0, "direction": "above"})
         if fp > 0.1:
-            conf += 0.1
+            conf += 0.10
             evidence.append({"feature": "ekf_flags_error_pct", "value": fp, "threshold": 0.1, "direction": "above"})
 
         conf = min(conf, 1.0)
         if conf == 0.0: return None
-        if conf < 0.7 and variances_over_fail < 2 and ls == 0 and fp <= 0.2:
-            return None
+        
+        # Require either: 2+ variances over fail threshold, OR a lane switch, OR very high single var
+        if variances_over_fail < 2 and ls == 0 and (max(vv, pv, cv) < lim_fail * 1.5):
+            return None  # Single moderate variance alone is not EKF failure
 
         return {
             "failure_type": "ekf_failure", "confidence": conf, "severity": "critical" if conf >= 0.8 else "warning",
@@ -327,7 +340,38 @@ class RuleEngine:
             "recommendation": "System load extremely high or internal errors. Software or companion computer issue."
         }
 
-    def _check_events(self, features):
+    def _check_rc_failsafe(self, features):
+        """Detect RC failsafe events."""
+        failsafe_count = features.get("evt_failsafe_count", 0.0)
+        radio_failsafe = features.get("evt_radio_failsafe_count", 0.0)  # subsystem=5 (FAILSAFE_RADIO)
+        rc_lost = features.get("evt_rc_lost_count", 0.0)  # MODE log: RTL/Land with reason=2
+        
+        if failsafe_count == 0 and radio_failsafe == 0 and rc_lost == 0:
+            return None
+            
+        conf = 0.0
+        evidence = []
+        
+        if radio_failsafe > 0:
+            # Confirmed RC radio failsafe subsystem event
+            conf = 0.90
+            evidence.append({"feature": "evt_radio_failsafe_count", "value": radio_failsafe, "threshold": 0, "direction": "above"})
+        elif failsafe_count > 0:
+            # A generic failsafe happened — could be RC or battery.
+            # Use moderate confidence since rule_engine will disambiguate on power features too
+            conf = 0.65
+            evidence.append({"feature": "evt_failsafe_count", "value": failsafe_count, "threshold": 0, "direction": "above"})
+        if rc_lost > 0:
+            conf = min(conf + 0.15, 1.0)
+            evidence.append({"feature": "evt_rc_lost_count", "value": rc_lost, "threshold": 0, "direction": "above"})
+            
+        return {
+            "failure_type": "rc_failsafe", "confidence": conf, "severity": "critical",
+            "detection_method": "rule", "evidence": evidence,
+            "recommendation": FAILURE_RECOMMENDATIONS.get("rc_failsafe", "RC signal lost. Check radio equipment and range.")
+        }
+
+
         # Triggered when evt_crash_detected > 0 or evt_failsafe_count > 0
         crashes = features.get("evt_crash_detected", 0.0)
         failsafes = features.get("evt_failsafe_count", 0.0)
