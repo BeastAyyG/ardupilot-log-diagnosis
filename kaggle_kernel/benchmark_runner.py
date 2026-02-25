@@ -1,0 +1,148 @@
+import os
+import subprocess
+import sys
+import shutil
+import shlex
+
+def run_cmd(cmd, cwd=None, shell=False, check=True):
+    print(f"[CMD] {cmd}", flush=True)
+    if shell:
+        result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True)
+    else:
+        result = subprocess.run(shlex.split(cmd) if isinstance(cmd, str) else cmd,
+                                cwd=cwd, capture_output=True, text=True)
+    if result.stdout:
+        print(result.stdout, flush=True)
+    if result.stderr:
+        print("[STDERR]", result.stderr[:2000], flush=True)
+    if check and result.returncode != 0:
+        raise RuntimeError(f"Command failed (rc={result.returncode}): {cmd}")
+    return result
+
+print("=" * 60, flush=True)
+print("ArduPilot Log Benchmark — Recovery v8", flush=True)
+print("=" * 60, flush=True)
+
+# ── 1. Setup ──────────────────────────────────────────────────
+WORK_DIR = "/kaggle/working"
+os.chdir(WORK_DIR)
+
+# ── 2. Clone latest code ──────────────────────────────────────
+REPO = "https://github.com/BeastAyyG/ardupilot-log-diagnosis.git"
+REPO_DIR = os.path.join(WORK_DIR, "ardupilot-log-diagnosis")
+if os.path.exists(REPO_DIR):
+    shutil.rmtree(REPO_DIR)
+run_cmd(f"git clone {REPO}")
+os.chdir(REPO_DIR)
+print(f"[CWD] {os.getcwd()}", flush=True)
+
+# ── 3. Find data ──────────────────────────────────────────────
+print("Searching for ground_truth.json ...", flush=True)
+gt_matches = []
+for root, dirs, files in os.walk("/kaggle/input"):
+    if "ground_truth.json" in files:
+        gt_matches.append(os.path.join(root, "ground_truth.json"))
+
+if not gt_matches:
+    run_cmd("find /kaggle/input -maxdepth 5 -name '*.json'", shell=True, check=False)
+    sys.exit("FATAL: ground_truth.json not found")
+
+GROUND_TRUTH = gt_matches[0]
+DATASET_DIR  = os.path.join(os.path.dirname(GROUND_TRUTH), "dataset")
+OUTPUT_DIR   = os.path.join(WORK_DIR, "benchmark_outputs")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+print(f"Ground truth : {GROUND_TRUTH}", flush=True)
+print(f"Dataset dir  : {DATASET_DIR}", flush=True)
+print(f"Output dir   : {OUTPUT_DIR}", flush=True)
+
+# Verify dataset dir has files
+import json, glob
+with open(GROUND_TRUTH) as f:
+    gt_data = json.load(f)
+n_logs = len(gt_data.get("logs", []))
+n_files = len(glob.glob(os.path.join(DATASET_DIR, "*.bin")))
+print(f"Ground truth logs: {n_logs}", flush=True)
+print(f"Dataset .bin files: {n_files}", flush=True)
+
+# ── 4. Install deps ───────────────────────────────────────────
+run_cmd("pip install -q pymavlink numpy xgboost scikit-learn pyyaml")
+
+# ── 5. Run each engine separately with explicit env/cwd ───────
+env = os.environ.copy()
+env["PYTHONPATH"] = REPO_DIR  # ensure src/ is importable
+
+ENGINES = ["rule", "hybrid"]   # skip ml (no model trained yet — always 0%)
+
+summaries = []
+for engine in ENGINES:
+    prefix = os.path.join(OUTPUT_DIR, f"benchmark_results_{engine}")
+    cmd = [
+        sys.executable, "-m", "src.cli.main", "benchmark",
+        "--engine", engine,
+        "--dataset-dir", DATASET_DIR,
+        "--ground-truth", GROUND_TRUTH,
+        "--output-prefix", prefix,
+    ]
+    print(f"\n{'─'*50}", flush=True)
+    print(f"[ENGINE] {engine}", flush=True)
+    print(f"{'─'*50}", flush=True)
+
+    result = subprocess.run(
+        cmd,
+        cwd=REPO_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout, flush=True)
+    if result.stderr:
+        # Only print non-trivial stderr
+        stderr_lines = [l for l in result.stderr.splitlines()
+                        if l.strip() and not l.startswith("WARNING")]
+        if stderr_lines:
+            print("[STDERR]\n" + "\n".join(stderr_lines[:40]), flush=True)
+
+    if result.returncode != 0:
+        print(f"[ERROR] Engine {engine} failed with rc={result.returncode}", flush=True)
+        summaries.append({"engine": engine, "error": True})
+        continue
+
+    # Load result JSON
+    json_path = prefix + ".json"
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            data = json.load(f)
+        ov = data.get("overall", {})
+        summaries.append({
+            "engine": engine,
+            "accuracy":   ov.get("accuracy", 0.0),
+            "top1_acc":   ov.get("top1_accuracy", 0.0),
+            "macro_f1":   ov.get("macro_f1", 0.0),
+            "total_logs": ov.get("total_logs", 0),
+            "ok":         ov.get("successful_extractions", 0),
+            "failed":     ov.get("failed_extractions", 0),
+        })
+    else:
+        print(f"[WARN] No output JSON at {json_path}", flush=True)
+        summaries.append({"engine": engine, "error": "no_json"})
+
+# ── 6. Print summary ──────────────────────────────────────────
+print("\n" + "=" * 60, flush=True)
+print("BENCHMARK SUMMARY", flush=True)
+print("=" * 60, flush=True)
+for s in summaries:
+    if s.get("error"):
+        print(f"  {s['engine']:10s}: FAILED ({s.get('error')})", flush=True)
+    else:
+        print(
+            f"  {s['engine']:10s}: any_match={s['accuracy']:.2%}  top1={s['top1_acc']:.2%}"
+            f"  macro_f1={s['macro_f1']:.4f}  logs={s['ok']}/{s['total_logs']}",
+            flush=True,
+        )
+
+# ── 7. Package ────────────────────────────────────────────────
+os.chdir(WORK_DIR)
+run_cmd(f"zip -r benchmark_recovery_v8.zip benchmark_outputs", shell=False,
+        cmd=f"zip -r benchmark_recovery_v8.zip benchmark_outputs")
+print("\n[DONE] Benchmark complete.", flush=True)
