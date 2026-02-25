@@ -17,26 +17,38 @@ class MotorExtractor(BaseExtractor):
         max_output_overall = 0.0
         t_vals = []
         
-        for msg in rcou_msgs:
-            # Assuming typically channels 1 to 4 or 8 for motors
-            # We fetch all channels that start with 'C' and a number
-            channels = []
-            for k in msg.keys():
-                if k.startswith("C") and k[1:].isdigit():
-                    val = self._safe_value(msg, k)
-                    if val > 800:  # Valid motor output typically > 1000, 800 is safe margin
-                        channels.append(val)
+        if not rcou_msgs:
+            pass
+        else:
+            # Skip the first 10 seconds of flight (arm/takeoff transients)
+            # to avoid false tanomaly triggers at motor startup
+            first_t = float(rcou_msgs[0].get("TimeUS", rcou_msgs[0].get("_timestamp", 0.0)))
+            skip_until = first_t + 10_000_000  # 10 seconds in microseconds
             
-            if channels:
-                max_ch = max(channels)
-                min_ch = min(channels)
-                spread_vals.append(max_ch - min_ch)
-                output_vals.extend(channels)
-                t_vals.append(float(msg.get("TimeUS", msg.get("_timestamp", 0.0))))
-                if max_ch > max_output_overall:
-                    max_output_overall = float(max_ch)
+            for msg in rcou_msgs:
+                t = float(msg.get("TimeUS", msg.get("_timestamp", 0.0)))
+                channels = []
+                for k in msg.keys():
+                    if k.startswith("C") and k[1:].isdigit():
+                        val = self._safe_value(msg, k)
+                        if val > 800:  # Valid motor output
+                            channels.append(val)
+                
+                if channels:
+                    max_ch = max(channels)
+                    min_ch = min(channels)
                     
-        spread_stats = self._safe_stats(spread_vals, t_vals, threshold=200.0)
+                    # Always accumulate for mean/max/std features
+                    spread_vals.append(max_ch - min_ch)
+                    output_vals.extend(channels)
+                    if max_ch > max_output_overall:
+                        max_output_overall = float(max_ch)
+                    
+                    # Only add timestamps for tanomaly after startup phase
+                    if t >= skip_until:
+                        t_vals.append(t)
+                    
+        spread_stats = self._safe_stats(spread_vals, t_vals, threshold=400.0)
         output_stats = self._safe_stats(output_vals)
         
         mot_thst_hover = self.parameters.get("MOT_THST_HOVER")

@@ -88,11 +88,9 @@ class HybridEngine:
         merged_diagnoses.sort(key=rank, reverse=True)
 
         # Temporal Arbiter Filter (Phase 3 Integration)
-        # Disambiguate root cause by selecting the earliest onset symptom to avoid cascading errors.
+        # Disambiguate root cause by selecting the earliest onset symptom.
+        # Only filter when we have multiple candidates and at least one has valid tanomaly data.
         if merged_diagnoses and len(merged_diagnoses) > 1:
-            earliest_time = float('inf')
-            root_cause = None
-            
             prefix_map = {
                 'vibration_high': 'vibe_z',
                 'compass_interference': 'mag',
@@ -102,18 +100,31 @@ class HybridEngine:
                 'ekf_failure': 'ekf_pos_var',
             }
             
+            # Build (tanomaly, confidence, diag) tuples for candidates with valid tanomaly
+            timed_candidates = []
             for d in merged_diagnoses:
                 ftype = d["failure_type"]
                 prefix = prefix_map.get(ftype)
                 tanomaly = features.get(f'{prefix}_tanomaly', -1.0) if prefix else -1.0
+                if tanomaly > 0:
+                    timed_candidates.append((tanomaly, d["confidence"], d))
+            
+            if timed_candidates:
+                # Sort by earliest onset, then by confidence for ties within 5 seconds
+                TEMPORAL_TIE_WINDOW_US = 5_000_000  # 5 seconds
+                timed_candidates.sort(key=lambda x: (x[0], -x[1]))
                 
-                # Boost confidence if ML says yes but time was earliest
-                if 0 < tanomaly < earliest_time:
-                    earliest_time = tanomaly
-                    root_cause = d
-                    
-            if root_cause:
-                root_cause["recommendation"] = "[ARB_FILTERED: ROOT CAUSE] " + str(root_cause.get("recommendation", ""))
+                best_time, best_conf, best_diag = timed_candidates[0]
+                root_cause = best_diag
+                
+                # Within tie window, prefer the higher confidence label
+                for t_time, t_conf, t_diag in timed_candidates[1:]:
+                    if t_time - best_time <= TEMPORAL_TIE_WINDOW_US and t_conf > best_conf:
+                        root_cause = t_diag
+                        best_conf = t_conf
+                        
+                root_cause = dict(root_cause)  # don't mutate original
+                root_cause["recommendation"] = "[ARB] " + str(root_cause.get("recommendation", ""))
                 return [root_cause]
 
         # Filter for low-quality symptom cascades if Temporal Arbiter didn't trigger
