@@ -120,3 +120,15 @@ Source file: `data/background_scrapes_batch/crawler_manifest.csv` (rows with `st
 - `data/background_scrapes_batch` is an active extraction pool and includes unlabeled logs that are not yet benchmark-trainable.
 - `data/clean_imports/background_batch_01` and `data/clean_imports/background_scrapes_01` both currently report 40 parse-valid unique logs and 0 benchmark-trainable labels.
 - Counts are expected to change as more extraction and manual review proceed.
+
+## Kaggle Backup Snapshot
+
+Synced from `beastayyg/ardupilot-master-log-pool-v2` into:
+
+- `data/kaggle_backups/ardupilot-master-log-pool-v2/`
+
+Validated by `ops/kaggle_backup/sync_master_pool_from_kaggle.py`:
+
+- `.bin` logs: **45**
+- `ground_truth.json` rows: **45**
+- Sync report: `data/kaggle_backups/ardupilot-master-log-pool-v2/kaggle_sync_report.json`

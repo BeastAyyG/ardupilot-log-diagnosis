@@ -1,0 +1,22 @@
+{
+  "generated_at_utc": "2026-02-26T01:40:12.862981+00:00",
+  "dataset_ref": "beastayyg/ardupilot-master-log-pool-v2",
+  "output_dir": "data/kaggle_backups/ardupilot-master-log-pool-v2",
+  "expected_log_count": 45,
+  "observed_log_count": 45,
+  "ground_truth_path": "data/kaggle_backups/ardupilot-master-log-pool-v2/ground_truth.json",
+  "ground_truth_count": 45,
+  "validation": {
+    "log_count_ok": true,
+    "ground_truth_count_ok": true
+  },
+  "artifacts": {
+    "kaggle_files_csv": "data/kaggle_backups/ardupilot-master-log-pool-v2/kaggle_files.csv",
+    "report_json": "data/kaggle_backups/ardupilot-master-log-pool-v2/kaggle_sync_report.json"
+  },
+  "master_pool_sync": {
+    "copied_bin_files": 0,
+    "skipped_existing_bin_files": 45,
+    "ground_truth_copied": true
+  }
+}
