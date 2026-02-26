@@ -1,0 +1,27 @@
+{
+  "source_root": "/home/srma/Desktop/ardupilot-log-diagnosis/data/background_scrapes_batch",
+  "output_root": "data/clean_imports/background_expert_01",
+  "generated_at_utc": "2026-02-26T01:14:55.078545+00:00",
+  "counts": {
+    "total_bin_files": 41,
+    "parseable_bin_files": 40,
+    "unique_parseable_after_dedupe": 40,
+    "rejected_nonlog": 0,
+    "zip_files": 8,
+    "unique_zip_files": 8,
+    "verified_labeled": 10,
+    "provisional_labeled": 0,
+    "verified_unlabeled": 30,
+    "benchmark_trainable": 10
+  },
+  "artifacts": {
+    "source_inventory_csv": "data/clean_imports/background_expert_01/manifests/source_inventory.csv",
+    "source_inventory_json": "data/clean_imports/background_expert_01/manifests/source_inventory.json",
+    "clean_import_manifest_csv": "data/clean_imports/background_expert_01/manifests/clean_import_manifest.csv",
+    "clean_import_manifest_json": "data/clean_imports/background_expert_01/manifests/clean_import_manifest.json",
+    "rejected_manifest_csv": "data/clean_imports/background_expert_01/manifests/rejected_manifest.csv",
+    "ground_truth_candidate_json": "data/clean_imports/background_expert_01/manifests/ground_truth_candidate.json",
+    "benchmark_ground_truth_json": "data/clean_imports/background_expert_01/benchmark_ready/ground_truth.json",
+    "proof_markdown": "data/clean_imports/background_expert_01/manifests/provenance_proof.md"
+  }
+}

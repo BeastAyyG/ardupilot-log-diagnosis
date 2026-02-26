@@ -86,3 +86,49 @@ def test_collect_forum_command_dispatch():
                 main()
             except SystemExit as e:
                 assert e.code == 0 or e.code is None
+
+
+def test_mine_expert_labels_collect_dispatch():
+    test_args = ["main", "mine-expert-labels", "--output-root", "/tmp/expert"]
+    fake_summary = {
+        "output_root": "/tmp/expert",
+        "topics_scanned": 0,
+        "topics_with_expert_label": 0,
+        "rows": 0,
+        "downloaded": 0,
+        "not_log_payload": 0,
+        "download_failed": 0,
+        "artifacts": {
+            "manifest_csv": "/tmp/expert/crawler_manifest_v2.csv",
+            "block1_csv": "/tmp/expert/block1_ardupilot_discuss.csv",
+            "summary_json": "/tmp/expert/crawler_summary_v2.json",
+            "state_json": "/tmp/expert/expert_miner_state.json",
+        },
+    }
+    with patch("src.data.expert_label_miner.collect_expert_labeled_forum_logs", return_value=fake_summary):
+        with patch.object(sys, "argv", test_args):
+            try:
+                main()
+            except SystemExit as e:
+                assert e.code == 0 or e.code is None
+
+
+def test_mine_expert_labels_enrich_dispatch():
+    test_args = ["main", "mine-expert-labels", "--enrich-only", "--source-root", "/tmp/source"]
+    fake_summary = {
+        "source_root": "/tmp/source",
+        "input_manifest": "/tmp/source/crawler_manifest.csv",
+        "output_manifest": "/tmp/source/crawler_manifest_v2.csv",
+        "output_block1": "/tmp/source/block1_ardupilot_discuss.csv",
+        "rows": 0,
+        "topics_scanned": 0,
+        "topics_with_expert_label": 0,
+        "rows_with_label": 0,
+        "summary_json": "/tmp/source/expert_label_summary.json",
+    }
+    with patch("src.data.expert_label_miner.enrich_manifest_with_expert_labels", return_value=fake_summary):
+        with patch.object(sys, "argv", test_args):
+            try:
+                main()
+            except SystemExit as e:
+                assert e.code == 0 or e.code is None

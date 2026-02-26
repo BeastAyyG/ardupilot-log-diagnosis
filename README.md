@@ -247,6 +247,38 @@ python training/grow_benchmark_dataset.py \
   --no-zip
 ```
 
+### Expert-Labeled Mining (No Manual Labeling)
+
+Mine only topics that already contain Developer/staff diagnosis text, then
+generate clean-import compatible artifacts (`crawler_manifest_v2.csv` and
+`block1_ardupilot_discuss.csv`).
+
+Run against an existing downloaded batch:
+
+```bash
+python -m src.cli.main mine-expert-labels \
+  --enrich-only \
+  --source-root data/background_scrapes_batch
+
+python -m src.cli.main import-clean \
+  --source-root data/background_scrapes_batch \
+  --output-root data/clean_imports/background_expert_01
+```
+
+Or run new expert-only discovery + download:
+
+```bash
+python -m src.cli.main mine-expert-labels \
+  --output-root data/raw_downloads/expert_batch_2026-02-26 \
+  --queries-json ops/expert_label_pipeline/queries/crash_analysis_high_recall.json \
+  --after-date 2026-01-01 \
+  --max-topics-per-query 150 \
+  --max-downloads 300 \
+  --sleep-ms 350
+```
+
+See `ops/expert_label_pipeline/README.md` for the full runbook.
+
 Companion-health output location:
 - `companion_health/data/health_monitor/`
 

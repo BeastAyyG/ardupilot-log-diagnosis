@@ -1,0 +1,12 @@
+{
+  "mode": "enrich_manifest",
+  "source_root": "data/background_scrapes_batch",
+  "input_manifest": "data/background_scrapes_batch/crawler_manifest.csv",
+  "output_manifest": "data/background_scrapes_batch/crawler_manifest_v2.csv",
+  "output_block1": "data/background_scrapes_batch/block1_ardupilot_discuss.csv",
+  "rows": 137,
+  "topics_scanned": 88,
+  "topics_with_expert_label": 18,
+  "rows_with_label": 33,
+  "generated_at_utc": "2026-02-26T01:14:35.217270+00:00"
+}

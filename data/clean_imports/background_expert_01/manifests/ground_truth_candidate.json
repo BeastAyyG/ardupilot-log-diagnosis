@@ -1,0 +1,559 @@
+{
+  "metadata": {
+    "description": "Candidate ground truth generated from clean import",
+    "source_batch": "background_scrapes_batch",
+    "generated_at_utc": "2026-02-26T01:14:55.078146+00:00",
+    "policy": {
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ],
+      "mapped_labels": {
+        "VIBE_HIGH": "vibration_high",
+        "MAG_INTERFERENCE": "compass_interference"
+      },
+      "trainable_only_for_mapped_labels": true
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0064_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/rtl-flyaway-bad-pos-among-others/53951",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Edit: Mike Boland beat me to it There\u2019s a large weight imbalance, heavy towards the rear. This is causing motors 1 and 3 to be doing almost nothing, while motors 2 and 4 work close to their maximum. This leaves no headroom for attitude control. Attitude wasnt great to begin with, but it gets worse as the flight goes on, the motor outputs go all over the place Z axis vibration looks a bit bad, and is usually the numbe",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "01803ce998a260eb56293a2e805ce3350a9b3d1fe00fb0a90bedc149849e611e",
+      "expert_username": "xfacta"
+    },
+    {
+      "filename": "log_0029_battery_failsafe.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "First thing - upgrade to latest stable firmware before doing anything else, version 3.6.8 is very old now. Select the flight controller as Pixhawk1 Next thing - don\u2019t rush into jumping down my list to ESC calibration and and trying to arm and fly again - work through all these things in order. Put ARMING_CHECK back to 1 Also set BATT_FS_CRT_ACT,1 BATT_FS_LOW_ACT,2 MOT_PWM_MIN,1000 MOT_PWM_MAX,2000 Check your radio fa",
+      "confidence": "low",
+      "raw_label": "BATTERY_FAILSAFE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "0818fe7e5ce3cda47fdf3fef42cb2d02963f354b8b18750fa59edb3d0e035719",
+      "expert_username": "xfacta"
+    },
+    {
+      "filename": "log_0033_hardware_failure.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/failure-to-launch/80437",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I\u2019ve recently experienced some odd takeoff behaviour with my Bixinator. I have everything setup for auto launch in my Mission, I arm the plane and throw it and some random (apparently) percentage of the time the motor doesn\u2019t fire and it just glides to the ground. If I reset the mission and try again, it sometimes works. Or sometimes it works the first time. I haven\u2019t been able to figure out what I\u2019m doing wrong. Thi",
+      "confidence": "low",
+      "raw_label": "HARDWARE_FAILURE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "15deab36497ed66aba1b18194547f8b39e9b40d2cab58524a3654c4cee916521",
+      "expert_username": "timtuxworth"
+    },
+    {
+      "filename": "log_0041_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3-6-7-installed-and-tested-drone-crashed-firmware-issue-or-battery-or-something-else-unable-to-find-out/39722",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "1796486e9ac43407765587df16a6d0fb6577cd7bee4c76b8c82ce0196075413a",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0039_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/esc-failure-or-signal-lost-thank-s-for-help/18093",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "1de0bcaf777b20c7f69c2948472c1ad5e87eb34dfe40c5bbce29d77f969acdf8",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0030_battery_failsafe.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/copter-3-5-5-rc1-available-for-beta-testing/25162",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Keith, There was a transmitter/receiver/RC failsafe in the log. I suspect that was what caused the RTL\u2026 A the risk of being nitpicky\u2026 the GCS almost never sends flight mode change requests, certainly it\u2019s not responsible for failsafes. In general the only time the GCSs request flight mode changes is when the user requests \u201cFollow-me\u201d, \u201cFly to Here\u201d or specifically hits one of the set-mode buttons (i.e. on the MP\u2019s ac",
+      "confidence": "low",
+      "raw_label": "BATTERY_FAILSAFE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "200022930ad7a751ae5777cda44b984019978f4847616c6fd1b19ee1872b0c93",
+      "expert_username": "rmackay9"
+    },
+    {
+      "filename": "log_0061_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/multiple-flyaways-in-loiter-and-auto/17663",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "20fe2a41c6ded85bcc36efd3337de6bf53a5c0e0a8178d481f1ecc52bb38b18e",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0058_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/multiple-flyaways-in-guided-do-i-need-to-tune-the-ekf/17438",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "396bc7ab6056c96abab9d93d615115f58c30e36a6a373565bd26e30b34cc057e",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0044_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "405c8b855f571cfb58f800bb46723ff38732305f8c0e81a7d2d713feeade27bf",
+      "expert_username": "timtuxworth"
+    },
+    {
+      "filename": "log_0032_hardware_failure.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/failure-to-launch/80437",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I\u2019ve recently experienced some odd takeoff behaviour with my Bixinator. I have everything setup for auto launch in my Mission, I arm the plane and throw it and some random (apparently) percentage of the time the motor doesn\u2019t fire and it just glides to the ground. If I reset the mission and try again, it sometimes works. Or sometimes it works the first time. I haven\u2019t been able to figure out what I\u2019m doing wrong. Thi",
+      "confidence": "low",
+      "raw_label": "HARDWARE_FAILURE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "476a5e4c28ef03599353736a46d832d0a14193e5ea3b28246aea6bc945c529ef",
+      "expert_username": "timtuxworth"
+    },
+    {
+      "filename": "log_0063_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/possibly-a-fly-away-please-take-a-look-at-the-log/41183",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "4be9cde3ea55c3cdabf84251ec2064591d051c71b6a4c973760ca65202e1ce40",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0054_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/tuning-issues-with-plane-successful-auto-t-o-and-land-maiden-now-not-so-much/100608",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "5429897d5ff19a109ff8a5ae95a09e63a21d97b976cb36d35cfd31d114ddf55d",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0040_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/engine-failure-bug-mechanical-or-other/77323",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "58f3f3b631233a6dc4c20f6d42ed47252d0c05788bd45fd57fc87074bad68778",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0055_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/tuning-issues-with-plane-successful-auto-t-o-and-land-maiden-now-not-so-much/100608",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "744e1d163202c8578dae7aca509430972ddd8e0f6ce402d9d2a94ed5e329a339",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0045_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "75a2881bbec319096c2ee9bd40881910f70fcfed759995dc39f8147656602699",
+      "expert_username": "timtuxworth"
+    },
+    {
+      "filename": "log_0071_radio_failsafe.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/failsafe-sbus-not-working/65942",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Yes that\u2019s the same as what I get. I have just bound a new receiver (during very low throttle) and Taranis is set to No Pulses. I\u2019m using ArduCopter V4.0.5 on this quad. Arducopter realises there\u2019s no pulses (PWM or SBUS) from the receiver and enters failsafe, same as if the throttle channel goes below the set PWM level. I have a throttle disable switch SF set to drop the throttle channel to 930 PWM or there-about. W",
+      "confidence": "low",
+      "raw_label": "RADIO_FAILSAFE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "7b4e98a4d20fd3ec5325b0b6a964112b7a4cc8f5b3e6e1d6a4cd36a5f441a942",
+      "expert_username": "xfacta"
+    },
+    {
+      "filename": "log_0028_battery_failsafe.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/rtl-does-not-return-to-launch-nor-lands-but-kind-of-loiters/6876",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "BATTERY_FAILSAFE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "8edac767be66c882f4374171331c5f6d90114d82757fb59bb15abb171918df9a",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0056_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/crash-when-switching-from-rtl-to-loiter/103732",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "96fb229fb404f57bc4d1c4ed4b41da69a6d442a618fdae1d3208b5d9fe425b69",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0059_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/something-is-wrong-with-my-copter-build/46289",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "9ae5224970cc1340f99205a1ef807742470924352a68e606e13d0c249f6bef51",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0060_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/something-is-wrong-with-my-copter-build/46289",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "a4d4a24d39c3a028704f0cee08899d60c46ba43ed237662b2352fdf8d02fe0a4",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0043_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "aac514db54f5aedc3af338ba5a94d3a5369ae4ecf33f96d0f4692b83f93fa253",
+      "expert_username": "timtuxworth"
+    },
+    {
+      "filename": "log_0066_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "The altitude issue first It\u2019s likely these are too high MOT_SPIN_ARM,0.14 MOT_SPIN_MIN,0.17 MOT_THST_HOVER,0.5212066 Try these for a starting point MOT_SPIN_ARM,0.10 MOT_SPIN_MIN,0.13 MOT_THST_HOVER,0.2 Vibrations do rise and altitude goes up (which is a problem that can occur) but in your case it\u2019s hard to tell if the vibrations are a cause or symptom because of the short flight time and minimal good data. For testi",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "af2836cad8f18ca67758f6e45730a2756a37938dfc2f2e2dc6fbb27dca7e5641",
+      "expert_username": "xfacta"
+    },
+    {
+      "filename": "log_0067_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/solo-flyaway-and-crash-during-auto-mission/15265",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "b729efbac030e6071c1725cc8a06d7dbf37b7728f6f2f20c9cb805e1b893eacc",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0065_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "The altitude issue first It\u2019s likely these are too high MOT_SPIN_ARM,0.14 MOT_SPIN_MIN,0.17 MOT_THST_HOVER,0.5212066 Try these for a starting point MOT_SPIN_ARM,0.10 MOT_SPIN_MIN,0.13 MOT_THST_HOVER,0.2 Vibrations do rise and altitude goes up (which is a problem that can occur) but in your case it\u2019s hard to tell if the vibrations are a cause or symptom because of the short flight time and minimal good data. For testi",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "b89fc87fea657312f90ca28f92e6108f42bc97cb5c27267df8fc82bdfae690c0",
+      "expert_username": "xfacta"
+    },
+    {
+      "filename": "log_0052_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/tuning-issues-with-plane-successful-auto-t-o-and-land-maiden-now-not-so-much/100608",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "b8d168d2f71525654f6737a6b2b1ec719de7655ba70415bca7c0ca921d0940e4",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0049_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/quadcopter-crash-log-analysis-request/99897",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "bffc80e1da7d30ad042d9b8a0cdb06e01b0f1dbccae3589f415b1874502cb256",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0070_radio_failsafe.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/failsafe-sbus-not-working/65942",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "Yes that\u2019s the same as what I get. I have just bound a new receiver (during very low throttle) and Taranis is set to No Pulses. I\u2019m using ArduCopter V4.0.5 on this quad. Arducopter realises there\u2019s no pulses (PWM or SBUS) from the receiver and enters failsafe, same as if the throttle channel goes below the set PWM level. I have a throttle disable switch SF set to drop the throttle channel to 930 PWM or there-about. W",
+      "confidence": "low",
+      "raw_label": "RADIO_FAILSAFE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "c35318e6ce5ed8bc79c3173b15fe88b912c4a6bb4c288b64c6fe18243df729bd",
+      "expert_username": "xfacta"
+    },
+    {
+      "filename": "log_0047_thrust_loss.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/motors-maxing-out-when-flight/115319",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "THRUST_LOSS",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "c55006bd101fd1d9f634eb61a56add2b9f644e29e767fbd0d5af5e0051827ad6",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0062_flyaway.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/quad-flyaway-need-analysis/69210",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "FLYAWAY",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "c6d4e2f2539fc101acdfce3216d5cea54b9efa5e92303f7417d7f8aaa133865e",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0057_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/crash-when-switching-from-rtl-to-loiter/103732",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "ca2e821c6686411f14997b427dc7ebe286aa3fa41f6262d9ddd51a0f9f3cb65e",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0069_radio_failsafe.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/quadcopter-gives-radio-failsafe-and-climbs-to-15-meters-immidiately-after-arming/99762",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "RADIO_FAILSAFE",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "cdb6b1a5546b7f01c91fd16786e2cbda4d60a5f408ab1f3f7582628aa878498b",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0038_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/esc-failure-or-signal-lost-thank-s-for-help/18093",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "cf337b4dde9a1f203b7ceb588c591241e2acac577124e89d88f2b8783efef043",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0037_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-redundancy/72447",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "d3ecd87205ba32a8effd9f2e78443bee25ffd0baa8be333c78bd404f641cf81f",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0046_thrust_loss.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/im-new-unable-to-take-off-on-stabilize-or-lotier/9348",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "THRUST_LOSS",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "d5095b90be9440b7ef0528d2ddbdf945f3f3f774d3517335464974cdf37fcba8",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0036_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-3-4-4-rc1-available-for-beta-testing/13645",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "d9464b12aaed79a5ea7f7c626bd96d83037db37018deff5c2399d078a9d155fe",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0068_uncontrolled_descent.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/copter-unexpected-rapid-climb-after-arming-eventually-crashed/119799",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "UNCONTROLLED_DESCENT",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "e37a094bd36b9572806acfd0701214927028bffce22d8ab38877549ba95e87a5",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0042_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium",
+      "raw_label": "MECHANICAL_FAILURE",
+      "trainable": true,
+      "category": "verified_labeled",
+      "sha256": "e3c66d3ea3e373cb384166ef0f70ed27a2aad71ded3404d56f0681ef2f9cd962",
+      "expert_username": "timtuxworth"
+    },
+    {
+      "filename": "log_0048_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/oscillation-in-roll-and-pitch-resulting-in-crash/93512",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "f7d7a771d1b12dda9e1b19c21d6e6941822d5c319beb930b89920f6bde54181e",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0050_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/quadcopter-crash-log-analysis-request/99897",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "fa2f67b19dcbb58b7b7ac1797f44d59957fafa1f932aa06218555e3f465df0ce",
+      "expert_username": ""
+    },
+    {
+      "filename": "log_0053_oscillation_crash.bin",
+      "labels": [],
+      "source_url": "https://discuss.ardupilot.org/t/tuning-issues-with-plane-successful-auto-t-o-and-land-maiden-now-not-so-much/100608",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "low",
+      "raw_label": "OSCILLATION_CRASH",
+      "trainable": false,
+      "category": "verified_unlabeled",
+      "sha256": "fb32889d51090b69f75118e7a543457993575a0a7d38e299e0e647cc3ec77040",
+      "expert_username": ""
+    }
+  ]
+}

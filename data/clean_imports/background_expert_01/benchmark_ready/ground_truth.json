@@ -1,0 +1,121 @@
+{
+  "metadata": {
+    "description": "Benchmark-ready subset generated from clean import",
+    "source_batch": "background_scrapes_batch",
+    "generated_at_utc": "2026-02-26T01:14:55.016346+00:00",
+    "total_logs": 10,
+    "label_distribution": {
+      "mechanical_failure": 10
+    },
+    "policy": {
+      "exclude_synthetic": true,
+      "exclude_provisional_labels": true,
+      "exclude_unlabeled": true,
+      "provisional_labels": [
+        "ESC_DESYNC"
+      ]
+    }
+  },
+  "logs": [
+    {
+      "filename": "log_0041_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/3-6-7-installed-and-tested-drone-crashed-firmware-issue-or-battery-or-something-else-unable-to-find-out/39722",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0039_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/esc-failure-or-signal-lost-thank-s-for-help/18093",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0044_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0040_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/engine-failure-bug-mechanical-or-other/77323",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0045_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0043_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0038_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/esc-failure-or-signal-lost-thank-s-for-help/18093",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0037_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-redundancy/72447",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0036_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/copter-3-4-4-rc1-available-for-beta-testing/13645",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "",
+      "confidence": "medium"
+    },
+    {
+      "filename": "log_0042_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "source_url": "https://discuss.ardupilot.org/t/fixed-wing-dead-reckoning-test-of-the-zealot-h743-aero-applications-edition/101680",
+      "source_type": "ArduPilot_Discuss",
+      "expert_quote": "I plan to test dead reckoning using intertial navigation on the Qio-Tek Zealot H743 \u201cAero Applications Edition\u201d which has an IIM-42652, ICM-42688P and an ADIS\u201316470 IMU. Also: Barometers: DPS3018 *2 Compass: QMC5883L I\u2019ll also install an ASP-5033 Airspeed sensor (using DroneCAN of course). I know I can \u201cdisable\u201d GPS in software, but call me cynical, I want to be 100% sure that while flying with no GPS, there is no ch",
+      "confidence": "medium"
+    }
+  ]
+}
