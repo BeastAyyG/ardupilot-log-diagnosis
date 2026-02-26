@@ -1,0 +1,17 @@
+Training RandomForest baseline...
+Training XGBoost...
+--- RandomForest Results ---
+Macro F1: 0.000
+ vibration_high       -> F1: 0.000 (Support: 3)
+ compass_interference -> F1: 0.000 (Support: 3)
+ power_instability    -> F1: 0.000 (Support: 1)
+ ekf_failure          -> F1: 0.000 (Support: 2)
+--- XGBoost Results ---
+Macro F1: 0.000
+ vibration_high       -> F1: 0.000 (Support: 3)
+ compass_interference -> F1: 0.000 (Support: 3)
+ power_instability    -> F1: 0.000 (Support: 1)
+ ekf_failure          -> F1: 0.000 (Support: 2)
+
+Saving XGBoost as final model...
+Training complete!

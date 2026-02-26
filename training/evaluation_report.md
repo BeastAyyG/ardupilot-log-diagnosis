@@ -1,5 +1,5 @@
 # ML Evaluation Report
-Selected Model: RandomForest
-Macro F1 Score: 0.333
+Selected Model: XGBoost
+Macro F1 Score: 0.000
 
-Trained on 10 samples, evaluated on 3 samples.
+Trained on 35 samples, evaluated on 9 samples.

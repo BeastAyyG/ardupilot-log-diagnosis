@@ -4,9 +4,10 @@
 
 - **Master Pool**: 45 unique deduplicated logs in `data/master_pool/`
 - **Label Distribution**: compass_interference(10), vibration_high(9), motor_imbalance(8), ekf_failure(5), power_instability(5), rc_failsafe(5), pid_tuning_issue(2), gps_quality_poor(1)
-- **Browser-Labeled Batch**: 28 candidates in `data/to_label/browser_labeled_01/` — extracted from real forum threads by reading expert quotes
+- **Browser-Labeled Batch**: 28 candidates in `data/to_label/browser_labeled_01/`
 - **Background Scrapes**: 41 new .bin files in `data/background_scrapes_batch/downloads/`
-- **Kaggle v5**: COMPLETED successfully, benchmark results saved locally
+- **Kaggle Kernel**: **v9 RUNNING** (with ML engine + Master Pool v2)
+- **Kaggle Kernel**: v5 COMPLETED (Rule F1=0.17)
 
 ## Benchmark Results (Kaggle v5)
 

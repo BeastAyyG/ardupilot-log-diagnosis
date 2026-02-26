@@ -1,6 +1,6 @@
 {
     "id": "beastayyg/ardupilot-log-benchmark-v9",
-    "title": "ArduPilot Log Benchmark Recovery v9",
+    "title": "ArduPilot Log Benchmark v9",
     "code_file": "benchmark_runner.py",
     "language": "python",
     "kernel_type": "script",

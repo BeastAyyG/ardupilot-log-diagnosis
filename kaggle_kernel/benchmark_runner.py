@@ -27,28 +27,25 @@ print("=" * 60, flush=True)
 WORK_DIR = "/kaggle/working"
 os.chdir(WORK_DIR)
 
-# ── 2. Clone latest code ──────────────────────────────────────
-REPO = "https://github.com/BeastAyyG/ardupilot-log-diagnosis.git"
-REPO_DIR = os.path.join(WORK_DIR, "ardupilot-log-diagnosis")
-if os.path.exists(REPO_DIR):
-    shutil.rmtree(REPO_DIR)
-run_cmd(f"git clone {REPO}")
-os.chdir(REPO_DIR)
-print(f"[CWD] {os.getcwd()}", flush=True)
+# ── 2. Locate and Prepare Code ──────────────────────────────────
+print("Locating source code in datasets...", flush=True)
+DATASET_ROOT = None
+for root, dirs, files in os.walk("/kaggle/input"):
+    if "src" in dirs and "ground_truth.json" in files:
+        DATASET_ROOT = root
+        break
+
+if not DATASET_ROOT:
+    sys.exit("FATAL: Dataset with 'src' and 'ground_truth.json' not found.")
+
+REPO_DIR = os.path.join(WORK_DIR, "repo")
+if os.path.exists(REPO_DIR): shutil.rmtree(REPO_DIR)
+shutil.copytree(os.path.join(DATASET_ROOT, "src"), os.path.join(REPO_DIR, "src"))
+print(f"Copied src to {REPO_DIR}", flush=True)
 
 # ── 3. Find data ──────────────────────────────────────────────
-print("Searching for ground_truth.json ...", flush=True)
-gt_matches = []
-for root, dirs, files in os.walk("/kaggle/input"):
-    if "ground_truth.json" in files:
-        gt_matches.append(os.path.join(root, "ground_truth.json"))
-
-if not gt_matches:
-    run_cmd("find /kaggle/input -maxdepth 5 -name '*.json'", shell=True, check=False)
-    sys.exit("FATAL: ground_truth.json not found")
-
-GROUND_TRUTH = gt_matches[0]
-DATASET_DIR  = os.path.join(os.path.dirname(GROUND_TRUTH), "dataset")
+GROUND_TRUTH = os.path.join(DATASET_ROOT, "ground_truth.json")
+DATASET_DIR  = os.path.join(DATASET_ROOT, "dataset")
 OUTPUT_DIR   = os.path.join(WORK_DIR, "benchmark_outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
