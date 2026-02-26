@@ -13,6 +13,11 @@ This document summarizes current log volume and provenance links in this reposit
   - `.bin` scanned by clean import: **41**
   - Parse-valid unique `.bin`: **40**
   - Benchmark-trainable from this batch currently: **0** (all currently unlabeled/manual-review)
+- Expert-label enrichment run (`mine-expert-labels --enrich-only` + clean import):
+  - Topics with developer/staff diagnosis: **18**
+  - Labeled rows in enriched manifest: **33**
+  - Verified labeled logs after clean import: **10**
+  - Benchmark-trainable logs from `background_expert_01`: **10**
 
 ## Canonical Labeled Dataset Sources (42 logs, 35 unique URLs)
 

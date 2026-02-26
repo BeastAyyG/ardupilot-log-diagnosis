@@ -40,6 +40,9 @@ benchmark_logs/
 extracted_collab_data/
 Collab data.zip
 data/
+# Keep source code under src/data tracked.
+!src/data/
+!src/data/*.py
 extracted_collab_data/
 node_modules/
 *.bin
