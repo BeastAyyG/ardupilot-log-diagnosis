@@ -56,6 +56,19 @@ print(f"Ground truth : {GROUND_TRUTH}", flush=True)
 print(f"Dataset dir  : {DATASET_DIR}", flush=True)
 print(f"Output dir   : {OUTPUT_DIR}", flush=True)
 
+# ── 3.5. Setup Models ──────────────────────────────────────────
+MODELS_SRC = os.path.join(os.path.dirname(GROUND_TRUTH), "models")
+MODELS_DST = os.path.join(REPO_DIR, "models")
+if os.path.exists(MODELS_SRC):
+    print(f"Found models in dataset: {MODELS_SRC}", flush=True)
+    if os.path.islink(MODELS_DST) or os.path.exists(MODELS_DST):
+        if os.path.islink(MODELS_DST): os.unlink(MODELS_DST)
+        else: shutil.rmtree(MODELS_DST)
+    os.symlink(MODELS_SRC, MODELS_DST)
+    print(f"Symlinked models to {MODELS_DST}", flush=True)
+else:
+    print(f"WARN: Models not found in dataset at {MODELS_SRC}", flush=True)
+
 # Verify dataset dir has files
 import json, glob
 with open(GROUND_TRUTH) as f:
@@ -72,7 +85,7 @@ run_cmd("pip install -q pymavlink numpy xgboost scikit-learn pyyaml")
 env = os.environ.copy()
 env["PYTHONPATH"] = REPO_DIR  # ensure src/ is importable
 
-ENGINES = ["rule", "hybrid"]   # skip ml (no model trained yet — always 0%)
+ENGINES = ["rule", "hybrid", "ml"]
 
 summaries = []
 for engine in ENGINES:

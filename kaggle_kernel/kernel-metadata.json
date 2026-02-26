@@ -1,6 +1,6 @@
 {
-    "id": "beastayyg/ardupilot-log-benchmark-v8",
-    "title": "ArduPilot Log Benchmark Recovery v8",
+    "id": "beastayyg/ardupilot-log-benchmark-v9",
+    "title": "ArduPilot Log Benchmark Recovery v9",
     "code_file": "benchmark_runner.py",
     "language": "python",
     "kernel_type": "script",
@@ -9,7 +9,7 @@
     "enable_tpu": "false",
     "enable_internet": "true",
     "dataset_sources": [
-        "beastayyg/colab-data"
+        "beastayyg/ardupilot-master-log-pool-v2"
     ],
     "competition_sources": [],
     "kernel_sources": [],
