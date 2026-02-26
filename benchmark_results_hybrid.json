@@ -1,0 +1,347 @@
+{
+  "overall": {
+    "total_logs": 0,
+    "successful_extractions": 0,
+    "failed_extractions": 0,
+    "failed_diagnoses": 42,
+    "accuracy": 0.0,
+    "top1_accuracy": 0.0,
+    "exact_match_accuracy": 0.0,
+    "macro_f1": 0.0
+  },
+  "per_label": {
+    "healthy": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "vibration_high": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "compass_interference": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "power_instability": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "gps_quality_poor": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "motor_imbalance": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "ekf_failure": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "mechanical_failure": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "brownout": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "pid_tuning_issue": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "rc_failsafe": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "crash_unknown": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "confusion_details": [],
+  "errors": [
+    {
+      "filename": "66bbaf3919__log_10_MAG_INTERFERENCE_1.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "c648fe37de__log_01_VIBE_HIGH.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "00afa36e54__log_0007_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "12ee853194__log_0009_compass_interference.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "16c0fe0044__log_0010_compass_interference.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "1820618f38__log_0004_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "33c535f6f0__log_0001_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "7065a3cd0f__log_0003_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "a004f350c2__log_0005_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "a7290a8733__log_0006_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "b0db91ee3d__log_0008_compass_interference.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "b9daccd263__log_0012_gps_quality_poor.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "c1bcef192f__log_0002_vibration_high.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "d74079b8cc__log_0011_compass_interference.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "4dbb9b5fad__log_0009_pid_tuning_issue.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "0818fe7e5c__log_0010_rc_failsafe.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "8dda19965d__log_0011_rc_failsafe.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "af2836cad8__log_0009_rc_failsafe.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "b89fc87fea__log_0008_rc_failsafe.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "14f3d25271__log_0010_ekf_failure.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "5c454779ec__log_0013_power_instability.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "694da9f46e__log_0012_power_instability.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "97845b23ea__log_0009_ekf_failure.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "db9fa2016d__log_0011_power_instability.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "f121066e7e__log_0008_ekf_failure.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "5b811aef3b__batch1_00000028.BIN",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "b63f76e62f__batch1_00000021.BIN",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "255373228d__batch1_00000014.BIN",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "7351969082__batch1_00000171.BIN",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "860f591dfe__batch1_00000003.BIN",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "1c18aa3c93__batch1_00000436.BIN",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "23941a01aa__batch1_midair_reboot_17918.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "277840edde__batch2_crash_4_0_rc3.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "0981e19b7d__batch2_motor_130060.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "c8bfdfdd38__batch2_motor_140246_a.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "07124add06__batch2_motor_140246_b.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "335e9881ac__batch2_esc_81059.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "87f863ad02__batch2_motor_off_121845.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "8265f254a7__batch2_two_motors_132001.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "c5640421c2__batch2_ekf_8931_a.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "36c9f718b1__batch2_ekf_8931_b.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    },
+    {
+      "filename": "5563ebf18d__batch2_crash_4_0_dropbox.bin",
+      "error": "'RuleEngine' object has no attribute '_check_events'",
+      "type": "DIAGNOSIS_FAILED"
+    }
+  ]
+}
