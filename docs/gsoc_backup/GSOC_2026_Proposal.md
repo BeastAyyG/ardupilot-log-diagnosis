@@ -1,6 +1,6 @@
 # GSoC 2026 Proposal — ArduPilot
 ## AI-Assisted Log Diagnosis & Root-Cause Detection
-**[YOUR FULL LEGAL NAME]**
+**Agastya Pandey**
 
 ---
 
@@ -8,15 +8,15 @@
 
 | Field | Value |
 |---|---|
-| **Name** | [Your full legal name] |
-| **Email** | [Your email address] |
+| **Name** | Agastya Pandey |
+| **Email** | agastya_pandey@srmap.edu.in |
 | **GitHub** | https://github.com/BeastAyyG |
-| **University** | [Full university name] |
-| **Degree / Major** | [e.g., B.Tech Computer Science & Engineering] |
-| **Year** | [e.g., 2nd year — expected graduation 2028] |
+| **University** | SRM University AP, Amaravati |
+| **Degree / Major** | B.Tech in Computer Science and Engineering (AI & ML) |
+| **Year** | 1st Year, 2nd Semester — Expected Graduation 2028 |
 | **Country** | India |
 | **Timezone** | IST (UTC+5:30) |
-| **Phone** | [Your phone number] |
+| **Phone** | +91 8755546692 |
 | **Discord** | [Your Discord handle] |
 
 ---
@@ -429,11 +429,11 @@ mentor-provided log files not in the training set.
 
 ### 11. MY CONTRIBUTIONS TO ARDUPILOT
 
-1. **Documentation PR** — [INSERT PR URL]
+1. **Documentation PR** — [INSERT PR URL — submit this to ArduPilot wiki before proposal deadline]
    Added Zorin OS mono-complete troubleshooting to the SITL setup documentation.
-2. **Pre-application discuss.ardupilot.org thread** — [INSERT THREAD URL]
-   Posted prototype demonstration for Project 5 before applying, received community feedback.
-3. **Discord `#gsoc` channel** — Active, sharing weekly benchmark snapshots since [INSERT DATE].
+2. **Pre-application discuss.ardupilot.org thread** — [INSERT THREAD URL — post this before proposal deadline]
+   Pre-application thread for Project 5 with prototype benchmark demonstration.
+3. **Discord `#gsoc` channel** — Active, sharing weekly prototype updates.
 4. **Prototype repository** — https://github.com/BeastAyyG/ardupilot-log-diagnosis
    56 tests, CI, production architecture, 45-log benchmark results, fully documented.
 
@@ -442,14 +442,23 @@ mentor-provided log files not in the training set.
 ### 12. RELEVANT EXPERIENCE
 
 **Technical:**
-- Python (3+ years): NumPy, pandas, scikit-learn, XGBoost, pytest, argparse, pymavlink
-- Machine learning: multi-class classification, calibration, SMOTE oversampling, cross-validation, ECE measurement
-- ArduPilot: built and ran SITL from source on Ubuntu 24.04. Familiar with MAVLink message structure at byte level.
-- [List your relevant coursework — Data Structures, Algorithms, ML, etc.]
-- [List any other projects, hackathons, or competitions]
+- Python (2+ years): NumPy, pandas, scikit-learn, XGBoost, pytest, argparse, pymavlink
+- Machine learning: multi-class classification, calibration, SMOTE oversampling,
+  cross-validation, ECE measurement — studied as part of my AI & ML specialisation
+- ArduPilot: built and ran SITL from source on Ubuntu 24.04. Familiar with MAVLink
+  message structure at byte level through direct work on this prototype
+- Relevant coursework: Data Structures & Algorithms, Programming in Python,
+  Introduction to AI/ML (B.Tech AI & ML curriculum, SRM University AP)
+- Built a drone health monitoring companion app using `pymavlink` and `scikit-learn`
+  that connects to ArduPilot SITL — this is the direct ancestor of the current prototype
 
 **Personal:**
-- [YOUR PERSONAL MOTIVATION — why ArduPilot specifically, what got you interested in drones/flight systems]
+I am a first-year student specialising in AI & ML who chose this project because I
+believe the most impactful application of ML is not generating text or images — it
+is detecting concrete physical failures before they cause crashes. ArduPilot powers
+hundreds of thousands of vehicles. A tool that correctly identifies a failing motor or
+a compass calibration problem from telemetry data in under 3 seconds has a direct,
+measurable effect on flight safety. That is what drew me to this project.
 
 ---
 
@@ -478,12 +487,13 @@ rely on it.
 
 | Period | Availability |
 |---|---|
-| **Weekly hours** | 30–35 hours |
-| **Full-time available from** | [Your date — e.g., May 15 after exams] |
-| **Exam periods** | [List any overlapping exam dates — be precise and honest] |
+| **Weekly hours during term** | 20–25 hours |
+| **Weekly hours post-exams** | 35–40 hours (full-time) |
+| **Full-time available from** | Late May 2026 (after conclusion of 2nd semester exams) |
+| **Exam period** | 2nd semester exams: approximately mid-to-late May 2026 *(exact dates TBC — will notify mentor immediately once confirmed)* |
 | **Time zone** | IST (UTC+5:30) — available for syncs 09:00–22:00 IST |
-| **Other commitments** | [Any coursework, part-time work, etc.] |
-| **Communication cadence** | Daily Discord/email availability. Friday benchmark snapshot + weekly progress report to mentor. Will flag blockers before they become delays. |
+| **Other commitments** | No part-time work or internships during GSoC period |
+| **Communication** | Available daily on Discord and email. Will provide weekly progress report every Friday. Will flag blockers before they become delays. |
 
 ---
 
