@@ -371,7 +371,7 @@ class RuleEngine:
             "recommendation": FAILURE_RECOMMENDATIONS.get("rc_failsafe", "RC signal lost. Check radio equipment and range.")
         }
 
-
+    def _check_events(self, features):
         # Triggered when evt_crash_detected > 0 or evt_failsafe_count > 0
         crashes = features.get("evt_crash_detected", 0.0)
         failsafes = features.get("evt_failsafe_count", 0.0)
