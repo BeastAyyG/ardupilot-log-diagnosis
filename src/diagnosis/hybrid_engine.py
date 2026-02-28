@@ -75,7 +75,8 @@ class HybridEngine:
                 "severity": severity,
                 "detection_method": method,
                 "evidence": evidence,
-                "recommendation": FAILURE_RECOMMENDATIONS.get(ftype, "Review log mechanically.")
+                "recommendation": FAILURE_RECOMMENDATIONS.get(ftype, "Review log mechanically."),
+                "reason_code": "confirmed" if final >= 0.7 else "uncertain"
             })
             
         def rank(diag: dict) -> tuple:

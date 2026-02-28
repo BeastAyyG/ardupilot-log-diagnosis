@@ -58,10 +58,17 @@ class DiagnosisFormatter:
             top_conf = int(float(decision.get("top_confidence", 0.0)) * 100)
             if top_guess:
                 lines.append(f"Top Guess: {top_guess.upper()} ({top_conf}%)")
+                
+            subsystems = decision.get("ranked_subsystems", [])
+            if subsystems:
+                lines.append("\nSubsystem Blame Ranking:")
+                for sub in subsystems[:3]: # top 3
+                    lines.append(f"  - {sub['subsystem']:>18}: {int(sub['likelihood']*100)}%")
+                    
             if decision.get("requires_human_review"):
-                lines.append("Human Review: REQUIRED")
+                lines.append("\nHuman Review: REQUIRED")
             else:
-                lines.append("Human Review: Not required")
+                lines.append("\nHuman Review: Not required")
             
         return "\n".join(lines)
         

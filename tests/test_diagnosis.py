@@ -35,7 +35,8 @@ def test_rule_multi_failure():
     features.update({
         "vibe_z_max": 65.0,
         "mag_field_range": 300.0,
-        "motor_spread_max": 250.0
+        "motor_spread_max": 450.0, 
+        "motor_spread_mean": 250.0
     })
     result = engine.diagnose(features)
     types = [d["failure_type"] for d in result]
@@ -114,3 +115,55 @@ def test_hybrid_filters_weak_secondary_labels():
     )
     result = engine.diagnose({})
     assert [d["failure_type"] for d in result] == ["vibration_high"]
+
+def test_override_thresholds_from_yaml(tmp_path):
+    import yaml
+    config_file = tmp_path / "test_thresholds.yaml"
+    custom_thresholds = {
+        "vibration": {"vibe_max_fail": 99.0},
+        "power": {"powr_vcc_min": 3.0}
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(custom_thresholds, f)
+
+    engine = RuleEngine(config_path=str(config_file))
+    
+    # Normally vibe=70 fails because default fail=60. Since we override to 99, it should only warn.
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({"vibe_z_max": 70.0})
+    result = engine.diagnose(features)
+    
+    assert len(result) > 0
+    vibe_diag = next(d for d in result if d["failure_type"] == "vibration_high")
+    
+    # If the threshold override worked, this is only a warning (conf < 0.7), not a critical failure.
+    # The default rule gives base=0.2 for > fail, 0.1 for > warn. 70 > 30 (warn) but NOT > 99 (new fail).
+    # So confidence should be 0.1 instead of 0.2
+    assert vibe_diag["severity"] == "info"
+    assert vibe_diag["confidence"] == 0.1
+
+def test_enforce_no_missing_keys():
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({"vibe_z_max": 100.0})
+    
+    results = engine.diagnose(features)
+    assert len(results) > 0
+    
+    for r in results:
+        assert isinstance(r, dict)
+        assert "failure_type" in r
+        assert "confidence" in r
+        assert "severity" in r
+        assert "detection_method" in r
+        assert "evidence" in r
+        assert "recommendation" in r
+        assert "reason_code" in r  # This enforces P1-04 decision codes
+
+        # This enforces P1-02 Evidence Schema standardization
+        for ev in r["evidence"]:
+            assert "feature" in ev
+            assert "value" in ev
+            assert "threshold" in ev
+            assert "direction" in ev
+

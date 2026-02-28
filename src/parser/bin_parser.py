@@ -33,7 +33,8 @@ class LogParser:
         # Only store messages we actually use in extractors to save memory and time
         self.INTERESTING_MESSAGE_TYPES = {
             "VIBE", "MAG", "BAT", "GPS", "RCOU", "XKF4", "NKF4",
-            "PARM", "ERR", "EV", "MODE", "MSG", "CTUN", "ATT", "PM", "FTN1"
+            "PARM", "ERR", "EV", "MODE", "MSG", "CTUN", "ATT", "PM", "FTN1",
+            "IMU", "POWR"
         }
         
         try:

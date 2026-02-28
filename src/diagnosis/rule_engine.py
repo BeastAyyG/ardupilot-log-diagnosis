@@ -75,7 +75,8 @@ class RuleEngine:
         return {
             "failure_type": "vibration_high", "confidence": conf, "severity": severity,
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": FAILURE_RECOMMENDATIONS["vibration_high"]
+            "recommendation": FAILURE_RECOMMENDATIONS["vibration_high"],
+            "reason_code": "confirmed" if conf >= 0.7 else "uncertain"
         }
 
     def _check_compass(self, features):
@@ -109,7 +110,8 @@ class RuleEngine:
         return {
             "failure_type": "compass_interference", "confidence": conf, "severity": severity,
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": FAILURE_RECOMMENDATIONS["compass_interference"]
+            "recommendation": FAILURE_RECOMMENDATIONS["compass_interference"],
+            "reason_code": "confirmed" if conf >= 0.6 else "uncertain"
         }
 
     def _check_power(self, features):
@@ -157,7 +159,8 @@ class RuleEngine:
         return {
             "failure_type": failure, "confidence": conf, "severity": severity,
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": msg or FAILURE_RECOMMENDATIONS["power_instability"]
+            "recommendation": msg or FAILURE_RECOMMENDATIONS["power_instability"],
+            "reason_code": "confirmed" if conf >= 0.8 else "uncertain"
         }
 
     def _check_gps(self, features):
@@ -191,7 +194,8 @@ class RuleEngine:
         return {
             "failure_type": "gps_quality_poor", "confidence": conf, "severity": severity,
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": FAILURE_RECOMMENDATIONS["gps_quality_poor"]
+            "recommendation": FAILURE_RECOMMENDATIONS["gps_quality_poor"],
+            "reason_code": "confirmed" if conf >= 0.7 else "uncertain"
         }
 
     def _check_motors(self, features):
@@ -246,7 +250,8 @@ class RuleEngine:
         return {
             "failure_type": failure, "confidence": conf, "severity": severity,
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": FAILURE_RECOMMENDATIONS.get(failure, "")
+            "recommendation": FAILURE_RECOMMENDATIONS.get(failure, ""),
+            "reason_code": "confirmed" if conf >= 0.75 else "uncertain"
         }
 
     def _check_ekf(self, features):
@@ -303,7 +308,8 @@ class RuleEngine:
         return {
             "failure_type": "ekf_failure", "confidence": conf, "severity": "critical" if conf >= 0.8 else "warning",
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": FAILURE_RECOMMENDATIONS["ekf_failure"]
+            "recommendation": FAILURE_RECOMMENDATIONS["ekf_failure"],
+            "reason_code": "confirmed" if conf >= 0.8 else "uncertain"
         }
 
     def _check_system(self, features):
@@ -337,7 +343,8 @@ class RuleEngine:
         return {
             "failure_type": "mechanical_failure", "confidence": conf, "severity": severity,
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": "System load extremely high or internal errors. Software or companion computer issue."
+            "recommendation": "System load extremely high or internal errors. Software or companion computer issue.",
+            "reason_code": "confirmed" if conf >= 0.85 else "uncertain"
         }
 
     def _check_rc_failsafe(self, features):
@@ -368,10 +375,11 @@ class RuleEngine:
         return {
             "failure_type": "rc_failsafe", "confidence": conf, "severity": "critical",
             "detection_method": "rule", "evidence": evidence,
-            "recommendation": FAILURE_RECOMMENDATIONS.get("rc_failsafe", "RC signal lost. Check radio equipment and range.")
+            "recommendation": FAILURE_RECOMMENDATIONS.get("rc_failsafe", "RC signal lost. Check radio equipment and range."),
+            "reason_code": "confirmed" if conf >= 0.9 else "uncertain"
         }
 
-
+    def _check_events(self, features):
         # Triggered when evt_crash_detected > 0 or evt_failsafe_count > 0
         crashes = features.get("evt_crash_detected", 0.0)
         failsafes = features.get("evt_failsafe_count", 0.0)
@@ -385,7 +393,8 @@ class RuleEngine:
             results.append({
                 "failure_type": "crash_unknown", "confidence": crash_conf, "severity": "critical" if crash_conf >= 0.8 else "warning",
                 "detection_method": "rule", "evidence": [{"feature": "evt_crash_detected", "value": crashes, "threshold": 0, "direction": "above"}],
-                "recommendation": FAILURE_RECOMMENDATIONS["crash_unknown"]
+                "recommendation": FAILURE_RECOMMENDATIONS["crash_unknown"],
+                "reason_code": "confirmed" if crash_conf >= 0.8 else "uncertain"
             })
             
         if auto_labels:
@@ -394,7 +403,8 @@ class RuleEngine:
                     results.append({
                         "failure_type": al, "confidence": 0.78, "severity": "critical",
                         "detection_method": "rule", "evidence": [{"feature": "evt_auto_labels", "value": al, "threshold": "", "direction": "exact"}],
-                        "recommendation": FAILURE_RECOMMENDATIONS[al]
+                        "recommendation": FAILURE_RECOMMENDATIONS[al],
+                        "reason_code": "confirmed"
                     })
                     
         # Return highest confidence or list of them? The design says return one diagnosis.

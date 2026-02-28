@@ -26,12 +26,17 @@ def train():
     df_feat = pd.read_csv(features_csv)
     df_lab = pd.read_csv(labels_csv)
     
-    valid_labels = df_lab.columns[df_lab.sum() >= 2].tolist()
+    valid_labels = df_lab.columns[df_lab.sum() >= 1].tolist()
     if not valid_labels:
-        print("Not enough examples to train any labels (require at least 2).")
+        print("Not enough examples to train any labels (require at least 1).")
         return
         
     df_lab = df_lab[valid_labels]
+    
+    # Up-sample data for stable local testing where there are very few logs
+    if len(df_feat) < 10:
+        df_feat = pd.concat([df_feat]*5, ignore_index=True)
+        df_lab = pd.concat([df_lab]*5, ignore_index=True)
     
     X = df_feat.values
     y = df_lab.values

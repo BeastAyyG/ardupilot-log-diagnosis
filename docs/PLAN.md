@@ -17,7 +17,8 @@
 - [ ] Integrate full hybrid engine (Rules + ML) with Arbiter filter.
 
 ## Phase 4: Data Mining & Iteration
-- [ ] Collect new logs from ArduPilot forum.
+- [x] Collect new logs from ArduPilot forum.
+- [x] Optimize data and perform cleanups (deduplication, deduplication, parsing validation).
 - [ ] Label logs using the high-confidence rules + manual review.
 - [ ] Retrain and improve Arbiter.
 

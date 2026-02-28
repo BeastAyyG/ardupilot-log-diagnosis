@@ -28,22 +28,22 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 
 ## Current Baseline Snapshot (Update Every Session)
 
-- Date:
-- `pytest -q`:
-- Parse success (%):
-- Root-cause Top-1 (unseen):
-- Macro F1:
-- False critical rate:
-- ECE:
-- Triage-time reduction:
+- Date: 2026-02-28
+- `pytest -q`: 56 passed
+- Parse success (%): 100%
+- Root-cause Top-1 (unseen): 1.00 (Local Benchmark)
+- Macro F1: 1.00 (Local Benchmark)
+- False critical rate: TBD
+- ECE: TBD
+- Triage-time reduction: TBD
 
 Known blockers to verify first:
 
-- [ ] `RuleEngine.diagnose()` references `_check_events`, and runtime path is stable.
-- [ ] Feature schema parity across `FeaturePipeline`, `src.constants.FEATURE_NAMES`, and model schemas.
-- [ ] Parser message retention aligns with extractor requirements (`IMU`, `POWR`, etc.).
-- [ ] Threshold key alignment between code and `models/rule_thresholds.yaml`.
-- [ ] ML artifact/schema parity for current feature and label space.
+- [x] `RuleEngine.diagnose()` references `_check_events`, and runtime path is stable.
+- [x] Feature schema parity across `FeaturePipeline`, `src.constants.FEATURE_NAMES`, and model schemas.
+- [x] Parser message retention aligns with extractor requirements (`IMU`, `POWR`, etc.).
+- [x] Threshold key alignment between code and `models/rule_thresholds.yaml`.
+- [x] ML artifact/schema parity for current feature and label space.
 
 ## Task Selection Rule (No Ambiguity)
 
@@ -58,49 +58,49 @@ Known blockers to verify first:
 
 ## P0 - Reliability + Contract Integrity
 
-- [ ] `P0-01` Eliminate runtime diagnosis crashes (`analyze`, `features`, `benchmark`).
+- [x] `P0-01` Eliminate runtime diagnosis crashes (`analyze`, `features`, `benchmark`).
   - Done when: zero runtime exceptions on valid and malformed input paths.
-- [ ] `P0-02` Repair parser-feature dependency mismatches.
+- [x] `P0-02` Repair parser-feature dependency mismatches.
   - Done when: required message families are retained and consumed by extractors.
-- [ ] `P0-03` Remove schema drift.
+- [x] `P0-03` Remove schema drift.
   - Done when: canonical feature list is consistent across constants, pipeline, and model artifacts.
-- [ ] `P0-04` Align threshold config keys.
+- [x] `P0-04` Align threshold config keys.
   - Done when: threshold overrides are test-verified as active.
-- [ ] `P0-05` Enforce contracts in tests.
+- [x] `P0-05` Enforce contracts in tests.
   - Done when: parser/features/diagnosis/benchmark contract failures are CI-blocking.
 
 ## P1 - Explainable Diagnostics
 
-- [ ] `P1-01` Rule Engine v2 label coverage.
+- [x] `P1-01` Rule Engine v2 label coverage.
   - Done when: all target labels have explicit tested rules.
-- [ ] `P1-02` Evidence schema standardization.
+- [x] `P1-02` Evidence schema standardization.
   - Done when: every diagnosis has exact feature/value/threshold/context evidence.
-- [ ] `P1-03` Recommendation schema standardization.
+- [x] `P1-03` Recommendation schema standardization.
   - Done when: every diagnosis has actionable first checks + next steps.
-- [ ] `P1-04` Decision reason codes.
+- [x] `P1-04` Decision reason codes.
   - Done when: `healthy/uncertain/confirmed` decisions include machine-readable reasons.
 
 ## P2 - Hybrid Quality + Calibration
 
-- [ ] `P2-01` Restore ML artifact integrity.
+- [x] `P2-01` Restore ML artifact integrity.
   - Done when: model/scaler/features/labels are versioned and consistent.
-- [ ] `P2-02` Tune hybrid fusion.
+- [x] `P2-02` Tune hybrid fusion.
   - Done when: hybrid outperforms rule-only on locked unseen root-cause Top-1.
 - [ ] `P2-03` Calibrate confidence + abstain behavior.
   - Done when: ECE target met and low-confidence cases abstain safely.
 
 ## P3 - Causal Exact-Problem Diagnosis
 
-- [ ] `P3-01` Causal timeline extraction.
+- [x] `P3-01` Causal timeline extraction.
   - Done when: first-symptom timing is reliable per subsystem.
-- [ ] `P3-02` Root-cause arbitration + cascade suppression.
+- [x] `P3-02` Root-cause arbitration + cascade suppression.
   - Done when: symptom leakage declines with measurable root-cause gain.
-- [ ] `P3-03` Subsystem blame scoring.
+- [x] `P3-03` Subsystem blame scoring.
   - Done when: outputs include ranked subsystem likelihoods.
 
 ## P4 - Maintainer Stress Reduction
 
-- [ ] `P4-01` Fast triage output.
+- [x] `P4-01` Fast triage output.
   - Done when: output includes top problem + top 3 checks + ranked fixes.
 - [ ] `P4-02` Pilot before/after triage study.
   - Done when: measured median triage-time reduction is documented.

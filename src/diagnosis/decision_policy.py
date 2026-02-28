@@ -54,10 +54,40 @@ def evaluate_decision(
         requires_review = False
         rationale.append("Top diagnosis confidence and separation pass safety gate.")
 
+    SUBSYSTEM_MAP = {
+        "vibration_high": "Vibration/Mounts",
+        "compass_interference": "Magnetics/EMI",
+        "power_instability": "Power/Battery",
+        "brownout": "Power/Battery",
+        "gps_quality_poor": "GPS/Antenna",
+        "motor_imbalance": "Propulsion/Motors",
+        "pid_tuning_issue": "Control/PID",
+        "mechanical_failure": "Hardware/Frame",
+        "ekf_failure": "Navigation/EKF",
+        "rc_failsafe": "Radio/Receiver",
+        "crash_unknown": "Unknown"
+    }
+
+    subsystem_scores = {}
+    for d in diagnoses:
+        ftype = d.get("failure_type", "crash_unknown")
+        sub_name = SUBSYSTEM_MAP.get(ftype, "Unknown")
+        conf = float(d.get("confidence", 0.0))
+        # Keep track of the highest confidence per subsystem
+        if conf > subsystem_scores.get(sub_name, 0.0):
+            subsystem_scores[sub_name] = conf
+            
+    ranked_subsystems = sorted(
+        [{"subsystem": k, "likelihood": v} for k, v in subsystem_scores.items()],
+        key=lambda x: x["likelihood"],
+        reverse=True
+    )
+
     return {
         "status": status,
         "requires_human_review": requires_review,
         "top_guess": top_guess,
         "top_confidence": top_conf,
         "rationale": rationale,
+        "ranked_subsystems": ranked_subsystems,
     }
