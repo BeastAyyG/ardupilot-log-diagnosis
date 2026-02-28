@@ -1,1 +1,0 @@
-"""Companion-health workspace package."""

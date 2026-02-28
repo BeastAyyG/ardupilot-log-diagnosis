@@ -57,9 +57,13 @@ def _normalize_url(value: str) -> str:
     return v
 
 
-def _collect_verified_candidates(clean_import_root: Path, exclude_batches: set[str]) -> List[dict]:
+def _collect_verified_candidates(
+    clean_import_root: Path, exclude_batches: set[str]
+) -> List[dict]:
     candidates: List[dict] = []
-    for manifest in sorted(clean_import_root.glob("*/manifests/clean_import_manifest.json")):
+    for manifest in sorted(
+        clean_import_root.glob("*/manifests/clean_import_manifest.json")
+    ):
         batch = manifest.parent.parent.name
         if batch in exclude_batches:
             continue
@@ -71,7 +75,13 @@ def _collect_verified_candidates(clean_import_root: Path, exclude_batches: set[s
             if label not in VALID_LABELS:
                 continue
 
-            src_file = clean_import_root / batch / "logs" / "verified_labeled" / row.get("file_name", "")
+            src_file = (
+                clean_import_root
+                / batch
+                / "logs"
+                / "verified_labeled"
+                / row.get("file_name", "")
+            )
             if not src_file.exists():
                 continue
 
@@ -125,7 +135,8 @@ def _collect_manual_candidates(manual_gt_path: Path) -> List[dict]:
                 "label": label,
                 "confidence": _safe_confidence(payload.get("confidence", "medium")),
                 "source_url": _normalize_url(payload.get("url", "")),
-                "source_type": (payload.get("source") or "manual_review").strip() or "manual_review",
+                "source_type": (payload.get("source") or "manual_review").strip()
+                or "manual_review",
                 "expert_quote": (payload.get("reason") or "").strip(),
             }
         )

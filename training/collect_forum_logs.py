@@ -14,13 +14,30 @@ from src.data.forum_collector import collect_forum_logs
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Collect candidate ArduPilot logs from forum search")
-    parser.add_argument("--output-root", default="data/raw_downloads/forum_batch", help="Output folder for batch")
-    parser.add_argument("--max-per-query", type=int, default=20, help="Max downloaded files per query")
-    parser.add_argument("--max-topics-per-query", type=int, default=60, help="Max forum topics scanned per query")
-    parser.add_argument("--sleep-ms", type=int, default=250, help="Request delay in milliseconds")
+    parser = argparse.ArgumentParser(
+        description="Collect candidate ArduPilot logs from forum search"
+    )
+    parser.add_argument(
+        "--output-root",
+        default="data/raw_downloads/forum_batch",
+        help="Output folder for batch",
+    )
+    parser.add_argument(
+        "--max-per-query", type=int, default=20, help="Max downloaded files per query"
+    )
+    parser.add_argument(
+        "--max-topics-per-query",
+        type=int,
+        default=60,
+        help="Max forum topics scanned per query",
+    )
+    parser.add_argument(
+        "--sleep-ms", type=int, default=250, help="Request delay in milliseconds"
+    )
     parser.add_argument("--no-zip", action="store_true", help="Skip zip attachments")
-    parser.add_argument("--queries-json", help="Path to JSON map of label->search query")
+    parser.add_argument(
+        "--queries-json", help="Path to JSON map of label->search query"
+    )
     args = parser.parse_args()
 
     query_overrides = None

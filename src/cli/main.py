@@ -1,5 +1,4 @@
 import argparse
-import sys
 import os
 import json
 from pathlib import Path
@@ -31,29 +30,30 @@ def _find_latest_clean_benchmark():
 
     return str(dataset_dir), str(gt_path)
 
+
 def cmd_analyze(args):
     parser = LogParser(args.logfile)
     parsed = parser.parse()
-    
+
     pipeline = FeaturePipeline()
     features = pipeline.extract(parsed)
-    
+
     if args.no_ml:
         engine = RuleEngine()
     else:
         engine = HybridEngine()
-        
+
     diagnoses = engine.diagnose(features)
     decision = evaluate_decision(diagnoses)
-    
+
     formatter = DiagnosisFormatter()
     metadata = features.get("_metadata", {})
-    
+
     if args.json:
         output = formatter.format_json(diagnoses, metadata, features, decision=decision)
     else:
         output = formatter.format_terminal(diagnoses, metadata, decision=decision)
-        
+
     if args.output:
         with open(args.output, "w") as f:
             f.write(output)
@@ -61,15 +61,17 @@ def cmd_analyze(args):
     else:
         print(output)
 
+
 def cmd_features(args):
     parser = LogParser(args.logfile)
     parsed = parser.parse()
-    
+
     pipeline = FeaturePipeline()
     features = pipeline.extract(parsed)
-    
+
     print(json.dumps(features, indent=2))
-    
+
+
 def cmd_benchmark(args):
     from src.benchmark.suite import BenchmarkSuite
     from src.benchmark.reporter import BenchmarkReporter
@@ -77,8 +79,12 @@ def cmd_benchmark(args):
     dataset_dir = args.dataset_dir
     ground_truth = args.ground_truth
 
-    default_args_used = args.dataset_dir == "dataset/" and args.ground_truth == "ground_truth.json"
-    default_available = Path(args.dataset_dir).exists() and Path(args.ground_truth).exists()
+    default_args_used = (
+        args.dataset_dir == "dataset/" and args.ground_truth == "ground_truth.json"
+    )
+    default_available = (
+        Path(args.dataset_dir).exists() and Path(args.ground_truth).exists()
+    )
 
     if default_args_used and not default_available:
         fallback_dataset, fallback_gt = _find_latest_clean_benchmark()
@@ -86,7 +92,7 @@ def cmd_benchmark(args):
             dataset_dir = fallback_dataset
             ground_truth = fallback_gt
             print(f"Using latest clean-import benchmark set: {ground_truth}")
-    
+
     suite = BenchmarkSuite(
         dataset_dir=dataset_dir,
         ground_truth_path=ground_truth,
@@ -94,7 +100,7 @@ def cmd_benchmark(args):
         include_non_trainable=args.include_non_trainable,
     )
     results = suite.run()
-    
+
     reporter = BenchmarkReporter()
     reporter.print_terminal(results)
     md_path = f"{args.output_prefix}.md"
@@ -212,141 +218,196 @@ def cmd_mine_expert_labels(args):
     print(f"Summary JSON: {artifacts.get('summary_json')}")
     print(f"State JSON: {artifacts.get('state_json')}")
 
+
 def cmd_batch(args):
     directory = args.directory
     if not os.path.exists(directory):
         print(f"Directory {directory} not found.")
         return
-        
+
     print(f"{'File':<25} | {'Status':<15} | {'Top Diagnosis'}")
     print("-" * 65)
-    
+
     pipeline = FeaturePipeline()
     engine = HybridEngine()
-    
+
     for f in os.listdir(directory):
         if not f.upper().endswith(".BIN"):
             continue
-            
+
         filepath = os.path.join(directory, f)
         parser = LogParser(filepath)
         parsed = parser.parse()
         features = pipeline.extract(parsed)
         diagnoses = engine.diagnose(features)
-        
+
         if not diagnoses:
             status = "HEALTHY"
             top = "None"
         else:
             status = "FAIL"
-            top = f"{diagnoses[0]['failure_type']} ({int(diagnoses[0]['confidence']*100)}%)"
-            
+            top = f"{diagnoses[0]['failure_type']} ({int(diagnoses[0]['confidence'] * 100)}%)"
+
         print(f"{f:<25} | {status:<15} | {top}")
+
 
 def cmd_label(args):
     logfile = args.logfile
     filename = os.path.basename(logfile)
-    
+
     parser = LogParser(logfile)
     parsed = parser.parse()
     pipeline = FeaturePipeline()
     features = pipeline.extract(parsed)
-    
+
     engine = HybridEngine()
     diagnoses = engine.diagnose(features)
-    
+
     print(f"\n--- Labeling {filename} ---")
     auto_labels = features.get("_metadata", {}).get("auto_labels", [])
     if auto_labels:
         print(f"Auto-suggested labels from ERR/EV: {auto_labels}")
-    
+
     print("\nModel Predictions:")
     if diagnoses:
         for d in diagnoses:
-            print(f" - {d['failure_type']} ({int(d['confidence']*100)}%)")
+            print(f" - {d['failure_type']} ({int(d['confidence'] * 100)}%)")
     else:
         print(" - None (Healthy)")
-        
+
     print("\nEnter correct labels (comma-separated). Uses constants.VALID_LABELS.")
     print("Leave blank to skip.")
     try:
         user_input = input("Labels > ").strip()
     except EOFError:
         user_input = ""
-        
+
     if not user_input:
         print("Skipped.")
         return
-        
+
     labels = [l.strip() for l in user_input.split(",")]
-    
+
     gt_path = "ground_truth.json"
     data = {"logs": []}
     if os.path.exists(gt_path):
         with open(gt_path, "r") as f:
             data = json.load(f)
-            
+
     data["logs"] = [l for l in data.get("logs", []) if l["filename"] != filename]
-    
-    data["logs"].append({
-        "filename": filename,
-        "labels": labels,
-        "source_url": "",
-        "source_type": "manual",
-        "expert_quote": "",
-        "confidence": "high"
-    })
-    
+
+    data["logs"].append(
+        {
+            "filename": filename,
+            "labels": labels,
+            "source_url": "",
+            "source_type": "manual",
+            "expert_quote": "",
+            "confidence": "high",
+        }
+    )
+
     with open(gt_path, "w") as f:
         json.dump(data, f, indent=2)
     print(f"Added {filename} to {gt_path} with labels {labels}")
-    
+
+
 def main():
     parser = argparse.ArgumentParser(description="ArduPilot Log Diagnosis Tool")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    
+
     p_analyze = subparsers.add_parser("analyze", help="Analyze a single log file")
     p_analyze.add_argument("logfile", help="Path to .BIN file")
     p_analyze.add_argument("--json", action="store_true", help="Output in JSON format")
     p_analyze.add_argument("-o", "--output", help="Save report to file")
-    p_analyze.add_argument("--no-ml", action="store_true", help="Force rule-based only diagnosis")
-    
-    p_features = subparsers.add_parser("features", help="Extract and print raw features")
+    p_analyze.add_argument(
+        "--no-ml", action="store_true", help="Force rule-based only diagnosis"
+    )
+
+    p_features = subparsers.add_parser(
+        "features", help="Extract and print raw features"
+    )
     p_features.add_argument("logfile", help="Path to .BIN file")
-    
+
     p_benchmark = subparsers.add_parser("benchmark", help="Run benchmark suite")
-    p_benchmark.add_argument("--engine", choices=["rule", "ml", "hybrid"], default="hybrid", help="Engine to benchmark")
-    p_benchmark.add_argument("--dataset-dir", default="dataset/", help="Directory containing benchmark .BIN files")
-    p_benchmark.add_argument("--ground-truth", default="ground_truth.json", help="Ground truth JSON path")
-    p_benchmark.add_argument("--output-prefix", default="benchmark_results", help="Output filename prefix (without extension)")
-    p_benchmark.add_argument("--include-non-trainable", action="store_true", help="Include entries marked trainable=false")
-    
+    p_benchmark.add_argument(
+        "--engine",
+        choices=["rule", "ml", "hybrid"],
+        default="hybrid",
+        help="Engine to benchmark",
+    )
+    p_benchmark.add_argument(
+        "--dataset-dir",
+        default="dataset/",
+        help="Directory containing benchmark .BIN files",
+    )
+    p_benchmark.add_argument(
+        "--ground-truth", default="ground_truth.json", help="Ground truth JSON path"
+    )
+    p_benchmark.add_argument(
+        "--output-prefix",
+        default="benchmark_results",
+        help="Output filename prefix (without extension)",
+    )
+    p_benchmark.add_argument(
+        "--include-non-trainable",
+        action="store_true",
+        help="Include entries marked trainable=false",
+    )
+
     p_batch = subparsers.add_parser("batch", help="Batch analyze directory")
     p_batch.add_argument("directory", help="Directory containing .BIN files")
-    
+
     p_label = subparsers.add_parser("label", help="Interactive labeling tool")
     p_label.add_argument("logfile", help="Path to .BIN file")
 
-    p_import = subparsers.add_parser("import-clean", help="Clean import external log batch with provenance manifests")
-    p_import.add_argument("--source-root", required=True, help="Source directory to scan")
+    p_import = subparsers.add_parser(
+        "import-clean", help="Clean import external log batch with provenance manifests"
+    )
+    p_import.add_argument(
+        "--source-root", required=True, help="Source directory to scan"
+    )
     p_import.add_argument(
         "--output-root",
         default="data/clean_imports/latest",
         help="Output directory for cleaned logs and manifests",
     )
-    p_import.add_argument("--no-copy", action="store_true", help="Generate manifests only, do not copy files")
+    p_import.add_argument(
+        "--no-copy",
+        action="store_true",
+        help="Generate manifests only, do not copy files",
+    )
 
-    p_collect = subparsers.add_parser("collect-forum", help="Collect candidate logs from discuss.ardupilot.org")
+    p_collect = subparsers.add_parser(
+        "collect-forum", help="Collect candidate logs from discuss.ardupilot.org"
+    )
     p_collect.add_argument(
         "--output-root",
         default="data/raw_downloads/forum_batch",
         help="Output folder for downloaded files and manifest",
     )
-    p_collect.add_argument("--max-per-query", type=int, default=20, help="Maximum downloads per label query")
-    p_collect.add_argument("--max-topics-per-query", type=int, default=60, help="Maximum forum topics scanned per query")
-    p_collect.add_argument("--sleep-ms", type=int, default=250, help="Delay between download requests in milliseconds")
+    p_collect.add_argument(
+        "--max-per-query",
+        type=int,
+        default=20,
+        help="Maximum downloads per label query",
+    )
+    p_collect.add_argument(
+        "--max-topics-per-query",
+        type=int,
+        default=60,
+        help="Maximum forum topics scanned per query",
+    )
+    p_collect.add_argument(
+        "--sleep-ms",
+        type=int,
+        default=250,
+        help="Delay between download requests in milliseconds",
+    )
     p_collect.add_argument("--no-zip", action="store_true", help="Skip zip attachments")
-    p_collect.add_argument("--queries-json", help="Path to JSON map of label->search query")
+    p_collect.add_argument(
+        "--queries-json", help="Path to JSON map of label->search query"
+    )
 
     p_expert = subparsers.add_parser(
         "mine-expert-labels",
@@ -357,13 +418,31 @@ def main():
         default="data/raw_downloads/forum_expert_batch",
         help="Output folder for downloaded files and expert manifests",
     )
-    p_expert.add_argument("--queries-json", help="Path to JSON queries (dict/list or {label, queries[]})")
-    p_expert.add_argument("--after-date", help="Incremental search start date (YYYY-MM-DD)")
-    p_expert.add_argument("--max-topics-per-query", type=int, default=120, help="Maximum topics scanned per query")
-    p_expert.add_argument("--max-downloads", type=int, default=300, help="Maximum downloaded payloads")
-    p_expert.add_argument("--sleep-ms", type=int, default=300, help="Delay between network requests in milliseconds")
+    p_expert.add_argument(
+        "--queries-json", help="Path to JSON queries (dict/list or {label, queries[]})"
+    )
+    p_expert.add_argument(
+        "--after-date", help="Incremental search start date (YYYY-MM-DD)"
+    )
+    p_expert.add_argument(
+        "--max-topics-per-query",
+        type=int,
+        default=120,
+        help="Maximum topics scanned per query",
+    )
+    p_expert.add_argument(
+        "--max-downloads", type=int, default=300, help="Maximum downloaded payloads"
+    )
+    p_expert.add_argument(
+        "--sleep-ms",
+        type=int,
+        default=300,
+        help="Delay between network requests in milliseconds",
+    )
     p_expert.add_argument("--no-zip", action="store_true", help="Skip zip attachments")
-    p_expert.add_argument("--state-path", help="Path to miner state JSON for incremental runs")
+    p_expert.add_argument(
+        "--state-path", help="Path to miner state JSON for incremental runs"
+    )
     p_expert.add_argument(
         "--existing-data-root",
         default="data",
@@ -398,9 +477,9 @@ def main():
         default="block1_ardupilot_discuss.csv",
         help="Output block1 CSV filename for --enrich-only mode",
     )
-    
+
     parsed_args = parser.parse_args()
-    
+
     if parsed_args.command == "analyze":
         cmd_analyze(parsed_args)
     elif parsed_args.command == "features":
@@ -417,6 +496,7 @@ def main():
         cmd_collect_forum(parsed_args)
     elif parsed_args.command == "mine-expert-labels":
         cmd_mine_expert_labels(parsed_args)
+
 
 if __name__ == "__main__":
     main()

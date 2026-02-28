@@ -21,28 +21,38 @@ LABEL_PROB_THRESHOLDS = {
 }
 MAX_PREDICTED_LABELS = 3
 
+
 class MLClassifier:
     """Trained ML model for failure classification."""
 
-    def __init__(self, model_dir: str = "models/", min_probability: float = DEFAULT_PROB_THRESHOLD):
+    def __init__(
+        self,
+        model_dir: str = "models/",
+        min_probability: float = DEFAULT_PROB_THRESHOLD,
+    ):
         self.model_path = os.path.join(model_dir, "classifier.joblib")
         self.scaler_path = os.path.join(model_dir, "scaler.joblib")
         self.features_path = os.path.join(model_dir, "feature_columns.json")
         self.labels_path = os.path.join(model_dir, "label_columns.json")
         self.min_probability = float(min_probability)
         self.label_thresholds = dict(LABEL_PROB_THRESHOLDS)
-        
+
         self.available = False
         if joblib is None:
             return
 
         if os.path.exists(self.model_path) and os.path.exists(self.scaler_path):
             try:
-                self.model = joblib.load(self.model_path)
+                loaded_model = joblib.load(self.model_path)
+                if isinstance(loaded_model, dict) and "model" in loaded_model:
+                    self.model = loaded_model["model"]
+                else:
+                    self.model = loaded_model
+
                 self.scaler = joblib.load(self.scaler_path)
-                with open(self.features_path, 'r') as f:
+                with open(self.features_path, "r") as f:
                     self.feature_columns = json.load(f)
-                with open(self.labels_path, 'r') as f:
+                with open(self.labels_path, "r") as f:
                     self.label_columns = json.load(f)
                 self.available = True
             except Exception:
@@ -51,17 +61,34 @@ class MLClassifier:
     def _threshold_for_label(self, label: str) -> float:
         return float(self.label_thresholds.get(label, self.min_probability))
 
-    def _build_diagnosis(self, label: str, prob: float, failure_recommendations: dict) -> dict:
+    def _build_diagnosis(
+        self, label: str, prob: float, failure_recommendations: dict
+    ) -> dict:
         return {
             "failure_type": label,
             "confidence": prob,
             "severity": "critical" if prob > 0.85 else "warning",
             "detection_method": "ml",
-            "evidence": [{"feature": "ML prediction", "value": prob, "threshold": self._threshold_for_label(label), "direction": "above"}],
-            "recommendation": failure_recommendations.get(label, "Review log mechanically."),
+            "evidence": [
+                {
+                    "feature": "ML prediction",
+                    "value": prob,
+                    "threshold": self._threshold_for_label(label),
+                    "direction": "above",
+                }
+            ],
+            "recommendation": failure_recommendations.get(
+                label, "Review log mechanically."
+            ),
         }
 
-    def _contextual_compass_vibration_filter(self, features: dict, diagnoses: list, label_probs: dict, failure_recommendations: dict) -> list:
+    def _contextual_compass_vibration_filter(
+        self,
+        features: dict,
+        diagnoses: list,
+        label_probs: dict,
+        failure_recommendations: dict,
+    ) -> list:
         if not diagnoses:
             return []
 
@@ -114,7 +141,9 @@ class MLClassifier:
                         "direction": "context",
                     }
                 ],
-                "recommendation": failure_recommendations.get("compass_interference", "Review log mechanically."),
+                "recommendation": failure_recommendations.get(
+                    "compass_interference", "Review log mechanically."
+                ),
             }
 
         out = list(diag_by_label.values())
@@ -143,13 +172,17 @@ class MLClassifier:
                 prob = float(probas[i][0, 1]) if probas[i].shape[1] > 1 else 0.0
                 label_probs[label] = prob
                 if prob >= self._threshold_for_label(label):
-                    diagnoses.append(self._build_diagnosis(label, prob, FAILURE_RECOMMENDATIONS))
+                    diagnoses.append(
+                        self._build_diagnosis(label, prob, FAILURE_RECOMMENDATIONS)
+                    )
         else:
             for i, label in enumerate(self.label_columns):
                 prob = float(probas[0, i])
                 label_probs[label] = prob
                 if prob >= self._threshold_for_label(label):
-                    diagnoses.append(self._build_diagnosis(label, prob, FAILURE_RECOMMENDATIONS))
+                    diagnoses.append(
+                        self._build_diagnosis(label, prob, FAILURE_RECOMMENDATIONS)
+                    )
 
         diagnoses = self._contextual_compass_vibration_filter(
             features,

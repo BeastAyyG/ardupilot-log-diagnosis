@@ -50,7 +50,9 @@ def _copy_log(src: Path, dst: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Create unseen holdout from candidate clean-import batches")
+    parser = argparse.ArgumentParser(
+        description="Create unseen holdout from candidate clean-import batches"
+    )
     parser.add_argument(
         "--exclude-batches",
         nargs="+",
@@ -157,7 +159,9 @@ def main() -> None:
     gt_path.write_text(json.dumps(gt_payload, indent=2) + "\n", encoding="utf-8")
 
     manifest_path = output_root / "holdout_manifest.json"
-    manifest_path.write_text(json.dumps(selected_logs, indent=2) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(selected_logs, indent=2) + "\n", encoding="utf-8"
+    )
 
     report_lines = [
         "# Unseen Holdout Report",

@@ -86,7 +86,7 @@ Known blockers to verify first:
   - Done when: model/scaler/features/labels are versioned and consistent.
 - [x] `P2-02` Tune hybrid fusion.
   - Done when: hybrid outperforms rule-only on locked unseen root-cause Top-1.
-- [ ] `P2-03` Calibrate confidence + abstain behavior.
+- [x] `P2-03` Calibrate confidence + abstain behavior.
   - Done when: ECE target met and low-confidence cases abstain safely.
 
 ## P3 - Causal Exact-Problem Diagnosis

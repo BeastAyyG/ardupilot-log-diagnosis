@@ -23,7 +23,6 @@ from pathlib import Path
 from datetime import datetime, timezone
 import requests
 from pydantic import BaseModel, Field
-import json
 
 try:
     from dotenv import load_dotenv
@@ -199,7 +198,7 @@ def run_auto_labeler(manifest_path: str, output_dir: str, limit: int = 20):
 
     print(f"\n✅ Done. {len(candidates)}/{processed} qualified candidates saved to:")
     print(f"   {out_file}")
-    print(f"\n⚠️  REQUIRED: Human review before adding to ground_truth.json")
+    print("\n⚠️  REQUIRED: Human review before adding to ground_truth.json")
     print(f"   Run: python3 training/import_clean_batch.py --source {out_file}")
 
 

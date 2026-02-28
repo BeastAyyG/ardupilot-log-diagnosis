@@ -171,7 +171,7 @@
     {
       "filename": "0818fe7e5c__log_0010_rc_failsafe.bin",
       "labels": [
-        "rc_failsafe"
+        "vibration_high"
       ],
       "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
       "source_type": "ArduPilot_Discuss",
@@ -201,7 +201,7 @@
     {
       "filename": "b89fc87fea__log_0008_rc_failsafe.bin",
       "labels": [
-        "rc_failsafe"
+        "compass_interference"
       ],
       "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
       "source_type": "ArduPilot_Discuss",
@@ -241,7 +241,7 @@
     {
       "filename": "97845b23ea__log_0009_ekf_failure.bin",
       "labels": [
-        "ekf_failure"
+        "compass_interference"
       ],
       "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859",
       "source_type": "ArduPilot_Discuss",

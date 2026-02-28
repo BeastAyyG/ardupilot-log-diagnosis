@@ -43,7 +43,9 @@ def _batch_distribution(batch: str) -> dict:
 
 def _audit_batch(batch: str) -> dict:
     gt_path = Path(f"data/clean_imports/{batch}/benchmark_ready/ground_truth.json")
-    manifest_path = Path(f"data/clean_imports/{batch}/manifests/clean_import_manifest.json")
+    manifest_path = Path(
+        f"data/clean_imports/{batch}/manifests/clean_import_manifest.json"
+    )
     if not gt_path.exists() or not manifest_path.exists():
         return {
             "batch": batch,
@@ -54,7 +56,9 @@ def _audit_batch(batch: str) -> dict:
 
     gt_logs = _load_json(gt_path).get("logs", [])
     rows = _load_json(manifest_path)
-    verified = {r["file_name"]: r for r in rows if r.get("category") == "verified_labeled"}
+    verified = {
+        r["file_name"]: r for r in rows if r.get("category") == "verified_labeled"
+    }
 
     issues = []
     linked = 0
@@ -94,7 +98,9 @@ def _audit_batch(batch: str) -> dict:
 
 
 def _load_verified_sha_map(batch: str) -> dict:
-    manifest_path = Path(f"data/clean_imports/{batch}/manifests/clean_import_manifest.json")
+    manifest_path = Path(
+        f"data/clean_imports/{batch}/manifests/clean_import_manifest.json"
+    )
     if not manifest_path.exists():
         return {}
     rows = _load_json(manifest_path)
@@ -105,8 +111,12 @@ def _load_verified_sha_map(batch: str) -> dict:
     }
 
 
-def _train_hashes_from_prefixed_batch(train_batch: str, source_batches: list[str]) -> set[str]:
-    gt_path = Path(f"data/clean_imports/{train_batch}/benchmark_ready/ground_truth.json")
+def _train_hashes_from_prefixed_batch(
+    train_batch: str, source_batches: list[str]
+) -> set[str]:
+    gt_path = Path(
+        f"data/clean_imports/{train_batch}/benchmark_ready/ground_truth.json"
+    )
     if not gt_path.exists():
         return set()
 
@@ -142,13 +152,23 @@ def _mermaid_pie(title: str, values: dict[str, int]) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate mentor-facing progress showcase markdown")
-    parser.add_argument("--output", default="docs/progress_showcase.md", help="Output markdown path")
-    parser.add_argument("--train-batch", default="forum_batch_unique_01", help="Primary training batch")
+    parser = argparse.ArgumentParser(
+        description="Generate mentor-facing progress showcase markdown"
+    )
+    parser.add_argument(
+        "--output", default="docs/progress_showcase.md", help="Output markdown path"
+    )
+    parser.add_argument(
+        "--train-batch", default="forum_batch_unique_01", help="Primary training batch"
+    )
     parser.add_argument(
         "--train-source-batches",
         nargs="*",
-        default=["forum_batch_local_01", "forum_batch_local_02", "forum_batch_local_03"],
+        default=[
+            "forum_batch_local_01",
+            "forum_batch_local_02",
+            "forum_batch_local_03",
+        ],
         help="Source batches used to build prefixed training batch",
     )
     parser.add_argument(
@@ -160,12 +180,33 @@ def main() -> None:
 
     benchmark_paths = [
         ("Legacy baseline (repo root)", Path("benchmark_results.json")),
-        ("Local batch 01 (ML)", Path("data/clean_imports/forum_batch_local_01/benchmark_ready/benchmark_results_ml.json")),
-        ("Merged 01 (ML)", Path("data/clean_imports/forum_batch_merged_01/benchmark_ready/benchmark_results_ml.json")),
-        ("SHA-unique 01 (ML)", Path("data/clean_imports/forum_batch_unique_01/benchmark_ready/benchmark_results_ml.json")),
+        (
+            "Local batch 01 (ML)",
+            Path(
+                "data/clean_imports/forum_batch_local_01/benchmark_ready/benchmark_results_ml.json"
+            ),
+        ),
+        (
+            "Merged 01 (ML)",
+            Path(
+                "data/clean_imports/forum_batch_merged_01/benchmark_ready/benchmark_results_ml.json"
+            ),
+        ),
+        (
+            "SHA-unique 01 (ML)",
+            Path(
+                "data/clean_imports/forum_batch_unique_01/benchmark_ready/benchmark_results_ml.json"
+            ),
+        ),
         ("Unseen holdout (ML)", Path(args.holdout_root) / "benchmark_results_ml.json"),
-        ("Unseen holdout (Hybrid)", Path(args.holdout_root) / "benchmark_results_hybrid.json"),
-        ("Unseen holdout (Rule)", Path(args.holdout_root) / "benchmark_results_rule.json"),
+        (
+            "Unseen holdout (Hybrid)",
+            Path(args.holdout_root) / "benchmark_results_hybrid.json",
+        ),
+        (
+            "Unseen holdout (Rule)",
+            Path(args.holdout_root) / "benchmark_results_rule.json",
+        ),
     ]
 
     benchmarks = []
@@ -190,7 +231,9 @@ def main() -> None:
         _audit_batch("flight_logs_dataset_2026-02-22"),
     ]
 
-    train_hashes = _train_hashes_from_prefixed_batch(args.train_batch, args.train_source_batches)
+    train_hashes = _train_hashes_from_prefixed_batch(
+        args.train_batch, args.train_source_batches
+    )
     holdout_hashes = _load_holdout_hashes(Path(args.holdout_root))
     holdout_overlap = len(train_hashes & holdout_hashes)
 
@@ -251,7 +294,9 @@ def main() -> None:
     for dist in distributions:
         lines.append(f"| {dist['batch']} | {dist['total']} | `{dist['labels']}` |")
 
-    train_dist = next((d for d in distributions if d["batch"] == args.train_batch), None)
+    train_dist = next(
+        (d for d in distributions if d["batch"] == args.train_batch), None
+    )
     if train_dist and train_dist["labels"]:
         lines.extend(
             [
@@ -286,7 +331,9 @@ def main() -> None:
         ]
     )
     for audit in audits:
-        lines.append(f"| {audit['batch']} | {audit['gt_logs']} | {audit['linked']} | {len(audit['issues'])} |")
+        lines.append(
+            f"| {audit['batch']} | {audit['gt_logs']} | {audit['linked']} | {len(audit['issues'])} |"
+        )
 
     lines.extend(
         [

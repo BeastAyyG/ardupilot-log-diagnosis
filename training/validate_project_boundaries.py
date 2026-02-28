@@ -32,7 +32,9 @@ def validate_ground_truth(path: Path) -> list:
         filename = entry.get("filename", "<unknown>")
         source_type = str(entry.get("source_type", "")).lower()
         if "companion" in source_type or "health" in source_type:
-            errors.append(f"{filename}: companion-health entry found in diagnosis ground truth")
+            errors.append(
+                f"{filename}: companion-health entry found in diagnosis ground truth"
+            )
 
         labels = entry.get("labels", [])
         for label in labels:
@@ -43,8 +45,14 @@ def validate_ground_truth(path: Path) -> list:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate diagnosis/companion-health project boundaries")
-    parser.add_argument("--ground-truth", default="ground_truth.json", help="Main diagnosis ground truth path")
+    parser = argparse.ArgumentParser(
+        description="Validate diagnosis/companion-health project boundaries"
+    )
+    parser.add_argument(
+        "--ground-truth",
+        default="ground_truth.json",
+        help="Main diagnosis ground truth path",
+    )
     parser.add_argument(
         "--benchmark-ground-truth",
         default="data/clean_imports/flight_logs_dataset_2026-02-22/benchmark_ready/ground_truth.json",

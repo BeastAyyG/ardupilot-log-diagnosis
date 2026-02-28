@@ -1,4 +1,3 @@
-import os
 import json
 import shutil
 import hashlib
@@ -35,7 +34,7 @@ def merge_datasets(data_root, output_dir):
             filename_to_path[zip_path.name] = zip_path
 
     print(f"[*] Found {len(filename_to_path)} unique filenames in index.")
-    print(f"[*] Scanning for ground_truth.json files...")
+    print("[*] Scanning for ground_truth.json files...")
 
     # Prioritize the highest-quality ground truth first (final_training_dataset)
     gt_files = sorted(

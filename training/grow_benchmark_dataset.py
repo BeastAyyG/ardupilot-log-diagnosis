@@ -20,7 +20,9 @@ def _load_queries(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         payload = json.load(f)
     if not isinstance(payload, dict) or not payload:
-        raise ValueError(f"Query file must contain a non-empty label->query map: {path}")
+        raise ValueError(
+            f"Query file must contain a non-empty label->query map: {path}"
+        )
     return payload
 
 
@@ -36,7 +38,9 @@ def _label_counts(benchmark_gt: Path) -> Counter:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Grow benchmark dataset with expanded forum queries")
+    parser = argparse.ArgumentParser(
+        description="Grow benchmark dataset with expanded forum queries"
+    )
     parser.add_argument(
         "--batch-name",
         default=f"forum_batch_expand_{date.today().isoformat()}",
@@ -47,9 +51,24 @@ def main() -> None:
         default="docs/forum_queries.expanded.json",
         help="Path to JSON map of label->forum search query",
     )
-    parser.add_argument("--max-per-query", type=int, default=15, help="Maximum downloads per label query")
-    parser.add_argument("--max-topics-per-query", type=int, default=80, help="Maximum forum topics scanned per query")
-    parser.add_argument("--sleep-ms", type=int, default=100, help="Delay between requests in milliseconds")
+    parser.add_argument(
+        "--max-per-query",
+        type=int,
+        default=15,
+        help="Maximum downloads per label query",
+    )
+    parser.add_argument(
+        "--max-topics-per-query",
+        type=int,
+        default=80,
+        help="Maximum forum topics scanned per query",
+    )
+    parser.add_argument(
+        "--sleep-ms",
+        type=int,
+        default=100,
+        help="Delay between requests in milliseconds",
+    )
     parser.add_argument("--no-zip", action="store_true", help="Skip zip attachments")
     parser.add_argument(
         "--min-per-label",
@@ -87,12 +106,18 @@ def main() -> None:
     print(f"raw_output={raw_out}")
     print(f"clean_output={clean_out}")
     print(f"downloaded={collect_summary.get('downloaded', 0)}")
-    print(f"benchmark_trainable={import_summary.get('counts', {}).get('benchmark_trainable', 0)}")
+    print(
+        f"benchmark_trainable={import_summary.get('counts', {}).get('benchmark_trainable', 0)}"
+    )
     print(f"benchmark_ground_truth={benchmark_gt}")
     print(f"label_distribution={dict(sorted(counts.items()))}")
 
     min_per_label = max(0, args.min_per_label)
-    underrepresented = [label for label in sorted(queries.keys()) if counts.get(label, 0) < min_per_label]
+    underrepresented = [
+        label
+        for label in sorted(queries.keys())
+        if counts.get(label, 0) < min_per_label
+    ]
     if underrepresented:
         print(f"underrepresented_labels(<{min_per_label})={underrepresented}")
 

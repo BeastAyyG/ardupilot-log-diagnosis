@@ -16,7 +16,9 @@ def _load_json(path: Path):
         return json.load(f)
 
 
-def _run_engine(engine: str, dataset_dir: Path, ground_truth: Path, output_prefix: Path) -> None:
+def _run_engine(
+    engine: str, dataset_dir: Path, ground_truth: Path, output_prefix: Path
+) -> None:
     cmd = [
         sys.executable,
         "-m",

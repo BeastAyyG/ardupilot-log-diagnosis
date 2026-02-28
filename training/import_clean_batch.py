@@ -13,14 +13,24 @@ from src.data.clean_import import run_clean_import
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Clean import external flight-log dataset with provenance")
-    parser.add_argument("--source-root", required=True, help="Source folder containing downloaded logs and manifests")
+    parser = argparse.ArgumentParser(
+        description="Clean import external flight-log dataset with provenance"
+    )
+    parser.add_argument(
+        "--source-root",
+        required=True,
+        help="Source folder containing downloaded logs and manifests",
+    )
     parser.add_argument(
         "--output-root",
         default="data/clean_imports/latest",
         help="Output directory for categorized logs and generated manifests",
     )
-    parser.add_argument("--no-copy", action="store_true", help="Generate manifests only without copying files")
+    parser.add_argument(
+        "--no-copy",
+        action="store_true",
+        help="Generate manifests only without copying files",
+    )
 
     args = parser.parse_args()
 

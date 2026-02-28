@@ -1,4 +1,3 @@
-import os
 import logging
 from .forum_collector import collect_forum_logs
 

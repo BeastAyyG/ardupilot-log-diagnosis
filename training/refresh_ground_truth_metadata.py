@@ -32,8 +32,12 @@ def refresh(path: Path) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Refresh metadata in ground_truth.json")
-    parser.add_argument("--path", default="ground_truth.json", help="Path to ground_truth.json")
+    parser = argparse.ArgumentParser(
+        description="Refresh metadata in ground_truth.json"
+    )
+    parser.add_argument(
+        "--path", default="ground_truth.json", help="Path to ground_truth.json"
+    )
     args = parser.parse_args()
 
     metadata = refresh(Path(args.path))

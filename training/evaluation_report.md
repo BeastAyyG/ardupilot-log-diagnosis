@@ -1,5 +1,5 @@
 # ML Evaluation Report
-Selected Model: RandomForest
-Macro F1 Score: 0.667
+Selected Model: RandomForest (Tuned via GridSearch & Oversampling)
+Macro F1 Score: 0.214
 
-Trained on 12 samples, evaluated on 3 samples.
+Trained on 63 balanced samples, evaluated on 9 samples.

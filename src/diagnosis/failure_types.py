@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class FailureType(Enum):
     HEALTHY = "healthy"
     VIBRATION_HIGH = "vibration_high"
@@ -14,10 +15,12 @@ class FailureType(Enum):
     RC_FAILSAFE = "rc_failsafe"
     CRASH_UNKNOWN = "crash_unknown"
 
+
 class Severity(Enum):
     CRITICAL = "critical"
     WARNING = "warning"
     INFO = "info"
+
 
 FAILURE_RECOMMENDATIONS = {
     "healthy": "Systems normal. Safe to fly.",
@@ -31,5 +34,5 @@ FAILURE_RECOMMENDATIONS = {
     "brownout": "Board voltage dropped critically. Check power module and ensure wiring is adequate.",
     "pid_tuning_issue": "Recalibrate or tune PID settings. Drone behavior indicates oscillations.",
     "rc_failsafe": "Adjust RC receiver antenna. Maintain line-of-sight during flight.",
-    "crash_unknown": "Crash detected! Unclear cause. Perform full manual inspection of logs."
+    "crash_unknown": "Crash detected! Unclear cause. Perform full manual inspection of logs.",
 }

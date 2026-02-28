@@ -27,7 +27,9 @@ def evaluate_decision(
     uncertain = False
     if top_conf < abstain_threshold:
         uncertain = True
-        rationale.append(f"Top confidence below abstain threshold ({top_conf:.2f} < {abstain_threshold:.2f}).")
+        rationale.append(
+            f"Top confidence below abstain threshold ({top_conf:.2f} < {abstain_threshold:.2f})."
+        )
 
     if len(diagnoses) > 1:
         second_conf = float(diagnoses[1].get("confidence", 0.0))
@@ -37,10 +39,14 @@ def evaluate_decision(
                 f"Top-2 confidence gap is small ({top_conf:.2f} - {second_conf:.2f} < {close_margin:.2f})."
             )
 
-    high_conf_count = sum(1 for d in diagnoses if float(d.get("confidence", 0.0)) >= 0.5)
+    high_conf_count = sum(
+        1 for d in diagnoses if float(d.get("confidence", 0.0)) >= 0.5
+    )
     if high_conf_count > 1:
         uncertain = True
-        rationale.append("Multiple high-confidence diagnoses detected; likely cascading symptoms.")
+        rationale.append(
+            "Multiple high-confidence diagnoses detected; likely cascading symptoms."
+        )
 
     if top.get("detection_method") == "ml" and top_conf < 0.75:
         uncertain = True
@@ -65,7 +71,7 @@ def evaluate_decision(
         "mechanical_failure": "Hardware/Frame",
         "ekf_failure": "Navigation/EKF",
         "rc_failsafe": "Radio/Receiver",
-        "crash_unknown": "Unknown"
+        "crash_unknown": "Unknown",
     }
 
     subsystem_scores = {}
@@ -76,11 +82,11 @@ def evaluate_decision(
         # Keep track of the highest confidence per subsystem
         if conf > subsystem_scores.get(sub_name, 0.0):
             subsystem_scores[sub_name] = conf
-            
+
     ranked_subsystems = sorted(
         [{"subsystem": k, "likelihood": v} for k, v in subsystem_scores.items()],
         key=lambda x: x["likelihood"],
-        reverse=True
+        reverse=True,
     )
 
     return {

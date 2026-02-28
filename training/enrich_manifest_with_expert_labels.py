@@ -13,12 +13,33 @@ from src.data.expert_label_miner import enrich_manifest_with_expert_labels
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Enrich crawler manifest with developer diagnoses")
-    parser.add_argument("--source-root", required=True, help="Folder containing crawler_manifest.csv")
-    parser.add_argument("--input-manifest-name", default="crawler_manifest.csv", help="Input manifest filename")
-    parser.add_argument("--output-manifest-name", default="crawler_manifest_v2.csv", help="Output manifest filename")
-    parser.add_argument("--output-block1-name", default="block1_ardupilot_discuss.csv", help="Output block1 filename")
-    parser.add_argument("--sleep-ms", type=int, default=250, help="Delay between topic requests in milliseconds")
+    parser = argparse.ArgumentParser(
+        description="Enrich crawler manifest with developer diagnoses"
+    )
+    parser.add_argument(
+        "--source-root", required=True, help="Folder containing crawler_manifest.csv"
+    )
+    parser.add_argument(
+        "--input-manifest-name",
+        default="crawler_manifest.csv",
+        help="Input manifest filename",
+    )
+    parser.add_argument(
+        "--output-manifest-name",
+        default="crawler_manifest_v2.csv",
+        help="Output manifest filename",
+    )
+    parser.add_argument(
+        "--output-block1-name",
+        default="block1_ardupilot_discuss.csv",
+        help="Output block1 filename",
+    )
+    parser.add_argument(
+        "--sleep-ms",
+        type=int,
+        default=250,
+        help="Delay between topic requests in milliseconds",
+    )
     args = parser.parse_args()
 
     summary = enrich_manifest_with_expert_labels(

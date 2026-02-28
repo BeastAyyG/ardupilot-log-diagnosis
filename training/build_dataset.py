@@ -20,7 +20,9 @@ CONFIDENCE_ORDER = {"low": 0, "medium": 1, "high": 2}
 
 
 def _confidence_ok(log_confidence: str, min_confidence: str) -> bool:
-    log_level = CONFIDENCE_ORDER.get(str(log_confidence).strip().lower(), CONFIDENCE_ORDER["medium"])
+    log_level = CONFIDENCE_ORDER.get(
+        str(log_confidence).strip().lower(), CONFIDENCE_ORDER["medium"]
+    )
     min_level = CONFIDENCE_ORDER[min_confidence]
     return log_level >= min_level
 
@@ -155,11 +157,23 @@ def build(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build training dataset from labeled BIN logs")
-    parser.add_argument("--ground-truth", default="ground_truth.json", help="Path to ground_truth.json")
-    parser.add_argument("--dataset-dir", default="dataset", help="Directory containing BIN logs")
-    parser.add_argument("--features-out", default="training/features.csv", help="Output CSV for features")
-    parser.add_argument("--labels-out", default="training/labels.csv", help="Output CSV for labels")
+    parser = argparse.ArgumentParser(
+        description="Build training dataset from labeled BIN logs"
+    )
+    parser.add_argument(
+        "--ground-truth", default="ground_truth.json", help="Path to ground_truth.json"
+    )
+    parser.add_argument(
+        "--dataset-dir", default="dataset", help="Directory containing BIN logs"
+    )
+    parser.add_argument(
+        "--features-out",
+        default="training/features.csv",
+        help="Output CSV for features",
+    )
+    parser.add_argument(
+        "--labels-out", default="training/labels.csv", help="Output CSV for labels"
+    )
     parser.add_argument(
         "--report-out",
         default="training/dataset_build_report.json",
