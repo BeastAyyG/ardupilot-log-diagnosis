@@ -1,27 +1,74 @@
-name: ci
+name: CI
 
 on:
   push:
+    branches: ["**"]
   pull_request:
+    branches: ["**"]
 
 jobs:
   test:
+    name: "Test Suite (Python ${{ matrix.python-version }})"
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          ruff check . --output-format=github
+
       - name: Validate project boundaries
         run: python training/validate_project_boundaries.py
 
-      - name: Run tests
-        run: pytest -q
+      - name: Run test suite
+        run: pytest -q --tb=short
+
+  leakage-check:
+    name: "Data Leakage Integrity Check"
+    runs-on: ubuntu-latest
+    # Only run leakage check if the data directories exist
+    # (they are not committed to git; this runs in environments that have them)
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Validate SHA256 train/holdout leakage
+        run: |
+          if [ -d "data/kaggle_backups/ardupilot-master-log-pool-v2" ] && [ -d "data/holdouts/production_holdout_clean/dataset" ]; then
+            python validate_leakage.py
+          else
+            echo "⚠️  Data directories not present in this environment — skipping leakage check."
+            echo "Run 'python validate_leakage.py' locally after data is populated."
+          fi
