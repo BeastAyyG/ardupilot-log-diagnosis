@@ -10,17 +10,17 @@ MAX_HYBRID_DIAGNOSES = 2
 
 METHOD_PRIORITY = {"rule+ml": 2, "ml": 1, "rule": 0}
 LABEL_PRIORITY = {
-    "vibration_high": 5,
+    "vibration_high":      5,
     "compass_interference": 5,
-    "gps_quality_poor": 4,
-    "power_instability": 4,
-    "brownout": 4,
-    "ekf_failure": 3,
-    "motor_imbalance": 3,
-    "pid_tuning_issue": 3,
-    "mechanical_failure": 2,
-    "rc_failsafe": 2,
-    "crash_unknown": 1,
+    "motor_imbalance":     5,   # Raised: motor failure is equally safety-critical
+    "gps_quality_poor":    4,
+    "power_instability":   4,
+    "brownout":            4,
+    "ekf_failure":         4,   # Raised: EKF failure precedes most crashes
+    "pid_tuning_issue":    3,
+    "mechanical_failure":  2,
+    "rc_failsafe":         2,
+    "crash_unknown":       1,
 }
 
 
@@ -64,7 +64,10 @@ class HybridEngine:
                 final = ml_prob * 0.85
                 method = "ml"
             elif rule_conf > 0:
-                final = rule_conf * 0.75
+                # Rule-only: scale by 0.85 (not 0.75). A rule firing at 100% on a
+                # 5x threshold breach (motor_spread=1005 vs limit=200) should not
+                # be penalised to below the decision policy's abstain threshold.
+                final = rule_conf * 0.85
                 method = "rule"
             else:
                 continue
@@ -127,17 +130,31 @@ class HybridEngine:
 
             if timed_candidates:
                 # Sort by earliest onset, then by confidence for ties within 5 seconds
-                TEMPORAL_TIE_WINDOW_US = 5_000_000  # 5 seconds
+                TEMPORAL_TIE_WINDOW_US = 5_000_000   # 5 seconds — pure tie
+                TEMPORAL_PROXIMITY_US  = 30_000_000  # 30 seconds — "close enough to be downstream"
+                EXTREME_CONFIDENCE     = 0.85        # above this, the signal overrides proximity
+
                 timed_candidates.sort(key=lambda x: (x[0], -x[1]))
 
                 best_time, best_conf, best_diag = timed_candidates[0]
                 root_cause = best_diag
 
-                # Within tie window, prefer the higher confidence label
                 for t_time, t_conf, t_diag in timed_candidates[1:]:
-                    if (
-                        t_time - best_time <= TEMPORAL_TIE_WINDOW_US
-                        and t_conf > best_conf
+                    time_gap = t_time - best_time
+
+                    # Within pure tie window — prefer higher confidence
+                    if time_gap <= TEMPORAL_TIE_WINDOW_US and t_conf > best_conf:
+                        root_cause = t_diag
+                        best_conf = t_conf
+
+                    # Within proximity window AND this candidate has extreme confidence —
+                    # a 5× threshold breach appearing 10–30 seconds after an earlier signal
+                    # is likely the structural cause, not the downstream symptom.
+                    # e.g. motor_imbalance at 100% appearing 10s after compass at 65%.
+                    elif (
+                        time_gap <= TEMPORAL_PROXIMITY_US
+                        and t_conf >= EXTREME_CONFIDENCE
+                        and t_conf > best_conf + 0.15  # must be meaningfully higher
                     ):
                         root_cause = t_diag
                         best_conf = t_conf
@@ -148,15 +165,24 @@ class HybridEngine:
                 )
                 return [root_cause]
 
-        # Filter for low-quality symptom cascades if Temporal Arbiter didn't trigger
+        # Filter for low-quality symptom cascades if Temporal Arbiter didn't trigger.
+        # IMPORTANT: critical rule-only diagnoses are NOT ejected — a rule that fires
+        # at full confidence on a massive threshold breach is trustworthy evidence even
+        # without ML corroboration.
         if merged_diagnoses:
             primary = merged_diagnoses[0]
             filtered_diagnoses = [primary]
             for d in merged_diagnoses[1:]:
-                if (
+                is_critical_rule = (
+                    d["detection_method"] == "rule"
+                    and d["severity"] == "critical"
+                )
+                if is_critical_rule:
+                    # Always include critical rule diagnoses as secondary evidence
+                    filtered_diagnoses.append(d)
+                elif (
                     d["confidence"] >= SECONDARY_MIN_CONFIDENCE
                     and (primary["confidence"] - d["confidence"]) <= SECONDARY_MAX_GAP
-                    and d["detection_method"] != "rule"
                 ):
                     filtered_diagnoses.append(d)
                 if len(filtered_diagnoses) >= MAX_HYBRID_DIAGNOSES:

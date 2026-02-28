@@ -45,18 +45,22 @@ class MotorExtractor(BaseExtractor):
                 if channels:
                     max_ch = max(channels)
                     min_ch = min(channels)
+                    spread = max_ch - min_ch
 
                     # Always accumulate for mean/max/std features
-                    spread_vals.append(max_ch - min_ch)
                     output_vals.extend(channels)
                     if max_ch > max_output_overall:
                         max_output_overall = float(max_ch)
 
-                    # Only add timestamps for tanomaly after startup phase
+                    # For tanomaly: only use post-startup samples so t_vals and
+                    # spread_vals stay in lockstep (required by _safe_stats).
+                    # Startup transients (first 10 s) are excluded from BOTH arrays.
                     if t >= skip_until:
+                        spread_vals.append(spread)
                         t_vals.append(t)
 
         spread_stats = self._safe_stats(spread_vals, t_vals, threshold=400.0)
+
         output_stats = self._safe_stats(output_vals)
 
         mot_thst_hover = self.parameters.get("MOT_THST_HOVER")

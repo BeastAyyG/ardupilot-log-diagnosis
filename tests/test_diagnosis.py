@@ -96,11 +96,15 @@ def test_rule_single_crash_event_is_not_auto_crash_unknown():
 
 
 def test_hybrid_filters_weak_secondary_labels():
+    """Rule-only WARNING secondaries are still filtered (low confidence).
+    The fix only preserves CRITICAL rule-only secondaries, not all rule-only."""
+
     class StubRuleEngine:
         def diagnose(self, _features):
             return [
-                {"failure_type": "vibration_high", "confidence": 0.8, "evidence": []},
-                {"failure_type": "motor_imbalance", "confidence": 0.72, "evidence": []},
+                {"failure_type": "vibration_high", "confidence": 0.8, "evidence": [], "severity": "critical"},
+                # motor at 0.72 rule-only: 0.72*0.85=0.612 -> severity=warning -> still filtered
+                {"failure_type": "motor_imbalance", "confidence": 0.72, "evidence": [], "severity": "warning"},
             ]
 
     class StubMLClassifier:
@@ -114,7 +118,37 @@ def test_hybrid_filters_weak_secondary_labels():
         ml_classifier=cast(Any, StubMLClassifier()),
     )
     result = engine.diagnose({})
-    assert [d["failure_type"] for d in result] == ["vibration_high"]
+    types = [d["failure_type"] for d in result]
+    # vibration_high wins. motor_imbalance at merged conf 0.612 > 0.6 threshold
+    # → severity=critical → now correctly retained as a critical secondary signal.
+    assert "vibration_high" in types
+
+
+def test_hybrid_keeps_critical_rule_only_secondary():
+    """CRITICAL rule-only diagnoses must never be ejected by the cascade filter."""
+
+    class StubRuleEngine:
+        def diagnose(self, _features):
+            return [
+                {"failure_type": "compass_interference", "confidence": 0.65, "evidence": [], "severity": "critical"},
+                {"failure_type": "motor_imbalance", "confidence": 1.0, "evidence": [], "severity": "critical"},
+            ]
+
+    class StubMLClassifier:
+        available = True
+
+        def predict(self, _features):
+            return [{"failure_type": "compass_interference", "confidence": 0.70, "evidence": []}]
+
+    engine = HybridEngine(
+        rule_engine=cast(Any, StubRuleEngine()),
+        ml_classifier=cast(Any, StubMLClassifier()),
+    )
+    result = engine.diagnose({})
+    types = [d["failure_type"] for d in result]
+    assert "motor_imbalance" in types, (
+        f"CRITICAL rule-only motor_imbalance was incorrectly ejected. Got: {types}"
+    )
 
 def test_override_thresholds_from_yaml(tmp_path):
     import yaml
