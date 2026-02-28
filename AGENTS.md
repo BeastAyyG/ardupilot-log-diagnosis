@@ -28,19 +28,19 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 
 ## Current Baseline Snapshot (Update Every Session)
 
-- Date:
-- `pytest -q`:
-- Parse success (%):
-- Root-cause Top-1 (unseen):
-- Macro F1:
-- False critical rate:
-- ECE:
-- Triage-time reduction:
+- Date: 2026-02-28
+- `pytest -q`: 54 passed, 0 failed
+- Parse success (%): N/A (no logs available in sandbox)
+- Root-cause Top-1 (unseen): ~21% (prior baseline)
+- Macro F1: ~0.20 (prior baseline)
+- False critical rate: TBD
+- ECE: TBD
+- Triage-time reduction: TBD
 
 Known blockers to verify first:
 
-- [ ] `RuleEngine.diagnose()` references `_check_events`, and runtime path is stable.
-- [ ] Feature schema parity across `FeaturePipeline`, `src.constants.FEATURE_NAMES`, and model schemas.
+- [x] `RuleEngine.diagnose()` references `_check_events`, and runtime path is stable.
+- [x] Feature schema parity across `FeaturePipeline`, `src.constants.FEATURE_NAMES`, and model schemas.
 - [ ] Parser message retention aligns with extractor requirements (`IMU`, `POWR`, etc.).
 - [ ] Threshold key alignment between code and `models/rule_thresholds.yaml`.
 - [ ] ML artifact/schema parity for current feature and label space.

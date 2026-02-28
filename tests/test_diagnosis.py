@@ -35,7 +35,8 @@ def test_rule_multi_failure():
     features.update({
         "vibe_z_max": 65.0,
         "mag_field_range": 300.0,
-        "motor_spread_max": 250.0
+        "motor_spread_max": 500.0,
+        "motor_spread_mean": 250.0,
     })
     result = engine.diagnose(features)
     types = [d["failure_type"] for d in result]

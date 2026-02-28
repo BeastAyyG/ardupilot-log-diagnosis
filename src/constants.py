@@ -38,6 +38,7 @@ FEATURE_NAMES = [
     "sys_vcc_min", "sys_vcc_range", "sys_vservo_min",
     "evt_error_count", "evt_failsafe_count", "evt_mode_change_count",
     "evt_unexpected_mode_changes", "evt_crash_detected", "evt_gps_lost_count",
+    "evt_radio_failsafe_count", "evt_rc_lost_count",
     "fft_dominant_freq_x", "fft_dominant_freq_y", "fft_dominant_freq_z",
     "fft_peak_power_x", "fft_peak_power_y", "fft_peak_power_z",
     "fft_noise_floor"
