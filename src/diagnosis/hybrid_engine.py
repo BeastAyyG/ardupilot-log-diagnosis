@@ -103,13 +103,17 @@ class HybridEngine:
         # Disambiguate root cause by selecting the earliest onset symptom.
         # Only filter when we have multiple candidates and at least one has valid tanomaly data.
         if merged_diagnoses and len(merged_diagnoses) > 1:
+            # Maps each label to the feature prefix that has a _tanomaly timestamp.
+            # All 8 labels must be represented so the Temporal Arbiter can fire for any root cause.
             prefix_map = {
-                "vibration_high": "vibe_z",
+                "vibration_high":      "vibe_z",
                 "compass_interference": "mag",
-                "power_instability": "volt",
-                "gps_quality_poor": "gps_hdop",
-                "motor_imbalance": "motor_spread",
-                "ekf_failure": "ekf_pos_var",
+                "power_instability":   "volt",
+                "gps_quality_poor":    "gps_hdop",
+                "motor_imbalance":     "motor_spread",
+                "ekf_failure":         "ekf_pos_var",
+                "rc_failsafe":         "rc_failsafe",      # → rc_failsafe_tanomaly
+                "pid_tuning_issue":    "pid_sat",           # → pid_sat_tanomaly
             }
 
             # Build (tanomaly, confidence, diag) tuples for candidates with valid tanomaly

@@ -8,6 +8,8 @@ xgboost
 joblib
 pyyaml
 pandas
+imbalanced-learn
+matplotlib
 scrapegraph-py
 python-dotenv
 crawlbase

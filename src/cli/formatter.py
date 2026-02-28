@@ -25,6 +25,16 @@ class DiagnosisFormatter:
         lines.append("╚═══════════════════════════════════════╝")
         lines.append("")
 
+        # Abstain / uncertain state — show this before diagnosis loop
+        if decision and decision.get("status") == "uncertain" and not diagnoses:
+            lines.append("UNCERTAIN — HUMAN REVIEW REQUIRED")
+            lines.append("  Confidence below threshold on all candidates.")
+            for r in decision.get("rationale", []):
+                lines.append(f"  · {r}")
+            lines.append("")
+            lines.append("Overall: SEND TO EXPERT")
+            return "\n".join(lines)
+
         if not diagnoses:
             lines.append("HEALTHY — No critical failures detected.")
             if decision:
@@ -73,11 +83,14 @@ class DiagnosisFormatter:
                     )
 
             if decision.get("requires_human_review"):
-                lines.append("\nHuman Review: REQUIRED")
+                lines.append("\n⚠  Human Review: REQUIRED")
+                for r in decision.get("rationale", []):
+                    lines.append(f"   · {r}")
             else:
                 lines.append("\nHuman Review: Not required")
 
         return "\n".join(lines)
+
 
     def format_json(
         self, diagnoses: list, metadata: dict, features: dict, decision: dict = None

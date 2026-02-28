@@ -220,35 +220,106 @@ def cmd_mine_expert_labels(args):
 
 
 def cmd_batch(args):
+    """Batch analyze a directory of .BIN logs with CSV + JSON report output."""
+    import csv
+
     directory = args.directory
     if not os.path.exists(directory):
         print(f"Directory {directory} not found.")
         return
 
-    print(f"{'File':<25} | {'Status':<15} | {'Top Diagnosis'}")
-    print("-" * 65)
+    output_dir = args.output_dir
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
 
+    engine_type = getattr(args, "engine", "hybrid")
     pipeline = FeaturePipeline()
-    engine = HybridEngine()
+    engine = HybridEngine() if engine_type != "rule" else RuleEngine()
 
-    for f in os.listdir(directory):
-        if not f.upper().endswith(".BIN"):
-            continue
+    bin_files = sorted(
+        f for f in os.listdir(directory) if f.upper().endswith(".BIN")
+    )
+    if not bin_files:
+        print(f"No .BIN files found in {directory}")
+        return
 
-        filepath = os.path.join(directory, f)
-        parser = LogParser(filepath)
-        parsed = parser.parse()
-        features = pipeline.extract(parsed)
-        diagnoses = engine.diagnose(features)
+    formatter = DiagnosisFormatter()
+    rows = []
+    healthy = fail = error = 0
 
-        if not diagnoses:
-            status = "HEALTHY"
-            top = "None"
-        else:
-            status = "FAIL"
-            top = f"{diagnoses[0]['failure_type']} ({int(diagnoses[0]['confidence'] * 100)}%)"
+    col_w = max(len(f) for f in bin_files) + 2
+    header = f"{'File':<{col_w}} | {'Status':<9} | {'Top Diagnosis':<30} | Conf"
+    print(header)
+    print("-" * len(header))
 
-        print(f"{f:<25} | {status:<15} | {top}")
+    for filename in bin_files:
+        filepath = os.path.join(directory, filename)
+        try:
+            parsed = LogParser(filepath).parse()
+            features = pipeline.extract(parsed)
+            diagnoses = (
+                engine.diagnose(features)
+                if isinstance(engine, HybridEngine)
+                else engine.diagnose(features)
+            )
+            decision = evaluate_decision(diagnoses)
+
+            if not diagnoses:
+                status = "HEALTHY"
+                top_label = "-"
+                conf = 0.0
+                sev = "-"
+                healthy += 1
+            else:
+                top = diagnoses[0]
+                top_label = top["failure_type"]
+                conf = top["confidence"]
+                sev = top["severity"]
+                status = "CRITICAL" if sev == "critical" else "WARNING"
+                fail += 1
+
+            row = {
+                "filename": filename,
+                "status": status,
+                "top_diagnosis": top_label,
+                "confidence": f"{conf:.2f}",
+                "severity": sev,
+                "requires_review": decision.get("requires_human_review", False),
+            }
+            rows.append(row)
+
+            conf_str = f"{conf:.0%}" if conf > 0 else "-"
+            print(f"{filename:<{col_w}} | {status:<9} | {top_label:<30} | {conf_str}")
+
+            # Write individual JSON report
+            if output_dir:
+                stem = Path(filename).stem
+                metadata = features.get("_metadata", {})
+                report_json = formatter.format_json(
+                    diagnoses, metadata, features, decision=decision
+                )
+                json_path = os.path.join(output_dir, f"{stem}_report.json")
+                with open(json_path, "w") as jf:
+                    jf.write(report_json)
+
+        except Exception as e:
+            error += 1
+            rows.append({"filename": filename, "status": "ERROR", "error": str(e)})
+            print(f"{filename:<{col_w}} | {'ERROR':<9} | {str(e)[:30]:<30} | -")
+
+    # Summary
+    print(f"\nSummary: {healthy} healthy · {fail} issues · {error} errors · {len(bin_files)} total")
+
+    # Write CSV
+    if output_dir and rows:
+        csv_path = os.path.join(output_dir, "batch_summary.csv")
+        with open(csv_path, "w", newline="") as cf:
+            fieldnames = ["filename", "status", "top_diagnosis", "confidence", "severity", "requires_review"]
+            writer = csv.DictWriter(cf, fieldnames=fieldnames, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(rows)
+        print(f"Summary CSV  → {csv_path}")
+        print(f"JSON reports → {output_dir}/*.json")
 
 
 def cmd_label(args):
@@ -355,8 +426,23 @@ def main():
         help="Include entries marked trainable=false",
     )
 
-    p_batch = subparsers.add_parser("batch", help="Batch analyze directory")
+    p_batch = subparsers.add_parser(
+        "batch-analyze",
+        aliases=["batch"],
+        help="Batch analyze a directory of .BIN logs — writes CSV summary + per-log JSON",
+    )
     p_batch.add_argument("directory", help="Directory containing .BIN files")
+    p_batch.add_argument(
+        "--output-dir", "-o",
+        default=None,
+        help="Directory for per-log JSON reports and batch_summary.csv",
+    )
+    p_batch.add_argument(
+        "--engine",
+        choices=["rule", "hybrid"],
+        default="hybrid",
+        help="Diagnosis engine to use (default: hybrid)",
+    )
 
     p_label = subparsers.add_parser("label", help="Interactive labeling tool")
     p_label.add_argument("logfile", help="Path to .BIN file")
@@ -486,7 +572,7 @@ def main():
         cmd_features(parsed_args)
     elif parsed_args.command == "benchmark":
         cmd_benchmark(parsed_args)
-    elif parsed_args.command == "batch":
+    elif parsed_args.command in ("batch-analyze", "batch"):
         cmd_batch(parsed_args)
     elif parsed_args.command == "label":
         cmd_label(parsed_args)
