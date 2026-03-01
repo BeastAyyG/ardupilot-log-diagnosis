@@ -61,6 +61,17 @@ def train():
     df_feat = pd.read_csv(features_csv)
     df_lab = pd.read_csv(labels_csv)
 
+    # ── 0. Impute NaN feature values ────────────────────────────────────────
+    # Some extractors (e.g. tanomaly) return -1.0 sentinel and some columns
+    # may have genuine NaN from edge cases. SMOTE requires finite values.
+    nan_cols = df_feat.columns[df_feat.isna().any()].tolist()
+    if nan_cols:
+        print(f"Imputing NaN in {len(nan_cols)} feature columns with column median:")
+        for col in nan_cols:
+            median_val = df_feat[col].median()
+            df_feat[col] = df_feat[col].fillna(median_val)
+            print(f"  {col}: filled with {median_val:.4f}")
+
     # ── 1. Convert multi-label dummies → single root-cause string ──────────
     X = df_feat.values
     class_names = []

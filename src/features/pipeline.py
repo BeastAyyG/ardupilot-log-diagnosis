@@ -53,10 +53,17 @@ class FeaturePipeline:
 
         extraction_time = time.time() - start_time
 
+        # Determine if extraction produced meaningful data.
+        # A corrupt or empty log will have duration=0 and very few message families.
+        # This flag lets callers distinguish 'genuinely healthy' from 'empty parse'.
+        duration = parsed_log.get("metadata", {}).get("duration_sec", 0.0)
+        n_message_families = len([k for k in messages if messages[k]])
+        extraction_success = not (duration == 0.0 and n_message_families < 3)
+
         # Add metadata
         all_features["_metadata"] = {
             "log_file": parsed_log.get("metadata", {}).get("filepath", "unknown"),
-            "duration_sec": parsed_log.get("metadata", {}).get("duration_sec", 0.0),
+            "duration_sec": duration,
             "vehicle_type": parsed_log.get("metadata", {}).get(
                 "vehicle_type", "Unknown"
             ),
@@ -67,6 +74,7 @@ class FeaturePipeline:
             "extraction_time_sec": float(extraction_time),
             "total_features": len([k for k in all_features if not k.startswith("_")]),
             "auto_labels": evt_auto_labels,
+            "extraction_success": extraction_success,
         }
 
         return all_features

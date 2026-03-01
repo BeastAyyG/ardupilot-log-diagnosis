@@ -256,6 +256,13 @@ class RuleEngine:
         }
 
     def _check_gps(self, features):
+        # Guard: if no GPS messages were recorded, all GPS features default to 0.
+        # 0 nsats / 0 hdop would trigger a false GPS_QUALITY_POOR alarm.
+        # Skip the check entirely for logs without GPS data (indoor flights, RTK-only, etc).
+        gps_msg_count = features.get("gps_message_count", features.get("gps_nsats_mean", -1.0))
+        if gps_msg_count == 0.0 and features.get("gps_hdop_mean", 0.0) == 0.0 and features.get("gps_fix_pct", 0.0) == 0.0:
+            return None  # No GPS data — cannot diagnose GPS quality
+
         hdop = features.get("gps_hdop_mean", 0.0)
         nsats = features.get("gps_nsats_min", 10.0)
         fix_pct = features.get("gps_fix_pct", 1.0)

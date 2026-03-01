@@ -38,6 +38,19 @@ def cmd_analyze(args):
     pipeline = FeaturePipeline()
     features = pipeline.extract(parsed)
 
+    # B-01 / B-04: Abort if the log produced no meaningful data.
+    # A corrupt, truncated, or empty file will have duration=0 and <3 message families.
+    # Running diagnosis on it produces false GPS/power alarms from zero-valued features.
+    meta = features.get("_metadata", {})
+    if not meta.get("extraction_success", True):
+        print("\n[ERROR] EXTRACTION_FAILED")
+        print(f"  Log file:  {args.logfile}")
+        print(f"  Duration:  {meta.get('duration_sec', 0):.0f}s")
+        print(f"  Messages:  {meta.get('messages_found', [])}")
+        print("  This log appears to be empty or corrupt. No diagnosis produced.")
+        print("  Verify the file is a valid ArduPilot .BIN dataflash log.")
+        import sys; sys.exit(2)
+
     if args.no_ml:
         engine = RuleEngine()
     else:
@@ -241,6 +254,14 @@ def cmd_batch(args):
     )
     if not bin_files:
         print(f"No .BIN files found in {directory}")
+        # B-07: still write an empty CSV so downstream automation doesn't break
+        if output_dir:
+            csv_path = os.path.join(output_dir, "batch_summary.csv")
+            fieldnames = ["filename", "status", "top_diagnosis", "confidence", "severity", "requires_review"]
+            with open(csv_path, "w", newline="") as cf:
+                import csv as _csv
+                _csv.DictWriter(cf, fieldnames=fieldnames).writeheader()
+            print(f"Summary CSV  → {csv_path} (header only — no logs found)")
         return
 
     formatter = DiagnosisFormatter()
@@ -310,16 +331,21 @@ def cmd_batch(args):
     # Summary
     print(f"\nSummary: {healthy} healthy · {fail} issues · {error} errors · {len(bin_files)} total")
 
-    # Write CSV
-    if output_dir and rows:
+    # Write CSV — always write header, even if 0 logs were processed.
+    # Downstream automation should never fail on a missing batch_summary.csv.
+    if output_dir:
         csv_path = os.path.join(output_dir, "batch_summary.csv")
+        fieldnames = ["filename", "status", "top_diagnosis", "confidence", "severity", "requires_review"]
         with open(csv_path, "w", newline="") as cf:
-            fieldnames = ["filename", "status", "top_diagnosis", "confidence", "severity", "requires_review"]
             writer = csv.DictWriter(cf, fieldnames=fieldnames, extrasaction="ignore")
             writer.writeheader()
-            writer.writerows(rows)
-        print(f"Summary CSV  → {csv_path}")
-        print(f"JSON reports → {output_dir}/*.json")
+            if rows:
+                writer.writerows(rows)
+        if rows:
+            print(f"Summary CSV  → {csv_path}")
+            print(f"JSON reports → {output_dir}/*.json")
+        else:
+            print(f"Summary CSV  → {csv_path} (header only — no logs processed)")
 
 
 def cmd_label(args):

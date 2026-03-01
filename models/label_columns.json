@@ -1,1 +1,1 @@
-["compass_interference", "ekf_failure", "motor_imbalance", "pid_tuning_issue", "power_instability", "rc_failsafe", "vibration_high"]
+["compass_interference", "ekf_failure", "mechanical_failure", "motor_imbalance", "power_instability", "rc_failsafe", "vibration_high"]

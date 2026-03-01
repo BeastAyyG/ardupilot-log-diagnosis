@@ -12,7 +12,9 @@ def test_analyze_command(tmp_path):
         try:
             main()
         except SystemExit as e:
-            assert e.code == 0 or e.code is None
+            # Exit 0 = success (real log, no issues)
+            # Exit 2 = EXTRACTION_FAILED (expected for a dummy/corrupt file) ← B-01 fix
+            assert e.code in (0, 2) or e.code is None
 
 def test_features_command(tmp_path):
     f = tmp_path / "test.BIN"
@@ -32,7 +34,8 @@ def test_json_flag(tmp_path):
         try:
             main()
         except SystemExit as e:
-            assert e.code == 0 or e.code is None
+            # Exit 2 = EXTRACTION_FAILED (expected for a dummy/corrupt file) ← B-01 fix
+            assert e.code in (0, 2) or e.code is None
 
 def test_missing_file():
     test_args = ["main", "analyze", "nonexistent.BIN"]

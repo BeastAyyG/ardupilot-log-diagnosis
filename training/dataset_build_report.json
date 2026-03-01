@@ -1,28 +1,27 @@
 {
-  "ground_truth_path": "data/kaggle_backups/ardupilot-master-log-pool-v2/ground_truth.json",
+  "ground_truth_path": "/tmp/unified_ground_truth.json",
   "dataset_dir": "data/kaggle_backups/ardupilot-master-log-pool-v2",
-  "total_entries": 45,
-  "processed": 44,
-  "failed_extraction": 1,
-  "skipped_missing_file": 0,
+  "total_entries": 52,
+  "processed": 41,
+  "failed_extraction": 0,
+  "skipped_missing_file": 11,
   "skipped_low_confidence": 0,
   "skipped_not_trainable": 0,
   "min_confidence": "low",
   "trainable_only": true,
   "label_distribution": {
-    "compass_interference": 12,
-    "ekf_failure": 4,
+    "compass_interference": 5,
+    "ekf_failure": 5,
     "gps_quality_poor": 1,
+    "mechanical_failure": 5,
     "motor_imbalance": 7,
-    "pid_tuning_issue": 2,
+    "pid_tuning_issue": 1,
     "power_instability": 5,
-    "rc_failsafe": 3,
-    "vibration_high": 10
+    "rc_failsafe": 4,
+    "vibration_high": 8
   },
   "source_type_distribution": {
-    "ArduPilot_Discuss": 33,
-    "forum_linked": 9,
-    "github": 2
+    "unknown": 41
   },
   "output_features": "training/features.csv",
   "output_labels": "training/labels.csv"
