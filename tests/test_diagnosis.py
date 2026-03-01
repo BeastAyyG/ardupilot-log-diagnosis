@@ -34,7 +34,7 @@ def test_rule_multi_failure():
     features = {k: 0.0 for k in FEATURE_NAMES}
     features.update({
         "vibe_z_max": 65.0,
-        "mag_field_range": 300.0,
+        "mag_field_range": 900.0,  # raised to match new threshold (600+)
         "motor_spread_max": 450.0, 
         "motor_spread_mean": 250.0
     })
@@ -47,7 +47,7 @@ def test_rule_multi_failure():
 def test_confidence_range():
     engine = RuleEngine()
     features = {k: 0.0 for k in FEATURE_NAMES}
-    features.update({"vibe_z_max": 100.0, "mag_field_range": 500.0})
+    features.update({"vibe_z_max": 100.0, "mag_field_range": 900.0})
     result = engine.diagnose(features)
     for d in result:
         assert 0 <= d["confidence"] <= 1.0
@@ -200,4 +200,70 @@ def test_enforce_no_missing_keys():
             assert "value" in ev
             assert "threshold" in ev
             assert "direction" in ev
+
+
+# =====================================================================
+# NEW TESTS: Thrust Loss, Setup Error, Compass Suppression
+# Per ArduPilot forum expert feedback (dkemxr, Yuri_Rage) 2026-03-01
+# =====================================================================
+
+def test_thrust_loss_detection():
+    """dkemxr: 'motors commanded to maximum producing Thrust Loss errors'"""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({
+        "motor_saturation_pct": 0.40,
+        "motor_all_high_pct": 0.25,
+        "ctrl_thr_saturated_pct": 0.30,
+        "ctrl_alt_error_max": 10.0,
+    })
+    result = engine.diagnose(features)
+    types = [d["failure_type"] for d in result]
+    assert "thrust_loss" in types, f"Expected thrust_loss, got {types}"
+    tl = next(d for d in result if d["failure_type"] == "thrust_loss")
+    assert tl["confidence"] >= 0.6
+    assert tl["severity"] == "critical"
+
+
+def test_setup_error_detection():
+    """Yuri_Rage: Log #33 had reversed servo settings causing immediate crash."""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({
+        "att_early_divergence": 50.0,
+        "att_time_to_crash_sec": 2.0,
+    })
+    result = engine.diagnose(features)
+    types = [d["failure_type"] for d in result]
+    assert "setup_error" in types, f"Expected setup_error, got {types}"
+    se = next(d for d in result if d["failure_type"] == "setup_error")
+    assert se["confidence"] >= 0.7
+    assert se["severity"] == "critical"
+
+
+def test_compass_suppressed_during_crash_tumbling():
+    """Compass should NOT fire if motors were saturated (crash tumbling noise)."""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({
+        "mag_field_range": 900.0,  # would normally trigger compass
+        "motor_saturation_pct": 0.50,  # but motors were saturated
+    })
+    result = engine.diagnose(features)
+    types = [d["failure_type"] for d in result]
+    assert "compass_interference" not in types, (
+        f"Compass should be suppressed when motors saturated, got {types}"
+    )
+
+
+def test_compass_not_triggered_below_new_threshold():
+    """mag_field_range=300 should NOT trigger compass anymore (new threshold=600)."""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({"mag_field_range": 300.0})
+    result = engine.diagnose(features)
+    types = [d["failure_type"] for d in result]
+    assert "compass_interference" not in types, (
+        f"mag_field_range=300 should be below new 600 threshold, got {types}"
+    )
 

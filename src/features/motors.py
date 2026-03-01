@@ -13,6 +13,8 @@ class MotorExtractor(BaseExtractor):
         "motor_max_output",
         "motor_hover_ratio",
         "motor_spread_tanomaly",
+        "motor_saturation_pct",
+        "motor_all_high_pct",
     ]
 
     def extract(self) -> dict:
@@ -22,6 +24,9 @@ class MotorExtractor(BaseExtractor):
         output_vals = []
         max_output_overall = 0.0
         t_vals = []
+        saturation_count = 0  # any motor > 1900
+        all_high_count = 0    # ALL motors > 1800 simultaneously
+        total_samples = 0
 
         if not rcou_msgs:
             pass
@@ -52,6 +57,13 @@ class MotorExtractor(BaseExtractor):
                     if max_ch > max_output_overall:
                         max_output_overall = float(max_ch)
 
+                    # Thrust loss detection: track motor saturation
+                    total_samples += 1
+                    if max_ch > 1900:
+                        saturation_count += 1
+                    if len(channels) >= 4 and min(channels) > 1800:
+                        all_high_count += 1
+
                     # For tanomaly: only use post-startup samples so t_vals and
                     # spread_vals stay in lockstep (required by _safe_stats).
                     # Startup transients (first 10 s) are excluded from BOTH arrays.
@@ -73,6 +85,10 @@ class MotorExtractor(BaseExtractor):
             # Let's use simple mean without conversion for now or assume output_mean is already raw
             hover_ratio = output_stats["mean"] / float(mot_thst_hover)
 
+        # Motor saturation percentages for thrust loss detection
+        motor_sat_pct = saturation_count / total_samples if total_samples > 0 else 0.0
+        motor_all_high = all_high_count / total_samples if total_samples > 0 else 0.0
+
         return {
             "motor_spread_mean": spread_stats["mean"],
             "motor_spread_max": spread_stats["max"],
@@ -82,4 +98,6 @@ class MotorExtractor(BaseExtractor):
             "motor_max_output": max_output_overall,
             "motor_hover_ratio": hover_ratio,
             "motor_spread_tanomaly": spread_stats["tanomaly"],
+            "motor_saturation_pct": motor_sat_pct,
+            "motor_all_high_pct": motor_all_high,
         }

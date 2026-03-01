@@ -14,6 +14,8 @@ class FailureType(Enum):
     PID_TUNING_ISSUE = "pid_tuning_issue"
     RC_FAILSAFE = "rc_failsafe"
     CRASH_UNKNOWN = "crash_unknown"
+    THRUST_LOSS = "thrust_loss"
+    SETUP_ERROR = "setup_error"
 
 
 class Severity(Enum):
@@ -35,4 +37,6 @@ FAILURE_RECOMMENDATIONS = {
     "pid_tuning_issue": "Recalibrate or tune PID settings. Drone behavior indicates oscillations.",
     "rc_failsafe": "Adjust RC receiver antenna. Maintain line-of-sight during flight.",
     "crash_unknown": "Crash detected! Unclear cause. Perform full manual inspection of logs.",
+    "thrust_loss": "Aircraft appears underpowered. Motors reached maximum output but could not maintain altitude. Check: total weight vs motor/prop thrust capability, battery C-rating under load, prop size, and ESC settings (e.g. Low RPM Power Protect should be Off).",
+    "setup_error": "Attitude diverged immediately after takeoff, suggesting reversed motor directions, incorrect prop placement, or reversed servo/RC channels. Verify motor order/direction and prop orientation before next flight.",
 }

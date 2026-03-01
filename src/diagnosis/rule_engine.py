@@ -26,6 +26,8 @@ class RuleEngine:
         results = []
         for check in [
             self._check_vibration,
+            self._check_thrust_loss,
+            self._check_setup_error,
             self._check_compass,
             self._check_power,
             self._check_gps,
@@ -109,26 +111,36 @@ class RuleEngine:
         mag_rng = features.get("mag_field_range", 0.0)
         mag_std = features.get("mag_field_std", 0.0)
 
-        rng_lim = self.thresholds.get("mag_range_limit", 200.0)
+        rng_lim = self.thresholds.get("mag_range_limit", 600.0)
         std_lim = self.thresholds.get("mag_std_limit", 50.0)
 
         if mag_rng <= rng_lim and mag_std <= std_lim:
             return None
 
+        # CRASH TUMBLING GUARD (per dkemxr feedback 2026-03-01):
+        # When motors are saturated (thrust loss / underpowered), the drone
+        # tumbles on impact. Tumbling produces wild magnetic field readings
+        # that look like compass interference but are NOT the root cause.
+        # Suppress compass diagnosis if motors were saturated.
+        motor_sat = features.get("motor_saturation_pct", 0.0)
+        motor_all_high = features.get("motor_all_high_pct", 0.0)
+        if motor_sat > 0.3 or motor_all_high > 0.2:
+            return None
+
         conf = 0.0
         evidence = []
-        if mag_rng > 400:
-            conf = 0.9
+        if mag_rng > 800:
+            conf = 0.65  # capped — experts say compass rarely causes crashes
             evidence.append(
                 {
                     "feature": "mag_field_range",
                     "value": mag_rng,
-                    "threshold": 400,
+                    "threshold": 800,
                     "direction": "above",
                 }
             )
         elif mag_rng > rng_lim:
-            conf = 0.5
+            conf = 0.35
             evidence.append(
                 {
                     "feature": "mag_field_range",
@@ -139,7 +151,7 @@ class RuleEngine:
             )
 
         if mag_std > 100:
-            conf = min(conf + 0.3, 1.0)
+            conf = min(conf + 0.2, 0.65)  # capped at 0.65
             evidence.append(
                 {
                     "feature": "mag_field_std",
@@ -149,7 +161,7 @@ class RuleEngine:
                 }
             )
         elif mag_std > std_lim:
-            conf = min(conf + 0.15, 1.0)
+            conf = min(conf + 0.1, 0.65)
             evidence.append(
                 {
                     "feature": "mag_field_std",
@@ -159,8 +171,11 @@ class RuleEngine:
                 }
             )
 
+        if not evidence:
+            return None
+
         conf = max(conf, 0.1)  # Minimum if triggered
-        severity = "critical" if conf > 0.6 else "warning"
+        severity = "warning" if conf > 0.5 else "info"
         return {
             "failure_type": "compass_interference",
             "confidence": conf,
@@ -168,7 +183,7 @@ class RuleEngine:
             "detection_method": "rule",
             "evidence": evidence,
             "recommendation": FAILURE_RECOMMENDATIONS["compass_interference"],
-            "reason_code": "confirmed" if conf >= 0.6 else "uncertain",
+            "reason_code": "uncertain",
         }
 
     def _check_power(self, features):
@@ -701,3 +716,159 @@ class RuleEngine:
             ]  # Returns only one, but theoretically we could expand this
 
         return None
+
+    def _check_thrust_loss(self, features):
+        """Detect underpowered aircraft where motors are saturated at maximum.
+
+        Per dkemxr (ArduPilot forum, 2026-03-01):
+        'This craft was underpowered to start with and by the end of the flight
+        the motors were being commanded to maximum producing the very easy to
+        see Thrust Loss errors.'
+
+        Triggers when: motors near max output + throttle saturated + altitude error.
+        """
+        motor_sat = features.get("motor_saturation_pct", 0.0)
+        motor_all_high = features.get("motor_all_high_pct", 0.0)
+        thr_sat = features.get("ctrl_thr_saturated_pct", 0.0)
+        alt_err = features.get("ctrl_alt_error_max", 0.0)
+        max_output = features.get("motor_max_output", 0.0)
+
+        # Need at least SOME motor saturation evidence
+        if motor_sat < 0.10 and motor_all_high < 0.05:
+            return None
+
+        conf = 0.0
+        evidence = []
+
+        # Primary: motors pegged at max for significant portion of flight
+        if motor_sat > 0.25:
+            conf += 0.45
+            evidence.append({
+                "feature": "motor_saturation_pct",
+                "value": motor_sat,
+                "threshold": 0.25,
+                "direction": "above",
+            })
+        elif motor_sat > 0.10:
+            conf += 0.25
+            evidence.append({
+                "feature": "motor_saturation_pct",
+                "value": motor_sat,
+                "threshold": 0.10,
+                "direction": "above",
+            })
+
+        # Supporting: ALL motors high simultaneously (not just one)
+        if motor_all_high > 0.15:
+            conf += 0.25
+            evidence.append({
+                "feature": "motor_all_high_pct",
+                "value": motor_all_high,
+                "threshold": 0.15,
+                "direction": "above",
+            })
+
+        # Supporting: throttle output saturated
+        if thr_sat > 0.15:
+            conf += 0.20
+            evidence.append({
+                "feature": "ctrl_thr_saturated_pct",
+                "value": thr_sat,
+                "threshold": 0.15,
+                "direction": "above",
+            })
+
+        # Supporting: significant altitude error (can't hold altitude)
+        if alt_err > 5.0:
+            conf += 0.10
+            evidence.append({
+                "feature": "ctrl_alt_error_max",
+                "value": alt_err,
+                "threshold": 5.0,
+                "direction": "above",
+            })
+
+        if not evidence or conf < 0.4:
+            return None
+
+        conf = min(conf, 1.0)
+        severity = "critical" if conf > 0.6 else "warning"
+        return {
+            "failure_type": "thrust_loss",
+            "confidence": conf,
+            "severity": severity,
+            "detection_method": "rule",
+            "evidence": evidence,
+            "recommendation": FAILURE_RECOMMENDATIONS["thrust_loss"],
+            "reason_code": "confirmed" if conf >= 0.6 else "uncertain",
+        }
+
+    def _check_setup_error(self, features):
+        """Detect reversed props/servos/RC channels causing immediate crash.
+
+        Per Yuri_Rage (ArduPilot forum, 2026-03-01):
+        Log #33's root cause was reversed servo settings, identified in the
+        original forum topic.
+
+        Triggers when: attitude diverges violently within first 5 seconds.
+        """
+        early_div = features.get("att_early_divergence", 0.0)
+        ttc = features.get("att_time_to_crash_sec", -1.0)
+
+        # Need attitude divergence to exist
+        if early_div < 20.0:
+            return None
+
+        conf = 0.0
+        evidence = []
+
+        # Primary: large attitude divergence in first 5 seconds
+        if early_div > 45.0:
+            conf += 0.55
+            evidence.append({
+                "feature": "att_early_divergence",
+                "value": early_div,
+                "threshold": 45.0,
+                "direction": "above",
+            })
+        elif early_div > 20.0:
+            conf += 0.35
+            evidence.append({
+                "feature": "att_early_divergence",
+                "value": early_div,
+                "threshold": 20.0,
+                "direction": "above",
+            })
+
+        # Supporting: crash happened within first 5 seconds
+        if 0 < ttc < 5.0:
+            conf += 0.35
+            evidence.append({
+                "feature": "att_time_to_crash_sec",
+                "value": ttc,
+                "threshold": 5.0,
+                "direction": "below",
+            })
+        elif 0 < ttc < 10.0:
+            conf += 0.15
+            evidence.append({
+                "feature": "att_time_to_crash_sec",
+                "value": ttc,
+                "threshold": 10.0,
+                "direction": "below",
+            })
+
+        if not evidence or conf < 0.4:
+            return None
+
+        conf = min(conf, 1.0)
+        severity = "critical" if conf > 0.6 else "warning"
+        return {
+            "failure_type": "setup_error",
+            "confidence": conf,
+            "severity": severity,
+            "detection_method": "rule",
+            "evidence": evidence,
+            "recommendation": FAILURE_RECOMMENDATIONS["setup_error"],
+            "reason_code": "confirmed" if conf >= 0.6 else "uncertain",
+        }
