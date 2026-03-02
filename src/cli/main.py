@@ -126,6 +126,22 @@ def cmd_benchmark(args):
     reporter.save_json(results, json_path)
     print(f"\nSaved {md_path} and {json_path}")
 
+    if args.assert_min_f1 is not None:
+        metrics = results.compute_metrics()
+        macro_f1 = metrics.get("overall", {}).get("macro_f1", 0.0)
+        if macro_f1 < args.assert_min_f1:
+            print(
+                f"\n❌  Macro F1 {macro_f1:.3f} is below the required minimum "
+                f"{args.assert_min_f1:.2f}. Failing benchmark gate."
+            )
+            import sys as _sys
+            _sys.exit(1)
+        else:
+            print(
+                f"\n✅  Macro F1 {macro_f1:.3f} meets the minimum requirement "
+                f"{args.assert_min_f1:.2f}."
+            )
+
 
 def cmd_import_clean(args):
     from src.data.clean_import import run_clean_import
@@ -467,6 +483,16 @@ def main():
         "--include-non-trainable",
         action="store_true",
         help="Include entries marked trainable=false",
+    )
+    p_benchmark.add_argument(
+        "--assert-min-f1",
+        type=float,
+        default=None,
+        metavar="THRESHOLD",
+        help=(
+            "Fail with exit code 1 if overall macro F1 is below this threshold. "
+            "Example: --assert-min-f1 0.55"
+        ),
     )
 
     p_batch = subparsers.add_parser(
