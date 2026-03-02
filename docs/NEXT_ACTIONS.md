@@ -105,7 +105,7 @@ Before you stop, confirm all items below:
 
 ## One-Line Rule
 
-All P0–P4 goals complete. All Hard Gates passed. Stretch goals optional.
+If any `P0` item is unchecked, do not work on anything outside `P0`.
 
 ## Next Priority: Data Expansion (U-08)
 
@@ -118,3 +118,4 @@ cannot be reliably trained or evaluated until ≥ 5 verified examples exist per 
 2. Review candidates with `python3 -m src.cli.main label`.
 3. Run `python3 training/build_dataset.py && python3 training/train_model.py` to retrain.
 4. Run `python3 training/reproduce_benchmark.py --from-scratch` to verify improvement.
+

@@ -28,7 +28,7 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 
 ## Current Baseline Snapshot (Update Every Session)
 
-- Date: 2026-03-02
+- Date: 2026-02-28
 - `pytest -q`: 120 passed
 - Parse success (%): 100%
 - Root-cause Top-1 (unseen): 1.00 (Local Benchmark)
