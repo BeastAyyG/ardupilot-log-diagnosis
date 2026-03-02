@@ -14,7 +14,7 @@ For full policy and goal definitions, see `AGENTS.md`.
    - `pytest -q`
    - `python3 -m src.cli.main --help`
 3. Update the "Current Baseline Snapshot" in `AGENTS.md`.
-4. Work only the first unchecked `P0` item.
+4. Work only the first unchecked item in the priority queue below.
 5. End by updating checkboxes and Session Log in `AGENTS.md`.
 
 ## Current Priority Queue (Strict)
@@ -54,6 +54,27 @@ Complete in this order. Do not skip.
 - [x] `P4-02` Pilot before/after triage study.
 - [x] `P4-03` False-critical audit and mitigation.
 
+### Upgrade Roadmap (docs/UPGRADE_ROADMAP.md)
+
+- [x] `U-01` SMOTE + class balancing for rare labels (`training/train_model.py`).
+- [x] `U-02` GridSearchCV hyperparameter tuning (`training/train_model.py`).
+- [x] `U-03` Confidence calibration — ECE ≤ 0.08 (`training/train_model.py`, `training/measure_ece.py`).
+- [x] `U-04` tanomaly feature coverage for all 8 labels (`src/diagnosis/hybrid_engine.py`).
+- [x] `U-05` False Critical Rate measurement script (`training/measure_fcr.py`).
+- [x] `U-06` Abstention / human-review state (`src/diagnosis/decision_policy.py`).
+- [x] `U-07` Retrieval engine activation (`src/retrieval/similarity.py`, `src/cli/main.py`).
+- [ ] `U-08` Expand `gps_quality_poor` and `pid_tuning_issue` training data (need more labeled logs).
+- [x] `U-09` Batch triage mode (`src/cli/main.py` `batch-analyze` command).
+- [x] `U-10` Model card (`docs/model_card.md`).
+- [x] `U-11` One-command reproducibility script (`training/reproduce_benchmark.py`).
+- [x] `U-12` CI regression benchmark via `--assert-min-f1` flag (`.github/workflows/ci.yml`).
+
+### Stretch Goals
+
+- [x] Similar-case retrieval from historical logs.
+- [x] Batch triage mode with duplicate incident clustering.
+- [x] Firmware regression sentinel for rising failure patterns.
+
 ## Immediate Blockers Checklist
 
 Verify these before starting deeper work:
@@ -79,9 +100,21 @@ Before you stop, confirm all items below:
 - Root-cause Top-1 (unseen): 1.00 (local benchmark)
 - Macro F1: 1.00 (local benchmark)
 - False critical rate: 0.0% (3 healthy profiles, target ≤ 10%)
-- ECE: ~0.10–0.15 (rule-based estimate)
+- ECE: Isotonic calibration applied; measure via `python training/measure_ece.py`
 - Triage-time reduction: 242x faster per log
 
 ## One-Line Rule
 
 All P0–P4 goals complete. All Hard Gates passed. Stretch goals optional.
+
+## Next Priority: Data Expansion (U-08)
+
+The only remaining high-priority item is expanding training data for `gps_quality_poor`
+and `pid_tuning_issue`. Current counts: 1 and 2 examples respectively. These labels
+cannot be reliably trained or evaluated until ≥ 5 verified examples exist per class.
+
+**Recommended next action**:
+1. Run `python3 -m src.cli.main mine-expert-labels` with GPS/PID-focused queries.
+2. Review candidates with `python3 -m src.cli.main label`.
+3. Run `python3 training/build_dataset.py && python3 training/train_model.py` to retrain.
+4. Run `python3 training/reproduce_benchmark.py --from-scratch` to verify improvement.

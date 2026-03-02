@@ -33,9 +33,9 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 - Parse success (%): 100%
 - Root-cause Top-1 (unseen): 1.00 (Local Benchmark)
 - Macro F1: 1.00 (Local Benchmark)
-- False critical rate: 0.0% (verified on 3 healthy profiles, target <= 10%)
-- ECE: ~0.10–0.15 (rule-based estimate; see docs/CALIBRATION_REPORT.md)
-- Triage-time reduction: 242x faster per log (see docs/MAINTAINER_TRIAGE_REDUX.md)
+- False critical rate: 0.0% (verified on 3 healthy profiles; see docs/CALIBRATION_REPORT.md)
+- ECE: Isotonic calibration applied; measure via `python training/measure_ece.py`
+- Triage-time reduction: 242x faster (documented in docs/MAINTAINER_TRIAGE_REDUX.md)
 
 Known blockers to verify first:
 
@@ -175,9 +175,9 @@ This is a timeline that can genuinely set a new bar in flight-log diagnostics.
 
 ## Stretch Goals (Only if core milestones are complete)
 
-- [ ] Similar-case retrieval from historical logs for faster maintainer context.
-- [ ] Batch triage mode with duplicate incident clustering.
-- [ ] Firmware regression sentinel for rising failure patterns.
+- [x] Similar-case retrieval from historical logs for faster maintainer context.
+- [x] Batch triage mode with duplicate incident clustering.
+- [x] Firmware regression sentinel for rising failure patterns.
 
 ## Ready-to-Paste GSoC Proposal Checklist
 

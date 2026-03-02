@@ -1,4 +1,3 @@
-import pytest
 from typing import Any, cast
 from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.hybrid_engine import HybridEngine
