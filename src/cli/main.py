@@ -50,7 +50,8 @@ def cmd_analyze(args):
         print(f"  Messages:  {meta.get('messages_found', [])}")
         print("  This log appears to be empty or corrupt. No diagnosis produced.")
         print("  Verify the file is a valid ArduPilot .BIN dataflash log.")
-        import sys; sys.exit(2)
+        import sys
+        sys.exit(2)
 
     if args.no_ml:
         engine = RuleEngine()
@@ -416,7 +417,7 @@ def cmd_label(args):
         print("Skipped.")
         return
 
-    labels = [l.strip() for l in user_input.split(",")]
+    labels = [label.strip() for label in user_input.split(",")]
 
     gt_path = "ground_truth.json"
     data = {"logs": []}
@@ -424,7 +425,7 @@ def cmd_label(args):
         with open(gt_path, "r") as f:
             data = json.load(f)
 
-    data["logs"] = [l for l in data.get("logs", []) if l["filename"] != filename]
+    data["logs"] = [log_entry for log_entry in data.get("logs", []) if log_entry["filename"] != filename]
 
     data["logs"].append(
         {

@@ -1,5 +1,3 @@
-import pytest
-import os
 from src.retrieval.similarity import FailureRetrieval
 
 def test_empty_database(tmp_path):

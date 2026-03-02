@@ -1,4 +1,3 @@
-import pytest
 from src.parser.bin_parser import LogParser
 
 def test_parse_valid_bin():

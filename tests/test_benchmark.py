@@ -1,6 +1,4 @@
-import pytest
 import json
-import os
 from src.benchmark.suite import BenchmarkSuite
 from src.benchmark.results import BenchmarkResults
 
