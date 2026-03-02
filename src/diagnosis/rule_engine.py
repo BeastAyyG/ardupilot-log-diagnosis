@@ -24,10 +24,15 @@ class RuleEngine:
 
     def diagnose(self, features: dict) -> list:
         # Coerce None / non-numeric values to 0.0 so comparisons never raise TypeError
-        features = {
-            k: (float(v) if v is not None else 0.0)
-            for k, v in features.items()
-        }
+        def _to_float(v):
+            if v is None:
+                return 0.0
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return 0.0
+
+        features = {k: _to_float(v) for k, v in features.items()}
         results = []
         for check in [
             self._check_vibration,
