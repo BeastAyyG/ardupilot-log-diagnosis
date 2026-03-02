@@ -13,12 +13,12 @@ LABEL_PRIORITY = {
     "vibration_high":      5,
     "compass_interference": 5,
     "motor_imbalance":     5,   # Raised: motor failure is equally safety-critical
+    "mechanical_failure":  6,   # Above motor_imbalance: specific root cause vs symptom
     "gps_quality_poor":    4,
     "power_instability":   4,
     "brownout":            4,
     "ekf_failure":         4,   # Raised: EKF failure precedes most crashes
     "pid_tuning_issue":    3,
-    "mechanical_failure":  2,
     "rc_failsafe":         2,
     "crash_unknown":       1,
 }
@@ -114,6 +114,7 @@ class HybridEngine:
                 "power_instability":   "volt",
                 "gps_quality_poor":    "gps_hdop",
                 "motor_imbalance":     "motor_spread",
+                "mechanical_failure":  "motor_spread",  # extreme motor differential → same onset source
                 "ekf_failure":         "ekf_pos_var",
                 "rc_failsafe":         "rc_failsafe",      # → rc_failsafe_tanomaly
                 "pid_tuning_issue":    "pid_sat",           # → pid_sat_tanomaly
