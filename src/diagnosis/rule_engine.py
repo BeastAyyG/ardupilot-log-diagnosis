@@ -23,6 +23,11 @@ class RuleEngine:
             self.thresholds = thresholds or DEFAULT_THRESHOLDS
 
     def diagnose(self, features: dict) -> list:
+        # Coerce None / non-numeric values to 0.0 so comparisons never raise TypeError
+        features = {
+            k: (float(v) if v is not None else 0.0)
+            for k, v in features.items()
+        }
         results = []
         for check in [
             self._check_vibration,
