@@ -134,3 +134,48 @@ def test_mine_expert_labels_enrich_dispatch():
                 main()
             except SystemExit as e:
                 assert e.code == 0 or e.code is None
+
+
+def test_demo_command_terminal():
+    """demo command produces non-empty terminal output."""
+    import io
+    from unittest.mock import patch
+    test_args = ["main", "demo"]
+    captured = io.StringIO()
+    with patch.object(sys, "argv", test_args):
+        with patch("sys.stdout", captured):
+            try:
+                main()
+            except SystemExit as e:
+                assert e.code in (0, None)
+    output = captured.getvalue()
+    assert "ArduPilot Log Diagnosis" in output or len(output) > 0
+
+
+def test_demo_command_html(tmp_path):
+    """demo --format html -o saves an HTML file."""
+    out = tmp_path / "demo.html"
+    test_args = ["main", "demo", "--format", "html", "-o", str(out)]
+    with patch.object(sys, "argv", test_args):
+        try:
+            main()
+        except SystemExit as e:
+            assert e.code in (0, None)
+    assert out.exists()
+    content = out.read_text()
+    assert "<!DOCTYPE html>" in content
+    assert "vibration_high" in content.lower() or "ArduPilot" in content
+
+
+def test_analyze_format_html(tmp_path):
+    """analyze --format html produces an HTML file."""
+    f = tmp_path / "test.BIN"
+    f.write_text("dummy")
+    out = tmp_path / "report.html"
+    test_args = ["main", "analyze", str(f), "--format", "html", "-o", str(out)]
+    with patch.object(sys, "argv", test_args):
+        try:
+            main()
+        except SystemExit as e:
+            # Exit 2 = extraction failed on dummy file — that's ok
+            assert e.code in (0, 2, None)

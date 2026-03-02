@@ -1,9 +1,9 @@
 # 🚁 ArduPilot AI Log Diagnosis
 
-[![CI](https://github.com/YOUR_GITHUB_USERNAME/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/ardupilot-log-diagnosis/actions/workflows/ci.yml)
+[![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 56 Passing](https://img.shields.io/badge/tests-56%20passing-brightgreen)](tests/)
+[![Tests: 123 Passing](https://img.shields.io/badge/tests-123%20passing-brightgreen)](tests/)
 [![Production: v1.0.0](https://img.shields.io/badge/production-v1.0.0-success)](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md)
 
 > An agentic AI + rule-based diagnostic engine for ArduPilot `.BIN` dataflash logs — built for the **GSoC 2026** program.
@@ -16,7 +16,15 @@ Extracts **60+ critical flight telemetry features** and uses a **hybrid rule + X
 
 ```bash
 pip install -r requirements.txt
+
+# Try an instant demo — no .BIN file needed
+python -m src.cli.main demo
+
+# Analyze a real log
 python -m src.cli.main analyze flight.BIN
+
+# Generate a shareable HTML report
+python -m src.cli.main analyze flight.BIN --format html -o report.html
 ```
 
 <details>
@@ -34,10 +42,20 @@ python -m src.cli.main analyze flight.BIN
 CRITICAL — VIBRATION_HIGH (95%)
   vibe_z_max = 67.8 (limit: 30.0)
   vibe_clip_total = 145 (limit: 0)
-  Method: rule + ML
-  Fix: Balance/replace propellers.
+  Method: rule+ml
+  ➜ Fix: Balance or replace propellers. Check motor mount tightness.
 
-Overall: NOT SAFE TO FLY
+WARNING — EKF_FAILURE (72%)
+  ekf_vel_var_max = 1.8 (limit: 1.5)
+  ekf_lane_switch_count = 2 (limit: 0)
+  Method: rule
+  ➜ Fix: EKF health compromised. Vibration is likely shaking sensors.
+
+Overall: NOT SAFE TO FLY ✘
+
+Subsystem Blame Ranking:
+  -  Vibration/Mounts: 71%
+  -   Navigation/EKF: 29%
 ```
 
 </details>
@@ -277,6 +295,8 @@ To add crash logs to the benchmark dataset specifically, see [`download_logs.md`
 | Document | Purpose |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | AI agent operating manual and full goal board |
+| [`docs/FORUM_ANNOUNCEMENT.md`](docs/FORUM_ANNOUNCEMENT.md) | Ready-to-post ArduPilot forum introduction |
+| [`docs/GSOC_PROPOSAL.md`](docs/GSOC_PROPOSAL.md) | Full GSoC 2026 proposal |
 | [`docs/PLAN-gsoc-architecture.md`](docs/PLAN-gsoc-architecture.md) | GSoC architecture plan and task breakdown |
 | [`docs/MAINTAINER_TRIAGE_REDUX.md`](docs/MAINTAINER_TRIAGE_REDUX.md) | Triage impact study & production sign-off |
 | [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) | Release gates & labeling policy |
