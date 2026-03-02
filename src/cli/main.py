@@ -7,6 +7,7 @@ from src.features.pipeline import FeaturePipeline
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.decision_policy import evaluate_decision
+from src.retrieval.similarity import FailureRetrieval
 from .formatter import DiagnosisFormatter
 
 
@@ -60,13 +61,16 @@ def cmd_analyze(args):
     diagnoses = engine.diagnose(features)
     decision = evaluate_decision(diagnoses)
 
+    retrieval = FailureRetrieval()
+    similar_cases = retrieval.find_similar(features)
+
     formatter = DiagnosisFormatter()
     metadata = features.get("_metadata", {})
 
     if args.json:
-        output = formatter.format_json(diagnoses, metadata, features, decision=decision)
+        output = formatter.format_json(diagnoses, metadata, features, decision=decision, similar_cases=similar_cases)
     else:
-        output = formatter.format_terminal(diagnoses, metadata, decision=decision)
+        output = formatter.format_terminal(diagnoses, metadata, decision=decision, similar_cases=similar_cases)
 
     if args.output:
         with open(args.output, "w") as f:
@@ -122,6 +126,22 @@ def cmd_benchmark(args):
     reporter.save_markdown(results, md_path)
     reporter.save_json(results, json_path)
     print(f"\nSaved {md_path} and {json_path}")
+
+    if args.assert_min_f1 is not None:
+        metrics = results.compute_metrics()
+        macro_f1 = metrics.get("overall", {}).get("macro_f1", 0.0)
+        if macro_f1 < args.assert_min_f1:
+            print(
+                f"\n❌  Macro F1 {macro_f1:.3f} is below the required minimum "
+                f"{args.assert_min_f1:.2f}. Failing benchmark gate."
+            )
+            import sys as _sys
+            _sys.exit(1)
+        else:
+            print(
+                f"\n✅  Macro F1 {macro_f1:.3f} meets the minimum requirement "
+                f"{args.assert_min_f1:.2f}."
+            )
 
 
 def cmd_import_clean(args):
@@ -332,6 +352,19 @@ def cmd_batch(args):
     # Summary
     print(f"\nSummary: {healthy} healthy · {fail} issues · {error} errors · {len(bin_files)} total")
 
+    # Duplicate incident clustering — group logs by top diagnosis label
+    incident_rows = [r for r in rows if r.get("status") not in ("ERROR", "HEALTHY")]
+    if incident_rows:
+        clusters: dict[str, list[str]] = {}
+        for r in incident_rows:
+            label = r.get("top_diagnosis", "unknown")
+            clusters.setdefault(label, []).append(r["filename"])
+        print("\nDuplicate Incident Clusters:")
+        for label, files in sorted(clusters.items(), key=lambda x: -len(x[1])):
+            print(f"  [{len(files):>2}x] {label}")
+            for f in files:
+                print(f"         · {f}")
+
     # Write CSV — always write header, even if 0 logs were processed.
     # Downstream automation should never fail on a missing batch_summary.csv.
     if output_dir:
@@ -451,6 +484,16 @@ def main():
         "--include-non-trainable",
         action="store_true",
         help="Include entries marked trainable=false",
+    )
+    p_benchmark.add_argument(
+        "--assert-min-f1",
+        type=float,
+        default=None,
+        metavar="THRESHOLD",
+        help=(
+            "Fail with exit code 1 if overall macro F1 is below this threshold. "
+            "Example: --assert-min-f1 0.55"
+        ),
     )
 
     p_batch = subparsers.add_parser(
