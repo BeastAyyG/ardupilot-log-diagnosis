@@ -175,17 +175,17 @@ This is a timeline that can genuinely set a new bar in flight-log diagnostics.
 
 ## Stretch Goals (Only if core milestones are complete)
 
-- [ ] Similar-case retrieval from historical logs for faster maintainer context.
-- [ ] Batch triage mode with duplicate incident clustering.
-- [ ] Firmware regression sentinel for rising failure patterns.
+- [x] Similar-case retrieval from historical logs for faster maintainer context.
+- [x] Batch triage mode with duplicate incident clustering.
+- [x] Firmware regression sentinel for rising failure patterns.
 
 ## Ready-to-Paste GSoC Proposal Checklist
 
-- [ ] Problem statement (diagnostics-first motivation and maintainer pain reduction).
-- [ ] Detailed timeline by week (table above).
-- [ ] Deliverables + evaluation criteria (hard gates and metrics).
-- [ ] Risk mitigation + fallback plan.
-- [ ] Final impact statement for ArduPilot maintainers.
+- [x] Problem statement (diagnostics-first motivation and maintainer pain reduction).
+- [x] Detailed timeline by week (table above).
+- [x] Deliverables + evaluation criteria (hard gates and metrics).
+- [x] Risk mitigation + fallback plan.
+- [x] Final impact statement for ArduPilot maintainers.
 
 ---
 

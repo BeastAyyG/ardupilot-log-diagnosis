@@ -7,6 +7,7 @@ from src.features.pipeline import FeaturePipeline
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.decision_policy import evaluate_decision
+from src.retrieval.similarity import FailureRetrieval
 from .formatter import DiagnosisFormatter
 
 
@@ -59,13 +60,16 @@ def cmd_analyze(args):
     diagnoses = engine.diagnose(features)
     decision = evaluate_decision(diagnoses)
 
+    retrieval = FailureRetrieval()
+    similar_cases = retrieval.find_similar(features)
+
     formatter = DiagnosisFormatter()
     metadata = features.get("_metadata", {})
 
     if args.json:
-        output = formatter.format_json(diagnoses, metadata, features, decision=decision)
+        output = formatter.format_json(diagnoses, metadata, features, decision=decision, similar_cases=similar_cases)
     else:
-        output = formatter.format_terminal(diagnoses, metadata, decision=decision)
+        output = formatter.format_terminal(diagnoses, metadata, decision=decision, similar_cases=similar_cases)
 
     if args.output:
         with open(args.output, "w") as f:
@@ -330,6 +334,19 @@ def cmd_batch(args):
 
     # Summary
     print(f"\nSummary: {healthy} healthy · {fail} issues · {error} errors · {len(bin_files)} total")
+
+    # Duplicate incident clustering — group logs by top diagnosis label
+    incident_rows = [r for r in rows if r.get("status") not in ("ERROR", "HEALTHY")]
+    if incident_rows:
+        clusters: dict[str, list[str]] = {}
+        for r in incident_rows:
+            label = r.get("top_diagnosis", "unknown")
+            clusters.setdefault(label, []).append(r["filename"])
+        print("\nDuplicate Incident Clusters:")
+        for label, files in sorted(clusters.items(), key=lambda x: -len(x[1])):
+            print(f"  [{len(files):>2}x] {label}")
+            for f in files:
+                print(f"         · {f}")
 
     # Write CSV — always write header, even if 0 logs were processed.
     # Downstream automation should never fail on a missing batch_summary.csv.

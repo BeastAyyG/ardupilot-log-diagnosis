@@ -5,7 +5,8 @@ class DiagnosisFormatter:
     """Formats diagnosis output for humans."""
 
     def format_terminal(
-        self, diagnoses: list, metadata: dict, decision: dict = None
+        self, diagnoses: list, metadata: dict, decision: dict = None,
+        similar_cases: list = None
     ) -> str:
         lines = []
         lines.append("╔═══════════════════════════════════════╗")
@@ -89,17 +90,31 @@ class DiagnosisFormatter:
             else:
                 lines.append("\nHuman Review: Not required")
 
+        if similar_cases:
+            lines.append("\nSimilar Historical Cases:")
+            for case in similar_cases:
+                pct = int(case["similarity"] * 100)
+                lines.append(f"  [{pct}%] {case['failure_type']}")
+                if case.get("root_cause"):
+                    lines.append(f"         Cause: {case['root_cause']}")
+                if case.get("fix"):
+                    lines.append(f"         Fix:   {case['fix']}")
+                if case.get("source_url"):
+                    lines.append(f"         Ref:   {case['source_url']}")
+
         return "\n".join(lines)
 
 
     def format_json(
-        self, diagnoses: list, metadata: dict, features: dict, decision: dict = None
+        self, diagnoses: list, metadata: dict, features: dict, decision: dict = None,
+        similar_cases: list = None
     ) -> str:
         return json.dumps(
             {
                 "metadata": metadata,
                 "diagnoses": diagnoses,
                 "decision": decision or {},
+                "similar_cases": similar_cases or [],
                 "features_summary": {
                     k: v for k, v in features.items() if not k.startswith("_")
                 },
