@@ -10,7 +10,6 @@ These satisfy Hard Gate E and P4-03.
 
 from __future__ import annotations
 
-import math
 from typing import List, Tuple
 
 
