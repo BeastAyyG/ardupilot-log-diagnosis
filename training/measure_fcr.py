@@ -54,7 +54,7 @@ def measure_fcr(healthy_dir: str, target_fcr: float, verbose: bool) -> float:
             parsed = LogParser(str(f)).parse()
             features = pipeline.extract(parsed)
             diagnoses = engine.diagnose(features)
-            decision = evaluate_decision(diagnoses)
+            evaluate_decision(diagnoses)
 
             has_critical = any(
                 d.get("severity", "") == "critical" for d in diagnoses
@@ -89,9 +89,9 @@ def measure_fcr(healthy_dir: str, target_fcr: float, verbose: bool) -> float:
     print(f"  FCR:        {fcr:.1%}")
     print(f"  Target:     ≤ {target_fcr:.0%}")
     if fcr <= target_fcr:
-        print(f"  Result:     ✅ PASS")
+        print("  Result:     ✅ PASS")
     else:
-        print(f"  Result:     ❌ FAIL — FCR exceeds production threshold")
+        print("  Result:     ❌ FAIL — FCR exceeds production threshold")
     if errors:
         print(f"  Parse errors: {len(errors)} (excluded from FCR)")
     print(f"{'='*55}\n")

@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch
 import sys
 from src.cli.main import main
@@ -42,7 +41,7 @@ def test_missing_file():
     with patch.object(sys, 'argv', test_args):
         try:
             main()
-        except SystemExit as e:
+        except SystemExit:
             pass
 
 

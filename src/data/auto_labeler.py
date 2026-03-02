@@ -80,7 +80,7 @@ def fetch_and_label(url: str, sgai_key: str) -> dict:
         try:
             resp = requests.get(url, headers=headers, timeout=15)
             html_source = resp.text
-        except:
+        except Exception:
             html_source = url # fallback to direct URL
             
         client = Client(api_key=sgai_key)

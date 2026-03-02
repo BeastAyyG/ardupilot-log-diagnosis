@@ -72,3 +72,47 @@ jobs:
             echo "⚠️  Data directories not present in this environment — skipping leakage check."
             echo "Run 'python validate_leakage.py' locally after data is populated."
           fi
+
+  regression-benchmark:
+    name: "Regression Benchmark (pilot set)"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Dataset files (dataset/ and ground_truth.json) are not committed to the repo.
+    # This job is informational only — it runs when data is present and is skipped
+    # gracefully otherwise. CI test failures are handled in the 'test' job.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check for benchmark dataset
+        id: dataset_check
+        run: |
+          if [ -d "dataset" ] && [ -f "ground_truth.json" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  Pilot benchmark dataset not present — skipping regression benchmark."
+            echo "Populate dataset/ and ground_truth.json to enable this check."
+          fi
+
+      - name: Run regression benchmark
+        if: steps.dataset_check.outputs.present == 'true'
+        run: |
+          python -m src.cli.main benchmark --engine hybrid \
+            --dataset-dir dataset/ \
+            --ground-truth ground_truth.json \
+            --assert-min-f1 0.30
