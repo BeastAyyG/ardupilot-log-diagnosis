@@ -41,7 +41,7 @@ def relabel():
         original_labels = set(log_entry.get("labels", []))
 
         # Check if the labes are considered "Symptom" labels
-        is_symptom = any(l in SYMPTOM_LABELS for l in original_labels)
+        is_symptom = any(label in SYMPTOM_LABELS for label in original_labels)
 
         if is_symptom or len(original_labels) == 0:
             filepath = os.path.join(dataset_dir, log_entry["filename"])

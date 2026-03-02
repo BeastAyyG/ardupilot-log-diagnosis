@@ -731,7 +731,6 @@ class RuleEngine:
         motor_all_high = features.get("motor_all_high_pct", 0.0)
         thr_sat = features.get("ctrl_thr_saturated_pct", 0.0)
         alt_err = features.get("ctrl_alt_error_max", 0.0)
-        max_output = features.get("motor_max_output", 0.0)
 
         # Need at least SOME motor saturation evidence
         if motor_sat < 0.10 and motor_all_high < 0.05:

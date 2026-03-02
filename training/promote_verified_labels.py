@@ -18,7 +18,6 @@ file so build_dataset.py can find them.
 import argparse
 import json
 import os
-import shutil
 import sys
 from datetime import datetime, timezone
 
@@ -36,10 +35,10 @@ def promote(provisional_path: str, output_dir: str, dry_run: bool = False) -> di
     print(f"Total entries:    {len(logs)}")
 
     verified = [
-        l for l in logs
-        if l.get("human_verified") is True
-        and l.get("auto_label")
-        and l.get("status", "").startswith("auto_labeled")
+        log_entry for log_entry in logs
+        if log_entry.get("human_verified") is True
+        and log_entry.get("auto_label")
+        and log_entry.get("status", "").startswith("auto_labeled")
     ]
     skipped = len(logs) - len(verified)
 

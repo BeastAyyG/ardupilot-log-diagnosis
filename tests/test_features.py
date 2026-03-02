@@ -1,4 +1,3 @@
-import pytest
 from src.features.pipeline import FeaturePipeline
 from src.constants import FEATURE_NAMES
 
