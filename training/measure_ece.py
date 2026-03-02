@@ -154,9 +154,9 @@ def main():
     print(f"  Overall ECE (macro): {ece:.4f}")
     print(f"  Target:              ≤ {args.target_ece:.2f}")
     if ece <= args.target_ece:
-        print(f"  Result:              ✅ PASS")
+        print("  Result:              ✅ PASS")
     else:
-        print(f"  Result:              ❌ FAIL — retraining or recalibration needed")
+        print("  Result:              ❌ FAIL — retraining or recalibration needed")
     print(f"{'='*50}\n")
 
     # Per-class ECE breakdown

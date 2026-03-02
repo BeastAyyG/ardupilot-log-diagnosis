@@ -23,13 +23,15 @@ def merge_datasets(data_root, output_dir):
     # Build global index of ALL .bin and .zip files across data/
     print(f"[*] Indexing all .bin/.zip files in {data_root}...")
     for bin_path in data_root.glob("**/*.bin"):
-        if "master_pool" in str(bin_path): continue
+        if "master_pool" in str(bin_path):
+            continue
         # Prefer the one in final_training_dataset (most processed)
         existing = filename_to_path.get(bin_path.name)
         if existing is None or "final_training_dataset" in str(bin_path):
             filename_to_path[bin_path.name] = bin_path
     for zip_path in data_root.glob("**/*.zip"):
-        if "master_pool" in str(zip_path): continue
+        if "master_pool" in str(zip_path):
+            continue
         if zip_path.name not in filename_to_path:
             filename_to_path[zip_path.name] = zip_path
 
@@ -43,7 +45,8 @@ def merge_datasets(data_root, output_dir):
     )
     
     for gt_path in gt_files:
-        if "master_pool" in str(gt_path): continue
+        if "master_pool" in str(gt_path):
+            continue
         print(f"  -> {gt_path}")
         try:
             with open(gt_path, 'r') as f:
