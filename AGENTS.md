@@ -29,11 +29,11 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 ## Current Baseline Snapshot (Update Every Session)
 
 - Date: 2026-03-02
-- `pytest -q`: 64 passed
+- `pytest -q`: 120 passed
 - Parse success (%): 100%
 - Root-cause Top-1 (unseen): 1.00 (Local Benchmark)
 - Macro F1: 1.00 (Local Benchmark)
-- False critical rate: 0.0% (verified on 3 healthy profiles; see docs/CALIBRATION_REPORT.md)
+- False critical rate: ≤ 10% (mitigation guards in place; see docs/CALIBRATION_ABSTENTION_REPORT.md)
 - ECE: Isotonic calibration applied; measure via `python training/measure_ece.py`
 - Triage-time reduction: 242x faster (documented in docs/MAINTAINER_TRIAGE_REDUX.md)
 
