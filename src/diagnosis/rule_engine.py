@@ -35,6 +35,7 @@ class RuleEngine:
         features = {k: _to_float(v) for k, v in features.items()}
         results = []
         for check in [
+            self._check_mechanical_failure,
             self._check_vibration,
             self._check_thrust_loss,
             self._check_setup_error,
@@ -53,6 +54,91 @@ class RuleEngine:
 
         results.sort(key=lambda x: x["confidence"], reverse=True)
         return results
+
+    def _check_mechanical_failure(self, features):
+        """Detect physical mechanical failures: broken prop/arm, failed motor.
+
+        Signature: extreme motor differential (one motor unresponsive or
+        producing far more/less thrust than others) combined with attitude
+        destabilisation. Distinct from motor_imbalance which is gradual wear;
+        mechanical_failure is sudden and usually leads to a crash.
+
+        Triggers when: motor_spread_mean >= 400 OR motor_spread_max >= 800,
+        with higher confidence as spread_mean >= 800 or spread_max >= 900.
+        """
+        spread_max = features.get("motor_spread_max", 0.0)
+        spread_mean = features.get("motor_spread_mean", 0.0)
+        roll_max = features.get("att_roll_max", 0.0)
+        pitch_max = features.get("att_pitch_max", 0.0)
+        ekf_err = features.get("ekf_flags_error_pct", 0.0)
+
+        # Primary gate: sustained extreme motor differential
+        if spread_mean < 400.0 and spread_max < 800.0:
+            return None
+
+        conf = 0.0
+        evidence = []
+
+        if spread_mean >= 800.0:
+            conf += 0.55
+            evidence.append({
+                "feature": "motor_spread_mean",
+                "value": spread_mean,
+                "threshold": 800.0,
+                "direction": "above",
+            })
+        elif spread_mean >= 400.0:
+            conf += 0.45
+            evidence.append({
+                "feature": "motor_spread_mean",
+                "value": spread_mean,
+                "threshold": 400.0,
+                "direction": "above",
+            })
+
+        if spread_max >= 900.0:
+            conf += 0.40
+            evidence.append({
+                "feature": "motor_spread_max",
+                "value": spread_max,
+                "threshold": 900.0,
+                "direction": "above",
+            })
+
+        # Severe attitude excursion confirms physical failure
+        if roll_max > 40.0 or pitch_max > 40.0:
+            conf += 0.25
+            evidence.append({
+                "feature": "att_roll_max" if roll_max > pitch_max else "att_pitch_max",
+                "value": max(roll_max, pitch_max),
+                "threshold": 40.0,
+                "direction": "above",
+            })
+
+        # EKF flags errors throughout the flight (sensor data inconsistent)
+        if ekf_err >= 0.9:
+            conf += 0.15
+            evidence.append({
+                "feature": "ekf_flags_error_pct",
+                "value": ekf_err,
+                "threshold": 0.9,
+                "direction": "above",
+            })
+
+        if not evidence or conf < 0.55:
+            return None
+
+        conf = min(conf, 1.0)
+        severity = "critical" if conf > 0.7 else "warning"
+        return {
+            "failure_type": "mechanical_failure",
+            "confidence": conf,
+            "severity": severity,
+            "detection_method": "rule",
+            "evidence": evidence,
+            "recommendation": FAILURE_RECOMMENDATIONS["mechanical_failure"],
+            "reason_code": "confirmed" if conf >= 0.7 else "uncertain",
+        }
 
     def _check_vibration(self, features):
         vibe_x = features.get("vibe_x_max", 0.0)

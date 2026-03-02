@@ -4,10 +4,10 @@
     "successful_extractions": 5,
     "failed_extractions": 5,
     "failed_diagnoses": 0,
-    "accuracy": 0.0,
-    "top1_accuracy": 0.0,
+    "accuracy": 0.8,
+    "top1_accuracy": 0.8,
     "exact_match_accuracy": 0.0,
-    "macro_f1": 0.0
+    "macro_f1": 0.17777777777777778
   },
   "per_label": {
     "healthy": {
@@ -82,13 +82,13 @@
     },
     "mechanical_failure": {
       "support": 5,
-      "tp": 0,
+      "tp": 4,
       "fp": 0,
-      "fn": 5,
+      "fn": 1,
       "tn": 0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.888888888888889
     },
     "brownout": {
       "support": 0,
@@ -158,10 +158,12 @@
         "mechanical_failure"
       ],
       "predicted": [
+        "mechanical_failure",
         "motor_imbalance",
         "brownout"
       ],
       "predicted_confidence": [
+        1.0,
         0.9500000000000001,
         0.8
       ]
@@ -172,11 +174,13 @@
         "mechanical_failure"
       ],
       "predicted": [
+        "mechanical_failure",
         "motor_imbalance",
-        "brownout",
-        "thrust_loss"
+        "thrust_loss",
+        "brownout"
       ],
       "predicted_confidence": [
+        1.0,
         0.9500000000000001,
         0.8,
         0.65
@@ -188,10 +192,12 @@
         "mechanical_failure"
       ],
       "predicted": [
+        "mechanical_failure",
         "motor_imbalance",
         "thrust_loss"
       ],
       "predicted_confidence": [
+        1.0,
         0.9500000000000001,
         0.65
       ]
@@ -202,8 +208,8 @@
         "mechanical_failure"
       ],
       "predicted": [
-        "motor_imbalance",
-        "vibration_high"
+        "vibration_high",
+        "motor_imbalance"
       ],
       "predicted_confidence": [
         1.0,
@@ -216,11 +222,13 @@
         "mechanical_failure"
       ],
       "predicted": [
+        "mechanical_failure",
         "motor_imbalance",
         "vibration_high",
         "thrust_loss"
       ],
       "predicted_confidence": [
+        1.0,
         0.9500000000000001,
         0.65,
         0.1
