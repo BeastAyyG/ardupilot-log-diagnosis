@@ -2,6 +2,14 @@ from .base_extractor import BaseExtractor
 
 
 class AttitudeExtractor(BaseExtractor):
+    """Extract attitude features from ATT messages.
+
+    Monitors roll/pitch stability, desired-vs-actual roll error, early
+    divergence (first 5 seconds), and time-to-crash.  Early divergence
+    is the hallmark of a setup error (reversed props/motors); a short
+    time_to_crash_sec with high attitude excursion confirms loss of control.
+    """
+
     REQUIRED_MESSAGES = ["ATT"]
     FEATURE_PREFIX = "att_"
     FEATURE_NAMES = [

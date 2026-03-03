@@ -2,6 +2,14 @@ from .base_extractor import BaseExtractor
 
 
 class PowerExtractor(BaseExtractor):
+    """Extract battery / power-rail features from BAT messages.
+
+    Monitors voltage stability, current draw, sag ratio, and failsafe
+    margin.  High bat_volt_range or bat_sag_ratio signals a weak or
+    aging battery; low bat_margin means the pack is close to triggering
+    the low-voltage failsafe.
+    """
+
     REQUIRED_MESSAGES = ["BAT"]
     FEATURE_PREFIX = "bat_"
     FEATURE_NAMES = [

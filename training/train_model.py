@@ -23,7 +23,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_recall_fscore_support
 from xgboost import XGBClassifier
 
-warnings.filterwarnings("ignore", category=UserWarning)
+# Only suppress known noisy warnings; let deprecation/convergence through.
+warnings.filterwarnings("ignore", message=".*use_label_encoder.*", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*Falling back to.*", category=UserWarning)
 
 
 def _safe_smote(X_train, y_train):
@@ -73,6 +75,10 @@ def train():
             print(f"  {col}: filled with {median_val:.4f}")
 
     # ── 1. Convert multi-label dummies → single root-cause string ──────────
+    # Use an explicit priority order so the root-cause label is deterministic
+    # regardless of CSV column ordering.  Higher index = higher priority.
+    from src.diagnosis.hybrid_engine import LABEL_PRIORITY
+
     X = df_feat.values
     class_names = []
     keep_indices = []
@@ -81,7 +87,9 @@ def train():
         row = df_lab.iloc[i]
         active_labels = row[row == 1].index.tolist()
         if active_labels:
-            class_names.append(active_labels[0])   # Root-Cause Precedence: first label wins
+            # Pick the label with the highest LABEL_PRIORITY (deterministic)
+            best = max(active_labels, key=lambda lbl: LABEL_PRIORITY.get(lbl, 0))
+            class_names.append(best)
             keep_indices.append(i)
 
     if not class_names:

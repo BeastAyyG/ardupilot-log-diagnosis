@@ -2,6 +2,13 @@ from .base_extractor import BaseExtractor
 
 
 class GPSExtractor(BaseExtractor):
+    """Extract GPS quality features from GPS messages.
+
+    Tracks horizontal dilution of precision (HDOP), satellite count,
+    fix percentage, and temporal anomaly on HDOP.  Poor GPS quality
+    causes EKF position drift and can trigger GPS glitch failsafes.
+    """
+
     REQUIRED_MESSAGES = ["GPS"]
     FEATURE_PREFIX = "gps_"
     FEATURE_NAMES = [

@@ -2,6 +2,13 @@ from .base_extractor import BaseExtractor
 
 
 class IMUExtractor(BaseExtractor):
+    """Extract raw inertial measurement features from IMU messages.
+
+    Computes standard deviation of accelerometer and gyroscope readings
+    on all three axes.  High imu_acc_z_std correlates with propeller
+    vibration; high gyroscope std indicates rotational instability.
+    """
+
     REQUIRED_MESSAGES = ["IMU"]
     FEATURE_PREFIX = "imu_"
     FEATURE_NAMES = [

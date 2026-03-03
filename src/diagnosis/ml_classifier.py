@@ -1,3 +1,4 @@
+import logging
 import os
 import json
 import numpy as np
@@ -6,6 +7,10 @@ try:
     import joblib
 except Exception:
     joblib = None
+
+from .failure_types import FAILURE_RECOMMENDATIONS
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_PROB_THRESHOLD = 0.55
@@ -56,6 +61,7 @@ class MLClassifier:
                     self.label_columns = json.load(f)
                 self.available = True
             except Exception:
+                logger.warning("Failed to load ML model from %s", self.model_path, exc_info=True)
                 self.available = False
 
     def _threshold_for_label(self, label: str) -> float:
@@ -157,8 +163,6 @@ class MLClassifier:
     def predict(self, features: dict) -> list:
         if not self.available:
             return []
-
-        from src.diagnosis.failure_types import FAILURE_RECOMMENDATIONS
 
         vector = []
         for feat in self.feature_columns:

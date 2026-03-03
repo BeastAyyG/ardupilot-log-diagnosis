@@ -2,6 +2,13 @@ from .base_extractor import BaseExtractor
 
 
 class ControlExtractor(BaseExtractor):
+    """Extract throttle and altitude-control features from CTUN messages.
+
+    Monitors throttle output, hover ratio, altitude error, climb-rate
+    variability, and throttle saturation.  High ctrl_thr_saturated_pct
+    indicates the vehicle is running out of thrust headroom.
+    """
+
     REQUIRED_MESSAGES = ["CTUN"]
     FEATURE_PREFIX = "ctrl_"
     FEATURE_NAMES = [

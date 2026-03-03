@@ -38,4 +38,6 @@ class CompanionMonitor:
 
 
 if __name__ == "__main__":
-    CompanionMonitor("udp:127.0.0.1:14550").run()
+    import os
+    conn_str = os.environ.get("MAVLINK_CONNECTION", "udp:127.0.0.1:14550")
+    CompanionMonitor(conn_str).run()

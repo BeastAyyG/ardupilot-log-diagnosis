@@ -336,11 +336,7 @@ def cmd_batch(args):
         try:
             parsed = LogParser(filepath).parse()
             features = pipeline.extract(parsed)
-            diagnoses = (
-                engine.diagnose(features)
-                if isinstance(engine, HybridEngine)
-                else engine.diagnose(features)
-            )
+            diagnoses = engine.diagnose(features)
             decision = evaluate_decision(diagnoses)
 
             if not diagnoses:

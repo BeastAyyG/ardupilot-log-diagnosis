@@ -24,22 +24,13 @@ from datetime import datetime, timezone
 import requests
 from pydantic import BaseModel, Field
 
+from src.constants import VALID_LABELS
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
-
-VALID_LABELS = [
-    "vibration_high",
-    "compass_interference",
-    "ekf_failure",
-    "motor_imbalance",
-    "power_instability",
-    "rc_failsafe",
-    "gps_quality_poor",
-    "pid_tuning_issue",
-]
 
 EXTRACTION_PROMPT = """
 You are an ArduPilot flight log expert. Analyze this forum thread and extract:
@@ -158,6 +149,14 @@ def run_auto_labeler(manifest_path: str, output_dir: str, limit: int = 20):
 
         # Only include if there's a valid label and community consensus
         if root_cause in VALID_LABELS and consensus:
+            # Sanitize: only store the structured fields we need, not the
+            # full ScrapeGraphAI response which may contain usernames/PII.
+            sanitized_ai = {
+                "root_cause": result.get("root_cause", "UNKNOWN"),
+                "confidence": result.get("confidence", "low"),
+                "community_consensus": result.get("community_consensus", False),
+                "expert_quote": result.get("expert_quote", "")[:200],
+            }
             candidates.append({
                 "filename": filename,
                 "labels": [root_cause],
@@ -166,7 +165,7 @@ def run_auto_labeler(manifest_path: str, output_dir: str, limit: int = 20):
                 "expert_quote": quote[:200],
                 "confidence": confidence,
                 "ai_extracted": True,  # MARKER: Must be human-reviewed before use
-                "raw_ai_result": result
+                "ai_result_summary": sanitized_ai,
             })
             print(f"       ✅ Label: {root_cause} ({confidence})")
         else:

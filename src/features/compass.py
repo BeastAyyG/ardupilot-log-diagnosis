@@ -3,6 +3,13 @@ from .base_extractor import BaseExtractor
 
 
 class CompassExtractor(BaseExtractor):
+    """Extract magnetometer features from MAG messages.
+
+    Computes field strength statistics, per-axis range, and temporal anomaly
+    detection.  Large mag_field_range or mag_field_std values indicate EMI
+    from power leads or ESCs, which corrupts EKF heading fusion.
+    """
+
     REQUIRED_MESSAGES = ["MAG"]
     FEATURE_PREFIX = "mag_"
     FEATURE_NAMES = [

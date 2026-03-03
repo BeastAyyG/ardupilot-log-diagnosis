@@ -2,6 +2,15 @@ from .base_extractor import BaseExtractor
 
 
 class MotorExtractor(BaseExtractor):
+    """Extract motor output features from RCOU messages.
+
+    Computes PWM spread (max-min across channels), output statistics,
+    hover ratio, and motor saturation percentages.  High spread indicates
+    motor imbalance; high saturation_pct / all_high_pct signals thrust loss.
+    The first 10 seconds of flight are excluded from tanomaly to avoid
+    false triggers during arm/takeoff transients.
+    """
+
     REQUIRED_MESSAGES = ["RCOU"]
     FEATURE_PREFIX = "motor_"
     FEATURE_NAMES = [

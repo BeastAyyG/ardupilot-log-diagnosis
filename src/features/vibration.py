@@ -2,6 +2,13 @@ from .base_extractor import BaseExtractor
 
 
 class VibrationExtractor(BaseExtractor):
+    """Extract vibration features from VIBE messages.
+
+    Analyses accelerometer vibration levels (X/Y/Z), clipping events, and
+    temporal anomaly detection on the Z axis.  High vibration causes IMU
+    saturation which cascades into EKF variance spikes.
+    """
+
     REQUIRED_MESSAGES = ["VIBE"]
     FEATURE_PREFIX = "vibe_"
     FEATURE_NAMES = [

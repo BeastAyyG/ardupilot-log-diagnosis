@@ -31,18 +31,48 @@ HREF_RE = re.compile(r"href=[\"']?([^\"' >]+)", re.IGNORECASE)
 DRIVE_ID_RE = re.compile(r"/d/([a-zA-Z0-9_-]+)")
 
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
+_MAX_RETRIES = 3
+_BACKOFF_BASE_SEC = 1.0  # doubles each retry: 1s, 2s, 4s
+
+
+def _retry(func, *args, max_retries: int = _MAX_RETRIES, **kwargs):
+    """Call *func* with exponential backoff on HTTP errors."""
+    last_exc: Exception = RuntimeError("unreachable")
+    for attempt in range(max_retries + 1):
+        try:
+            return func(*args, **kwargs)
+        except Exception as exc:
+            last_exc = exc
+            if attempt < max_retries:
+                wait = _BACKOFF_BASE_SEC * (2 ** attempt)
+                _logger.warning(
+                    "Request failed (attempt %d/%d): %s — retrying in %.1fs",
+                    attempt + 1, max_retries + 1, exc, wait,
+                )
+                time.sleep(wait)
+    raise last_exc
+
+
 def _request_json(url: str, timeout_sec: int = 30) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": DEFAULT_USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
-        return json.loads(resp.read().decode("utf-8", errors="replace"))
+    def _do():
+        req = urllib.request.Request(url, headers={"User-Agent": DEFAULT_USER_AGENT})
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            return json.loads(resp.read().decode("utf-8", errors="replace"))
+    return _retry(_do)
 
 
 def _request_bytes(url: str, timeout_sec: int = 60) -> Tuple[bytes, dict]:
-    req = urllib.request.Request(url, headers={"User-Agent": DEFAULT_USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
-        payload = resp.read()
-        headers = dict(resp.headers.items())
-        return payload, headers
+    def _do():
+        req = urllib.request.Request(url, headers={"User-Agent": DEFAULT_USER_AGENT})
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            payload = resp.read()
+            headers = dict(resp.headers.items())
+            return payload, headers
+    return _retry(_do)
 
 
 def _make_absolute(url: str) -> str:

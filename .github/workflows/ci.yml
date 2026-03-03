@@ -33,21 +33,38 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          pip install ruff
+          pip install ruff==0.4.4
           ruff check . --output-format=github
 
       - name: Validate project boundaries
         run: python training/validate_project_boundaries.py
 
-      - name: Run test suite
-        run: pytest -q --tb=short
+      - name: Run test suite with coverage
+        run: |
+          pip install pytest-cov
+          pytest -q --tb=short --cov=src --cov-report=term-missing --cov-report=xml
+
+      - name: Validate feature_columns.json matches constants
+        run: |
+          python -c "
+import json
+from src.constants import FEATURE_NAMES
+with open('models/feature_columns.json') as f:
+    on_disk = json.load(f)
+assert on_disk == FEATURE_NAMES, (
+    f'feature_columns.json has {len(on_disk)} features but '
+    f'constants.FEATURE_NAMES has {len(FEATURE_NAMES)}. '
+    'Regenerate with: python -c \"from src.constants import FEATURE_NAMES; '
+    'import json; json.dump(FEATURE_NAMES, open(\\\"models/feature_columns.json\\\", \\\"w\\\"))\"'
+)
+print(f'feature_columns.json OK — {len(on_disk)} features match constants.py')
+          "
 
   leakage-check:
     name: "Data Leakage Integrity Check"
     runs-on: ubuntu-latest
-    # Only run leakage check if the data directories exist
-    # (they are not committed to git; this runs in environments that have them)
-    continue-on-error: true
+    # Only meaningful when data directories are present (they are gitignored).
+    # The step itself checks for directory existence before running.
 
     steps:
       - name: Checkout repository

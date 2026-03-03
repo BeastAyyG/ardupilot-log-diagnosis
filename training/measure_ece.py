@@ -29,7 +29,12 @@ ECE_PASS_THRESHOLD = 0.08
 
 
 def compute_ece(y_true: np.ndarray, probs: np.ndarray, n_bins: int = 10) -> float:
-    """Compute scalar ECE across all classes (macro average)."""
+    """Compute scalar ECE across all classes (macro average).
+
+    Note: For the single-sample (confidence, correct) ECE used in
+    ``src.benchmark.calibration``, see ``src.benchmark.calibration.compute_ece``.
+    This version operates on multi-class probability matrices.
+    """
     n_classes = probs.shape[1]
     ece_per_class = []
 

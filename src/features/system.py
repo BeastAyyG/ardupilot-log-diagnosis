@@ -2,6 +2,13 @@ from .base_extractor import BaseExtractor
 
 
 class SystemExtractor(BaseExtractor):
+    """Extract scheduler and power-supply features from PM / POWR messages.
+
+    Tracks long-loop counts, maximum loop time, CPU load, internal errors,
+    and servo-rail / Vcc voltages.  Elevated sys_long_loops or low sys_vcc_min
+    can indicate a brownout or an overloaded flight controller.
+    """
+
     REQUIRED_MESSAGES = ["PM"]
     FEATURE_PREFIX = "sys_"
     FEATURE_NAMES = [

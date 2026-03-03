@@ -2,6 +2,14 @@ from .base_extractor import BaseExtractor
 
 
 class EKFExtractor(BaseExtractor):
+    """Extract Extended Kalman Filter variance features from XKF4/NKF4 messages.
+
+    Monitors velocity, position, height, and compass variance along with
+    lane-switch events and sensor-status flags.  Rising ekf_pos_var or
+    ekf_vel_var indicates the EKF is losing confidence in its state estimate,
+    which precedes EKF failsafes.
+    """
+
     REQUIRED_MESSAGES = []  # Custom logic for XKF4 vs NKF4
     FEATURE_PREFIX = "ekf_"
     FEATURE_NAMES = [
