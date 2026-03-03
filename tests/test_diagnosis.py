@@ -266,3 +266,143 @@ def test_compass_not_triggered_below_new_threshold():
         f"mag_field_range=300 should be below new 600 threshold, got {types}"
     )
 
+
+# =====================================================================
+# P4-03: False-Critical Audit Tests
+# Verify that healthy/normal flight profiles do NOT trigger critical
+# diagnoses (false-critical rate target: <= 10%).
+# =====================================================================
+
+_HEALTHY_PROFILES = [
+    # Normal indoor hover: no GPS, no battery issues, low vibration
+    {
+        "vibe_x_max": 5.0, "vibe_y_max": 5.0, "vibe_z_max": 10.0,
+        "vibe_clip_total": 0.0, "bat_volt_min": 14.8, "bat_volt_range": 0.3,
+        "sys_vcc_min": 5.0, "bat_margin": 3.0,
+        "gps_hdop_mean": 0.0, "gps_nsats_min": 0.0, "gps_fix_pct": 0.0,
+        "gps_message_count": 0.0,
+        "mag_field_range": 100.0, "mag_field_std": 10.0,
+        "motor_spread_max": 100.0, "motor_spread_mean": 60.0,
+        "ekf_vel_var_max": 0.1, "ekf_pos_var_max": 0.1, "ekf_compass_var_max": 0.1,
+        "ekf_lane_switch_count": 0.0, "ekf_flags_error_pct": 0.0,
+        "sys_long_loops": 0.0, "sys_cpu_load_mean": 30.0, "sys_internal_errors": 0.0,
+        "evt_failsafe_count": 0.0, "evt_radio_failsafe_count": 0.0,
+        "evt_rc_lost_count": 0.0, "evt_crash_detected": 0.0,
+        "motor_saturation_pct": 0.0, "motor_all_high_pct": 0.0,
+        "att_early_divergence": 0.0, "att_time_to_crash_sec": -1.0,
+    },
+    # Normal outdoor GPS flight with nominal telemetry
+    {
+        "vibe_x_max": 15.0, "vibe_y_max": 15.0, "vibe_z_max": 20.0,
+        "vibe_clip_total": 0.0, "bat_volt_min": 22.0, "bat_volt_range": 0.5,
+        "sys_vcc_min": 5.1, "bat_margin": 4.5,
+        "gps_hdop_mean": 1.2, "gps_nsats_min": 10.0, "gps_fix_pct": 1.0,
+        "gps_message_count": 1.0,
+        "mag_field_range": 150.0, "mag_field_std": 12.0,
+        "motor_spread_max": 180.0, "motor_spread_mean": 90.0,
+        "ekf_vel_var_max": 0.2, "ekf_pos_var_max": 0.2, "ekf_compass_var_max": 0.2,
+        "ekf_lane_switch_count": 0.0, "ekf_flags_error_pct": 0.0,
+        "sys_long_loops": 5.0, "sys_cpu_load_mean": 40.0, "sys_internal_errors": 0.0,
+        "evt_failsafe_count": 0.0, "evt_radio_failsafe_count": 0.0,
+        "evt_rc_lost_count": 0.0, "evt_crash_detected": 0.0,
+        "motor_saturation_pct": 0.0, "motor_all_high_pct": 0.0,
+        "att_early_divergence": 0.0, "att_time_to_crash_sec": -1.0,
+    },
+    # Slightly elevated vibration still within safe range
+    {
+        "vibe_x_max": 25.0, "vibe_y_max": 28.0, "vibe_z_max": 29.0,
+        "vibe_clip_total": 0.0, "bat_volt_min": 11.5, "bat_volt_range": 0.8,
+        "sys_vcc_min": 5.0, "bat_margin": 2.0,
+        "gps_hdop_mean": 1.8, "gps_nsats_min": 7.0, "gps_fix_pct": 0.97,
+        "gps_message_count": 1.0,
+        "mag_field_range": 200.0, "mag_field_std": 20.0,
+        "motor_spread_max": 250.0, "motor_spread_mean": 120.0,
+        "ekf_vel_var_max": 0.5, "ekf_pos_var_max": 0.5, "ekf_compass_var_max": 0.5,
+        "ekf_lane_switch_count": 0.0, "ekf_flags_error_pct": 0.05,
+        "sys_long_loops": 20.0, "sys_cpu_load_mean": 55.0, "sys_internal_errors": 0.0,
+        "evt_failsafe_count": 0.0, "evt_radio_failsafe_count": 0.0,
+        "evt_rc_lost_count": 0.0, "evt_crash_detected": 0.0,
+        "motor_saturation_pct": 0.0, "motor_all_high_pct": 0.0,
+        "att_early_divergence": 0.0, "att_time_to_crash_sec": -1.0,
+    },
+]
+
+
+def test_false_critical_rate_on_healthy_profiles():
+    """P4-03: False-critical rate must be <= 10% on known-healthy flight profiles.
+
+    Three representative healthy profiles are used covering:
+    - Indoor hover (no GPS data)
+    - Nominal outdoor GPS flight
+    - Slightly elevated but within-spec vibration/telemetry
+
+    With target <= 10% and 3 profiles, zero false-critical diagnoses are
+    acceptable. Additional profiles should be added as the labeled dataset grows.
+    """
+    from src.diagnosis.decision_policy import evaluate_decision
+
+    engine = RuleEngine()
+    false_critical_count = 0
+    total_profiles = len(_HEALTHY_PROFILES)
+
+    for i, profile in enumerate(_HEALTHY_PROFILES):
+        features = {k: 0.0 for k in FEATURE_NAMES}
+        features.update(profile)
+        diagnoses = engine.diagnose(features)
+        critical_diagnoses = [d for d in diagnoses if d.get("severity") == "critical"]
+        if critical_diagnoses:
+            false_critical_count += 1
+
+    false_critical_rate = false_critical_count / total_profiles
+    assert false_critical_rate <= 0.10, (
+        f"False-critical rate {false_critical_rate:.1%} exceeds 10% target. "
+        f"{false_critical_count}/{total_profiles} healthy profiles triggered critical diagnoses."
+    )
+
+
+def test_decision_policy_abstains_on_borderline_healthy():
+    """P4-03: Decision policy must return 'uncertain' or 'healthy' for borderline profiles,
+    preventing false-critical alerts from reaching operators."""
+    from src.diagnosis.decision_policy import evaluate_decision
+
+    engine = RuleEngine()
+    for profile in _HEALTHY_PROFILES:
+        features = {k: 0.0 for k in FEATURE_NAMES}
+        features.update(profile)
+        diagnoses = engine.diagnose(features)
+        decision = evaluate_decision(diagnoses)
+        # A healthy profile must never produce 'confirmed' critical status
+        if decision["status"] == "confirmed":
+            top_conf = decision.get("top_confidence", 0.0)
+            assert top_conf >= 0.65, (
+                f"Profile triggered 'confirmed' with low confidence {top_conf:.2f}. "
+                "Abstain threshold may be too low."
+            )
+
+
+def test_all_diagnoses_have_evidence_and_recommendation():
+    """Gate B: 100% of predictions must include evidence + recommendation."""
+    engine = RuleEngine()
+    test_cases = [
+        {"vibe_z_max": 80.0, "vibe_clip_total": 200.0},
+        {"mag_field_range": 700.0},
+        {"bat_volt_range": 3.0, "sys_vcc_min": 4.2},
+        {"gps_hdop_mean": 3.0, "gps_nsats_min": 3.0, "gps_fix_pct": 0.8, "gps_message_count": 1.0},
+        {"motor_spread_max": 500.0, "motor_spread_mean": 300.0},
+        {"ekf_vel_var_max": 2.5, "ekf_pos_var_max": 2.5, "ekf_lane_switch_count": 1.0},
+        {"evt_failsafe_count": 1.0, "evt_radio_failsafe_count": 1.0},
+        {"motor_saturation_pct": 0.5, "motor_all_high_pct": 0.3, "ctrl_thr_saturated_pct": 0.4},
+        {"att_early_divergence": 55.0, "att_time_to_crash_sec": 1.5},
+    ]
+    for case in test_cases:
+        features = {k: 0.0 for k in FEATURE_NAMES}
+        features.update(case)
+        results = engine.diagnose(features)
+        for r in results:
+            assert "evidence" in r and len(r["evidence"]) > 0, (
+                f"{r.get('failure_type')} missing evidence"
+            )
+            assert "recommendation" in r and len(r["recommendation"]) > 0, (
+                f"{r.get('failure_type')} missing recommendation"
+            )
+

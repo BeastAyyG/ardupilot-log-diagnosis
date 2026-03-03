@@ -17,7 +17,9 @@ training/data/health_monitor/**/*.BIN
 training/data/health_monitor/**/*.bin
 training/data/health_monitor/**/*.csv
 __pycache__/
+**/__pycache__/
 *.pyc
+training/train_output.txt
 .env
 venv/
 .pytest_cache/
