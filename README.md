@@ -6,9 +6,9 @@
 [![Tests: 123 Passing](https://img.shields.io/badge/tests-123%20passing-brightgreen)](tests/)
 [![Production: v1.0.0](https://img.shields.io/badge/production-v1.0.0-success)](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md)
 
-> An agentic AI + rule-based diagnostic engine for ArduPilot `.BIN` dataflash logs — built for the **GSoC 2026** program.
+> An end-to-end diagnostic pipeline for ArduPilot `.BIN` dataflash logs — built for the **GSoC 2026** program.
 
-Extracts **60+ critical flight telemetry features** and uses a **hybrid rule + XGBoost intelligence engine** to identify whether a flight is healthy or suffering from root-cause conditions such as high vibrations, compass interference, EKF failures, and power instability. Designed to reduce senior ArduPilot maintainer triage time by over **240×**.
+At its core is a **physics-based rule engine** that extracts **60+ critical flight telemetry features** to accurately detect hardware and tuning failures. Alongside it runs an **experimental XGBoost classifier** that learns from expert forum labels. A **Hybrid Fusion Engine** safely merges these signals, defaulting to human-review when uncertain. Designed to reduce senior ArduPilot maintainer triage time by over **240×**.
 
 ---
 

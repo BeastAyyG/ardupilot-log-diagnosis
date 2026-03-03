@@ -12,14 +12,11 @@ messages across dozens of subsystems. Today the triage workflow is:
 4. Cross-reference with ArduPilot documentation and similar forum reports.
 5. Post a diagnosis — often hours after the initial report.
 
-This project delivers an **AI-powered diagnostic analyzer** that identifies the
-**exact likely root cause**, explains the evidence, and recommends next actions —
-reducing expert triage time by ≥ 40 % (measured: 242× faster in controlled trials;
-see `docs/MAINTAINER_TRIAGE_REDUX.md`).
+This project delivers an **end-to-end diagnostic pipeline**. At its core is a **physics-based rule engine** encoding expert knowledge (e.g., motor saturation guards, compass tumbling detection). Alongside it runs an **experimental XGBoost classifier** built for tabular telemetry. I engineered a **Hybrid Fusion Engine** with a safe abstention policy to combine them. My GSoC goal is to expand the labeled dataset from 50 to 500+ logs so the ML model can become a highly accurate secondary filter.
 
 The tool is **diagnostics-first**: it does not provide a generic chatbot or anomaly
 detector. Every output is:
-- Tied to exact feature values, thresholds, and timestamps.
+- Tied to exact feature values, thresholds, and timestamps (Rule Engine).
 - Confidence-calibrated with mandatory abstention for low-certainty cases.
 - Actionable — including ranked subsystem blame and step-by-step next actions.
 
@@ -68,11 +65,11 @@ detector. Every output is:
 
 | Metric | Target | Status |
 |---|---|---|
-| Root-cause Top-1 (locked unseen) | ≥ 50–60 % | ✓ 100 % (local benchmark) |
+| Root-cause Top-1 (locked unseen) | ≥ 50–60 % | Rule-Baseline Complete (ML needs data) |
 | ECE | ≤ 0.08 | ✓ Isotonic calibration applied |
 | False-critical rate | ≤ 10 % | ✓ Engine-level guards in place |
 | Median triage-time reduction | ≥ 40 % | ✓ 242× faster (measured) |
-| Parse reliability | ≥ 99 % | ✓ 100 % on benchmark set |
+| Parse reliability | ≥ 99 % | ✓ 100 % isolated parse tests |
 
 ---
 

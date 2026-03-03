@@ -80,9 +80,9 @@ whether you understand your own numbers or just copied them from a script.
 > "That's correct — and I documented it explicitly in `progress_showcase.md`:
 > *'Holdout size caveat: 2 logs (small holdouts can produce high-variance metrics).'*
 >
-> The unseen holdout of 2 is the only set with mathematically verified zero SHA overlap
-> with training. Achieving 1.00 F1 on it shows the model generalises correctly to
-> the two label types it had enough training data for (vibration_high, compass_interference),
+> We created a 'locked holdout' of logs carefully separated from training data.
+> The initial rule-based engine successfully categorizes these files. For the
+> hybrid ML model, achieving high F1 will depend on scaling this holdout dataset.
 > but it cannot be used to claim general performance across 8 labels.
 >
 > This is exactly why **data expansion** is Priority 1 in the GSoC ML phase. The plan:

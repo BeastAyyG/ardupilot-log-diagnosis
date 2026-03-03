@@ -25,7 +25,7 @@ flowchart LR
 | Local batch 01 (ML) | 12 | 0.00 | 0.41 | `data/clean_imports/forum_batch_local_01/benchmark_ready/benchmark_results_ml.json` |
 | Merged 01 (ML) | 21 | 0.67 | 0.23 | `data/clean_imports/forum_batch_merged_01/benchmark_ready/benchmark_results_ml.json` |
 | SHA-unique 01 (ML) | 13 | 0.69 | 0.43 | `data/clean_imports/forum_batch_unique_01/benchmark_ready/benchmark_results_ml.json` |
-| Unseen holdout (ML) | 2 | 1.00 | 1.00 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_ml.json` |
+| Unseen holdout (ML) | 2 | 0.50 | 0.40 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_ml.json` |
 | Unseen holdout (Hybrid) | 2 | 0.00 | 0.33 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_hybrid.json` |
 | Unseen holdout (Rule) | 2 | 0.00 | 0.22 | `data/holdouts/unseen_flight_2026-02-22/benchmark_results_rule.json` |
 

@@ -38,6 +38,7 @@ class HybridEngine:
     def diagnose(self, features: dict) -> list:
         rule_results = self.rules.diagnose(features)
         ml_results = self.ml.predict(features) if self.ml.available else []
+        self.last_explain_data = {"rule": rule_results, "ml": ml_results}
 
         rule_dict = {d["failure_type"]: d for d in rule_results}
         ml_dict = {d["failure_type"]: d for d in ml_results}

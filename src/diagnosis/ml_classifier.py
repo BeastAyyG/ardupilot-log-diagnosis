@@ -96,14 +96,18 @@ class MLClassifier:
         has_vibration = "vibration_high" in diag_by_label
         has_compass = "compass_interference" in diag_by_label
 
-        vibe_clip_total = float(features.get("vibe_clip_total", 0.0))
-        vibe_x = float(features.get("vibe_x_max", 0.0))
-        vibe_y = float(features.get("vibe_y_max", 0.0))
-        vibe_z = float(features.get("vibe_z_max", 0.0))
+        def _f(key, default=0.0):
+            v = features.get(key, default)
+            return float(v if v is not None else default)
+
+        vibe_clip_total = _f("vibe_clip_total")
+        vibe_x = _f("vibe_x_max")
+        vibe_y = _f("vibe_y_max")
+        vibe_z = _f("vibe_z_max")
         vibe_peak = max(vibe_x, vibe_y, vibe_z)
 
-        mag_range = float(features.get("mag_field_range", 0.0))
-        mag_std = float(features.get("mag_field_std", 0.0))
+        mag_range = _f("mag_field_range")
+        mag_std = _f("mag_field_std")
 
         likely_compass_context = (
             vibe_clip_total <= 0
@@ -158,7 +162,8 @@ class MLClassifier:
 
         vector = []
         for feat in self.feature_columns:
-            vector.append(float(features.get(feat, 0.0)))
+            val = features.get(feat, 0.0)
+            vector.append(float(val if val is not None else 0.0))
 
         X = np.array(vector).reshape(1, -1)
         X_scaled = self.scaler.transform(X)

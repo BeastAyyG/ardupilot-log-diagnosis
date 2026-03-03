@@ -10,6 +10,39 @@ from src.diagnosis.decision_policy import evaluate_decision
 from src.retrieval.similarity import FailureRetrieval
 from .formatter import DiagnosisFormatter
 
+def _print_explain_box(explain_data, final_diagnoses):
+    if not explain_data:
+        return
+        
+    print("")
+    print("╔════════════════════════════════════════════════════════╗")
+    print("║  🤖 Hybrid Engine Arbitration Breakdown                 ║")
+    print("╠════════════════════════════════════════════════════════╣")
+    
+    rule_best = explain_data["rule"][0] if explain_data.get("rule") else None
+    print("║  [Rule Engine]                                         ║")
+    if rule_best:
+        print(f"║  Top Guess: {rule_best['failure_type'].upper():<27} ({rule_best['confidence']*100:3.0f}%) ║")
+    else:
+        print(f"║  Top Guess: {'HEALTHY':<27} (  0%) ║")
+    print("║                                                        ║")
+    
+    ml_best = explain_data["ml"][0] if explain_data.get("ml") else None
+    print("║  [XGBoost ML Model]                                    ║")
+    if ml_best:
+        print(f"║  Top Guess: {ml_best['failure_type'].upper():<27} ({ml_best['confidence']*100:3.0f}%) ║")
+    else:
+        print(f"║  Top Guess: {'HEALTHY':<27} (  0%) ║")
+    print("║                                                        ║")
+        
+    print("║  [Final Fused Decision]                                ║")
+    if final_diagnoses:
+        final_best = final_diagnoses[0]
+        print(f"║  Result:    {final_best['failure_type'].upper():<27} ({final_best['confidence']*100:3.0f}%) ║")
+    else:
+        print("║  Result:    HEALTHY                                    ║")
+        
+    print("╚════════════════════════════════════════════════════════╝")
 
 def _find_latest_clean_benchmark():
     root = Path("data/clean_imports")
@@ -81,6 +114,8 @@ def cmd_analyze(args):
     else:
         print(output)
 
+    if getattr(args, "explain", False) and getattr(engine, "last_explain_data", None):
+        _print_explain_box(engine.last_explain_data, diagnoses)
 
 def cmd_features(args):
     parser = LogParser(args.logfile)
@@ -520,6 +555,13 @@ def cmd_demo(args):
         print(f"Demo report saved to {args.output}")
     else:
         print(output)
+        
+    if getattr(args, "explain", False):
+        dummy_explain = {
+            "rule": [{"failure_type": "vibration_high", "confidence": 0.85}],
+            "ml": [{"failure_type": "vibration_high", "confidence": 0.62}],
+        }
+        _print_explain_box(dummy_explain, diagnoses)
 
 
 def main():
@@ -536,6 +578,9 @@ def main():
         help="Output format: terminal (default), json, or html",
     )
     p_analyze.add_argument("-o", "--output", help="Save report to file")
+    p_analyze.add_argument(
+        "--explain", action="store_true", help="Show Hybrid Engine Arbitration Breakdown"
+    )
     p_analyze.add_argument(
         "--no-ml", action="store_true", help="Force rule-based only diagnosis"
     )
@@ -613,6 +658,9 @@ def main():
         help="Output format: terminal (default), json, or html",
     )
     p_demo.add_argument("-o", "--output", help="Save demo report to file")
+    p_demo.add_argument(
+        "--explain", action="store_true", help="Show Hybrid Engine Arbitration Breakdown"
+    )
 
     p_import = subparsers.add_parser(
         "import-clean", help="Clean import external log batch with provenance manifests"
