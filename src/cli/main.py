@@ -448,6 +448,8 @@ def cmd_label(args):
 def cmd_demo(args):
     """Print a vivid sample diagnosis report without requiring a real .BIN file."""
     from src.diagnosis.decision_policy import evaluate_decision
+    from src.retrieval.similarity import FailureRetrieval
+    from src.constants import FEATURE_NAMES
     from .formatter import DiagnosisFormatter
 
     metadata = {
@@ -479,8 +481,8 @@ def cmd_demo(args):
             "severity": "warning",
             "detection_method": "rule",
             "evidence": [
-                {"feature": "ekf_vel_var_max",     "value": 1.8, "threshold": 1.5, "direction": "above"},
-                {"feature": "ekf_lane_switch_count", "value": 2,  "threshold": 0,  "direction": "above"},
+                {"feature": "ekf_vel_var_max",       "value": 1.8, "threshold": 1.5, "direction": "above"},
+                {"feature": "ekf_lane_switch_count", "value": 2,   "threshold": 0,   "direction": "above"},
             ],
             "recommendation": (
                 "EKF health compromised. Check sensor consistency. "
@@ -492,15 +494,14 @@ def cmd_demo(args):
 
     decision = evaluate_decision(diagnoses)
 
-    similar_cases = [
-        {
-            "similarity": 0.91,
-            "failure_type": "vibration_high",
-            "root_cause": "Bent propeller blade after previous hard landing.",
-            "fix": "Replace all propellers; re-balance motors.",
-            "source_url": "https://discuss.ardupilot.org/t/example-vibration-crash/12345",
-        },
-    ]
+    # Use real similar-case retrieval from known_failures.json
+    demo_features = {k: 0.0 for k in FEATURE_NAMES}
+    demo_features.update({
+        "vibe_z_max": 67.8, "vibe_clip_total": 145.0, "vibe_z_std": 11.0,
+        "ekf_vel_var_max": 1.8, "ekf_lane_switch_count": 2.0,
+    })
+    retrieval = FailureRetrieval()
+    similar_cases = retrieval.find_similar(demo_features)
 
     formatter = DiagnosisFormatter()
     fmt = getattr(args, "format", "terminal")

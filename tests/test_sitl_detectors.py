@@ -5,11 +5,8 @@ These tests use in-memory synthetic log data to validate the analysis logic
 without requiring real .BIN log files.  The approach mirrors how the existing
 feature extractors are tested (fake message dicts injected directly).
 """
-import sys
-import types
-import importlib
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 # ---------------------------------------------------------------------------

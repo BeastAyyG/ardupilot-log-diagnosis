@@ -17,7 +17,6 @@ Usage:
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
@@ -182,8 +181,8 @@ def _write_report(
         lines += [
             f"### Engine: `{engine}`",
             "",
-            f"| Metric | Value |",
-            f"|---|---|",
+            "| Metric | Value |",
+            "|---|---|",
             f"| Total logs | {total} |",
             f"| Extracted | {extracted} ({parse_pct:.1f}%) |",
             f"| Macro F1 | {macro_f1:.3f} |",

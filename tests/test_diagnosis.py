@@ -339,8 +339,6 @@ def test_false_critical_rate_on_healthy_profiles():
     With target <= 10% and 3 profiles, zero false-critical diagnoses are
     acceptable. Additional profiles should be added as the labeled dataset grows.
     """
-    from src.diagnosis.decision_policy import evaluate_decision
-
     engine = RuleEngine()
     false_critical_count = 0
     total_profiles = len(_HEALTHY_PROFILES)

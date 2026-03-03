@@ -8,8 +8,6 @@ satisfies so reviewers can trace coverage directly.
 
 import hashlib
 import json
-import pytest
-from typing import Any, cast
 
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.diagnosis.rule_engine import RuleEngine

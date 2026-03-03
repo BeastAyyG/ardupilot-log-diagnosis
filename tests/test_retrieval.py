@@ -32,3 +32,31 @@ def test_top_k(tmp_path):
         
     res = retrieval.find_similar({"vibe_z_max": 100.0}, top_k=3)
     assert len(res) == 3
+
+
+def test_known_failures_populated():
+    """known_failures.json must have at least one entry per major label."""
+    from src.retrieval.similarity import FailureRetrieval
+    r = FailureRetrieval()
+    assert len(r.known.get("failures", [])) >= 8, (
+        "known_failures.json must contain representative cases for all major failure types. "
+        "Run the retrieval seeding script or update models/known_failures.json."
+    )
+    labels = {c["failure_type"] for c in r.known["failures"]}
+    required = {"vibration_high", "compass_interference", "power_instability",
+                "ekf_failure", "motor_imbalance", "rc_failsafe"}
+    missing = required - labels
+    assert not missing, f"known_failures.json missing cases for: {missing}"
+
+
+def test_retrieval_returns_results_for_vibration():
+    """find_similar() must return at least one match for a vibration feature set."""
+    from src.retrieval.similarity import FailureRetrieval
+    from src.constants import FEATURE_NAMES
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({"vibe_z_max": 70.0, "vibe_clip_total": 200.0, "vibe_z_std": 12.0})
+    r = FailureRetrieval()
+    similar = r.find_similar(features)
+    assert len(similar) >= 1, "Expected at least one similar case for high-vibration features"
+    assert similar[0]["failure_type"] == "vibration_high"
+    assert similar[0]["similarity"] >= 0.7
