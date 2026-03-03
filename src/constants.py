@@ -121,11 +121,13 @@ DEFAULT_THRESHOLDS = {
     "mag_range_limit": 600.0,
     "mag_std_limit": 50.0,
     "bat_volt_range_limit": 2.0,
+    "volt_min_absolute": 10.0,
     "gps_hdop_limit": 2.0,
     "gps_nsats_min": 6,
-    "motor_spread_limit": 200.0,
+    "motor_spread_limit": 400.0,
+    "spread_mean_limit": 200.0,
     "ekf_variance_warn": 0.5,
-    "ekf_variance_fail": 1.0,
+    "ekf_variance_fail": 1.5,
     "powr_vcc_min": 4.5,
 }
 

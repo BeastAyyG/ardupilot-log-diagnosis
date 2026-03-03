@@ -67,8 +67,10 @@ def cmd_analyze(args):
     formatter = DiagnosisFormatter()
     metadata = features.get("_metadata", {})
 
-    if args.json:
+    if args.json or getattr(args, "format", "terminal") == "json":
         output = formatter.format_json(diagnoses, metadata, features, decision=decision, similar_cases=similar_cases)
+    elif getattr(args, "format", "terminal") == "html":
+        output = formatter.format_html(diagnoses, metadata, features, decision=decision, similar_cases=similar_cases)
     else:
         output = formatter.format_terminal(diagnoses, metadata, decision=decision, similar_cases=similar_cases)
 
@@ -443,6 +445,83 @@ def cmd_label(args):
     print(f"Added {filename} to {gt_path} with labels {labels}")
 
 
+def cmd_demo(args):
+    """Print a vivid sample diagnosis report without requiring a real .BIN file."""
+    from src.diagnosis.decision_policy import evaluate_decision
+    from src.retrieval.similarity import FailureRetrieval
+    from src.constants import FEATURE_NAMES
+    from .formatter import DiagnosisFormatter
+
+    metadata = {
+        "log_file": "demo_flight.BIN",
+        "duration_sec": 342.0,
+        "vehicle_type": "ArduCopter",
+        "firmware": "4.5.1",
+    }
+
+    diagnoses = [
+        {
+            "failure_type": "vibration_high",
+            "confidence": 0.95,
+            "severity": "critical",
+            "detection_method": "rule+ml",
+            "evidence": [
+                {"feature": "vibe_z_max",      "value": 67.8,  "threshold": 30.0, "direction": "above"},
+                {"feature": "vibe_clip_total", "value": 145,   "threshold": 0,    "direction": "above"},
+            ],
+            "recommendation": (
+                "Balance or replace propellers. Check motor mount tightness. "
+                "Inspect for loose screws."
+            ),
+            "reason_code": "confirmed",
+        },
+        {
+            "failure_type": "ekf_failure",
+            "confidence": 0.72,
+            "severity": "warning",
+            "detection_method": "rule",
+            "evidence": [
+                {"feature": "ekf_vel_var_max",       "value": 1.8, "threshold": 1.5, "direction": "above"},
+                {"feature": "ekf_lane_switch_count", "value": 2,   "threshold": 0,   "direction": "above"},
+            ],
+            "recommendation": (
+                "EKF health compromised. Check sensor consistency. "
+                "Vibration is likely shaking sensors and causing cascading EKF failure."
+            ),
+            "reason_code": "uncertain",
+        },
+    ]
+
+    decision = evaluate_decision(diagnoses)
+
+    # Use real similar-case retrieval from known_failures.json
+    demo_features = {k: 0.0 for k in FEATURE_NAMES}
+    demo_features.update({
+        "vibe_z_max": 67.8, "vibe_clip_total": 145.0, "vibe_z_std": 11.0,
+        "ekf_vel_var_max": 1.8, "ekf_lane_switch_count": 2.0,
+    })
+    retrieval = FailureRetrieval()
+    similar_cases = retrieval.find_similar(demo_features)
+
+    formatter = DiagnosisFormatter()
+    fmt = getattr(args, "format", "terminal")
+    features_stub: dict = {}
+
+    if fmt == "json":
+        output = formatter.format_json(diagnoses, metadata, features_stub, decision=decision, similar_cases=similar_cases)
+    elif fmt == "html":
+        output = formatter.format_html(diagnoses, metadata, features_stub, decision=decision, similar_cases=similar_cases)
+    else:
+        output = formatter.format_terminal(diagnoses, metadata, decision=decision, similar_cases=similar_cases)
+
+    if args.output:
+        with open(args.output, "w") as f:
+            f.write(output)
+        print(f"Demo report saved to {args.output}")
+    else:
+        print(output)
+
+
 def main():
     parser = argparse.ArgumentParser(description="ArduPilot Log Diagnosis Tool")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -450,6 +529,12 @@ def main():
     p_analyze = subparsers.add_parser("analyze", help="Analyze a single log file")
     p_analyze.add_argument("logfile", help="Path to .BIN file")
     p_analyze.add_argument("--json", action="store_true", help="Output in JSON format")
+    p_analyze.add_argument(
+        "--format",
+        choices=["terminal", "json", "html"],
+        default="terminal",
+        help="Output format: terminal (default), json, or html",
+    )
     p_analyze.add_argument("-o", "--output", help="Save report to file")
     p_analyze.add_argument(
         "--no-ml", action="store_true", help="Force rule-based only diagnosis"
@@ -516,6 +601,18 @@ def main():
 
     p_label = subparsers.add_parser("label", help="Interactive labeling tool")
     p_label.add_argument("logfile", help="Path to .BIN file")
+
+    p_demo = subparsers.add_parser(
+        "demo",
+        help="Print a vivid sample diagnosis report (no real .BIN file required)",
+    )
+    p_demo.add_argument(
+        "--format",
+        choices=["terminal", "json", "html"],
+        default="terminal",
+        help="Output format: terminal (default), json, or html",
+    )
+    p_demo.add_argument("-o", "--output", help="Save demo report to file")
 
     p_import = subparsers.add_parser(
         "import-clean", help="Clean import external log batch with provenance manifests"
@@ -646,6 +743,8 @@ def main():
         cmd_batch(parsed_args)
     elif parsed_args.command == "label":
         cmd_label(parsed_args)
+    elif parsed_args.command == "demo":
+        cmd_demo(parsed_args)
     elif parsed_args.command == "import-clean":
         cmd_import_clean(parsed_args)
     elif parsed_args.command == "collect-forum":

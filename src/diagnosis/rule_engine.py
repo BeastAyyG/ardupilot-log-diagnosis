@@ -43,6 +43,7 @@ class RuleEngine:
             self._check_power,
             self._check_gps,
             self._check_motors,
+            self._check_pid_tuning,
             self._check_ekf,
             self._check_system,
             self._check_rc_failsafe,
@@ -289,6 +290,9 @@ class RuleEngine:
         )  # assume safe unless proven otherwise
         vcc_min = features.get("sys_vcc_min", 5.0)
         margin = features.get("bat_margin", 10.0)
+        sag_ratio = features.get("bat_sag_ratio", 0.0)
+        curr_max = features.get("bat_curr_max", 0.0)
+        volt_std = features.get("bat_volt_std", 0.0)
 
         lim_rng = self.thresholds.get("bat_volt_range_limit", 2.0)
         lim_vcc = self.thresholds.get("powr_vcc_min", 4.5)
@@ -348,6 +352,49 @@ class RuleEngine:
                     "value": volt_min,
                     "threshold": self.thresholds.get("volt_min_absolute", 10.0),
                     "direction": "below",
+                }
+            )
+            if not failure:
+                failure = "power_instability"
+
+        # Voltage sag under load: high sag ratio indicates weak/aging battery
+        if sag_ratio > 0.08:
+            conf += 0.35
+            evidence.append(
+                {
+                    "feature": "bat_sag_ratio",
+                    "value": sag_ratio,
+                    "threshold": 0.08,
+                    "direction": "above",
+                    "context": "battery voltage sags >8% under load — likely weak or aging cell",
+                }
+            )
+            if not failure:
+                failure = "power_instability"
+                msg = "Battery voltage sags significantly under load"
+        elif sag_ratio > 0.05:
+            conf += 0.20
+            evidence.append(
+                {
+                    "feature": "bat_sag_ratio",
+                    "value": sag_ratio,
+                    "threshold": 0.05,
+                    "direction": "above",
+                }
+            )
+            if not failure:
+                failure = "power_instability"
+
+        # High current std relative to mean suggests intermittent power draw
+        if volt_std > 0.8 and curr_max > 20.0:
+            conf += 0.15
+            evidence.append(
+                {
+                    "feature": "bat_volt_std",
+                    "value": volt_std,
+                    "threshold": 0.8,
+                    "direction": "above",
+                    "context": "voltage noise under high-current flight",
                 }
             )
             if not failure:
@@ -966,4 +1013,96 @@ class RuleEngine:
             "evidence": evidence,
             "recommendation": FAILURE_RECOMMENDATIONS["setup_error"],
             "reason_code": "confirmed" if conf >= 0.6 else "uncertain",
+        }
+
+    def _check_pid_tuning(self, features):
+        """Detect PID tuning issues: sustained oscillation without mechanical cause.
+
+        A poorly-tuned multirotor oscillates in roll and/or pitch at stable hover
+        while motors remain balanced and vibration stays moderate.  Specifically:
+
+        - att_roll_std / att_pitch_std elevated (persistent oscillation)
+        - motor_spread_std LOW (all motors working equally → not motor fault)
+        - vibe_z_max below the warning threshold (not a vibration root cause)
+        - ctrl_alt_error_std elevated (altitude loop also oscillating)
+        """
+        roll_std = features.get("att_roll_std", 0.0)
+        pitch_std = features.get("att_pitch_std", 0.0)
+        spread_std = features.get("motor_spread_std", 0.0)
+        vibe_z = features.get("vibe_z_max", 0.0)
+        alt_err_std = features.get("ctrl_alt_error_std", 0.0)
+        thr_sat_pct = features.get("ctrl_thr_saturated_pct", 0.0)
+        motor_sat = features.get("motor_saturation_pct", 0.0)
+
+        vibe_warn = self.thresholds.get("vibe_max_warn", 30.0)
+
+        # Must show attitude oscillation
+        att_oscillating = roll_std > 5.0 or pitch_std > 5.0
+        if not att_oscillating:
+            return None
+
+        # Guard: high vibration is more likely root cause
+        if vibe_z > vibe_warn:
+            return None
+
+        # Guard: motors saturated → thrust_loss, not PID
+        if thr_sat_pct > 0.2 or motor_sat > 0.2:
+            return None
+
+        conf = 0.0
+        evidence = []
+
+        # Primary: sustained attitude oscillation
+        for axis, val, name in [("roll", roll_std, "att_roll_std"), ("pitch", pitch_std, "att_pitch_std")]:
+            if val > 10.0:
+                conf += 0.40
+                evidence.append({
+                    "feature": name,
+                    "value": val,
+                    "threshold": 10.0,
+                    "direction": "above",
+                })
+            elif val > 5.0:
+                conf += 0.25
+                evidence.append({
+                    "feature": name,
+                    "value": val,
+                    "threshold": 5.0,
+                    "direction": "above",
+                })
+
+        # Supporting: low motor spread std confirms balanced motors (not hardware fault)
+        if spread_std < 30.0:
+            conf += 0.10
+            evidence.append({
+                "feature": "motor_spread_std",
+                "value": spread_std,
+                "threshold": 30.0,
+                "direction": "below",
+                "context": "low motor differential confirms oscillation is software/tuning",
+            })
+
+        # Supporting: altitude oscillation (rate PID issue)
+        if alt_err_std > 2.0:
+            conf += 0.15
+            evidence.append({
+                "feature": "ctrl_alt_error_std",
+                "value": alt_err_std,
+                "threshold": 2.0,
+                "direction": "above",
+            })
+
+        if not evidence or conf < 0.45:
+            return None
+
+        conf = min(conf, 1.0)
+        severity = "warning"
+        return {
+            "failure_type": "pid_tuning_issue",
+            "confidence": conf,
+            "severity": severity,
+            "detection_method": "rule",
+            "evidence": evidence,
+            "recommendation": FAILURE_RECOMMENDATIONS["pid_tuning_issue"],
+            "reason_code": "confirmed" if conf >= 0.65 else "uncertain",
         }

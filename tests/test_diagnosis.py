@@ -339,8 +339,6 @@ def test_false_critical_rate_on_healthy_profiles():
     With target <= 10% and 3 profiles, zero false-critical diagnoses are
     acceptable. Additional profiles should be added as the labeled dataset grows.
     """
-    from src.diagnosis.decision_policy import evaluate_decision
-
     engine = RuleEngine()
     false_critical_count = 0
     total_profiles = len(_HEALTHY_PROFILES)
@@ -406,3 +404,45 @@ def test_all_diagnoses_have_evidence_and_recommendation():
                 f"{r.get('failure_type')} missing recommendation"
             )
 
+
+
+def test_pid_tuning_rule_fires_on_oscillation():
+    """_check_pid_tuning fires when attitude oscillates but vibration is low."""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({
+        "att_roll_std": 12.0,
+        "att_pitch_std": 8.0,
+        "motor_spread_std": 15.0,   # motors balanced
+        "vibe_z_max": 10.0,          # well below warn threshold
+        "ctrl_alt_error_std": 3.0,
+    })
+    results = engine.diagnose(features)
+    labels = [r["failure_type"] for r in results]
+    assert "pid_tuning_issue" in labels, f"Expected pid_tuning_issue, got {labels}"
+
+
+def test_pid_tuning_suppressed_when_vibration_high():
+    """_check_pid_tuning must NOT fire when vibe_z_max is above warn threshold."""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update({
+        "att_roll_std": 12.0,
+        "vibe_z_max": 45.0,   # high vibration — root cause is vibe, not PID
+        "motor_spread_std": 10.0,
+    })
+    results = engine.diagnose(features)
+    labels = [r["failure_type"] for r in results]
+    assert "pid_tuning_issue" not in labels, "pid_tuning_issue should be suppressed when vibe is high"
+
+
+def test_power_instability_from_sag_ratio():
+    """Improved _check_power fires on bat_sag_ratio alone."""
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features["bat_sag_ratio"] = 0.12  # >8% sag under load
+    features["bat_curr_max"] = 25.0
+    features["bat_volt_min"] = 14.0   # reasonable voltage, not brownout
+    results = engine.diagnose(features)
+    labels = [r["failure_type"] for r in results]
+    assert "power_instability" in labels, f"Expected power_instability from sag_ratio, got {labels}"
