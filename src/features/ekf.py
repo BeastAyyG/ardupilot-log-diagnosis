@@ -46,11 +46,18 @@ class EKFExtractor(BaseExtractor):
                     lane_switches += 1
                     last_pi = pi
 
-        # Simplistic bad SS flags logic (SS represents sensor status)
-        ss_vals = [self._safe_value(msg, "SS") for msg in msgs]
+        # EKF sensor status (SS) is a bitmask from AP_NavEKF3_Control.cpp.
+        # Bits:  0=attitude, 1=velocity_horiz, 2=velocity_vert,
+        #        3=pos_horiz, 4=pos_vert, 5=compass_heading,
+        #        6=pos_abs, 7=pred_pos_horiz_abs
+        # A healthy EKF has at least bits 0-4 set (value >= 0x1F = 31).
+        # We count the fraction of samples where ANY of bits 0-4 are unset,
+        # which indicates degraded EKF health.
+        EKF_HEALTH_MASK = 0x1F  # bits 0-4: attitude + vel + pos + height
+        ss_vals = [int(self._safe_value(msg, "SS")) for msg in msgs]
         bad_ss_count = sum(
-            1 for ss in ss_vals if ss == 0
-        )  # Assuming 0 is a bad flag state here for placeholder, in reality it's bitmask
+            1 for ss in ss_vals if (ss & EKF_HEALTH_MASK) != EKF_HEALTH_MASK
+        )
         flags_error_pct = bad_ss_count / len(ss_vals) if ss_vals else 0.0
 
         sv_stats = self._safe_stats(sv_vals, t_vals)

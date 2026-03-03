@@ -36,6 +36,7 @@ class LogParser:
             "VIBE",
             "MAG",
             "BAT",
+            "CURR",  # pre-ArduCopter 4.0 battery messages (same fields as BAT)
             "GPS",
             "RCOU",
             "XKF4",
@@ -47,6 +48,7 @@ class LogParser:
             "MSG",
             "CTUN",
             "ATT",
+            "RATE",  # PID controller: desired vs actual rates for tuning diagnosis
             "PM",
             "FTN1",
             "IMU",

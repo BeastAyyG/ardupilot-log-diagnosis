@@ -2,7 +2,8 @@ from .base_extractor import BaseExtractor
 
 
 class PowerExtractor(BaseExtractor):
-    REQUIRED_MESSAGES = ["BAT"]
+    # Accept either BAT (ArduCopter 4.0+) or CURR (pre-4.0 firmware)
+    REQUIRED_MESSAGES = []  # custom has_data() handles fallback
     FEATURE_PREFIX = "bat_"
     FEATURE_NAMES = [
         "bat_volt_min",
@@ -17,8 +18,20 @@ class PowerExtractor(BaseExtractor):
         "volt_tanomaly",
     ]
 
+    def has_data(self) -> bool:
+        """Check for BAT or CURR messages (firmware version compatibility)."""
+        return (
+            ("BAT" in self.messages and len(self.messages["BAT"]) > 0)
+            or ("CURR" in self.messages and len(self.messages["CURR"]) > 0)
+        )
+
     def extract(self) -> dict:
+        # BAT is the modern message name (ArduCopter 4.0+).
+        # Older firmware (pre-4.0) logs battery data as CURR with the same
+        # Volt/Curr field names, so we fall back to CURR when BAT is absent.
         bat_msgs = self.messages.get("BAT", [])
+        if not bat_msgs:
+            bat_msgs = self.messages.get("CURR", [])
 
         volt_vals = [self._safe_value(msg, "Volt") for msg in bat_msgs]
         curr_vals = [self._safe_value(msg, "Curr") for msg in bat_msgs]

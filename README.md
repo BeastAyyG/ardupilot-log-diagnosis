@@ -3,8 +3,8 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 123 Passing](https://img.shields.io/badge/tests-123%20passing-brightgreen)](tests/)
-[![Production: v1.0.0](https://img.shields.io/badge/production-v1.0.0-success)](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md)
+[![Tests: 120+ Passing](https://img.shields.io/badge/tests-120%2B%20passing-brightgreen)](tests/)
+[![Status: Alpha](https://img.shields.io/badge/status-alpha-orange)](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md)
 
 > An end-to-end diagnostic pipeline for ArduPilot `.BIN` dataflash logs — built for the **GSoC 2026** program.
 
