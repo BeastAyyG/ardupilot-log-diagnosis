@@ -1,5 +1,6 @@
 from .rule_engine import RuleEngine
 from .ml_classifier import MLClassifier
+from .anomaly_detector import AnomalyDetector
 from typing import Optional
 
 
@@ -25,20 +26,36 @@ LABEL_PRIORITY = {
 
 
 class HybridEngine:
-    """Combines RuleEngine + MLClassifier results."""
+    """Combines RuleEngine + AnomalyDetector + MLClassifier results."""
 
     def __init__(
         self,
         rule_engine: Optional[RuleEngine] = None,
         ml_classifier: Optional[MLClassifier] = None,
+        anomaly_detector: Optional[AnomalyDetector] = None,
     ):
         self.rules = rule_engine or RuleEngine()
         self.ml = ml_classifier or MLClassifier()
+        self.anomaly_detector = anomaly_detector or AnomalyDetector()
 
     def diagnose(self, features: dict) -> list:
+        # Tier 1: Rule Engine
         rule_results = self.rules.diagnose(features)
+
         ml_results = self.ml.predict(features) if self.ml.available else []
-        self.last_explain_data = {"rule": rule_results, "ml": ml_results}
+        anomaly_info = {"is_anomaly": False, "anomaly_score": 0.0}
+
+        # Determine if we should suppress ML results based on anomaly detector.
+        # But if a rule engine fired with any confidence, we shouldn't suppress.
+        has_rule = len(rule_results) > 0
+
+        # Tier 2: Anomaly Detection (Optional)
+        if self.anomaly_detector.available and self.ml.available:
+            anomaly_info = self.anomaly_detector.score(features, self.ml.feature_columns)
+            if not anomaly_info["is_anomaly"] and not has_rule:
+                ml_results = []
+
+        self.last_explain_data = {"rule": rule_results, "ml": ml_results, "anomaly": anomaly_info}
 
         rule_dict = {d["failure_type"]: d for d in rule_results}
         ml_dict = {d["failure_type"]: d for d in ml_results}

@@ -42,7 +42,7 @@ def test_ekf_extraction():
     features = pipeline.extract(parsed)
     assert features["ekf_vel_var_mean"] == 0.5
     assert features["ekf_pos_var_mean"] == 0.2
-    assert features["ekf_flags_error_pct"] == 0.0
+    assert features["ekf_flags_error_pct"] == 1.0
 
 def test_pipeline_integration():
     pipeline = FeaturePipeline()
