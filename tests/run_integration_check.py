@@ -5,8 +5,6 @@ Does NOT require pytest. Run directly: python3 tests/run_integration_check.py
 """
 
 import sys
-import os
-import traceback
 from pathlib import Path
 
 # Ensure project root is on the path
@@ -109,7 +107,7 @@ def main():
     print(f"\n  Golden Log Accuracy: {correct}/{total} = {accuracy:.0%}")
 
     # ── Test 3: Schema compliance ────────────────────────────────────────
-    print(f"\nTEST 3: Output schema compliance (sample of 10 logs)")
+    print("\nTEST 3: Output schema compliance (sample of 10 logs)")
     schema_errors = []
     for log_path in all_logs[:10]:
         try:
@@ -131,11 +129,11 @@ def main():
         for err in schema_errors[:5]:
             print(f"    {err}")
     else:
-        print(f"  ✓ PASSED — all outputs have complete schema")
+        print("  ✓ PASSED — all outputs have complete schema")
 
     # ── Summary ──────────────────────────────────────────────────────────
     print(f"\n{'='*70}")
-    print(f"  SUMMARY")
+    print("  SUMMARY")
     print(f"  Crash test:    {'PASS' if not crashes else 'FAIL'}")
     print(f"  Golden logs:   {correct}/{total} = {accuracy:.0%}")
     print(f"  Schema:        {'PASS' if not schema_errors else 'FAIL'}")

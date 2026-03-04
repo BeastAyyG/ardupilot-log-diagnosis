@@ -8,13 +8,11 @@ They prove the tool works end-to-end on real data, not just mock dictionaries.
 Tests are skipped gracefully if the data directory is not present (CI-safe).
 """
 
-import os
 import pytest
 from pathlib import Path
 
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
-from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.decision_policy import evaluate_decision
 

@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Dict, Any, List
 
 class AnomalyDetector:
     """Autoencoder-based anomaly detection trained on healthy flights.

@@ -14,12 +14,8 @@ Usage:
         --output-dir data/sitl_generated/
 """
 
-import subprocess
-import time
 import random
 import json
-import os
-import shutil
 import argparse
 from pathlib import Path
 
