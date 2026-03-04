@@ -22,7 +22,18 @@ SKIP_REASON = "Real log data not present (CI environment)"
 
 
 def _has_data():
-    return DATA_DIR.exists() and any(DATA_DIR.glob("*.bin"))
+    if not DATA_DIR.exists():
+        return False
+    # Check if there are .bin files that are actually binary logs, not just LFS pointers
+    for log_file in DATA_DIR.glob("*.bin"):
+        # LFS pointer files are small (usually < 200 bytes). Real BIN logs are > 10KB.
+        if log_file.stat().st_size > 1024:
+            # Optionally check if it looks like an LFS pointer by reading the first bytes
+            with open(log_file, "rb") as f:
+                header = f.read(20)
+                if not header.startswith(b"version https://git-lfs"):
+                    return True
+    return False
 
 
 def _run_full_pipeline(log_path: str) -> dict:
