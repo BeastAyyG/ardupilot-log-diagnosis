@@ -15,6 +15,7 @@ if str(ROOT_DIR) not in sys.path:
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
+from .window_slicer import slice_log_into_windows
 
 CONFIDENCE_ORDER = {"low": 0, "medium": 1, "high": 2}
 
@@ -89,14 +90,23 @@ def build(
             failed_extraction += 1
             continue
 
-        features = pipeline.extract(parsed)
+        # For non-healthy logs with short duration, or for standard extraction, just use the whole log.
+        # But if slicing is requested (implied by blueprint), we slice it.
+        # We will extract features from the full log AND the slices to massively augment the dataset.
+        slices = slice_log_into_windows(parsed, window_sec=5.0, overlap=0.5)
 
-        feat_row = [features.get(name, 0.0) for name in FEATURE_NAMES]
-        label_row = [1 if label in labels else 0 for label in VALID_LABELS]
+        # Add the full log as a "slice" as well
+        slices.append(parsed)
 
-        feature_rows.append(feat_row)
-        label_rows.append(label_row)
-        processed += 1
+        for log_slice in slices:
+            features = pipeline.extract(log_slice)
+
+            feat_row = [features.get(name, 0.0) for name in FEATURE_NAMES]
+            label_row = [1 if label in labels else 0 for label in VALID_LABELS]
+
+            feature_rows.append(feat_row)
+            label_rows.append(label_row)
+            processed += 1
 
         for label in labels:
             label_counter[label] += 1

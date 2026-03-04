@@ -8,13 +8,11 @@ They prove the tool works end-to-end on real data, not just mock dictionaries.
 Tests are skipped gracefully if the data directory is not present (CI-safe).
 """
 
-import os
 import pytest
 from pathlib import Path
 
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
-from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.decision_policy import evaluate_decision
 
@@ -24,7 +22,18 @@ SKIP_REASON = "Real log data not present (CI environment)"
 
 
 def _has_data():
-    return DATA_DIR.exists() and any(DATA_DIR.glob("*.bin"))
+    if not DATA_DIR.exists():
+        return False
+    # Check if there are .bin files that are actually binary logs, not just LFS pointers
+    for log_file in DATA_DIR.glob("*.bin"):
+        # LFS pointer files are small (usually < 200 bytes). Real BIN logs are > 10KB.
+        if log_file.stat().st_size > 1024:
+            # Optionally check if it looks like an LFS pointer by reading the first bytes
+            with open(log_file, "rb") as f:
+                header = f.read(20)
+                if not header.startswith(b"version https://git-lfs"):
+                    return True
+    return False
 
 
 def _run_full_pipeline(log_path: str) -> dict:

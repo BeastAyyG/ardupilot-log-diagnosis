@@ -19,7 +19,7 @@ import joblib
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, IsolationForest
 from sklearn.metrics import precision_recall_fscore_support
 from xgboost import XGBClassifier
 
@@ -195,6 +195,33 @@ def train():
 
     print(f"\nSaving {best_name} as final model (Macro F1={best_score:.3f})...")
     os.makedirs(model_dir, exist_ok=True)
+
+    # ── 11. Train Anomaly Detector (Tier 2) on Healthy Logs ─────────────────
+    print("\nTraining Tier 2 Anomaly Detector on 'healthy' logs...")
+    # We find all healthy samples in the original un-SMOTEd dataset
+    healthy_idx = [i for i, c in enumerate(class_names) if c == "healthy"]
+
+    if len(healthy_idx) > 5:
+        X_healthy = X[healthy_idx]
+        # Train Isolation Forest on unscaled original healthy data, then scale it
+        anomaly_scaler = StandardScaler()
+        X_healthy_scaled = anomaly_scaler.fit_transform(X_healthy)
+
+        iso_forest = IsolationForest(
+            n_estimators=200,
+            contamination=0.05,  # assume 5% of "healthy" data might actually be bad
+            random_state=42,
+        )
+        iso_forest.fit(X_healthy_scaled)
+
+        anomaly_bundle = {
+            "iso_forest": iso_forest,
+            "scaler": anomaly_scaler,
+        }
+        joblib.dump(anomaly_bundle, os.path.join(model_dir, "anomaly_detector.joblib"))
+        print(f"  Anomaly Detector trained on {len(healthy_idx)} healthy samples and saved.")
+    else:
+        print(f"  Not enough healthy logs to train Anomaly Detector ({len(healthy_idx)} found, need > 5).")
 
     model_bundle = {
         "model": best_model,
