@@ -56,18 +56,9 @@ Complete in this order. Do not skip.
 
 ### Upgrade Roadmap (docs/UPGRADE_ROADMAP.md)
 
-- [x] `U-01` SMOTE + class balancing for rare labels (`training/train_model.py`).
-- [x] `U-02` GridSearchCV hyperparameter tuning (`training/train_model.py`).
-- [x] `U-03` Confidence calibration — ECE ≤ 0.08 (`training/train_model.py`, `training/measure_ece.py`).
-- [x] `U-04` tanomaly feature coverage for all 8 labels (`src/diagnosis/hybrid_engine.py`).
-- [x] `U-05` False Critical Rate measurement script (`training/measure_fcr.py`).
-- [x] `U-06` Abstention / human-review state (`src/diagnosis/decision_policy.py`).
-- [x] `U-07` Retrieval engine activation (`src/retrieval/similarity.py`, `src/cli/main.py`).
-- [ ] `U-08` Expand `gps_quality_poor` and `pid_tuning_issue` training data (need more labeled logs).
-- [x] `U-09` Batch triage mode (`src/cli/main.py` `batch-analyze` command).
-- [x] `U-10` Model card (`docs/model_card.md`).
-- [x] `U-11` One-command reproducibility script (`training/reproduce_benchmark.py`).
-- [x] `U-12` CI regression benchmark via `--assert-min-f1` flag (`.github/workflows/ci.yml`).
+- The current long-term master plan now lives in `docs/UPGRADE_ROADMAP.md`.
+- If this file and the roadmap ever disagree, the roadmap wins.
+- Work the roadmap in order. Do not skip ahead to polish or new features.
 
 ### Stretch Goals
 
@@ -118,4 +109,3 @@ cannot be reliably trained or evaluated until ≥ 5 verified examples exist per 
 2. Review candidates with `python3 -m src.cli.main label`.
 3. Run `python3 training/build_dataset.py && python3 training/train_model.py` to retrain.
 4. Run `python3 training/reproduce_benchmark.py --from-scratch` to verify improvement.
-

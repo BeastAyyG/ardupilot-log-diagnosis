@@ -1,7 +1,8 @@
 from .rule_engine import RuleEngine
 from .ml_classifier import MLClassifier
 from .anomaly_detector import AnomalyDetector
-from typing import Optional
+from typing import Optional, cast
+from src.contracts import DiagnosisDict, FeatureDict
 
 
 MIN_MERGED_CONFIDENCE = 0.45
@@ -38,7 +39,7 @@ class HybridEngine:
         self.ml = ml_classifier or MLClassifier()
         self.anomaly_detector = anomaly_detector or AnomalyDetector()
 
-    def diagnose(self, features: dict) -> list:
+    def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
         # Tier 1: Rule Engine
         rule_results = self.rules.diagnose(features)
 
@@ -50,7 +51,11 @@ class HybridEngine:
         has_rule = len(rule_results) > 0
 
         # Tier 2: Anomaly Detection (Optional)
-        if self.anomaly_detector.available and self.ml.available:
+        if (
+            self.anomaly_detector.available
+            and self.ml.available
+            and hasattr(self.ml, "feature_columns")
+        ):
             anomaly_info = self.anomaly_detector.score(features, self.ml.feature_columns)
             if not anomaly_info["is_anomaly"] and not has_rule:
                 ml_results = []
@@ -182,7 +187,19 @@ class HybridEngine:
                 root_cause["recommendation"] = "[ARB] " + str(
                     root_cause.get("recommendation", "")
                 )
-                return [root_cause]
+                selected = [cast(DiagnosisDict, root_cause)]
+                for diag in merged_diagnoses:
+                    if diag["failure_type"] == root_cause["failure_type"]:
+                        continue
+                    is_critical_rule = (
+                        diag["detection_method"] == "rule"
+                        and diag["severity"] == "critical"
+                    )
+                    if is_critical_rule:
+                        selected.append(diag)
+                    if len(selected) >= MAX_HYBRID_DIAGNOSES:
+                        break
+                return selected
 
         # Filter for low-quality symptom cascades if Temporal Arbiter didn't trigger.
         # IMPORTANT: critical rule-only diagnoses are NOT ejected — a rule that fires

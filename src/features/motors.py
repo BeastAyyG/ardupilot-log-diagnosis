@@ -42,7 +42,9 @@ class MotorExtractor(BaseExtractor):
                 t = float(msg.get("TimeUS", msg.get("_timestamp", 0.0)))
                 channels = []
                 for k in msg.keys():
-                    if k.startswith("C") and k[1:].isdigit():
+                    if (k.startswith("C") and k[1:].isdigit()) or (
+                        k.startswith("Ch") and k[2:].isdigit()
+                    ):
                         val = self._safe_value(msg, k)
                         if val > 800:  # Valid motor output
                             channels.append(val)

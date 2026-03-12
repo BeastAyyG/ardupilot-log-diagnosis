@@ -1,20 +1,45 @@
 import logging
+from typing import cast
 from pymavlink import DFReader
 from src.constants import ERR_SUBSYSTEM_MAP, ERR_AUTO_LABEL_MAP, MODE_NAMES, EV_NAMES
+from src.contracts import ParsedLog
 
 
 class LogParser:
+    INTERESTING_MESSAGE_TYPES = {
+        "VIBE",
+        "MAG",
+        "BAT",
+        "CURR",  # pre-ArduCopter 4.0 battery messages (same fields as BAT)
+        "GPS",
+        "RCOU",
+        "XKF4",
+        "NKF4",
+        "PARM",
+        "ERR",
+        "EV",
+        "MODE",
+        "MSG",
+        "CTUN",
+        "ATT",
+        "RATE",  # PID controller: desired vs actual rates for tuning diagnosis
+        "PM",
+        "FTN1",
+        "IMU",
+        "POWR",
+    }
+
     def __init__(self, filepath: str):
         self.filepath = filepath
         self.logger = logging.getLogger(__name__)
 
-    def parse(self) -> dict:
+    def parse(self) -> ParsedLog:
         """
         Parse entire .BIN file.
         Returns a dict containing metadata, messages, parameters, errors, events,
         mode_changes, and status_messages.
         """
-        parsed_data = {
+        parsed_data = cast(ParsedLog, {
             "metadata": {
                 "filepath": self.filepath,
                 "duration_sec": 0.0,
@@ -29,37 +54,13 @@ class LogParser:
             "events": [],
             "mode_changes": [],
             "status_messages": [],
-        }
-
-        # Only store messages we actually use in extractors to save memory and time
-        self.INTERESTING_MESSAGE_TYPES = {
-            "VIBE",
-            "MAG",
-            "BAT",
-            "CURR",  # pre-ArduCopter 4.0 battery messages (same fields as BAT)
-            "GPS",
-            "RCOU",
-            "XKF4",
-            "NKF4",
-            "PARM",
-            "ERR",
-            "EV",
-            "MODE",
-            "MSG",
-            "CTUN",
-            "ATT",
-            "RATE",  # PID controller: desired vs actual rates for tuning diagnosis
-            "PM",
-            "FTN1",
-            "IMU",
-            "POWR",
-        }
+        })
 
         try:
             log = DFReader.DFReader_binary(self.filepath)
         except Exception as e:
             self.logger.error(f"Failed to open log file {self.filepath}: {e}")
-            return parsed_data
+            return cast(ParsedLog, parsed_data)
 
         first_time = None
         last_time = None
@@ -155,4 +156,4 @@ class LogParser:
         if first_time is not None and last_time is not None and last_time > first_time:
             parsed_data["metadata"]["duration_sec"] = (last_time - first_time) / 1e6
 
-        return parsed_data
+        return cast(ParsedLog, parsed_data)

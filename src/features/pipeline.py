@@ -1,4 +1,5 @@
 import time
+from typing import cast
 from .vibration import VibrationExtractor
 from .compass import CompassExtractor
 from .power import PowerExtractor
@@ -11,6 +12,7 @@ from .control import ControlExtractor
 from .system import SystemExtractor
 from .events import EventExtractor
 from .fft_analysis import FFTExtractor
+from src.contracts import FeatureDict, ParsedLog
 
 
 class FeaturePipeline:
@@ -32,7 +34,7 @@ class FeaturePipeline:
             FFTExtractor,
         ]
 
-    def extract(self, parsed_log: dict) -> dict:
+    def extract(self, parsed_log: ParsedLog) -> FeatureDict:
         start_time = time.time()
 
         all_features = {}
@@ -77,7 +79,7 @@ class FeaturePipeline:
             "extraction_success": extraction_success,
         }
 
-        return all_features
+        return cast(FeatureDict, all_features)
 
     def get_feature_names(self) -> list:
         """Return ordered list of all feature names."""

@@ -12,10 +12,12 @@ Usage: python training/train_model.py
 
 import os
 import json
+import hashlib
 import warnings
 import numpy as np
 import pandas as pd
 import joblib
+from src.constants import FEATURE_NAMES, VALID_LABELS
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.calibration import CalibratedClassifierCV
@@ -239,6 +241,23 @@ def train():
         json.dump(df_feat.columns.tolist(), f)
     with open(os.path.join(model_dir, "label_columns.json"), "w") as f:
         json.dump(le.classes_.tolist(), f)
+
+    threshold_path = os.path.join(model_dir, "rule_thresholds.yaml")
+    threshold_hash = ""
+    if os.path.exists(threshold_path):
+        with open(threshold_path, "r") as f:
+            threshold_hash = hashlib.sha256(f.read().encode()).hexdigest()
+
+    manifest = {
+        "model_version": best_name,
+        "feature_schema_hash": hashlib.sha256(json.dumps(FEATURE_NAMES, sort_keys=True).encode()).hexdigest(),
+        "label_schema_hash": hashlib.sha256(json.dumps(VALID_LABELS, sort_keys=True).encode()).hexdigest(),
+        "training_dataset_id": "training/features.csv + training/labels.csv",
+        "calibration_date": pd.Timestamp.utcnow().strftime("%Y-%m-%d"),
+        "threshold_config_hash": threshold_hash,
+    }
+    with open(os.path.join(model_dir, "manifest.json"), "w") as f:
+        json.dump(manifest, f, indent=2)
 
     # Evaluation report
     report_md = (

@@ -1,6 +1,7 @@
 import os
 import json
 from .results import BenchmarkResults
+from src.contracts import DiagnosisDict
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
 from src.diagnosis.rule_engine import RuleEngine
@@ -62,6 +63,9 @@ class BenchmarkSuite:
                 if not parsed.get("messages"):
                     raise Exception("Parsed empty messages dict")
                 features = pipeline.extract(parsed)
+                metadata = features.get("_metadata", {})
+                if not metadata.get("extraction_success", True):
+                    raise Exception("Extraction failed: empty or corrupt log")
             except Exception as e:
                 results.add_error(filename, str(e), "EXTRACTION_FAILED")
                 continue
@@ -71,7 +75,7 @@ class BenchmarkSuite:
                     if isinstance(self.engine, MLClassifier):
                         predictions = self.engine.predict(features)
                     else:
-                        predictions = []
+                        predictions: list[DiagnosisDict] = []
                 else:
                     if isinstance(self.engine, (RuleEngine, HybridEngine)):
                         predictions = self.engine.diagnose(features)

@@ -3,6 +3,7 @@ from .base_extractor import BaseExtractor
 
 class SystemExtractor(BaseExtractor):
     REQUIRED_MESSAGES = ["PM"]
+    MESSAGE_DEPENDENCIES = ["PM", "POWR"]
     FEATURE_PREFIX = "sys_"
     FEATURE_NAMES = [
         "sys_long_loops",

@@ -3,6 +3,7 @@ from .base_extractor import BaseExtractor
 
 class FFTExtractor(BaseExtractor):
     REQUIRED_MESSAGES = []  # Custom
+    MESSAGE_DEPENDENCIES = ["FTN1", "IMU"]
     FEATURE_PREFIX = "fft_"
     FEATURE_NAMES = [
         "fft_dominant_freq_x",
@@ -24,7 +25,6 @@ class FFTExtractor(BaseExtractor):
 
     def extract(self) -> dict:
         ftn_msgs = self.messages.get("FTN1", [])
-        imu_msgs = self.messages.get("IMU", [])
 
         if ftn_msgs:
             pk_avg_vals = [self._safe_value(msg, "PkAvg") for msg in ftn_msgs]
@@ -47,20 +47,7 @@ class FFTExtractor(BaseExtractor):
                 "fft_peak_power_z": sum(snz_vals) / len(snz_vals) if snz_vals else 0.0,
                 "fft_noise_floor": 0.0,  # Hard to extract without more data
             }
-        elif imu_msgs and False:  # Disabled manual FFT as it hangs on large logs
-            pass
-            # ... (omitted expensive logic)
-        return {
-            "fft_dominant_freq_x": 0.0,
-            "fft_dominant_freq_y": 0.0,
-            "fft_dominant_freq_z": 0.0,
-            "fft_peak_power_x": 0.0,
-            "fft_peak_power_y": 0.0,
-            "fft_peak_power_z": 0.0,
-            "fft_noise_floor": 0.0,
-        }
 
-        # No data
         return {
             "fft_dominant_freq_x": 0.0,
             "fft_dominant_freq_y": 0.0,

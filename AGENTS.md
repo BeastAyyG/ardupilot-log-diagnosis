@@ -28,8 +28,8 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 
 ## Current Baseline Snapshot (Update Every Session)
 
-- Date: 2026-03-03
-- `pytest -q`: 120 passed
+- Date: 2026-03-13
+- `pytest -q`: 162 passed
 - Parse success (%): 100%
 - Root-cause Top-1 (unseen): Initial Rule-Baseline Complete (Data Collection Active)
 - Macro F1: 0.357 (Baseline ML - requires community logs)

@@ -4,6 +4,7 @@ from .base_extractor import BaseExtractor
 class PowerExtractor(BaseExtractor):
     # Accept either BAT (ArduCopter 4.0+) or CURR (pre-4.0 firmware)
     REQUIRED_MESSAGES = []  # custom has_data() handles fallback
+    MESSAGE_DEPENDENCIES = ["BAT", "CURR"]
     FEATURE_PREFIX = "bat_"
     FEATURE_NAMES = [
         "bat_volt_min",
@@ -30,11 +31,20 @@ class PowerExtractor(BaseExtractor):
         # Older firmware (pre-4.0) logs battery data as CURR with the same
         # Volt/Curr field names, so we fall back to CURR when BAT is absent.
         bat_msgs = self.messages.get("BAT", [])
+        using_curr_fallback = False
         if not bat_msgs:
             bat_msgs = self.messages.get("CURR", [])
+            using_curr_fallback = bool(bat_msgs)
 
         volt_vals = [self._safe_value(msg, "Volt") for msg in bat_msgs]
         curr_vals = [self._safe_value(msg, "Curr") for msg in bat_msgs]
+        if using_curr_fallback:
+            # Older CURR logs often store centivolts / centiamps. Normalize when
+            # values are obviously too large for direct engineering units.
+            if volt_vals and max(volt_vals) > 100.0:
+                volt_vals = [value / 100.0 for value in volt_vals]
+            if curr_vals and max(curr_vals) > 500.0:
+                curr_vals = [value / 100.0 for value in curr_vals]
         t_vals = [
             float(msg.get("TimeUS", msg.get("_timestamp", 0.0))) for msg in bat_msgs
         ]

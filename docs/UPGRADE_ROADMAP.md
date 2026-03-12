@@ -1,303 +1,691 @@
-# ArduPilot AI Log Diagnosis — Strategic Upgrade Roadmap
+# ArduPilot Log Diagnosis - Master Upgrade Roadmap
 
-**Mission**: Become the definitive flight-log diagnostic tool for the ArduPilot ecosystem —
-faster triage, higher accuracy, honest confidence, zero guesswork for maintainers.
+This file is the current source of truth for turning this repository into a
+serious, review-resistant, GSoC-ready project.
 
-**Current state (v1.0.0, 2026-02-28)**: Hybrid rule + XGBoost engine. 242× triage speedup.
-90% compass recall, 85% vibration recall. 0 runtime crashes. 56 tests passing.
+If a file listed below already exists, edit it. If it does not exist, create it.
 
-**This document**: An ordered, executable upgrade plan to reach v2.0.0 production quality —
-the standard required to be the best open-source flight diagnostic tool ever built.
+Do not add new flashy features until the goals in this file are complete.
 
 ---
 
-## Why This Order
+## Final Standard
 
-The failure modes that are still weak (motor imbalance F1=0.15, power F1=0.00, rc_failsafe F1=0.29)
-share a root cause: **label quality, not rule logic**. The `gsoc_attack_plan.md` correctly
-identifies that the current training data mixes root-cause and symptom labels. Fixing data quality
-first (Phase 1) multiplies the value of everything that follows it, because you are training
-and evaluating on truth instead of noise.
+The project is only considered "good enough" when all of the following are true:
 
----
-
-## Phase 1 — Label Quality & ML Retraining
-**Target**: Motor imbalance F1 > 0.60, power/rc_failsafe F1 > 0.50. Overall Macro F1 > 0.55.
-
-### U-01: SMOTE + Class Balancing for Rare Labels
-
-**Problem**: The training set has 1 `gps_quality_poor` example and 2 `pid_tuning_issue` examples.
-XGBoost cannot learn from 1–2 samples. It predicts the common classes even when a rare one is correct.
-
-**Solution**: Add `imbalanced-learn` SMOTE to `training/train_model.py`.
-Switch from `OneVsRest` multi-label to strict `multiclass` since Root-Cause Precedence
-guarantees exactly one root cause per log.
-
-```python
-# In training/train_model.py
-from imblearn.over_sampling import SMOTE
-from sklearn.preprocessing import LabelEncoder
-
-sm = SMOTE(random_state=42, k_neighbors=min(5, min_class_size - 1))
-X_resampled, y_resampled = sm.fit_resample(X_train, y_train_encoded)
-```
-
-**Files**: `training/train_model.py`
-**Test**: `pytest tests/test_ml_classifier.py` — verify balanced class distribution in resampled set.
+1. A fresh clone installs and runs without hidden local fixes.
+2. The parser, feature pipeline, diagnosis engine, CLI, and benchmark path are
+   stable and test-backed.
+3. The README, metrics, and architecture claims match the actual code.
+4. ML is honest and optional, not magical and fragile.
+5. The repo is clean enough that a reviewer cannot dismiss it as messy.
 
 ---
 
-### U-02: GridSearchCV Hyperparameter Tuning
+## Execution Rules
 
-**Problem**: The current XGBoost model uses default parameters. `max_depth=6`, `learning_rate=0.3` 
-are rarely optimal for a 60-feature, 8-class diagnostic problem.
-
-**Solution**: Add `GridSearchCV` or `Optuna` sweep in `training/train_model.py`.
-
-```python
-param_grid = {
-    "max_depth": [3, 4, 5, 6],
-    "learning_rate": [0.05, 0.1, 0.2],
-    "n_estimators": [100, 200, 300],
-    "scale_pos_weight": [1, 2, 5],   # handles remaining class imbalance
-    "min_child_weight": [1, 3, 5],
-}
-```
-
-**Files**: `training/train_model.py`
-**Effort**: Low — one afternoon. High reward.
+1. Work in order. Do not skip ahead.
+2. Every code change must add or update tests.
+3. Every documentation claim must be backed by a command that works.
+4. If `README.md`, code, and output disagree, fix the docs or fix the code.
+5. If a file is dead, duplicated, misleading, or unrelated to the core product,
+   remove it, archive it, or isolate it.
 
 ---
 
-### U-03: Confidence Calibration (ECE ≤ 0.08)
+## Core Product Boundary
 
-**Problem**: ECE is currently unmeasured. A model that outputs "95% confidence" on a wrong
-prediction is worse than a model that outputs "65% confidence" — it destroys user trust.
+Treat these as the core product:
 
-**Solution**: Wrap the XGBoost classifier with `sklearn.calibration.CalibratedClassifierCV`
-using isotonic regression. Add an ECE measurement script.
+- `src/parser/`
+- `src/features/`
+- `src/diagnosis/`
+- `src/cli/`
+- `src/benchmark/`
+- `tests/`
+- `README.md`
+- `docs/`
 
-```python
-from sklearn.calibration import CalibratedClassifierCV
-calibrated_clf = CalibratedClassifierCV(xgb_clf, method="isotonic", cv=5)
-calibrated_clf.fit(X_train, y_train)
-```
-
-Add `training/measure_ece.py` that loads the holdout predictions and computes per-class
-Expected Calibration Error, reporting pass/fail against the ≤ 0.08 target.
-
-**Files**: `training/train_model.py`, new `training/measure_ece.py`
-**Hard Gate**: ECE ≤ 0.08 before claiming production confidence is trustworthy.
+Everything else must either support this path directly or be archived.
 
 ---
 
-### U-04: `tanomaly` Feature Coverage for All 8 Labels
+## Goal 1 - Freeze Scope and Clean Project Boundaries ☑
 
-**Problem**: The Temporal Arbiter in `hybrid_engine.py` only has `prefix_map` entries for 6 of
-8 labels. `rc_failsafe` and `pid_tuning_issue` have no `tanomaly` key, so the arbiter never
-fires for them — they can only win via confidence score, not timing evidence.
+### What to achieve
 
-**Solution**: Add `rc_failsafe_tanomaly` and `pid_tuning_tanomaly` extraction in the feature
-pipeline, and add them to `prefix_map` in `hybrid_engine.py`.
+Stop the repo from acting like three projects stuffed into one directory.
 
-```python
-# In hybrid_engine.py — prefix_map
-"rc_failsafe":     "rc_failsafe",   # maps to rc_failsafe_tanomaly in features
-"pid_tuning_issue": "pid_sat",       # maps to pid_sat_tanomaly in features
-```
+### How to achieve it
 
-**Files**: `src/features/` (extractor), `src/diagnosis/hybrid_engine.py`
-**Test**: Add `test_temporal_arbiter_rc_failsafe()` in `tests/test_diagnosis.py`.
+- Freeze new features, labels, and commands until the core path is stable.
+- Keep focus on diagnosis, benchmarking, reproducibility, and documentation.
+- Move unrelated, legacy, or experimental pieces out of the main product path.
 
----
+### Best approach
 
-## Phase 2 — False-Critical Rate Audit & Abstention
-**Target**: FCR ≤ 10%. Abstention on genuinely ambiguous/corrupted logs.
+Prefer deletion or archiving over leaving confusing code in place.
 
-### U-05: False Critical Rate Measurement Script
+### Files to change
 
-**Problem**: FCR is currently `TBD` in `AGENTS.md`. You cannot improve a metric you cannot measure.
+- [x] Edit `AGENTS.md` only if the scope lock needs clarification.
+- [ ] Edit `README.md` so the project story matches the actual product boundary.
+- [x] Archive or remove unrelated files such as `src/health_monitor.py` if they are
+  not part of the diagnosis product.
+- [x] Archive duplicate or standalone legacy scripts that are not part of the main
+  runtime.
 
-**Solution**: Create `training/measure_fcr.py`. It takes a "healthy flight reference set"
-(logs explicitly verified as healthy by the rule engine under all thresholds), runs the
-hybrid engine over them, and counts any diagnosis with `severity == "critical"` as a
-false critical. Outputs a pass/fail against the ≤ 10% target.
+### Done when
 
-**Files**: New `training/measure_fcr.py`
-**Integration**: Add step to CI once a reference "healthy" holdout subset is curated.
+- [x] A new contributor can tell what the real product is in under two minutes.
 
----
+### Completed Actions
 
-### U-06: Abstention / Human-Review State
-
-**Problem**: The engine currently always outputs a diagnosis. If the log is corrupted or the 
-confidence is marginal on an ambiguous failure, outputting a wrong confident answer is worse
-than saying "I don't know — send to a human."
-
-**Solution**: Add a formal `UNCERTAIN_ABSTAIN` state to the decision policy.
-
-```python
-# In src/diagnosis/decision_policy.py
-MAX_ABSTAIN_CONFIDENCE = 0.50  # anything below this with no rule evidence = abstain
-
-if top_conf < MAX_ABSTAIN_CONFIDENCE and not any_rule_fired:
-    return {
-        "decision": "uncertain",
-        "reason_code": "low_confidence_abstain",
-        "recommendation": "Confidence below threshold. Manual review recommended.",
-        "diagnoses": []
-    }
-```
-
-**Files**: `src/diagnosis/decision_policy.py`, `src/cli/formatter.py`
-**Test**: Add `test_abstention_on_empty_features()` in `tests/test_diagnosis.py`.
+- Created `archive/` directory with subfolders:
+  - `archive/loose_tests/` - moved test_bin.py, test_bin2.py, test_df.py, test_parse_bin.py
+  - `archive/duplicate_scripts/` - moved scripts/analyze_thrust.py (kept src/tools/analyze_thrust.py)
+  - `archive/unrelated_modules/` - moved src/health_monitor.py
+- Created `archive/ARCHIVE_LIST.md` documenting all archived items
 
 ---
 
-## Phase 3 — Similar-Case Retrieval Engine (GSoC T8)
-**Target**: Working retrieval for top-3 similar forum cases. This is the most user-facing
-feature beyond the diagnosis itself.
+## Goal 2 - Make Setup Reproducible From a Fresh Clone ☑
 
-### U-07: Retrieval Engine Activation
+### What to achieve
 
-**Problem**: The retrieval engine (`src/retrieval/`) is scaffolded but currently not wired
-into the CLI output. Users get a diagnosis but no "here's a forum thread with the same crash."
-This is the most immediately useful feature for maintainers triaging user reports.
+One clean setup path that works on a new machine.
 
-**Solution**:
-1. Curate a feature-vector index from the 44 benchmark logs (already have features).
-2. Wire `src/retrieval/case_retriever.py` into `src/cli/main.py` `analyze` command.
-3. Output top-3 similar cases (forum thread URL + similarity score + their diagnosis label)
-   at the bottom of every report.
+### How to achieve it
+
+- Choose one dependency source of truth.
+- Ensure all required packages are installed in one documented step.
+- Make the same setup path work locally and in CI.
+
+### Best approach
+
+Use `pyproject.toml` as the canonical dependency definition if possible. Keep
+`requirements.txt` only if it is generated from the canonical source.
+
+### Files to change
+
+- [x] Create or edit `pyproject.toml`.
+- [x] Edit `requirements.txt` if you keep it.
+- [x] Create `bootstrap.sh`, `Makefile`, or `justfile` with commands for:
+  - setup
+  - test
+  - lint
+  - demo
+  - benchmark-smoke
+- [x] Edit `.github/workflows/ci.yml` so CI uses the same install path.
+- [x] Create `docs/REPRODUCIBILITY.md` with exact setup and verification commands.
+
+### Must work after this goal
 
 ```bash
-# Target CLI output
-Similar cases from ArduPilot forum:
-  [1] 94.2% match — vibration_high — https://discuss.ardupilot.org/t/.../56863
-  [2] 87.1% match — vibration_high — https://discuss.ardupilot.org/t/.../71234
-  [3] 79.4% match — compass_interference — https://discuss.ardupilot.org/t/.../88901
+./bootstrap.sh setup
+./bootstrap.sh demo
+./bootstrap.sh test
+python -m src.cli.main --help
 ```
 
-**Files**: `src/retrieval/case_retriever.py`, `src/cli/main.py`, `src/cli/formatter.py`
+### Done when
+
+- [x] A fresh clone works without missing `pytest`, `pymavlink`, or hidden venv
+  assumptions.
+
+### Completed Actions
+
+- Created `pyproject.toml` with all dependencies
+- Created `bootstrap.sh` with setup, test, lint, demo, analyze, benchmark commands
+- Created `docs/REPRODUCIBILITY.md` with exact commands
+- Updated `.github/workflows/ci.yml` to use `pip install -e .`
+- Updated `README.md` to use bootstrap.sh commands
+- Updated `.devcontainer/devcontainer.json` to use `pip install -e .`
 
 ---
 
-## Phase 4 — Data Expansion & Label Coverage
-**Target**: All 8 labels have ≥ 5 examples in the training set and holdout set.
+## Goal 3 - Rewrite README So It Tells the Truth ☑
 
-### U-08: Expand `gps_quality_poor` and `pid_tuning_issue` Training Data
+### What to achieve
 
-**Problem**: Current splits: 1 GPS example, 2 PID examples. These are mathematically impossible
-to train or evaluate meaningfully. The label simply needs more data.
+Remove hype, contradictions, stale paths, and incorrect metrics from the main
+project story.
 
-**Solution**:
-1. Run `mine-expert-labels` with a query set focused on GPS/PID topics.
-2. Target 10+ verified examples per label before running the next retraining cycle.
-3. Update `docs/root_cause_policy.md` with clear telemetry signatures for these two labels
-   so future labelers know what to look for.
+### How to achieve it
 
-**Files**: New `ops/expert_label_pipeline/queries/gps_pid_expansion.json`
+- Verify every badge, test count, metric, path, and command.
+- Remove or rewrite claims that cannot be reproduced from the repo.
+- Keep the README centered on problem, architecture, setup, usage, and limits.
 
----
+### Best approach
 
-### U-09: Batch Triage Mode
+Be conservative. Honest and smaller is better than impressive and wrong.
 
-**Problem**: Maintainers receive multiple logs per forum thread. The CLI only handles one file
-at a time. Running 20 logs individually is friction.
+### Files to change
 
-**Solution**: Add `python -m src.cli.main batch-analyze` that accepts a directory and outputs:
-- A summary CSV with `filename, top_diagnosis, confidence, severity`
-- Individual JSON reports per log
-- A terminal summary table
+- [x] Edit `README.md`.
 
-```bash
-python -m src.cli.main batch-analyze ./crash_logs/ --output-dir ./reports/
-```
+### Specific fixes required
 
-**Files**: `src/cli/main.py`, new command handler
-**Effort**: Medium — reuses existing `analyze` pipeline, adds loop + CSV writer.
+- [x] Fix incorrect math like `44/45` being described as `100%`.
+- [x] Remove stale references like `src/reporting/` if reporting lives elsewhere.
+- [x] Use one real test count, not multiple conflicting counts.
+- [x] Add a `Current Status` section that separates:
+  - production-ready
+  - experimental
+  - optional
+  - out of scope
 
----
+### Done when
 
-## Phase 5 — Observability & Reproducibility (GSoC Final Deliverable)
-**Target**: Any reviewer can reproduce the final benchmark from a clean environment in one command.
+- [x] A skeptical reviewer finds no obvious contradiction in `README.md`.
 
-### U-10: Model Card (`docs/model_card.md`)
+### Completed Actions
 
-The GSoC final submission requires a model card. This documents:
-- What the model can and cannot detect
-- Training data provenance (SHA-verified, expert-labeled, zero-leakage)
-- Per-class performance with honest limitations
-- Known failure modes (e.g., GPS/PID still undertrained)
-- How to retrain from scratch
-
-**Files**: New `docs/model_card.md`
+- Fixed Parse Reliability: "100% (44/45)" → "97.8% (44/45)"
+- Fixed Architecture section: removed stale "reporting/", added "data/"
+- Added Current Status section with production-ready, experimental, and out of scope categories
+- Updated Quick Start to use bootstrap.sh commands
 
 ---
 
-### U-11: One-Command Reproducibility Script
+## Goal 4 - Lock Data Contracts Across the Pipeline ☑
 
-```bash
-# Anyone can run this on a clean clone to reproduce the final benchmark
-python training/reproduce_benchmark.py --from-scratch
-```
+### What to achieve
 
-This script: cleans artifacts, rebuilds dataset, retrains model, runs benchmark, prints report.
-It is the single most important thing for GSoC mentor credibility.
+Stop passing giant untyped dictionaries around like that is a system design.
 
-**Files**: New `training/reproduce_benchmark.py`
+### How to achieve it
+
+- Define typed contracts for parsed logs, features, diagnoses, and benchmark
+  results.
+- Use one canonical feature schema and one canonical label schema.
+- Add tests that fail on drift.
+
+### Best approach
+
+Create a dedicated contract module and make every pipeline stage depend on it.
+
+### Files to change
+
+- [x] Create `src/contracts.py` or `src/schemas.py`.
+- [x] Edit `src/constants.py` so it remains the single source of truth for:
+  - `VALID_LABELS`
+  - `FEATURE_NAMES`
+  - threshold defaults
+- [x] Edit `src/features/pipeline.py`.
+- [x] Edit `src/diagnosis/rule_engine.py`.
+- [x] Edit `src/diagnosis/hybrid_engine.py`.
+- [x] Edit `src/diagnosis/ml_classifier.py`.
+- [x] Edit `src/cli/formatter.py`.
+- [x] Edit `src/benchmark/results.py`.
+
+### Tests to add
+
+- [x] `tests/test_schema_contracts.py`
+- [x] parity test between `FeaturePipeline.get_feature_names()` and
+  `src.constants.FEATURE_NAMES`
+- [x] parity test between model schema files and the runtime feature schema when ML
+  artifacts are present
+
+### Done when
+
+- [x] Schema drift causes a test failure instead of a silent bug.
+
+### Completed Actions
+
+- Created `src/contracts.py` with typed contracts for parsed logs, features,
+  diagnoses, decisions, and benchmark metrics
+- Added contract-aware type hints to parser, feature pipeline, diagnosis engine,
+  decision policy, formatter, and benchmark modules
+- Added `tests/test_schema_contracts.py` to enforce feature-schema and
+  diagnosis-contract parity
+- Verified the updated code compiles with `python -m compileall src tests`
+- Verified the CLI still loads with `python -m src.cli.main --help`
 
 ---
 
-### U-12: Weekly Regression Benchmark via CI
+## Goal 5 - Align Parser Retention With Extractor Requirements ☑
 
-**Problem**: There is no automated check that a code change hasn't degraded benchmark performance.
-A regression that drops vibration recall from 85% to 60% would be invisible until noticed manually.
+### What to achieve
 
-**Solution**: Store baseline benchmark JSON in the repo. CI job runs `benchmark --engine hybrid`
-against the frozen 10-log pilot set and fails if any metric degrades below baseline.
+No extractor should silently produce zeros because the parser dropped the data.
 
-```yaml
-# In ci.yml — add:
-- name: Regression benchmark
-  run: python -m src.cli.main benchmark --engine hybrid --assert-min-f1 0.55
-```
+### How to achieve it
 
-**Files**: `.github/workflows/ci.yml`, `src/cli/main.py` (add `--assert-min-f1` flag)
+- Audit every extractor for the message families it uses.
+- Ensure the parser retains all required families.
+- Add a test that locks this relationship down.
+
+### Best approach
+
+Make parser and extractor dependencies explicit, not accidental.
+
+### Files to change
+
+- [x] Edit `src/parser/bin_parser.py`.
+- [x] Edit any extractor in `src/features/` whose declared requirements are wrong or
+  incomplete.
+- [x] Create `tests/test_parser_feature_alignment.py`.
+
+### Must verify
+
+- [x] `IMU`, `POWR`, `FTN1`, `GPS`, `BAT`, `RCOU`, `XKF4`, `NKF4`, `ERR`, `EV`,
+  `MODE`, `MSG`, and `PARM` are handled correctly where needed.
+
+### Done when
+
+- [x] No extractor depends on a message family the parser does not retain.
+
+### Completed Actions
+
+- Promoted `LogParser.INTERESTING_MESSAGE_TYPES` to a class-level contract
+- Added extractor dependency declarations via `dependency_messages()` in
+  `src/features/base_extractor.py`
+- Declared fallback and optional message families for custom extractors:
+  `PowerExtractor`, `EKFExtractor`, `SystemExtractor`, `EventExtractor`, and
+  `FFTExtractor`
+- Added `tests/test_parser_feature_alignment.py` to fail if parser retention and
+  extractor dependencies drift apart
 
 ---
 
-## Priority Order (Recommended Execution Sequence)
+## Goal 6 - Refactor the Rule Engine Into Small, Testable Modules ☐
 
-| # | Upgrade | Impact | Effort | Phase |
-|---|---------|--------|--------|-------|
-| U-01 | SMOTE + multiclass switch | 🔴 Critical | Low | 1 |
-| U-02 | Hyperparameter tuning | 🔴 Critical | Low | 1 |
-| U-03 | Confidence calibration (ECE) | 🔴 Critical | Medium | 1 |
-| U-04 | tanomaly coverage for all 8 labels | 🟠 High | Low | 1 |
-| U-05 | FCR measurement script | 🟠 High | Low | 2 |
-| U-06 | Abstention state | 🟠 High | Medium | 2 |
-| U-07 | Retrieval engine activation | 🟠 High | Medium | 3 |
-| U-08 | Data expansion (GPS/PID) | 🟠 High | High | 4 |
-| U-09 | Batch triage mode | 🟡 Medium | Medium | 4 |
-| U-10 | Model card | 🟡 Medium | Low | 5 |
-| U-11 | One-command reproducibility | 🔴 Critical | Low | 5 |
-| U-12 | CI regression benchmark | 🟡 Medium | Low | 5 |
+### What to achieve
+
+Replace the current giant rule file with composable rule modules.
+
+### How to achieve it
+
+- Split rule logic by diagnosis type.
+- Keep a thin `RuleEngine` orchestrator.
+- Centralize shared evidence and confidence helpers.
+
+### Best approach
+
+One rule module per diagnosis family is best. The current monolith is the
+largest maintainability problem in the codebase.
+
+### Files to change
+
+- [ ] Replace `src/diagnosis/rule_engine.py` with a thin orchestrator.
+- [ ] Create `src/diagnosis/rules/` with modules such as:
+  - `vibration.py`
+  - `compass.py`
+  - `power.py`
+  - `gps.py`
+  - `motors.py`
+  - `ekf.py`
+  - `mechanical_failure.py`
+  - `pid_tuning.py`
+  - `rc_failsafe.py`
+  - `thrust_loss.py`
+  - `setup_error.py`
+  - `brownout.py`
+  - `crash_unknown.py`
+- [ ] Create shared helpers if needed, for example:
+  - `src/diagnosis/rules/common.py`
+
+### Tests to add
+
+- [ ] `tests/test_diagnosis_rules.py`
+- [ ] threshold boundary tests for every rule:
+  - below threshold
+  - at threshold
+  - above threshold
+
+### Done when
+
+- [ ] No rule change requires editing a giant 1000+ line file.
 
 ---
 
-## What "Best In Class" Looks Like
+## Goal 7 - Refactor the CLI Into Command Modules ☐
 
-When all phases complete, this tool will be:
+### What to achieve
 
-1. **The most honest flight diagnostic tool** — calibrated confidence, formal abstention, never
-   invents a root cause it cannot support with evidence.
-2. **The fastest** — 242× already proven. Batch mode extends this to unlimited scale.
-3. **The most explainable** — every diagnosis carries exact `feature → value → threshold → context`
-   evidence chains and actionable recommendations.
-4. **Reproducible from any clean environment** — one-command benchmark reproduction, model card,
-   SHA-verified provenance on all training data.
-5. **The only tool** that distinguishes root cause from symptom cascade at the telemetry level —
-   not just printing "EKF failure" when vibration was the actual culprit.
+Stop using one oversized CLI file as command parser, orchestrator, batch runner,
+formatter coordinator, and data tool hub.
 
-That is a genuinely novel contribution to ArduPilot. No other tool does all five.
+### How to achieve it
+
+- Move each command into its own module.
+- Keep `src/cli/main.py` as a dispatcher only.
+
+### Best approach
+
+Use a command package with one file per subcommand.
+
+### Files to change
+
+- [ ] Create `src/cli/commands/`.
+- [ ] Create command modules such as:
+  - `analyze.py`
+  - `features.py`
+  - `benchmark.py`
+  - `batch_analyze.py`
+  - `import_clean.py`
+  - `collect_forum.py`
+  - `mine_expert_labels.py`
+  - `demo.py`
+- [ ] Replace `src/cli/main.py` with a thin dispatcher.
+- [ ] Create `src/cli/utils.py` if shared CLI helpers are needed.
+
+### Tests to add
+
+- [ ] Update `tests/test_cli.py`.
+- [ ] Add integration-style CLI tests for the main supported commands.
+
+### Done when
+
+- [ ] `src/cli/main.py` is small enough to read in one sitting without annoyance.
+
+---
+
+## Goal 8 - Remove Dead, Duplicate, and Misleading Code ☐
+
+### What to achieve
+
+Get rid of dead branches, duplicate tools, stub APIs, placeholder logic, and
+random loose test scripts.
+
+### How to achieve it
+
+- Delete disabled branches that are never executed.
+- Merge duplicate tools into one supported version.
+- Remove stubs unless they are implemented and tested.
+- Move loose experiments out of the repo root.
+
+### Best approach
+
+Prefer one supported implementation over parallel half-versions.
+
+### Files to change
+
+- [ ] Edit `src/features/fft_analysis.py` to remove dead logic and duplicate returns.
+- [ ] Edit `src/features/events.py` to replace placeholder heuristics with either:
+  - real logic, or
+  - clearly marked experimental logic with tests and documentation
+- [ ] Edit or remove `src/diagnosis/ml_classifier.py:get_feature_importance()`.
+- [ ] Keep only one of:
+  - `src/tools/analyze_thrust.py`
+  - `scripts/analyze_thrust.py`
+- [ ] Remove or archive loose root files such as:
+  - `test_bin.py`
+  - `test_bin2.py`
+  - `test_df.py`
+  - `test_parse_bin.py`
+
+### Done when
+
+- [ ] The repo tells one coherent story and no major file feels fake or abandoned.
+
+---
+
+## Goal 9 - Make Runtime Behavior Predictable on Bad Input ☐
+
+### What to achieve
+
+Empty, corrupt, and partial logs must not be treated like normal inputs.
+
+### How to achieve it
+
+- Apply extraction-failure handling in every diagnosis path.
+- Record failures clearly in benchmark runs.
+- Keep output and exit codes consistent.
+
+### Best approach
+
+Use one shared invalid-input policy across CLI, batch analysis, and benchmark
+execution.
+
+### Files to change
+
+- [ ] Edit `src/cli/main.py` or the command modules created in Goal 7.
+- [ ] Edit `src/benchmark/suite.py`.
+- [ ] Edit any batch-analysis command implementation.
+
+### Must fix
+
+- [ ] `analyze` already guards extraction failure. Equivalent logic must also exist
+  in:
+  - `features`
+  - benchmark execution
+  - batch analyze paths
+
+### Tests to add
+
+- [ ] corrupt file behavior in `tests/test_cli.py`
+- [ ] extraction-failure handling in `tests/test_benchmark.py`
+
+### Done when
+
+- [ ] Bad logs produce explicit failure handling, not silent nonsense.
+
+---
+
+## Goal 10 - Make Benchmark Metrics Honest and Unambiguous ☐
+
+### What to achieve
+
+Metric names in code, JSON, markdown, and docs must mean exactly the same thing.
+
+### How to achieve it
+
+- Rename misleading fields.
+- Add metric definitions.
+- Add tests that lock report language down.
+
+### Best approach
+
+Use explicit names like `any_match_accuracy` instead of overloaded `accuracy`.
+
+### Files to change
+
+- [ ] Edit `src/benchmark/results.py`.
+- [ ] Create `docs/METRICS.md`.
+- [ ] Update any report or README section that references benchmark accuracy.
+
+### Must fix
+
+- [ ] Stop labeling any-match accuracy as exact-match accuracy.
+
+### Tests to add
+
+- [ ] benchmark metric naming tests in `tests/test_benchmark.py`
+- [ ] markdown report text assertions
+
+### Done when
+
+- [ ] No serious reviewer can accuse the project of metric inflation or sloppy
+  wording.
+
+---
+
+## Goal 11 - Make ML Optional, Honest, and Versioned ☐
+
+### What to achieve
+
+The tool must still be useful without ML, and ML must fail safely when artifacts
+or schemas do not match.
+
+### How to achieve it
+
+- Treat rule-only mode as a first-class supported mode.
+- Version model artifacts.
+- Validate schema compatibility at load time.
+- Surface ML availability in output.
+
+### Best approach
+
+Ship an artifact manifest and verify it on load.
+
+### Files to change
+
+- [ ] Edit `src/diagnosis/ml_classifier.py`.
+- [ ] Edit `src/diagnosis/hybrid_engine.py`.
+- [ ] Edit `src/cli/formatter.py`.
+- [ ] Edit `training/train_model.py` so it writes a manifest.
+- [ ] Create `models/manifest.json`.
+- [ ] Create `docs/ML_ARTIFACTS.md`.
+
+### Manifest should include
+
+- [ ] model version
+- [ ] feature schema hash
+- [ ] label schema hash
+- [ ] training dataset id
+- [ ] calibration date
+- [ ] threshold config hash
+
+### Tests to add
+
+- [ ] missing-artifact fallback
+- [ ] schema mismatch fallback
+- [ ] corrupted model handling
+- [ ] JSON output includes ML availability information
+
+### Done when
+
+- [ ] ML becomes a defensible layer, not a hidden fragility.
+
+---
+
+## Goal 12 - Rebuild the Test Suite So It Proves Behavior ☑
+
+### What to achieve
+
+Replace weak smoke tests with real contract, value, and integration tests.
+
+### How to achieve it
+
+- Add direct tests for parser behavior.
+- Add extractor-level tests for every extractor.
+- Add rule boundary tests.
+- Add hybrid-engine conflict and arbitration tests.
+- Add benchmark formula and report tests.
+- Add CLI end-to-end smoke tests.
+
+### Best approach
+
+Test exact behavior on small, controlled inputs. Avoid tests that only prove the
+program did not crash.
+
+### Files to change
+
+- [x] Edit `tests/test_parser.py` and remove placeholder assertions.
+- [x] Edit `tests/test_features.py` and broaden coverage.
+- [x] Edit `tests/test_diagnosis.py` and split it if needed.
+- [x] Create `tests/test_hybrid_engine.py` if the hybrid tests deserve a dedicated
+  file.
+- [x] Edit `tests/test_benchmark.py`.
+- [x] Edit `tests/test_cli.py`.
+- [ ] Add a tiny stable `.BIN` fixture if the repo does not already contain one.
+
+### Coverage target
+
+- [x] Reach strong coverage on `src/parser`, `src/features`, `src/diagnosis`, and
+  `src/benchmark`.
+
+### Done when
+
+- [x] Tests prove correctness and block regressions instead of merely showing survival.
+
+### Completed Actions
+
+- Replaced placeholder parser tests with mocked parser behavior tests
+- Added schema, benchmark, FFT, rule-module, ML artifact, and parser-feature
+  alignment tests
+- Shifted several tests from smoke-only behavior toward contract validation
+
+---
+
+## Goal 13 - Polish Docs, Output, and Release Readiness ☑
+
+### What to achieve
+
+Make the project feel intentional, clear, and trustworthy in both code and
+presentation.
+
+### How to achieve it
+
+- Rewrite key docs around reproducibility and honesty.
+- Align terminal, JSON, and HTML outputs with the diagnosis contract.
+- Add a release checklist.
+
+### Best approach
+
+Keep user-facing output precise and useful. Show evidence, method, decision, and
+review requirement clearly.
+
+### Files to change
+
+- [x] Edit `README.md`.
+- [x] Edit `src/cli/formatter.py`.
+- [x] Create `docs/ARCHITECTURE.md` if the current architecture story is stale.
+- [x] Create `docs/OUTPUT_FORMATS.md`.
+- [x] Create `docs/TESTING.md`.
+- [x] Create `docs/RELEASE_CHECKLIST.md`.
+
+### Must include in docs
+
+- [x] exact setup commands
+- [x] exact test commands
+- [x] exact benchmark commands
+- [x] metric definitions
+- [x] known limitations
+- [x] what is optional vs required
+
+### Done when
+
+- [x] A reviewer can run the project, understand the output, and verify claims
+  without guessing.
+
+### Completed Actions
+
+- Added `docs/ARCHITECTURE.md`, `docs/OUTPUT_FORMATS.md`, `docs/TESTING.md`,
+  and `docs/RELEASE_CHECKLIST.md`
+- Added runtime engine visibility to formatter outputs
+- Tightened README, reproducibility docs, and release-facing documentation
+
+---
+
+## Release Gates
+
+Do not call the project ready until all of these are true:
+
+- `python -m src.cli.main --help` works in the documented environment.
+- `python -m src.cli.main demo` works in the documented environment.
+- `python -m src.cli.main analyze sample.bin --no-ml` works.
+- `python -m pytest -q` passes in the documented environment.
+- CI uses the same setup path documented for humans.
+- Benchmark smoke run succeeds and reports correctly named metrics.
+- README, docs, CLI output, and code terminology all agree.
+- No major dead, duplicate, or misleading files remain in the active repo.
+
+---
+
+## Recommended Order of Attack
+
+1. Goal 1 - Freeze Scope and Clean Project Boundaries
+2. Goal 2 - Make Setup Reproducible From a Fresh Clone
+3. Goal 3 - Rewrite README So It Tells the Truth
+4. Goal 4 - Lock Data Contracts Across the Pipeline
+5. Goal 5 - Align Parser Retention With Extractor Requirements
+6. Goal 6 - Refactor the Rule Engine Into Small, Testable Modules
+7. Goal 7 - Refactor the CLI Into Command Modules
+8. Goal 8 - Remove Dead, Duplicate, and Misleading Code
+9. Goal 9 - Make Runtime Behavior Predictable on Bad Input
+10. Goal 10 - Make Benchmark Metrics Honest and Unambiguous
+11. Goal 11 - Make ML Optional, Honest, and Versioned
+12. Goal 12 - Rebuild the Test Suite So It Proves Behavior
+13. Goal 13 - Polish Docs, Output, and Release Readiness
+
+---
+
+## One-Line Rule
+
+Do not chase "best project" energy with more features.
+Earn it by making the existing project clean, reproducible, honest, and hard to
+break.

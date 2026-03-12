@@ -1,6 +1,10 @@
 import os
 import json
+import hashlib
 import numpy as np
+from typing import Any, cast
+from src.constants import FEATURE_NAMES, VALID_LABELS
+from src.contracts import DiagnosisDict, FeatureDict
 
 try:
     import joblib
@@ -34,14 +38,24 @@ class MLClassifier:
         self.scaler_path = os.path.join(model_dir, "scaler.joblib")
         self.features_path = os.path.join(model_dir, "feature_columns.json")
         self.labels_path = os.path.join(model_dir, "label_columns.json")
+        self.manifest_path = os.path.join(model_dir, "manifest.json")
         self.min_probability = float(min_probability)
         self.label_thresholds = dict(LABEL_PROB_THRESHOLDS)
+        self.unavailable_reason = "ml artifacts not loaded"
 
         self.available = False
         if joblib is None:
+            self.unavailable_reason = "joblib unavailable"
             return
 
-        if os.path.exists(self.model_path) and os.path.exists(self.scaler_path):
+        required_paths = [
+            self.model_path,
+            self.scaler_path,
+            self.features_path,
+            self.labels_path,
+            self.manifest_path,
+        ]
+        if all(os.path.exists(path) for path in required_paths):
             try:
                 loaded_model = joblib.load(self.model_path)
                 if isinstance(loaded_model, dict) and "model" in loaded_model:
@@ -54,9 +68,37 @@ class MLClassifier:
                     self.feature_columns = json.load(f)
                 with open(self.labels_path, "r") as f:
                     self.label_columns = json.load(f)
-                self.available = True
-            except Exception:
+                with open(self.manifest_path, "r") as f:
+                    self.manifest = json.load(f)
+                self.available = self._manifest_matches_runtime()
+                self.unavailable_reason = (
+                    "available" if self.available else "manifest schema mismatch"
+                )
+            except Exception as exc:
+                self.unavailable_reason = f"failed to load ml artifacts: {exc}"
                 self.available = False
+        else:
+            self.unavailable_reason = "missing classifier, scaler, schema, or manifest artifact"
+
+    def _hash_json_list(self, values: list[str]) -> str:
+        payload = json.dumps(values, sort_keys=True).encode()
+        return hashlib.sha256(payload).hexdigest()
+
+    def _hash_threshold_config(self) -> str:
+        model_dir = os.path.dirname(self.model_path)
+        threshold_path = os.path.join(model_dir, "rule_thresholds.yaml")
+        if not os.path.exists(threshold_path):
+            return ""
+        with open(threshold_path, "r") as file_obj:
+            return hashlib.sha256(file_obj.read().encode()).hexdigest()
+
+    def _manifest_matches_runtime(self) -> bool:
+        manifest = getattr(self, "manifest", {})
+        return (
+            manifest.get("feature_schema_hash") == self._hash_json_list(FEATURE_NAMES)
+            and manifest.get("label_schema_hash") == self._hash_json_list(VALID_LABELS)
+            and manifest.get("threshold_config_hash", "") == self._hash_threshold_config()
+        )
 
     def _threshold_for_label(self, label: str) -> float:
         return float(self.label_thresholds.get(label, self.min_probability))
@@ -154,7 +196,7 @@ class MLClassifier:
         out.sort(key=lambda x: x["confidence"], reverse=True)
         return out
 
-    def predict(self, features: dict) -> list:
+    def predict(self, features: FeatureDict) -> list[DiagnosisDict]:
         if not self.available:
             return []
 
@@ -163,12 +205,15 @@ class MLClassifier:
         vector = []
         for feat in self.feature_columns:
             val = features.get(feat, 0.0)
-            vector.append(float(val if val is not None else 0.0))
+            if isinstance(val, (int, float)):
+                vector.append(float(val))
+            else:
+                vector.append(0.0)
 
         X = np.array(vector).reshape(1, -1)
         X_scaled = self.scaler.transform(X)
 
-        probas = self.model.predict_proba(X_scaled)
+        probas = cast(Any, self.model).predict_proba(X_scaled)
 
         diagnoses = []
         label_probs = {}
@@ -200,4 +245,20 @@ class MLClassifier:
         return diagnoses[:MAX_PREDICTED_LABELS]
 
     def get_feature_importance(self) -> dict:
-        return {}
+        if not self.available or not hasattr(self.model, "feature_importances_"):
+            return {}
+
+        importances = getattr(self.model, "feature_importances_", None)
+        if importances is None:
+            return {}
+
+        try:
+            return {
+                feature: float(score)
+                for feature, score in zip(self.feature_columns, importances, strict=False)
+            }
+        except TypeError:
+            return {
+                feature: float(score)
+                for feature, score in zip(self.feature_columns, importances)
+            }

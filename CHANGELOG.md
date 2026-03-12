@@ -6,6 +6,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.1] — 2026-03-13 — Release Readiness Pass
+
+### Summary
+Release-readiness pass completed. The project now ships with a working setup path,
+green full test suite, a valid sample log fixture, a cleaned architecture, and a
+final exported benchmark report for the release candidate.
+
+### Added
+- `pyproject.toml` and `bootstrap.sh` as the primary setup and execution path.
+- Architecture, testing, metrics, ML artifact, output format, reproducibility,
+  and release-checklist docs under `docs/`.
+- Contract layer in `src/contracts.py` plus schema and alignment tests.
+- Split CLI command package under `src/cli/commands/`.
+- Split rule modules under `src/diagnosis/rules/`.
+- Release benchmark exports: `release_benchmark_results.md` and
+  `release_benchmark_results.json`.
+
+### Changed
+- Refactored the rule engine and CLI into maintainable modules.
+- Standardised benchmark metrics to use `Any-Match Accuracy`, `Top-1 Accuracy`,
+  and `Exact-Match Accuracy` consistently.
+- Updated README, roadmap, and release docs to match actual repo behavior.
+- Upgraded the baseline test count to **162 passing tests**.
+
+### Fixed
+- Final benchmark export path now runs successfully.
+- `sample.bin` analysis now works on a real parseable fixture.
+- Old `RCOU`/`CURR` telemetry compatibility in motor and power extraction.
+- ML artifact loading now verifies a manifest and fails safely.
+
+---
+
 ## [1.0.0] — 2026-02-28 — Production Sign-Off
 
 ### Summary

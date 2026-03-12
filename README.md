@@ -3,7 +3,7 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 120+ Passing](https://img.shields.io/badge/tests-120%2B%20passing-brightgreen)](tests/)
+[![Tests: 162 Passing](https://img.shields.io/badge/tests-162%20passing-brightgreen)](tests/)
 [![Status: Alpha](https://img.shields.io/badge/status-alpha-orange)](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md)
 
 > An end-to-end diagnostic pipeline for ArduPilot `.BIN` dataflash logs — built for the **GSoC 2026** program.
@@ -15,16 +15,19 @@ At its core is a **physics-based rule engine** that extracts **60+ critical flig
 ## ⚡ Quick Start
 
 ```bash
-pip install -r requirements.txt
+# Clone and setup
+git clone https://github.com/BeastAyyG/ardupilot-log-diagnosis.git
+cd ardupilot-log-diagnosis
+./bootstrap.sh setup
 
 # Try an instant demo — no .BIN file needed
-python -m src.cli.main demo
+./bootstrap.sh demo
 
 # Analyze a real log
-python -m src.cli.main analyze flight.BIN
+./bootstrap.sh analyze flight.BIN
 
 # Generate a shareable HTML report
-python -m src.cli.main analyze flight.BIN --format html -o report.html
+./bootstrap.sh analyze flight.BIN --format html -o report.html
 ```
 
 <details>
@@ -71,7 +74,7 @@ Validated against **45 real crash logs** sourced from `discuss.ardupilot.org` wi
 | **Maintainer Triage Time** | 2.1 sec/log | — |
 | **Manual Baseline** | 8.5 min/log | — |
 | **Speedup** | **242×** | — |
-| **Parse Reliability** | 100% (44/45 logs extracted) | ≥ 99% |
+| **Parse Reliability** | 97.8% (44/45 logs extracted) | ≥ 99% |
 | **Compass Interference Recall** | **90%** | ≥ 85% |
 | **Vibration Cascade Recall** | **85%** | ≥ 85% |
 | **EKF Failure F1** | **0.67** | ≥ 0.50 |
@@ -125,12 +128,13 @@ ardupilot-log-diagnosis/
 │   ├── features/       # 60+ telemetry feature extractors
 │   ├── diagnosis/      # Hybrid rule + XGBoost engine, decision policy
 │   ├── retrieval/      # Cosine-similarity similar-case retrieval
-│   ├── reporting/      # JSON + terminal report formatting
-│   └── cli/            # Entry point: `python -m src.cli.main`
+│   ├── cli/            # Entry point: `python -m src.cli.main`
+│   ├── benchmark/      # Benchmark suite and reporting
+│   └── data/           # Data ingestion, forum collection, clean import
 ├── models/             # Versioned: classifier, scaler, feature/label schemas
 ├── training/           # dataset build, holdout creation, benchmark runner
 ├── ops/                # Expert label mining pipeline
-├── tests/              # 56 passing unit + integration tests
+├── tests/              # Unit and integration tests
 └── docs/               # GSoC plan, triage study, acceptance criteria
 ```
 
@@ -279,6 +283,32 @@ See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITER
 | **Multi-label precision** | Dips in cascading failure cases (vibration → compass → EKF) |
 | **False-critical audit** | In progress — target FCR ≤ 10% |
 | **Calibration (ECE)** | Target ECE ≤ 0.08, measurement in progress |
+
+---
+
+## 📊 Current Status
+
+### Production-Ready
+
+- Parser: `.BIN` to structured log extraction
+- Feature pipeline: 60+ telemetry features from multiple message families
+- Rule engine: Physics-based thresholds for vibration, compass, power, GPS, motors, EKF
+- Decision policy: Confidence calibration, abstention, human-review gating
+- CLI: `analyze`, `demo`, `benchmark` commands
+- Reproducible setup via `pyproject.toml` and `bootstrap.sh`
+
+### Experimental
+
+- ML classifier (XGBoost): Requires trained model artifacts
+- Hybrid engine: Rule + ML fusion with temporal arbitration
+- Retrieval engine: Similar-case lookup from historical logs
+- Forum collection and expert label mining pipelines
+
+### Out of Scope (Archived)
+
+- `src/health_monitor.py`: Companion health monitor (moved to `archive/`)
+- Legacy test scripts in repo root (moved to `archive/loose_tests/`)
+- Duplicate tools (moved to `archive/duplicate_scripts/`)
 
 ---
 

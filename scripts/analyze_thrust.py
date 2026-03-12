@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 analyze_thrust.py — Comprehensive thrust-loss / underpowered-aircraft analyser.
 
@@ -73,7 +72,7 @@ def _parse_log(filepath: str) -> tuple:
                 time_us = float(getattr(msg, "TimeUS", 0.0))
                 channels = {}
                 for field in msg.get_fieldnames():
-                    if field.startswith("C") and field[1:].isdigit():
+                    if (field.startswith("C") and field[1:].isdigit()) or (field.startswith("Ch") and field[2:].isdigit()):
                         val = float(getattr(msg, field, 0.0))
                         if val > 800:
                             channels[field] = val

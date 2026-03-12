@@ -18,9 +18,11 @@ class BenchmarkReporter:
             f"║  Extracted:      {ov['successful_extractions']} ({pct:.0f}%)"
         )
         print(extracted_line + " " * max(1, 40 - len(extracted_line)) + "║")
-        acc = ov["accuracy"] * 100
-        acc_line = f"║  Overall acc:    {acc:.0f}%"
+        any_acc = ov["any_match_accuracy"] * 100
+        acc_line = f"║  Any-match acc:  {any_acc:.0f}%"
         print(acc_line + " " * max(1, 40 - len(acc_line)) + "║")
+        top1_line = f"║  Top-1 acc:      {ov['top1_accuracy'] * 100:.0f}%"
+        print(top1_line + " " * max(1, 40 - len(top1_line)) + "║")
         f1_line = f"║  Macro F1:       {ov['macro_f1']:.2f}"
         print(f1_line + " " * max(1, 40 - len(f1_line)) + "║")
         print("╚═════════════════════════════════════════╝")

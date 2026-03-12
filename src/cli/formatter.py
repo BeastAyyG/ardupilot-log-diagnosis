@@ -1,6 +1,9 @@
 import json
 import os
 import sys
+from typing import Optional
+
+from src.contracts import DecisionDict, DiagnosisDict, FeatureDict, FeatureMetadata
 
 
 # ─── ANSI colour helpers ──────────────────────────────────────────────────────
@@ -77,8 +80,8 @@ class DiagnosisFormatter:
     # ------------------------------------------------------------------
 
     def format_terminal(
-        self, diagnoses: list, metadata: dict, decision: dict = None,
-        similar_cases: list = None
+        self, diagnoses: list[DiagnosisDict], metadata: FeatureMetadata, decision: Optional[DecisionDict] = None,
+        similar_cases: Optional[list] = None, runtime_info: Optional[dict] = None
     ) -> str:
         lines = []
         lines.append(_c("╔═══════════════════════════════════════╗", _BOLD))
@@ -168,6 +171,15 @@ class DiagnosisFormatter:
             else:
                 lines.append(_c("\nHuman Review: Not required ✔", _GREEN))
 
+        if runtime_info:
+            engine_name = runtime_info.get("engine", "unknown")
+            ml_available = runtime_info.get("ml_available")
+            if ml_available is False:
+                reason = runtime_info.get("ml_reason", "ml unavailable")
+                lines.append(f"\nRuntime: {engine_name} (rule-only fallback, {reason})")
+            else:
+                lines.append(f"\nRuntime: {engine_name}")
+
         if similar_cases:
             lines.append("\nSimilar Historical Cases:")
             for case in similar_cases:
@@ -187,12 +199,13 @@ class DiagnosisFormatter:
     # ------------------------------------------------------------------
 
     def format_json(
-        self, diagnoses: list, metadata: dict, features: dict, decision: dict = None,
-        similar_cases: list = None
+        self, diagnoses: list[DiagnosisDict], metadata: FeatureMetadata, features: FeatureDict, decision: Optional[DecisionDict] = None,
+        similar_cases: Optional[list] = None, runtime_info: Optional[dict] = None
     ) -> str:
         return json.dumps(
             {
                 "metadata": metadata,
+                "runtime": runtime_info or {},
                 "diagnoses": diagnoses,
                 "decision": decision or {},
                 "similar_cases": similar_cases or [],
@@ -208,8 +221,9 @@ class DiagnosisFormatter:
     # ------------------------------------------------------------------
 
     def format_html(
-        self, diagnoses: list, metadata: dict, features: dict,
-        decision: dict = None, similar_cases: list = None
+        self, diagnoses: list[DiagnosisDict], metadata: FeatureMetadata, features: FeatureDict,
+        decision: Optional[DecisionDict] = None, similar_cases: Optional[list] = None,
+        runtime_info: Optional[dict] = None
     ) -> str:
         filename = metadata.get("log_file", "unknown").split("/")[-1]
         duration = metadata.get("duration_sec", 0.0)
@@ -221,6 +235,19 @@ class DiagnosisFormatter:
             f"{metadata.get('firmware', '')}".strip()
         )
 
+        runtime_section = ""
+        if runtime_info:
+            engine_name = runtime_info.get("engine", "unknown")
+            ml_available = runtime_info.get("ml_available")
+            if ml_available is False:
+                runtime_section = (
+                    '<div class="card"><strong>Runtime:</strong> '
+                    f'{engine_name} (rule-only fallback, {runtime_info.get("ml_reason", "ml unavailable")})'
+                    '</div>'
+                )
+            else:
+                runtime_section = f'<div class="card"><strong>Runtime:</strong> {engine_name}</div>'
+
         if not diagnoses:
             body = (
                 '<div class="card">'
@@ -228,6 +255,7 @@ class DiagnosisFormatter:
                 ' No critical failures detected. Safe to fly.'
                 "</div>"
             )
+            body = runtime_section + body
         else:
             cards = []
             for d in diagnoses:
@@ -300,7 +328,8 @@ class DiagnosisFormatter:
                 )
 
             body = (
-                "".join(cards)
+                runtime_section
+                + "".join(cards)
                 + f'<div class="card"><strong>Overall:</strong> {safe_html}</div>'
                 + subsystem_section
                 + similar_section

@@ -1,0 +1,40 @@
+{
+  "logs": [
+    {
+      "filename": "33c535f6f0__log_0001_vibration_high.bin",
+      "labels": ["vibration_high"],
+      "source_type": "release_benchmark",
+      "trainable": true
+    },
+    {
+      "filename": "12ee853194__log_0009_compass_interference.bin",
+      "labels": ["compass_interference"],
+      "source_type": "release_benchmark",
+      "trainable": true
+    },
+    {
+      "filename": "14f3d25271__log_0010_ekf_failure.bin",
+      "labels": ["ekf_failure", "compass_interference"],
+      "source_type": "release_benchmark",
+      "trainable": true
+    },
+    {
+      "filename": "b89fc87fea__log_0008_rc_failsafe.bin",
+      "labels": ["rc_failsafe", "motor_imbalance"],
+      "source_type": "release_benchmark",
+      "trainable": true
+    },
+    {
+      "filename": "5c454779ec__log_0013_power_instability.bin",
+      "labels": ["power_instability", "motor_imbalance", "ekf_failure"],
+      "source_type": "release_benchmark",
+      "trainable": true
+    },
+    {
+      "filename": "log_0046_thrust_loss.bin",
+      "labels": ["thrust_loss", "power_instability", "motor_imbalance"],
+      "source_type": "release_benchmark",
+      "trainable": true
+    }
+  ]
+}

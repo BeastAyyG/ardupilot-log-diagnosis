@@ -3,6 +3,7 @@ from .base_extractor import BaseExtractor
 
 class EKFExtractor(BaseExtractor):
     REQUIRED_MESSAGES = []  # Custom logic for XKF4 vs NKF4
+    MESSAGE_DEPENDENCIES = ["XKF4", "NKF4"]
     FEATURE_PREFIX = "ekf_"
     FEATURE_NAMES = [
         "ekf_vel_var_mean",

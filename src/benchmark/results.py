@@ -1,17 +1,22 @@
 import json
 from src.constants import VALID_LABELS
+from src.contracts import BenchmarkError, BenchmarkLogResult, BenchmarkMetrics, BenchmarkOverall, DiagnosisDict, LabelMetrics
 
 
 class BenchmarkResults:
     def __init__(self):
-        self.log_results = []
-        self.per_label = {}
-        self.errors = []
-        self.overall = {
+        self.log_results: list[BenchmarkLogResult] = []
+        self.per_label: dict[str, LabelMetrics] = {}
+        self.errors: list[BenchmarkError] = []
+        self.overall: BenchmarkOverall = {
             "total_logs": 0,
             "successful_extractions": 0,
             "failed_extractions": 0,
             "failed_diagnoses": 0,
+            "any_match_accuracy": 0.0,
+            "top1_accuracy": 0.0,
+            "exact_match_accuracy": 0.0,
+            "macro_f1": 0.0,
         }
 
     def add_error(self, filename, error_msg, error_type="EXTRACTION_FAILED"):
@@ -23,7 +28,7 @@ class BenchmarkResults:
         else:
             self.overall["failed_diagnoses"] += 1
 
-    def add_result(self, filename, ground_truth, predicted, features_extracted):
+    def add_result(self, filename, ground_truth, predicted: list[DiagnosisDict], features_extracted):
         self.overall["successful_extractions"] += 1
         self.log_results.append(
             {
@@ -36,13 +41,22 @@ class BenchmarkResults:
             }
         )
 
-    def compute_metrics(self) -> dict:
+    def compute_metrics(self) -> BenchmarkMetrics:
         self.overall["total_logs"] = (
             self.overall["successful_extractions"] + self.overall["failed_extractions"]
         )
 
         for label in VALID_LABELS:
-            self.per_label[label] = {"support": 0, "tp": 0, "fp": 0, "fn": 0, "tn": 0}
+            self.per_label[label] = {
+                "support": 0,
+                "tp": 0,
+                "fp": 0,
+                "fn": 0,
+                "tn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+            }
 
         confusion_details = []
 
@@ -115,7 +129,7 @@ class BenchmarkResults:
                 exact_matches += 1
 
         n = max(self.overall["successful_extractions"], 1)
-        self.overall["accuracy"] = float(any_matches / n)  # PRIMARY metric
+        self.overall["any_match_accuracy"] = float(any_matches / n)
         self.overall["top1_accuracy"] = float(top1_matches / n)  # Single-label accuracy
         self.overall["exact_match_accuracy"] = float(
             exact_matches / n
@@ -136,11 +150,18 @@ class BenchmarkResults:
         lines = [
             "# Benchmark Results",
             "",
+            "## Metric Definitions",
+            "- Any-Match Accuracy: at least one predicted label matches ground truth.",
+            "- Top-1 Accuracy: highest-confidence prediction matches ground truth.",
+            "- Exact-Match Accuracy: predicted label set exactly matches ground truth.",
+            "",
             "## Overall Metrics",
             f"- Total logs: {ov['total_logs']}",
             f"- Successful Extractions: {ov['successful_extractions']}",
             f"- Failed Extractions: {ov['failed_extractions']}",
-            f"- Exact Match Accuracy: {ov['accuracy']:.2f}",
+            f"- Any-Match Accuracy: {ov['any_match_accuracy']:.2f}",
+            f"- Top-1 Accuracy: {ov['top1_accuracy']:.2f}",
+            f"- Exact-Match Accuracy: {ov['exact_match_accuracy']:.2f}",
             f"- Macro F1 Score: {ov['macro_f1']:.2f}",
             "",
             "## Per-Label Metrics",

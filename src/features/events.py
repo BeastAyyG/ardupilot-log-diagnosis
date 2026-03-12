@@ -5,6 +5,7 @@ class EventExtractor(BaseExtractor):
     """Extract features from ERR, EV, MODE, MSG"""
 
     REQUIRED_MESSAGES = []  # works with whatever exists
+    MESSAGE_DEPENDENCIES = ["ERR", "EV", "MODE"]
     FEATURE_PREFIX = "evt_"
     FEATURE_NAMES = [
         "evt_error_count",
@@ -13,8 +14,8 @@ class EventExtractor(BaseExtractor):
         "evt_unexpected_mode_changes",
         "evt_crash_detected",
         "evt_gps_lost_count",
-        "evt_radio_failsafe_count",
         "evt_rc_lost_count",
+        "evt_radio_failsafe_count",
     ]
 
     def extract(self) -> dict:
@@ -47,20 +48,18 @@ class EventExtractor(BaseExtractor):
         # 3. Mode Change count
         evt_mode_change_count = len(mode_msgs)
 
-        # 4. Unexpected Mode Changes (Transitions to RTL/LAND without matching RCIN input)
-        # simplistic heuristic for now: reason = 0 typically means user un-commanded or failsafe
-        # but just placeholders here
+        # 4. Unexpected Mode Changes.
+        # We treat RTL/Land transitions with non-manual reasons as unexpected,
+        # because they usually indicate safety automation rather than operator intent.
         evt_unexpected_mode_changes = 0
         for msg in mode_msgs:
             mode_num = int(
                 self._safe_value(msg, "ModeNum", self._safe_value(msg, "Mode"))
             )
             reason = int(self._safe_value(msg, "Reason", -1))
-            # Mode 6=RTL, 9=Land. If reasoned by failsafe or unknown (reason 0, 1, etc.)
-            # Ardupilot defines reasons, let's just use a stub or use actual reason == 0
-            if mode_num in [6, 9] and reason not in [
-                0
-            ]:  # Assume reason != 0 means system commanded (e.g failsafe)
+            # Mode 6=RTL, 9=Land. Non-zero reason generally means the transition
+            # was triggered by system logic such as failsafe handling.
+            if mode_num in [6, 9] and reason != 0:
                 evt_unexpected_mode_changes += 1
 
         evt_radio_failsafe_count = 0  # Subsystem 5 = FAILSAFE_RADIO (RC link lost)
@@ -70,9 +69,6 @@ class EventExtractor(BaseExtractor):
             ev_id = int(self._safe_value(msg, "Id"))
             if ev_id == 19:
                 evt_gps_lost_count += 1
-            elif ev_id in (25, 26, 27, 28):  # ARMING related, some firmwares use these
-                pass
-
         for msg in err_msgs:
             subsys = int(self._safe_value(msg, "Subsys"))
             if subsys == 5:  # FAILSAFE_RADIO = RC signal lost
@@ -95,7 +91,7 @@ class EventExtractor(BaseExtractor):
             "evt_unexpected_mode_changes": float(evt_unexpected_mode_changes),
             "evt_crash_detected": float(evt_crash_detected),
             "evt_gps_lost_count": float(evt_gps_lost_count),
-            "evt_radio_failsafe_count": float(evt_radio_failsafe_count),
             "evt_rc_lost_count": float(evt_rc_lost_count),
+            "evt_radio_failsafe_count": float(evt_radio_failsafe_count),
             "_evt_auto_labels": evt_auto_labels,
         }

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import List, cast
+
+from src.contracts import DecisionDict, DiagnosisDict, RankedSubsystem
 
 
 def evaluate_decision(
-    diagnoses: List[dict],
+    diagnoses: List[DiagnosisDict],
     abstain_threshold: float = 0.65,
     close_margin: float = 0.15,
-) -> Dict[str, object]:
+) -> DecisionDict:
     if not diagnoses:
         return {
             "status": "healthy",
@@ -17,6 +19,7 @@ def evaluate_decision(
             "top_guess": None,
             "top_confidence": 0.0,
             "rationale": ["No critical diagnosis produced."],
+            "ranked_subsystems": [],
         }
 
     top = diagnoses[0]
@@ -95,5 +98,5 @@ def evaluate_decision(
         "top_guess": top_guess,
         "top_confidence": top_conf,
         "rationale": rationale,
-        "ranked_subsystems": ranked_subsystems,
+        "ranked_subsystems": cast(list[RankedSubsystem], ranked_subsystems),
     }

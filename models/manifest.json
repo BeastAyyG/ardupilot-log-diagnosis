@@ -1,0 +1,8 @@
+{
+  "model_version": "workspace-artifact",
+  "feature_schema_hash": "80a163a359de9a83ffb61dfc66e6e98efde0ef3dbe99d5c2ee20b4726ff4b0fb",
+  "label_schema_hash": "735f61ae8b7de1ce4f19ffc69d61a39a77200d91fa4d56354c4c69b91e9fd00d",
+  "training_dataset_id": "workspace-existing-artifacts",
+  "calibration_date": "2026-03-13",
+  "threshold_config_hash": "61f7a1fa41ea5e2ef483e3b643f8a844d673fc5ca35a5014ae9c9f3dbad9eda9"
+}

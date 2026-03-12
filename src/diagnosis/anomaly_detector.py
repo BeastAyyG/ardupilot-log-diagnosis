@@ -49,7 +49,15 @@ class AnomalyDetector:
         if not self.available:
             return {"anomaly_score": 0.0, "is_anomaly": False, "top_deviations": []}
 
-        vector = np.array([float(features.get(f, 0.0)) for f in feature_columns])
+        def _safe_float(value):
+            if value is None:
+                return 0.0
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return 0.0
+
+        vector = np.array([_safe_float(features.get(f, 0.0)) for f in feature_columns])
 
         # We need to reshape for sklearn/keras
         try:
@@ -101,3 +109,5 @@ class AnomalyDetector:
                 "is_anomaly": bool(is_anomaly),
                 "top_deviations": top_deviations,
             }
+
+        return {"anomaly_score": 0.0, "is_anomaly": False, "top_deviations": []}

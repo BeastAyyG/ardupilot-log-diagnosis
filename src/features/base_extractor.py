@@ -1,9 +1,11 @@
 import numpy as np
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class BaseExtractor(ABC):
     REQUIRED_MESSAGES: list = []
+    MESSAGE_DEPENDENCIES: list = []
     FEATURE_PREFIX: str = ""
     FEATURE_NAMES: list = []
 
@@ -25,11 +27,22 @@ class BaseExtractor(ABC):
             for t in self.REQUIRED_MESSAGES
         )
 
+    @classmethod
+    def dependency_messages(cls) -> list[str]:
+        """Return all message families this extractor reads from the parser.
+
+        This is broader than REQUIRED_MESSAGES for extractors that support
+        fallback message families or optional side-channel data.
+        """
+        if cls.MESSAGE_DEPENDENCIES:
+            return list(cls.MESSAGE_DEPENDENCIES)
+        return list(cls.REQUIRED_MESSAGES)
+
     def _safe_stats(
         self,
         values: list,
-        times: list = None,
-        threshold: float = None,
+        times: Optional[list] = None,
+        threshold: Optional[float] = None,
         mode: str = "above",
     ) -> dict:
         """Compute mean/max/min/std/range safely and tanomaly if times provided.
