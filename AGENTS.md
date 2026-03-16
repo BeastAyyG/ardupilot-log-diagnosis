@@ -30,12 +30,12 @@ Build an AI-powered ArduPilot `.BIN` **diagnostic analyzer** that identifies the
 
 - Date: 2026-03-13
 - `pytest -q`: 162 passed
-- Parse success (%): 100%
+- Parse success (%): 97.8%
 - Root-cause Top-1 (unseen): Initial Rule-Baseline Complete (Data Collection Active)
 - Macro F1: 0.357 (Baseline ML - requires community logs)
 - False critical rate: ≤ 10% (mitigation guards in place; see docs/CALIBRATION_ABSTENTION_REPORT.md)
 - ECE: Isotonic calibration applied; measure via `python training/measure_ece.py`
-- Triage-time reduction: 242x faster (documented in docs/MAINTAINER_TRIAGE_REDUX.md)
+- Triage-time reduction: 84% reduction (documented in docs/MAINTAINER_TRIAGE_REDUX.md)
 
 Known blockers to verify first:
 

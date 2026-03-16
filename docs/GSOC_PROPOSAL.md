@@ -68,7 +68,7 @@ detector. Every output is:
 | Root-cause Top-1 (locked unseen) | ≥ 50–60 % | Rule-Baseline Complete (ML needs data) |
 | ECE | ≤ 0.08 | ✓ Isotonic calibration applied |
 | False-critical rate | ≤ 10 % | ✓ Engine-level guards in place |
-| Median triage-time reduction | ≥ 40 % | ✓ 242× faster (measured) |
+| Median triage-time reduction | ≥ 40 % | ✓ 84% reduction (measured) |
 | Parse reliability | ≥ 99 % | ✓ 100 % isolated parse tests |
 
 ---
@@ -114,7 +114,7 @@ that:
   and event timestamps, so a maintainer can verify or override the output in seconds.
 - **Knows when to abstain** — low-confidence and close-gap cases are routed to human review
   rather than producing a wrong answer with false certainty.
-- **Reduces triage time** — measured at 242× faster in controlled trials, with a ≥ 40 %
+- **Reduces triage time** — measured at 84% reduction in controlled trials, with a ≥ 40 %
   reduction goal on a representative pilot set.
 - **Scales to batch workflows** — `batch-analyze` processes a full directory of logs in one
   command, clusters duplicate incidents, and writes a CSV summary for issue triage.

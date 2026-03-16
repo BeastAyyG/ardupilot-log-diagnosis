@@ -1,13 +1,13 @@
 {
   "overall": {
-    "total_logs": 0,
-    "successful_extractions": 0,
-    "failed_extractions": 0,
-    "failed_diagnoses": 42,
-    "accuracy": 0.0,
-    "top1_accuracy": 0.0,
-    "exact_match_accuracy": 0.0,
-    "macro_f1": 0.0
+    "total_logs": 45,
+    "successful_extractions": 44,
+    "failed_extractions": 1,
+    "failed_diagnoses": 0,
+    "any_match_accuracy": 0.2727272727272727,
+    "top1_accuracy": 0.18181818181818182,
+    "exact_match_accuracy": 0.06818181818181818,
+    "macro_f1": 0.1376984126984127
   },
   "per_label": {
     "healthy": {
@@ -15,77 +15,77 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 0,
+      "tn": 44,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     },
     "vibration_high": {
-      "support": 0,
-      "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "support": 10,
+      "tp": 3,
+      "fp": 2,
+      "fn": 7,
+      "tn": 32,
+      "precision": 0.6,
+      "recall": 0.3,
+      "f1": 0.4
     },
     "compass_interference": {
-      "support": 0,
-      "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "support": 12,
+      "tp": 3,
+      "fp": 9,
+      "fn": 9,
+      "tn": 23,
+      "precision": 0.25,
+      "recall": 0.25,
+      "f1": 0.25
     },
     "power_instability": {
-      "support": 0,
+      "support": 5,
       "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
+      "fp": 12,
+      "fn": 5,
+      "tn": 27,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     },
     "gps_quality_poor": {
-      "support": 0,
+      "support": 1,
       "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
+      "fp": 1,
+      "fn": 1,
+      "tn": 42,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     },
     "motor_imbalance": {
-      "support": 0,
-      "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "support": 7,
+      "tp": 3,
+      "fp": 18,
+      "fn": 4,
+      "tn": 19,
+      "precision": 0.14285714285714285,
+      "recall": 0.42857142857142855,
+      "f1": 0.21428571428571427
     },
     "ekf_failure": {
-      "support": 0,
-      "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "support": 4,
+      "tp": 3,
+      "fp": 9,
+      "fn": 1,
+      "tn": 31,
+      "precision": 0.25,
+      "recall": 0.75,
+      "f1": 0.375
     },
     "mechanical_failure": {
       "support": 0,
       "tp": 0,
-      "fp": 0,
+      "fp": 6,
       "fn": 0,
-      "tn": 0,
+      "tn": 38,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -95,27 +95,27 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 0,
+      "tn": 44,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     },
     "pid_tuning_issue": {
-      "support": 0,
+      "support": 2,
       "tp": 0,
       "fp": 0,
-      "fn": 0,
-      "tn": 0,
+      "fn": 2,
+      "tn": 42,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     },
     "rc_failsafe": {
-      "support": 0,
+      "support": 3,
       "tp": 0,
-      "fp": 0,
-      "fn": 0,
-      "tn": 0,
+      "fp": 3,
+      "fn": 3,
+      "tn": 38,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
@@ -125,223 +125,579 @@
       "tp": 0,
       "fp": 0,
       "fn": 0,
-      "tn": 0,
+      "tn": 44,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "thrust_loss": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 44,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "setup_error": {
+      "support": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 44,
       "precision": 0.0,
       "recall": 0.0,
       "f1": 0.0
     }
   },
-  "confusion_details": [],
-  "errors": [
+  "confusion_details": [
     {
       "filename": "66bbaf3919__log_10_MAG_INTERFERENCE_1.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "mechanical_failure"
+      ],
+      "predicted_confidence": [
+        0.8075,
+        0.7225
+      ]
     },
     {
       "filename": "c648fe37de__log_01_VIBE_HIGH.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "power_instability",
+        "vibration_high"
+      ],
+      "predicted_confidence": [
+        0.7224999999999999,
+        0.85
+      ]
     },
     {
       "filename": "00afa36e54__log_0007_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "12ee853194__log_0009_compass_interference.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [],
+      "predicted_confidence": []
     },
     {
       "filename": "16c0fe0044__log_0010_compass_interference.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "vibration_high"
+      ],
+      "predicted_confidence": [
+        0.85,
+        0.85
+      ]
     },
     {
       "filename": "1820618f38__log_0004_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "33c535f6f0__log_0001_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "rc_failsafe",
+        "motor_imbalance"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.765
+      ]
     },
     {
       "filename": "7065a3cd0f__log_0003_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.5525,
+        0.8075
+      ]
     },
     {
       "filename": "a004f350c2__log_0005_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "rc_failsafe",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.765
+      ]
     },
     {
       "filename": "a7290a8733__log_0006_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "vibration_high"
+      ],
+      "predicted_confidence": [
+        0.85,
+        0.85
+      ]
     },
     {
       "filename": "b0db91ee3d__log_0008_compass_interference.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.5525,
+        0.85
+      ]
     },
     {
       "filename": "b9daccd263__log_0012_gps_quality_poor.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "gps_quality_poor"
+      ],
+      "predicted": [],
+      "predicted_confidence": []
     },
     {
       "filename": "c1bcef192f__log_0002_vibration_high.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "ekf_failure"
+      ],
+      "predicted_confidence": [
+        0.8075,
+        0.85
+      ]
     },
     {
       "filename": "d74079b8cc__log_0011_compass_interference.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "ekf_failure"
+      ],
+      "predicted_confidence": [
+        0.68,
+        0.85
+      ]
     },
     {
       "filename": "4dbb9b5fad__log_0009_pid_tuning_issue.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "pid_tuning_issue"
+      ],
+      "predicted": [
+        "compass_interference",
+        "mechanical_failure"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.7225
+      ]
     },
     {
       "filename": "0818fe7e5c__log_0010_rc_failsafe.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "gps_quality_poor"
+      ],
+      "predicted_confidence": [
+        0.85
+      ]
     },
     {
       "filename": "8dda19965d__log_0011_rc_failsafe.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "rc_failsafe"
+      ],
+      "predicted": [
+        "motor_imbalance"
+      ],
+      "predicted_confidence": [
+        0.68
+      ]
     },
     {
       "filename": "af2836cad8__log_0009_rc_failsafe.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "rc_failsafe"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "mechanical_failure"
+      ],
+      "predicted_confidence": [
+        0.85,
+        0.8075
+      ]
     },
     {
       "filename": "b89fc87fea__log_0008_rc_failsafe.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "rc_failsafe",
+        "motor_imbalance"
+      ],
+      "predicted_confidence": [
+        0.85,
+        0.765
+      ]
     },
     {
       "filename": "14f3d25271__log_0010_ekf_failure.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "ekf_failure"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.85
+      ]
     },
     {
       "filename": "5c454779ec__log_0013_power_instability.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "power_instability"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "ekf_failure"
+      ],
+      "predicted_confidence": [
+        0.85,
+        0.765
+      ]
     },
     {
       "filename": "694da9f46e__log_0012_power_instability.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "power_instability"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.765
+      ]
     },
     {
       "filename": "97845b23ea__log_0009_ekf_failure.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.5525,
+        0.85
+      ]
     },
     {
       "filename": "db9fa2016d__log_0011_power_instability.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "power_instability"
+      ],
+      "predicted": [],
+      "predicted_confidence": []
     },
     {
       "filename": "f121066e7e__log_0008_ekf_failure.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "5b811aef3b__batch1_00000028.BIN",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "b63f76e62f__batch1_00000021.BIN",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "255373228d__batch1_00000014.BIN",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "7351969082__batch1_00000171.BIN",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "860f591dfe__batch1_00000003.BIN",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "1c18aa3c93__batch1_00000436.BIN",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "ekf_failure"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "ekf_failure"
+      ],
+      "predicted_confidence": [
+        0.8075,
+        0.85
+      ]
     },
     {
       "filename": "23941a01aa__batch1_midair_reboot_17918.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "power_instability"
+      ],
+      "predicted": [
+        "motor_imbalance"
+      ],
+      "predicted_confidence": [
+        0.8075
+      ]
     },
     {
       "filename": "277840edde__batch2_crash_4_0_rc3.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "motor_imbalance"
+      ],
+      "predicted": [
+        "power_instability",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.85
+      ]
     },
     {
       "filename": "0981e19b7d__batch2_motor_130060.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
-    },
-    {
-      "filename": "c8bfdfdd38__batch2_motor_140246_a.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "motor_imbalance"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "power_instability"
+      ],
+      "predicted_confidence": [
+        0.68,
+        0.85
+      ]
     },
     {
       "filename": "07124add06__batch2_motor_140246_b.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "motor_imbalance"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "vibration_high"
+      ],
+      "predicted_confidence": [
+        0.51,
+        0.85
+      ]
     },
     {
       "filename": "335e9881ac__batch2_esc_81059.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "motor_imbalance"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "power_instability"
+      ],
+      "predicted_confidence": [
+        0.8075,
+        0.7224999999999999
+      ]
     },
     {
       "filename": "87f863ad02__batch2_motor_off_121845.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "motor_imbalance"
+      ],
+      "predicted": [
+        "power_instability",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.5525,
+        0.85
+      ]
     },
     {
       "filename": "8265f254a7__batch2_two_motors_132001.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "motor_imbalance"
+      ],
+      "predicted": [
+        "power_instability",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.5525,
+        0.85
+      ]
     },
     {
       "filename": "c5640421c2__batch2_ekf_8931_a.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "ekf_failure"
+      ],
+      "predicted": [
+        "ekf_failure",
+        "mechanical_failure"
+      ],
+      "predicted_confidence": [
+        0.7225,
+        0.85
+      ]
     },
     {
       "filename": "36c9f718b1__batch2_ekf_8931_b.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "ekf_failure"
+      ],
+      "predicted": [
+        "power_instability",
+        "mechanical_failure"
+      ],
+      "predicted_confidence": [
+        0.7225,
+        0.7224999999999999
+      ]
     },
     {
       "filename": "5563ebf18d__batch2_crash_4_0_dropbox.bin",
-      "error": "'RuleEngine' object has no attribute '_check_events'",
-      "type": "DIAGNOSIS_FAILED"
+      "ground_truth": [
+        "power_instability"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "compass_interference"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.85
+      ]
+    },
+    {
+      "filename": "log_0033_hardware_failure.bin",
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "power_instability",
+        "mechanical_failure"
+      ],
+      "predicted_confidence": [
+        0.85,
+        0.85
+      ]
+    },
+    {
+      "filename": "log_0037_mechanical_failure.bin",
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "power_instability"
+      ],
+      "predicted_confidence": [
+        0.8075,
+        0.7224999999999999
+      ]
+    },
+    {
+      "filename": "log_0038_mechanical_failure.bin",
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "motor_imbalance"
+      ],
+      "predicted_confidence": [
+        0.595
+      ]
+    },
+    {
+      "filename": "log_0039_mechanical_failure.bin",
+      "ground_truth": [
+        "rc_failsafe"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "power_instability"
+      ],
+      "predicted_confidence": [
+        0.8075,
+        0.7224999999999999
+      ]
+    },
+    {
+      "filename": "log_0040_mechanical_failure.bin",
+      "ground_truth": [
+        "vibration_high"
+      ],
+      "predicted": [
+        "motor_imbalance"
+      ],
+      "predicted_confidence": [
+        0.8075
+      ]
+    },
+    {
+      "filename": "log_0041_mechanical_failure.bin",
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "power_instability"
+      ],
+      "predicted_confidence": [
+        0.68,
+        0.7224999999999999
+      ]
+    },
+    {
+      "filename": "log_0046_thrust_loss.bin",
+      "ground_truth": [
+        "pid_tuning_issue"
+      ],
+      "predicted": [
+        "motor_imbalance",
+        "power_instability"
+      ],
+      "predicted_confidence": [
+        0.4675,
+        0.85
+      ]
+    },
+    {
+      "filename": "log_0047_thrust_loss.bin",
+      "ground_truth": [
+        "compass_interference"
+      ],
+      "predicted": [],
+      "predicted_confidence": []
+    }
+  ],
+  "errors": [
+    {
+      "filename": "log_0034_hardware_failure.bin",
+      "error": "Parsed empty messages dict",
+      "type": "EXTRACTION_FAILED"
     }
   ]
 }

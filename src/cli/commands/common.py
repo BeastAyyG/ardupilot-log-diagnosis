@@ -94,10 +94,14 @@ def ensure_extraction_success(logfile: str, features: dict[str, Any]) -> None:
 
 def write_or_print_output(output: str, output_path: str | None, saved_label: str) -> None:
     if output_path:
-        with open(output_path, "w") as file_obj:
+        with open(output_path, "w", encoding="utf-8") as file_obj:
             file_obj.write(output)
         print(f"{saved_label} saved to {output_path}")
     else:
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except AttributeError:
+            pass
         print(output)
 
 

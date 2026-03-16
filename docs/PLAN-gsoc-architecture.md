@@ -21,7 +21,7 @@ An AI-assisted log diagnosis tool for ArduPilot `.BIN` dataflash logs. Extended 
 | Root-cause Top-1 > 50% on unseen holdout | > 50–60% | 🔄 In Progress |
 | ECE (Expected Calibration Error) ≤ 0.08 | ≤ 0.08 | 🔄 Measuring |
 | False Critical Rate ≤ 10% | ≤ 10% | 🔄 In Progress |
-| Triage-time reduction ≥ 40% | ≥ 40% | ✅ Done (242× speedup) |
+| Triage-time reduction ≥ 40% | ≥ 40% | ✅ Done (84% reduction) |
 
 ## 4. Tech Stack
 - **Language**: Python 3.10+
@@ -65,7 +65,7 @@ ardupilot-log-diagnosis/
 | T9 | Module 5 & 6: Reporting + CLI | P2 | ✅ Complete |
 | T10 | Testing & Documentation | P3 | ✅ Complete (56 tests) |
 | T11 | Root-cause arbitration + cascade suppression | P3 | ✅ Complete |
-| T12 | Maintainer triage study (P4-02) | P4 | ✅ Complete (242× speedup) |
+| T12 | Maintainer triage study (P4-02) | P4 | ✅ Complete (84% reduction) |
 | T13 | False-critical audit + ECE calibration | P4 | 🔄 In Progress |
 
 ## 7. Verification Status
@@ -98,7 +98,7 @@ ardupilot-log-diagnosis/
 | Midterm | End W6 | Formal checkpoint | Stable CLI + reproducible benchmark demo | ✅ Done |
 | Coding Phase 2 | W7–W8 | Causal timeline engine | Root-cause arbitration, cascade suppression | ✅ Done |
 | Coding Phase 2 | W9–W10 | Actionable diagnostics | Top-problem + top-3-checks + ranked fixes | ✅ Done |
-| Coding Phase 2 | W11 | Stress-reduction validation | Triage study: 242× speedup documented | ✅ Done |
+| Coding Phase 2 | W11 | Stress-reduction validation | Triage study: 84% reduction documented | ✅ Done |
 | Coding Phase 2 | W12 | Final release + handoff | Final docs, model card, benchmark report | 🔄 In Progress |
 | Final Evaluation | End W12 | Submission | GSoC final report + merged docs | ⏳ Upcoming |
 

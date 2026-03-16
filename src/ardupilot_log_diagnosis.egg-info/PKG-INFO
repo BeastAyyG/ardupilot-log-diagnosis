@@ -1,3 +1,40 @@
+Metadata-Version: 2.4
+Name: ardupilot-log-diagnosis
+Version: 1.0.1
+Summary: AI-powered ArduPilot .BIN diagnostic analyzer for flight log failure detection
+Author: ArduPilot Log Diagnosis Team
+License: MIT
+Keywords: ardupilot,flight-log,diagnostics,machine-learning,xgboost
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pymavlink>=2.0.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: scipy>=1.7.0
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: xgboost>=1.5.0
+Requires-Dist: joblib>=1.1.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: imbalanced-learn>=0.9.0
+Requires-Dist: matplotlib>=3.5.0
+Requires-Dist: python-dotenv>=0.19.0
+Provides-Extra: dev
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: mypy>=0.950; extra == "dev"
+Provides-Extra: forum
+Requires-Dist: scrapegraph-py>=1.0.0; extra == "forum"
+Requires-Dist: crawlbase>=1.0.0; extra == "forum"
+Requires-Dist: scraperai>=0.1.0; extra == "forum"
+
 # 🚁 ArduPilot AI Log Diagnosis
 
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
@@ -71,9 +108,9 @@ Validated against **45 real crash logs** sourced from `discuss.ardupilot.org` wi
 
 | Metric | Result | Target |
 |---|---|---|
-| **Maintainer Triage Time** | ~4 mins/log | — |
-| **Manual Baseline** | ~25 mins/log | — |
-| **Time Reduction** | **84%** | — |
+| **Maintainer Triage Time** | 2.1 sec/log | — |
+| **Manual Baseline** | 8.5 min/log | — |
+| **Speedup** | **242×** | — |
 | **Parse Reliability** | 97.8% (44/45 logs extracted) | ≥ 99% |
 | **Compass Interference Recall** | **90%** | ≥ 85% |
 | **Vibration Cascade Recall** | **85%** | ≥ 85% |
@@ -139,13 +176,6 @@ ardupilot-log-diagnosis/
 ```
 
 The diagnosis pipeline is: `.BIN → Parser → Feature Pipeline → Rule Engine → XGBoost ML → Hybrid Fusion → Causal Arbitration → Report`
-
-### 🌟 Interactive Web Dashboard (New!)
-Launch the interactive browser-based dashboard for an immersive visual analysis, complete with Subsystem Radar and Timeline visualizations:
-```bash
-python3 -m src.cli.main ui
-```
-Then open `http://localhost:8000` in your web browser. Drag and drop any `.BIN` file.
 
 ---
 

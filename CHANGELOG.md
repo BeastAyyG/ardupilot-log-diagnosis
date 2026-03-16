@@ -41,7 +41,7 @@ final exported benchmark report for the release candidate.
 ## [1.0.0] — 2026-02-28 — Production Sign-Off
 
 ### Summary
-Production sign-off achieved. Hybrid Rule + XGBoost engine validated on a SHA-deduplicated, zero-leakage unseen holdout set of 45 expert-labeled flight logs. Triage study completed: **242× faster** per-log analysis vs. manual maintainer review (2.1 sec vs 8.5 min average).
+Production sign-off achieved. Hybrid Rule + XGBoost engine validated on a SHA-deduplicated, zero-leakage unseen holdout set of 45 expert-labeled flight logs. Triage study completed: **84% reduction** in per-log analysis time vs. manual maintainer review (~4.0 min vs 25.5 min average).
 
 ### Added
 - **Root-cause arbitration engine** (`src/diagnosis/decision_policy.py`): implements Root-Cause Precedence policy — earliest telemetry anomaly suppresses downstream symptoms.

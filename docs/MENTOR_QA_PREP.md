@@ -205,7 +205,7 @@ A mentor who knows this will ask it.
 
 ---
 
-### Q8: "You said 242× faster triage. Show me exactly how you measured that."
+### Q8: "You said you have an 84% reduction in triage time. Show me exactly how you measured that."
 
 **Why they ask it**: This is the headline claim in your triage study. If you can't reproduce the methodology, it's not science.
 
@@ -396,7 +396,7 @@ A mentor who knows this will ask it.
 | EKF precision | 75% | `benchmark_results.json` |
 | Train/holdout SHA overlaps | **0** | `validate_leakage.py` |
 | Tests passing | **56** | `pytest -q` output |
-| Triage speedup | **242×** | `MAINTAINER_TRIAGE_REDUX.md` |
+| Triage time reduction | **84%** | `MAINTAINER_TRIAGE_REDUX.md` |
 | GPS training examples | **1** | `progress_showcase.md` (explains low F1) |
 | ECE target | **≤ 0.08** | `PRODUCTION_ACCEPTANCE_CRITERIA.md` |
 | FCR target | **≤ 10%** | `PRODUCTION_ACCEPTANCE_CRITERIA.md` |

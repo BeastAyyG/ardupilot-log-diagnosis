@@ -11,8 +11,8 @@
 ## 1. Model Description
 
 This model classifies ArduPilot flight-controller dataflash logs into one of eight root-cause
-diagnostic categories. It is designed to reduce senior maintainer triage time from ~8.5 minutes
-per log to under 3 seconds — a 242× speedup measured on a held-out benchmark.
+diagnostic categories. It is designed to reduce senior maintainer triage time from ~25 minutes
+per log to ~4 minutes — an 84% reduction measured in a triage study.
 
 The system uses a **hybrid architecture**:
 1. A deterministic **Rule Engine** that checks calibrated telemetry thresholds.
@@ -122,7 +122,7 @@ Evaluated on 45 logs; 44 successfully extracted (97.8% parse reliability).
 
 **Overall Macro F1**: 0.35  
 **Parse Reliability**: 97.8%  
-**Triage Speedup**: 242× (2.1 s vs. 8.5 min manual baseline)  
+**Triage Time Reduction**: 84% (~4.0 min vs. 25.5 min manual baseline)  
 **False Critical Rate**: ≤ 10% (mitigation guards active)
 
 Full results: `benchmark_results_hybrid.md`

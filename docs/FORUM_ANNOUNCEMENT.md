@@ -1,6 +1,6 @@
 # 🚁 ArduPilot AI Log Diagnosis — Forum Announcement
 
-> **Thread title:** [Tool] AI-powered `.BIN` log diagnostic analyzer — 242× faster triage, evidence-based root-cause output
+> **Thread title:** [Tool] AI-powered `.BIN` log diagnostic analyzer — 84% faster triage, evidence-based root-cause output
 
 ---
 
@@ -104,8 +104,8 @@ with expert-verified ground-truth labels:
 | Compass Interference Recall | **90%**  |
 | Vibration Cascade Recall    | **85%**  |
 | EKF Failure F1              | **0.67** |
-| Triage speed                | **242×** |
-| Parse reliability           | **100%** (44/45 logs extracted) |
+| Triage time reduction       | **84%** (4 mins vs 25 mins) |
+| Parse reliability           | **97.8%** (44/45 logs extracted) |
 
 ---
 

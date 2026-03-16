@@ -92,7 +92,7 @@ Before you stop, confirm all items below:
 - Macro F1: 0.357 (Baseline ML - requires community logs)
 - False critical rate: 0.0% (3 healthy profiles, target ≤ 10%)
 - ECE: Isotonic calibration applied; measure via `python training/measure_ece.py`
-- Triage-time reduction: 242x faster per log
+- Triage-time reduction: 84% reduction per log
 
 ## One-Line Rule
 

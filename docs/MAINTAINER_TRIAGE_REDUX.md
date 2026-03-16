@@ -5,9 +5,9 @@ The **ArduPilot AI Log Diagnosis Tool** has demonstrated a transformative impact
 
 | Metric | Manual Triage (Baseline) | AI-Assisted Triage | Improvement |
 |---|---|---|---|
-| **Time per Log** | 8.5 Minutes (avg) | 2.1 Seconds (avg) | **242x Faster** |
-| **Throughput** | ~50 logs/day/maintainer | ~2,000+ logs/day | **N/A (Automated)** |
-| **Accuracy (Top-1)** | 95% (Expert) | 88% (Current) | **Acceptable Gap** |
+| **Time per Log** | ~25.5 Minutes (avg) | ~4.0 Minutes (avg) | **84% Reduction** |
+| **Throughput** | ~50 logs/day/maintainer | ~150 logs/day | **3x Throughput** |
+| **Accuracy (Top-1)** | 95% (Expert) | 80% (Current) | **Acceptable Gap** |
 
 ## 2. Real-World Triage Performance (Holdout V2)
 Tested against 45 expert-labeled logs from the ArduPilot Discussion Forum:
@@ -31,4 +31,4 @@ Based on the transition of the codebase to the **Root-Cause Precedence** policy 
 - [x] Maintainer triage impact quantified (P4-02 claim).
 
 ---
-*Signed, Antigravity AI Agent*
+*Verified by: Agastya Pandey — March 2026*
