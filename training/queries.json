@@ -1,0 +1,10 @@
+{
+  "queries": [
+    "GPS glitch failsafe",
+    "gps quality poor hdop",
+    "oscillating toilet bowling pid tuning",
+    "pid p gain oscillation crash",
+    "motor failure prop broken crash",
+    "thrust loss motor arm esc failure"
+  ]
+}

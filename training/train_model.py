@@ -10,8 +10,16 @@ Upgrades (v1.1.0):
 Usage: python training/train_model.py
 """
 
+import io
 import os
+import sys
 import json
+
+# Fix Windows cp1252 terminal — reconfigure stdout to UTF-8 so emojis print correctly
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+except Exception:
+    pass
 import hashlib
 import warnings
 import numpy as np
@@ -253,7 +261,7 @@ def train():
         "feature_schema_hash": hashlib.sha256(json.dumps(FEATURE_NAMES, sort_keys=True).encode()).hexdigest(),
         "label_schema_hash": hashlib.sha256(json.dumps(VALID_LABELS, sort_keys=True).encode()).hexdigest(),
         "training_dataset_id": "training/features.csv + training/labels.csv",
-        "calibration_date": pd.Timestamp.utcnow().strftime("%Y-%m-%d"),
+        "calibration_date": pd.Timestamp.now("UTC").strftime("%Y-%m-%d"),
         "threshold_config_hash": threshold_hash,
     }
     with open(os.path.join(model_dir, "manifest.json"), "w") as f:
