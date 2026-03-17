@@ -1,0 +1,14 @@
+{
+  "overall_ece": 0.00011106758723422837,
+  "target_ece": 0.08,
+  "pass": true,
+  "n_samples": 140,
+  "classes": [
+    "compass_interference",
+    "ekf_failure",
+    "gps_quality_poor",
+    "healthy",
+    "rc_failsafe",
+    "vibration_high"
+  ]
+}

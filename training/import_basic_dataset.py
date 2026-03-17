@@ -75,12 +75,19 @@ def _extract_rar(rar_path: Path, dest: Path) -> bool:
     """Try to extract the .rar using available tools."""
     dest.mkdir(parents=True, exist_ok=True)
 
-    # Try Python patool (works if 7z or unrar is available on PATH)
+    # 1. Try rarfile (pure Python, no external tool needed for modern .rar)
     try:
-        import patoollib  # noqa: F401 — just to check
-    except ImportError:
-        pass
+        import rarfile
+        with rarfile.RarFile(str(rar_path)) as rf:
+            rf.extractall(str(dest))
+        print("  Extracted using rarfile (pure Python)")
+        return True
+    except rarfile.BadRarFile:
+        print("  rarfile: bad rar format, trying fallback...")
+    except Exception as exc:
+        print(f"  rarfile failed: {exc}, trying fallback...")
 
+    # 2. Try patool (works if 7z or unrar is available on PATH)
     try:
         import patoollib as patool
         patool.extract_archive(str(rar_path), outdir=str(dest))
@@ -88,7 +95,6 @@ def _extract_rar(rar_path: Path, dest: Path) -> bool:
     except Exception:
         pass
 
-    # Try patool (the CLI wrapper that calls 7z/unrar/etc)
     try:
         import subprocess
         result = subprocess.run(
@@ -100,7 +106,7 @@ def _extract_rar(rar_path: Path, dest: Path) -> bool:
     except Exception:
         pass
 
-    # Try 7z directly
+    # 3. Try 7z directly
     seven_z = shutil.which("7z") or shutil.which("7za")
     if seven_z:
         import subprocess
