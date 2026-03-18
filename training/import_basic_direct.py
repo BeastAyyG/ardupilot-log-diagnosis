@@ -138,13 +138,13 @@ def import_basic_direct(src_dir: Path, output_root: Path) -> dict:
     print(f"  .BIN files found:   {summary['total_bin']}")
     print(f"  Labeled:            {summary['labeled']}")
     print(f"  Unlabeled:          {summary['unlabeled']}")
-    print(f"\n  Label distribution:")
+    print("\n  Label distribution:")
     for lbl, cnt in sorted(label_counts.items()):
         print(f"    {lbl:<35} {cnt:>3}")
     print(f"\n  Ground truth:  {gt_path}")
-    print(f"\nNext steps:")
+    print("\nNext steps:")
     print(f'  python -m training.build_dataset --ground-truth "{gt_path}" --dataset-dir "{dataset_dir}"')
-    print(f"  python -m training.train_model")
+    print("  python -m training.train_model")
 
     return summary
 

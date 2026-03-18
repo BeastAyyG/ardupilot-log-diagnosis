@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import platform
 import shutil
 import sys
 import tempfile
@@ -197,18 +196,18 @@ def import_basic(rar_path: Path, output_root: Path) -> dict:
 
     # Print summary
     print("\n" + "=" * 50)
-    print(f"BASiC Import Summary")
+    print("BASiC Import Summary")
     print("=" * 50)
     print(f"  Total .BIN files:  {summary['total_bin']}")
     print(f"  Labeled:           {summary['labeled']}")
     print(f"  Unlabeled:         {summary['unlabeled']}")
-    print(f"\n  Label distribution:")
+    print("\n  Label distribution:")
     for lbl, cnt in sorted(label_counts.items()):
         print(f"    {lbl:<30} {cnt:>4}")
     print(f"\n  Ground truth:  {gt_path}")
-    print(f"\nNext steps:")
+    print("\nNext steps:")
     print(f"  python -m training.build_dataset --ground-truth \"{gt_path}\" --dataset-dir \"{dataset_dir}\"")
-    print(f"  python -m training.train_model")
+    print("  python -m training.train_model")
 
     return summary
 
