@@ -5,6 +5,7 @@ import numpy as np
 from typing import Any, cast
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.contracts import DiagnosisDict, FeatureDict
+from src.runtime_paths import MODELS_DIR, resolve_repo_path
 
 try:
     import joblib
@@ -31,14 +32,15 @@ class MLClassifier:
 
     def __init__(
         self,
-        model_dir: str = "models/",
+        model_dir: str | os.PathLike[str] | None = None,
         min_probability: float = DEFAULT_PROB_THRESHOLD,
     ):
-        self.model_path = os.path.join(model_dir, "classifier.joblib")
-        self.scaler_path = os.path.join(model_dir, "scaler.joblib")
-        self.features_path = os.path.join(model_dir, "feature_columns.json")
-        self.labels_path = os.path.join(model_dir, "label_columns.json")
-        self.manifest_path = os.path.join(model_dir, "manifest.json")
+        resolved_model_dir = resolve_repo_path(model_dir) if model_dir is not None else MODELS_DIR
+        self.model_path = str(resolved_model_dir / "classifier.joblib")
+        self.scaler_path = str(resolved_model_dir / "scaler.joblib")
+        self.features_path = str(resolved_model_dir / "feature_columns.json")
+        self.labels_path = str(resolved_model_dir / "label_columns.json")
+        self.manifest_path = str(resolved_model_dir / "manifest.json")
         self.min_probability = float(min_probability)
         self.label_thresholds = dict(LABEL_PROB_THRESHOLDS)
         self.unavailable_reason = "ml artifacts not loaded"

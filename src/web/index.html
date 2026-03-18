@@ -257,7 +257,7 @@
                     </div>
                 </div>
 
-                <!-- ★ THE JAW-DROP: Annotated Crash Causality Timeline ★ -->
+                <!-- Annotated Crash Causality Timeline -->
                 <div class="glass-panel p-6" id="crash-timeline-panel">
                     <div class="flex items-center mb-6 space-x-3">
                         <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ff003c]"></div>
@@ -428,6 +428,7 @@
         }
 
         function populateDashboard(data) {
+            window.lastData = data; // store for sub-functions
             // Unhide dashboards
             document.getElementById('metadata-panel').classList.remove('hidden');
             document.getElementById('results-dashboard').classList.remove('hidden');
@@ -634,8 +635,34 @@
                 
                 evtHtml += `</div>`;
                 card.innerHTML = evtHtml;
-                container.appendChild(card);
             });
+
+            // Add Side-by-Side Validation Report
+            const ruleOutput =
+                typeof window.lastData?.rule_output_only === 'string'
+                    ? window.lastData.rule_output_only
+                    : window.lastData?.rule_output_only?.failure_type || 'NOMINAL';
+            const validationCard = document.createElement('div');
+            validationCard.className = "mt-8 glass-panel p-6 border border-cyan-500/30 overflow-hidden relative";
+            validationCard.innerHTML = `
+                <div class="scan-line"></div>
+                <h3 class="text-sm uppercase tracking-widest text-cyan-400 font-bold mb-4 flex justify-between">
+                    AI Integrity Validation
+                    <span class="text-[10px] text-gray-500 bg-gray-900 px-2 py-1 rounded">XGBOOST-HYBRID-v1</span>
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3 bg-black/20 rounded border border-gray-800">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Legacy Rule Engine</p>
+                        <p class="text-sm font-bold text-gray-400">${String(ruleOutput).toUpperCase()}</p>
+                    </div>
+                    <div class="p-3 bg-cyan-900/10 rounded border border-cyan-500/20">
+                        <p class="text-[10px] text-cyan-500 uppercase font-bold mb-1">Hybrid AI Decision</p>
+                        <p class="text-sm font-bold text-cyan-400">${(window.lastData?.explain_data?.decision?.top_guess || "NOMINAL").toUpperCase()}</p>
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-4 italic">Comparison shows how the ML layer filters false positives and handles multi-factor failures better than legacy static rules.</p>
+            `;
+            container.appendChild(validationCard);
         }
 
         function buildCrashTimeline(events) {
@@ -715,19 +742,51 @@
                     name: "Flight Path"
                 };
                 
+                const markers = {
+                    type: 'scatter3d',
+                    mode: 'markers+text',
+                    x: [], y: [], z: [],
+                    text: [],
+                    marker: {
+                        size: 8,
+                        color: [],
+                        line: { color: 'white', width: 1 }
+                    },
+                    name: "Event Markers",
+                    textposition: 'top center',
+                    hoverinfo: 'text'
+                };
+
+                const SEV_COLOR_MAP = {
+                    'crash': '#ff003c',
+                    'critical': '#ff5e00',
+                    'warning': '#facc15',
+                    'error': '#ff003c'
+                };
+
+                (window.lastData?.timeline_events || []).forEach(ev => {
+                    if (ev.gps) {
+                        markers.x.push(ev.gps.lng);
+                        markers.y.push(ev.gps.lat);
+                        markers.z.push(ev.gps.alt);
+                        markers.text.push(ev.label);
+                        markers.marker.color.push(SEV_COLOR_MAP[ev.severity] || '#00f3ff');
+                    }
+                });
+                
                 const layout = {
-                    title: '3D Trajectory Reconstruction',
+                    title: 'Interactive 3D Mission Replay',
                     paper_bgcolor: 'transparent',
                     plot_bgcolor: 'transparent',
                     font: { color: '#a0aec0' },
                     margin: { l: 0, r: 0, b: 0, t: 30 },
                     scene: {
-                        xaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lng' },
-                        yaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lat' },
+                        xaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lng', gridcolor: 'rgba(255,255,255,0.05)' },
+                        yaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lat', gridcolor: 'rgba(255,255,255,0.05)' },
                         zaxis: { showgrid: true, zeroline: true, showline: true, title: 'Alt (m)', gridcolor: 'rgba(255,255,255,0.1)' }
                     }
                 };
-                Plotly.newPlot(target, [trace], layout, {responsive: true});
+                Plotly.newPlot(target, [trace, markers], layout, {responsive: true});
             } else if (type === 'vibe') {
                 const trk = currentTimeSeries.vibe;
                 if (!trk || trk.length === 0) {

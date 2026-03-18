@@ -1,5 +1,5 @@
 """
-Hard Gate verification tests (AGENTS.md Gates A–E).
+Hard Gate verification tests.
 
 These tests are the CI-blocking contracts that must all pass before any
 release can be approved.  Each test is labelled with the Gate ID it

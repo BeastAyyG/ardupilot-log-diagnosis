@@ -1,44 +1,51 @@
-from unittest.mock import patch
+import builtins
 import sys
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import pytest
+
+from src.cli.commands import ui
 from src.cli.main import main
+
 
 def test_analyze_command(tmp_path):
     f = tmp_path / "test.BIN"
     f.write_text("dummy")
-    
+
     test_args = ["main", "analyze", str(f), "--no-ml"]
-    with patch.object(sys, 'argv', test_args):
+    with patch.object(sys, "argv", test_args):
         try:
             main()
-        except SystemExit as e:
-            # Exit 0 = success (real log, no issues)
-            # Exit 2 = EXTRACTION_FAILED (expected for a dummy/corrupt file) ← B-01 fix
-            assert e.code in (0, 2) or e.code is None
+        except SystemExit as exc:
+            assert exc.code in (0, 2) or exc.code is None
+
 
 def test_features_command(tmp_path):
     f = tmp_path / "test.BIN"
     f.write_text("dummy")
     test_args = ["main", "features", str(f)]
-    with patch.object(sys, 'argv', test_args):
+    with patch.object(sys, "argv", test_args):
         try:
             main()
-        except SystemExit as e:
-            assert e.code == 0 or e.code is None
+        except SystemExit as exc:
+            assert exc.code == 0 or exc.code is None
+
 
 def test_json_flag(tmp_path):
     f = tmp_path / "test.BIN"
     f.write_text("dummy")
     test_args = ["main", "analyze", str(f), "--json"]
-    with patch.object(sys, 'argv', test_args):
+    with patch.object(sys, "argv", test_args):
         try:
             main()
-        except SystemExit as e:
-            # Exit 2 = EXTRACTION_FAILED (expected for a dummy/corrupt file) ← B-01 fix
-            assert e.code in (0, 2) or e.code is None
+        except SystemExit as exc:
+            assert exc.code in (0, 2) or exc.code is None
+
 
 def test_missing_file():
     test_args = ["main", "analyze", "nonexistent.BIN"]
-    with patch.object(sys, 'argv', test_args):
+    with patch.object(sys, "argv", test_args):
         try:
             main()
         except SystemExit:
@@ -65,8 +72,8 @@ def test_import_clean_command_dispatch():
         with patch.object(sys, "argv", test_args):
             try:
                 main()
-            except SystemExit as e:
-                assert e.code == 0 or e.code is None
+            except SystemExit as exc:
+                assert exc.code == 0 or exc.code is None
 
 
 def test_collect_forum_command_dispatch():
@@ -86,8 +93,8 @@ def test_collect_forum_command_dispatch():
         with patch.object(sys, "argv", test_args):
             try:
                 main()
-            except SystemExit as e:
-                assert e.code == 0 or e.code is None
+            except SystemExit as exc:
+                assert exc.code == 0 or exc.code is None
 
 
 def test_mine_expert_labels_collect_dispatch():
@@ -107,12 +114,15 @@ def test_mine_expert_labels_collect_dispatch():
             "state_json": "/tmp/expert/expert_miner_state.json",
         },
     }
-    with patch("src.data.expert_label_miner.collect_expert_labeled_forum_logs", return_value=fake_summary):
+    with patch(
+        "src.data.expert_label_miner.collect_expert_labeled_forum_logs",
+        return_value=fake_summary,
+    ):
         with patch.object(sys, "argv", test_args):
             try:
                 main()
-            except SystemExit as e:
-                assert e.code == 0 or e.code is None
+            except SystemExit as exc:
+                assert exc.code == 0 or exc.code is None
 
 
 def test_mine_expert_labels_enrich_dispatch():
@@ -128,47 +138,47 @@ def test_mine_expert_labels_enrich_dispatch():
         "rows_with_label": 0,
         "summary_json": "/tmp/source/expert_label_summary.json",
     }
-    with patch("src.data.expert_label_miner.enrich_manifest_with_expert_labels", return_value=fake_summary):
+    with patch(
+        "src.data.expert_label_miner.enrich_manifest_with_expert_labels",
+        return_value=fake_summary,
+    ):
         with patch.object(sys, "argv", test_args):
             try:
                 main()
-            except SystemExit as e:
-                assert e.code == 0 or e.code is None
+            except SystemExit as exc:
+                assert exc.code == 0 or exc.code is None
 
 
 def test_demo_command_terminal():
-    """demo command produces non-empty terminal output."""
     import io
-    from unittest.mock import patch
+
     test_args = ["main", "demo"]
     captured = io.StringIO()
     with patch.object(sys, "argv", test_args):
         with patch("sys.stdout", captured):
             try:
                 main()
-            except SystemExit as e:
-                assert e.code in (0, None)
+            except SystemExit as exc:
+                assert exc.code in (0, None)
     output = captured.getvalue()
     assert "ArduPilot Log Diagnosis" in output or len(output) > 0
 
 
 def test_demo_command_html(tmp_path):
-    """demo --format html -o saves an HTML file."""
     out = tmp_path / "demo.html"
     test_args = ["main", "demo", "--format", "html", "-o", str(out)]
     with patch.object(sys, "argv", test_args):
         try:
             main()
-        except SystemExit as e:
-            assert e.code in (0, None)
+        except SystemExit as exc:
+            assert exc.code in (0, None)
     assert out.exists()
-    content = out.read_text()
+    content = out.read_text(encoding="utf-8")
     assert "<!DOCTYPE html>" in content
     assert "vibration_high" in content.lower() or "ArduPilot" in content
 
 
 def test_analyze_format_html(tmp_path):
-    """analyze --format html produces an HTML file."""
     f = tmp_path / "test.BIN"
     f.write_text("dummy")
     out = tmp_path / "report.html"
@@ -176,6 +186,22 @@ def test_analyze_format_html(tmp_path):
     with patch.object(sys, "argv", test_args):
         try:
             main()
-        except SystemExit as e:
-            # Exit 2 = extraction failed on dummy file — that's ok
-            assert e.code in (0, 2, None)
+        except SystemExit as exc:
+            assert exc.code in (0, 2, None)
+
+
+def test_ui_command_reports_missing_optional_dependency(capsys):
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "uvicorn":
+            raise ImportError("No module named 'uvicorn'")
+        return real_import(name, *args, **kwargs)
+
+    with patch("builtins.__import__", side_effect=fake_import):
+        with pytest.raises(SystemExit) as exc_info:
+            ui.run(SimpleNamespace(port=8000))
+
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert "Optional web UI dependencies are not installed." in captured.out

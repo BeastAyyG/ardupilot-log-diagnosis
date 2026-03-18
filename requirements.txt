@@ -10,6 +10,9 @@ pyyaml
 pandas
 imbalanced-learn
 matplotlib
+fastapi
+uvicorn
+python-multipart
 scrapegraph-py
 python-dotenv
 crawlbase

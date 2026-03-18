@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.retrieval.similarity import FailureRetrieval
 
 def test_empty_database(tmp_path):
@@ -60,3 +62,13 @@ def test_retrieval_returns_results_for_vibration():
     assert len(similar) >= 1, "Expected at least one similar case for high-vibration features"
     assert similar[0]["failure_type"] == "vibration_high"
     assert similar[0]["similarity"] >= 0.7
+
+
+def test_default_known_failures_path_is_repo_relative(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    retrieval = FailureRetrieval()
+
+    assert Path(retrieval.known_failures_path).is_absolute()
+    assert Path(retrieval.known_failures_path).exists()
+    assert retrieval.known.get("failures")

@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
 import numpy as np
+
+from src.runtime_paths import MODELS_DIR
 
 class AnomalyDetector:
     """Autoencoder-based anomaly detection trained on healthy flights.
@@ -10,8 +17,11 @@ class AnomalyDetector:
     This approach requires ZERO failure data — only healthy flights.
     """
 
-    def __init__(self, model_path="models/anomaly_detector.joblib"):
-        self.model_path = model_path
+    def __init__(self, model_path: str | os.PathLike[str] | None = None):
+        resolved_model_path = (
+            Path(model_path) if model_path is not None else MODELS_DIR / "anomaly_detector.joblib"
+        )
+        self.model_path = str(resolved_model_path)
         self.available = False
         self._load()
 

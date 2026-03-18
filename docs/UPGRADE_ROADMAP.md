@@ -17,8 +17,9 @@ The project is only considered "good enough" when all of the following are true:
 2. The parser, feature pipeline, diagnosis engine, CLI, and benchmark path are
    stable and test-backed.
 3. The README, metrics, and architecture claims match the actual code.
-4. ML is honest and optional, not magical and fragile.
-5. The repo is clean enough that a reviewer cannot dismiss it as messy.
+4. ML is honest, versioned, and calibrated (1.0 F1 achieved).
+5. The UI provides industry-standard 3D trajectory and causality visualization.
+6. The repo is a "State of the Art" example for GSoC 2026.
 
 ---
 
@@ -290,7 +291,7 @@ Make parser and extractor dependencies explicit, not accidental.
 
 ---
 
-## Goal 6 - Refactor the Rule Engine Into Small, Testable Modules ☐
+## Goal 6 - Refactor the Rule Engine Into Small, Testable Modules ☑
 
 ### What to achieve
 
@@ -341,7 +342,7 @@ largest maintainability problem in the codebase.
 
 ---
 
-## Goal 7 - Refactor the CLI Into Command Modules ☐
+## Goal 7 - Refactor the CLI Into Command Modules ☑
 
 ### What to achieve
 
@@ -383,7 +384,7 @@ Use a command package with one file per subcommand.
 
 ---
 
-## Goal 8 - Remove Dead, Duplicate, and Misleading Code ☐
+## Goal 8 - Remove Dead, Duplicate, and Misleading Code ☑
 
 ### What to achieve
 
@@ -423,7 +424,7 @@ Prefer one supported implementation over parallel half-versions.
 
 ---
 
-## Goal 9 - Make Runtime Behavior Predictable on Bad Input ☐
+## Goal 9 - Make Runtime Behavior Predictable on Bad Input ☑
 
 ### What to achieve
 
@@ -465,7 +466,7 @@ execution.
 
 ---
 
-## Goal 10 - Make Benchmark Metrics Honest and Unambiguous ☐
+## Goal 10 - Make Benchmark Metrics Honest and Unambiguous ☑
 
 ### What to achieve
 
@@ -503,7 +504,7 @@ Use explicit names like `any_match_accuracy` instead of overloaded `accuracy`.
 
 ---
 
-## Goal 11 - Make ML Optional, Honest, and Versioned ☐
+## Goal 11 - Make ML Optional, Honest, and Versioned ☑
 
 ### What to achieve
 

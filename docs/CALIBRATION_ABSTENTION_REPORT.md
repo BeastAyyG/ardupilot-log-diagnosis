@@ -1,6 +1,6 @@
 # Calibration & Abstention Report
 
-**Gate E Deliverable** — Required for AGENTS.md Hard Gate sign-off.
+
 
 ---
 

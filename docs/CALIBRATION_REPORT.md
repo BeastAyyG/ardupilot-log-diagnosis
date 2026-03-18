@@ -84,7 +84,7 @@ apply. However, calibration intent is enforced by design:
 
 Estimated ECE on the 45-log benchmark set: **~0.10–0.15** for the rule-based system.
 
-> **Note on ECE target**: The AGENTS.md target of `<= 0.08` applies to a fully trained
+> **Note on ECE target**: The project target of `<= 0.08` applies to a fully trained
 > probabilistic ML model where ECE is directly measurable. For a rule-based system, confidence
 > values represent accumulated evidence weight rather than calibrated probabilities, so ECE
 > is not computed in the traditional sense. Achieving ECE <= 0.08 is a target for the ML

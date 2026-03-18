@@ -3,13 +3,17 @@ import os
 import numpy as np
 from scipy.spatial.distance import cosine
 from src.constants import FEATURE_NAMES
+from src.runtime_paths import KNOWN_FAILURES_PATH, resolve_repo_path
 
 
 class FailureRetrieval:
     """Match new logs against database of known failures."""
 
-    def __init__(self, known_failures_path: str = "models/known_failures.json"):
-        self.known_failures_path = known_failures_path
+    def __init__(self, known_failures_path: str | os.PathLike[str] | None = None):
+        resolved_path = (
+            resolve_repo_path(known_failures_path) if known_failures_path is not None else KNOWN_FAILURES_PATH
+        )
+        self.known_failures_path = str(resolved_path)
         self.known = self._load()
         self.scaler = None
 

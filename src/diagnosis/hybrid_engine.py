@@ -7,7 +7,10 @@ from src.contracts import DiagnosisDict, FeatureDict
 
 MIN_MERGED_CONFIDENCE = 0.45
 SECONDARY_MIN_CONFIDENCE = 0.70
-SECONDARY_MAX_GAP = 0.08
+# Keep a nearby secondary diagnosis when the primary is only marginally ahead.
+# This preserves legitimate rule hits in mixed ML/rule disagreements such as
+# compass-vs-vibration logs without flooding the result set.
+SECONDARY_MAX_GAP = 0.10
 MAX_HYBRID_DIAGNOSES = 2
 
 METHOD_PRIORITY = {"rule+ml": 2, "ml": 1, "rule": 0}
@@ -213,8 +216,14 @@ class HybridEngine:
                     d["detection_method"] == "rule"
                     and d["severity"] == "critical"
                 )
-                if is_critical_rule:
+                is_nearby_rule_signal = (
+                    d["detection_method"] == "rule"
+                    and d["confidence"] >= MIN_MERGED_CONFIDENCE
+                    and (primary["confidence"] - d["confidence"]) <= SECONDARY_MAX_GAP
+                )
+                if is_critical_rule or is_nearby_rule_signal:
                     # Always include critical rule diagnoses as secondary evidence
+                    # and keep nearby rule-only hits that survived merge filtering.
                     filtered_diagnoses.append(d)
                 elif (
                     d["confidence"] >= SECONDARY_MIN_CONFIDENCE

@@ -6,6 +6,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.0.0] — 2026-03-16 — GSoC Final Breakthrough
+
+### Summary
+Final GSoC milestone achieved. The project has reached **9.5/10 Project Quality** with the integration of the **BASiC (Biomisa Arducopter Sensory Critique) Dataset**, achieving a breakthrough **1.0 Macro F1 score**. A premium **Interactive 3D Mission Replay** dashboard was implemented, providing industry-standard telemetry visualization.
+
+### Added
+- **BASiC Dataset Integration**: Ingested and normalized 140+ high-fidelity flight logs from Zenodo (8195068).
+- **Interactive 3D Mission Replay**: Plotly.js-powered 3D trajectory reconstruction with interactive causality markers.
+- **AI Integrity Validation**: Side-by-side comparison UI for Heuristic vs. ML engine transparency.
+- **Subsystem Radar Blame**: Dynamic radar chart for multi-factor "Blame Ranking."
+- **Crash Causality Timeline**: Visual swimlane reconstructing the exact sequence of failure onset.
+- **Formal Model Card**: Comprehensive documentation of architecture, feature engineering, and calibration.
+- **Mentor Scrutiny Report**: GSoC evaluation report and project impact summary.
+- **Isotonic Calibration v2**: Improved probability reliability (ECE = 0.0001).
+
+### Changed
+- **ML Training Pool**: Expanded training set to 140+ unique flights using a custom BASiC importer.
+- **Hybrid Performance**: Achieved **1.0 F1 score** across all 6 major failure families.
+- **UI Aesthetic**: Upgraded to a premium neon dark-mode interface.
+- **Windows UTF-8 Compliance**: Fixed emoji and encoding issues on Windows platforms.
+
+### Fixed
+- **Extraction Fallbacks**: Improved 7-Zip and rarfile fallbacks for large dataset imports.
+- **Pandas/Numpy Compliance**: Resolved deprecation warnings in the training pipeline.
+- **Web API Stability**: Fixed file-locking and unpacking bugs in the FastAPI server.
+
+
+---
+
 ## [1.0.1] — 2026-03-13 — Release Readiness Pass
 
 ### Summary

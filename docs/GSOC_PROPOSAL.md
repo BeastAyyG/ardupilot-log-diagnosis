@@ -98,7 +98,7 @@ Expert-label miner (`src/data/expert_label_miner.py`) collects forum-diagnosed l
 
 ### Risk R5 — Scope creep
 **Likelihood**: Medium.  **Impact**: Medium (delayed core milestones).  
-**Mitigation**: AGENTS.md task-selection rule: no stretch goal until all P0–P4 gates pass.  
+**Mitigation**: Strict prioritization—no stretch goals until core pipeline passes validation.  
 **Fallback**: Drop stretch goals S2 and S3; S1 (retrieval) is already implemented.
 
 ---
