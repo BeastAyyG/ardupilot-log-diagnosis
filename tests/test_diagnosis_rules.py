@@ -39,6 +39,8 @@ def test_rule_module_thrust_loss_detection():
         "motor_all_high_pct": 0.25,
         "ctrl_thr_saturated_pct": 0.30,
         "ctrl_alt_error_max": 10.0,
+        "_thrust_loss_tanomaly": 13_000_000.0,
+        "_thrust_loss_descent_detected": 1.0,
     })
     result = check_thrust_loss(features, {})
     assert result is not None

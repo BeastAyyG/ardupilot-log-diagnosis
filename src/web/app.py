@@ -7,12 +7,16 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import ValidationError
+
+from src.web.schemas import AnalysisResponse
 
 from src.diagnosis.decision_policy import evaluate_decision
 from src.diagnosis.hybrid_engine import HybridEngine
+from src.diagnosis.parameter_validation import validate_parameters
 from src.diagnosis.rule_engine import RuleEngine
 from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
@@ -41,8 +45,8 @@ async def get_index() -> str:
     return "UI not found"
 
 
-@app.post("/api/analyze")
-async def analyze_log(file: UploadFile = File(...)) -> JSONResponse:
+@app.post("/api/analyze", response_model=AnalysisResponse)
+async def analyze_log(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith(".bin"):
         return JSONResponse(status_code=400, content={"error": "Only .BIN files are supported."})
 
@@ -63,8 +67,11 @@ async def analyze_log(file: UploadFile = File(...)) -> JSONResponse:
                 handle.write(chunk)
 
         result = await asyncio.to_thread(_analyze_temp_log, temp_path, file.filename)
-        return JSONResponse(content=result)
-    except Exception:
+        return AnalysisResponse(**result)
+    except ValidationError as e:
+        LOGGER.exception("Schema validation failed for model output")
+        return JSONResponse(status_code=500, content={"error": "Schema validation failed", "details": e.errors()})
+    except Exception as e:
         LOGGER.exception("Error during analysis")
         return JSONResponse(
             status_code=500,
@@ -89,6 +96,11 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
     engine = HybridEngine()
     diagnoses = engine.diagnose(features)
     explain_data = dict(getattr(engine, "last_explain_data", {}))
+    parameter_warnings = validate_parameters(
+        parsed.get("parameters", {}),
+        features,
+        features.get("_metadata", {}).get("vehicle_type", "Unknown"),
+    )
 
     decision = evaluate_decision(diagnoses)
     explain_data["decision"] = decision
@@ -105,6 +117,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
         },
         "features": features,
         "diagnoses": diagnoses,
+        "parameter_warnings": parameter_warnings,
         "explain_data": explain_data,
         "time_series": time_series,
         "timeline_events": timeline_events,

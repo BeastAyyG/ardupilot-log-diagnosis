@@ -173,12 +173,25 @@ def check_thrust_loss(features: FeatureDict, thresholds: dict) -> DiagnosisDict 
     alt_err = features.get("ctrl_alt_error_max", 0.0)
     sag_ratio = features.get("bat_sag_ratio", 0.0)
     curr_max = features.get("bat_curr_max", 0.0)
+    thrust_loss_tanomaly = features.get("_thrust_loss_tanomaly", -1.0)
+    thrust_loss_descent = features.get("_thrust_loss_descent_detected", 0.0)
 
-    if motor_sat < 0.10 and motor_all_high < 0.05:
+    if motor_sat < 0.10 and motor_all_high < 0.05 and thrust_loss_tanomaly < 0:
         return None
 
     conf = 0.0
     evidence = []
+
+    if thrust_loss_tanomaly > 0 and thrust_loss_descent > 0:
+        conf += 0.55
+        evidence.append(
+            {
+                "feature": "thrust_loss_tanomaly",
+                "value": thrust_loss_tanomaly,
+                "threshold": "all motors >= 1900 PWM for >= 3s while altitude drops",
+                "direction": "exact",
+            }
+        )
 
     if motor_sat > 0.25:
         conf += 0.45
@@ -261,7 +274,7 @@ def check_thrust_loss(features: FeatureDict, thresholds: dict) -> DiagnosisDict 
         return None
 
     conf = min(conf, 1.0)
-    severity = "critical" if conf > 0.6 else "warning"
+    severity = "critical" if conf > 0.6 or thrust_loss_tanomaly > 0 else "warning"
     return {
         "failure_type": "thrust_loss",
         "confidence": conf,

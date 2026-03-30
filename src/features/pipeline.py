@@ -34,23 +34,45 @@ class FeaturePipeline:
             FFTExtractor,
         ]
 
+    def _extractors_for_vehicle(self, vehicle_type: str) -> list:
+        vehicle_type = (vehicle_type or "Unknown").lower()
+        if vehicle_type == "rover":
+            disabled = {
+                VibrationExtractor,
+                MotorExtractor,
+                ControlExtractor,
+                FFTExtractor,
+            }
+            return [extractor for extractor in self.extractors if extractor not in disabled]
+        if vehicle_type == "sub":
+            disabled = {
+                GPSExtractor,
+                MotorExtractor,
+                ControlExtractor,
+                FFTExtractor,
+            }
+            return [extractor for extractor in self.extractors if extractor not in disabled]
+        return list(self.extractors)
+
     def extract(self, parsed_log: ParsedLog) -> FeatureDict:
         start_time = time.time()
 
-        all_features = {}
+        all_features = {name: 0.0 for name in self.get_feature_names()}
         messages = parsed_log.get("messages", {})
         parameters = parsed_log.get("parameters", {})
+        vehicle_type = parsed_log.get("metadata", {}).get("vehicle_type", "Unknown")
 
         evt_auto_labels = []
+        active_extractors = self._extractors_for_vehicle(vehicle_type)
 
-        for ExtractorClass in self.extractors:
+        for ExtractorClass in active_extractors:
             extractor = ExtractorClass(messages, parameters)
             if extractor.has_data():
                 features = extractor.extract()
                 if "_evt_auto_labels" in features:
                     evt_auto_labels = features.pop("_evt_auto_labels")
             else:
-                features = {name: 0.0 for name in ExtractorClass.FEATURE_NAMES}
+                features = {}
             all_features.update(features)
 
         extraction_time = time.time() - start_time
@@ -73,6 +95,7 @@ class FeaturePipeline:
                 "firmware_version", "Unknown"
             ),
             "messages_found": list(messages.keys()),
+            "active_extractors": [extractor.__name__ for extractor in active_extractors],
             "extraction_time_sec": float(extraction_time),
             "total_features": len([k for k in all_features if not k.startswith("_")]),
             "auto_labels": evt_auto_labels,

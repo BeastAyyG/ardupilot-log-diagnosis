@@ -6,6 +6,7 @@ import json
 
 import pytest
 from starlette.datastructures import UploadFile
+from starlette.responses import JSONResponse
 
 fastapi = pytest.importorskip("fastapi")
 
@@ -78,6 +79,14 @@ def _make_upload(payload: bytes, filename: str = "flight.BIN") -> UploadFile:
     return UploadFile(file=io.BytesIO(payload), filename=filename)
 
 
+def _response_to_dict(response) -> dict:
+    """Extract dict from either AnalysisResponse (pydantic) or JSONResponse."""
+    if isinstance(response, JSONResponse):
+        return json.loads(response.body)
+    # Pydantic model (AnalysisResponse)
+    return response.model_dump()
+
+
 def test_api_analyze_handles_gps_without_vibe(monkeypatch):
     monkeypatch.setattr(web_app, "LogParser", _FakeParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _FakePipeline)
@@ -85,9 +94,8 @@ def test_api_analyze_handles_gps_without_vibe(monkeypatch):
     monkeypatch.setattr(web_app, "RuleEngine", _FakeRuleEngine)
 
     response = asyncio.run(web_app.analyze_log(_make_upload(b"abc")))
-    payload = json.loads(response.body)
+    payload = _response_to_dict(response)
 
-    assert response.status_code == 200
     assert payload["time_series"]["gps"][0]["t"] == 0.0
     assert payload["metadata"]["vehicle"] == "QuadPlane"
 
@@ -99,9 +107,8 @@ def test_api_rule_output_only_is_string(monkeypatch):
     monkeypatch.setattr(web_app, "RuleEngine", _FakeRuleEngine)
 
     response = asyncio.run(web_app.analyze_log(_make_upload(b"abc")))
-    payload = json.loads(response.body)
+    payload = _response_to_dict(response)
 
-    assert response.status_code == 200
     assert payload["rule_output_only"] == "compass_interference"
     assert isinstance(payload["rule_output_only"], str)
 
@@ -116,7 +123,7 @@ def test_api_rejects_oversized_upload(monkeypatch):
     monkeypatch.setattr(web_app, "LogParser", _ExplodingParser)
 
     response = asyncio.run(web_app.analyze_log(_make_upload(b"12345")))
-    payload = json.loads(response.body)
+    payload = _response_to_dict(response)
 
     assert response.status_code == 413
     assert "exceeds" in payload["error"]

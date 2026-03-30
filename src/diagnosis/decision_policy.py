@@ -70,6 +70,7 @@ def evaluate_decision(
         "brownout": "Power/Battery",
         "gps_quality_poor": "GPS/Antenna",
         "motor_imbalance": "Propulsion/Motors",
+        "thrust_loss": "Propulsion/Thrust",
         "pid_tuning_issue": "Control/PID",
         "mechanical_failure": "Hardware/Frame",
         "ekf_failure": "Navigation/EKF",

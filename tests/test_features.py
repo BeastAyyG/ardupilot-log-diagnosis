@@ -53,3 +53,54 @@ def test_feature_count():
     pipeline = FeaturePipeline()
     assert len(pipeline.get_feature_names()) == len(FEATURE_NAMES)
     assert set(pipeline.get_feature_names()) == set(FEATURE_NAMES)
+
+
+def test_motor_extractor_records_thrust_loss_tanomaly():
+    pipeline = FeaturePipeline()
+    rcou = []
+    gps = []
+    for second in range(5):
+        rcou.append(
+            {
+                "TimeUS": second * 1_000_000,
+                "C1": 1910,
+                "C2": 1915,
+                "C3": 1920,
+                "C4": 1912,
+            }
+        )
+        gps.append({"TimeUS": second * 1_000_000, "Alt": 100 - second})
+
+    parsed = {
+        "metadata": {"vehicle_type": "Copter"},
+        "messages": {"RCOU": rcou, "GPS": gps},
+        "parameters": {},
+        "errors": [],
+        "events": [],
+        "mode_changes": [],
+        "status_messages": [],
+    }
+    features = pipeline.extract(parsed)
+    assert features["_thrust_loss_tanomaly"] >= 0
+    assert features["_thrust_loss_descent_detected"] == 1.0
+
+
+def test_rover_pipeline_disables_hover_related_extractors():
+    pipeline = FeaturePipeline()
+    parsed = {
+        "metadata": {"vehicle_type": "Rover"},
+        "messages": {
+            "VIBE": [{"TimeUS": 1_000_000, "VibeX": 50.0, "VibeY": 50.0, "VibeZ": 50.0}],
+            "RCOU": [{"TimeUS": 1_000_000, "C1": 1900, "C2": 1900, "C3": 1900, "C4": 1900}],
+            "CTUN": [{"TimeUS": 1_000_000, "ThO": 0.99, "Alt": 10, "DAlt": 20, "CRt": 0.0}],
+        },
+        "parameters": {},
+        "errors": [],
+        "events": [],
+        "mode_changes": [],
+        "status_messages": [],
+    }
+    features = pipeline.extract(parsed)
+    assert features["vibe_z_max"] == 0.0
+    assert features["motor_saturation_pct"] == 0.0
+    assert features["ctrl_thr_saturated_pct"] == 0.0

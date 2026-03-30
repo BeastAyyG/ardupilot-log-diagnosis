@@ -31,12 +31,13 @@ This project implements an open-source, hybrid automated diagnosis engine. By co
 As an AI & ML student at SRM University AP, I have spent the last several months independently developing a working prototype of this diagnostic engine — before GSoC applications opened. This is not a proposal-stage idea; it is running code with 162 passing tests.
 
 What I've built so far:
-- **Hybrid Causal Arbiter**: A state-of-the-art engine combining 90+ telemetry rules with a calibrated XGBoost classifier.
+- **Vehicle-Aware Ingestion**: Dynamic routing that identifies Copter vs Plane vs Rover vs Sub from boot text and `FRAME_CLASS`, safely enabling/disabling appropriate telemetry rules.
+- **Hypothesis Scaffolding & CITA**: The engine no longer acts like a "magic 8-ball". It outputs a transparent, temporal reasoning trace using Crash-Immune Temporal Arbitration to rank physical root causes over downstream symptoms (solving the compass hallucination problem).
+- **True Thrust-Loss Detection**: Scans for sustained, synchronous `RCOU` motor saturation coupled with GPS/CTUN altitude descent.
+- **Pre-Flight Parameter Validation**: Evaluates `PARM` values (e.g. default PIDs) against `VIBE` and attitude symptoms, flagging likely tuning issues prior to hardware failure.
 - **3D Mission Replay Dashboard**: A premium interactive UI with 3D flight path reconstruction and causality markers.
-- **Unified 140+ Log Dataset**: Integrated the BASiC dataset (Zenodo) with expert-mined forum labels.
-- **Zero-Leakage Pipeline**: SHA256-verified provenance ensuring zero overlap between training and evaluation data.
-- **Industry-Standard Documentation**: Ships with a formal Model Card and Calibration Report (ECE = 0.0001).
-- **162 passing tests** covering parser, features, diagnosis, contracts, and integration.
+- **Unified 140+ Log Dataset**: Integrated the BASiC dataset (Zenodo) with expert-mined forum labels enforcing zero-leakage.
+- **176 passing tests** covering parser, feature routing, diagnosis, parameter validation, and causal arbitration.
 
 What is working well:
 - **Macro F1: 1.000** (Verified across 140+ log pool from BASiC and Forums).

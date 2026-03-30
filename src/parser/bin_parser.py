@@ -33,6 +33,38 @@ class LogParser:
         self.filepath = filepath
         self.logger = logging.getLogger(__name__)
 
+    @staticmethod
+    def _vehicle_from_message(message_text: str) -> tuple[str, str | None]:
+        message_text = message_text or ""
+        mappings = {
+            "ArduCopter": "Copter",
+            "ArduPlane": "Plane",
+            "ArduRover": "Rover",
+            "APMrover2": "Rover",
+            "ArduSub": "Sub",
+        }
+        for token, vehicle_type in mappings.items():
+            if token in message_text:
+                parts = message_text.split()
+                version = None
+                if len(parts) > 1 and parts[0] == token:
+                    version = parts[1]
+                return vehicle_type, version
+        return "Unknown", None
+
+    @staticmethod
+    def _vehicle_from_parameters(parameters: dict) -> str:
+        frame_class = parameters.get("FRAME_CLASS")
+        if frame_class is not None:
+            return "Copter"
+        if "SKID_STEER_OUT" in parameters or "CRUISE_SPEED" in parameters:
+            return "Rover"
+        if "Q_ENABLE" in parameters:
+            return "Plane"
+        if "SURFACE_DEPTH" in parameters or "WPNAV_SPEED_DN" in parameters:
+            return "Sub"
+        return "Unknown"
+
     def parse(self) -> ParsedLog:
         """
         Parse entire .BIN file.
@@ -100,12 +132,13 @@ class LogParser:
                     parsed_data["status_messages"].append(
                         {"time_us": time_us, "message": message_text}
                     )
-                    # Attempt to extract vehicle type and firmware
-                    if "ArduCopter" in message_text:
-                        parsed_data["metadata"]["vehicle_type"] = "Copter"
-                        parts = message_text.split()
-                        if len(parts) > 1 and parts[0] == "ArduCopter":
-                            parsed_data["metadata"]["firmware_version"] = parts[1]
+                    vehicle_type, firmware_version = self._vehicle_from_message(
+                        message_text
+                    )
+                    if vehicle_type != "Unknown":
+                        parsed_data["metadata"]["vehicle_type"] = vehicle_type
+                    if firmware_version:
+                        parsed_data["metadata"]["firmware_version"] = firmware_version
                 elif msg_type == "PARM" and msg_dict:
                     name = msg_dict.get("Name")
                     value = msg_dict.get("Value")
@@ -155,5 +188,10 @@ class LogParser:
 
         if first_time is not None and last_time is not None and last_time > first_time:
             parsed_data["metadata"]["duration_sec"] = (last_time - first_time) / 1e6
+
+        if parsed_data["metadata"]["vehicle_type"] == "Unknown":
+            parsed_data["metadata"]["vehicle_type"] = self._vehicle_from_parameters(
+                parsed_data["parameters"]
+            )
 
         return cast(ParsedLog, parsed_data)

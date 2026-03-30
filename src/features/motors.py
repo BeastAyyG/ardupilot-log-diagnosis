@@ -3,6 +3,7 @@ from .base_extractor import BaseExtractor
 
 class MotorExtractor(BaseExtractor):
     REQUIRED_MESSAGES = ["RCOU"]
+    MESSAGE_DEPENDENCIES = ["RCOU", "GPS", "CTUN"]
     FEATURE_PREFIX = "motor_"
     FEATURE_NAMES = [
         "motor_spread_mean",
@@ -19,6 +20,8 @@ class MotorExtractor(BaseExtractor):
 
     def extract(self) -> dict:
         rcou_msgs = self.messages.get("RCOU", [])
+        gps_msgs = self.messages.get("GPS", [])
+        ctun_msgs = self.messages.get("CTUN", [])
 
         spread_vals = []
         output_vals = []
@@ -27,6 +30,34 @@ class MotorExtractor(BaseExtractor):
         saturation_count = 0  # any motor > 1900
         all_high_count = 0    # ALL motors > 1800 simultaneously
         total_samples = 0
+        thrust_loss_tanomaly = -1.0
+        thrust_loss_descent = 0.0
+        high_run_start = None
+
+        altitude_samples = []
+        for msg in gps_msgs:
+            t_us = msg.get("TimeUS", msg.get("_timestamp", 0.0))
+            alt = msg.get("Alt")
+            if t_us is not None and alt is not None:
+                altitude_samples.append((float(t_us), float(alt)))
+        if not altitude_samples:
+            for msg in ctun_msgs:
+                t_us = msg.get("TimeUS", msg.get("_timestamp", 0.0))
+                if t_us is None:
+                    continue
+                alt = msg.get("Alt", msg.get("DAlt"))
+                if alt is not None:
+                    altitude_samples.append((float(t_us), float(alt)))
+
+        def altitude_drop_detected(start_t: float, end_t: float) -> bool:
+            if not altitude_samples:
+                return False
+            window = [item for item in altitude_samples if start_t <= item[0] <= end_t]
+            if len(window) < 2:
+                return False
+            start_alt = window[0][1]
+            end_alt = window[-1][1]
+            return end_alt < (start_alt - 1.0)
 
         if not rcou_msgs:
             pass
@@ -66,6 +97,20 @@ class MotorExtractor(BaseExtractor):
                     if len(channels) >= 4 and min(channels) > 1800:
                         all_high_count += 1
 
+                    all_pegged = len(channels) >= 4 and min_ch >= 1900
+                    if all_pegged:
+                        if high_run_start is None:
+                            high_run_start = t
+                        if (
+                            thrust_loss_tanomaly < 0
+                            and (t - high_run_start) >= 3_000_000
+                            and altitude_drop_detected(high_run_start, t)
+                        ):
+                            thrust_loss_tanomaly = float(high_run_start)
+                            thrust_loss_descent = 1.0
+                    else:
+                        high_run_start = None
+
                     # For tanomaly: only use post-startup samples so t_vals and
                     # spread_vals stay in lockstep (required by _safe_stats).
                     # Startup transients (first 10 s) are excluded from BOTH arrays.
@@ -102,4 +147,6 @@ class MotorExtractor(BaseExtractor):
             "motor_spread_tanomaly": spread_stats["tanomaly"],
             "motor_saturation_pct": motor_sat_pct,
             "motor_all_high_pct": motor_all_high,
+            "_thrust_loss_tanomaly": thrust_loss_tanomaly,
+            "_thrust_loss_descent_detected": thrust_loss_descent,
         }

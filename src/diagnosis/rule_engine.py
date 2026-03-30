@@ -60,6 +60,29 @@ class RuleEngine:
             check_events,
         ]
 
+    def _checks_for_vehicle(self, vehicle_type: str) -> list[RuleCheck]:
+        vehicle_type = (vehicle_type or "Unknown").lower()
+        if vehicle_type == "rover":
+            return [
+                check_compass,
+                check_power,
+                check_gps,
+                check_ekf,
+                check_system,
+                check_rc_failsafe,
+                check_events,
+            ]
+        if vehicle_type == "sub":
+            return [
+                check_compass,
+                check_power,
+                check_ekf,
+                check_system,
+                check_rc_failsafe,
+                check_events,
+            ]
+        return list(self.checks)
+
     def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
         def _to_float(value):
             if value is None:
@@ -70,9 +93,11 @@ class RuleEngine:
                 return value
 
         normalized = cast(FeatureDict, {key: _to_float(value) for key, value in features.items()})
+        metadata = normalized.get("_metadata", {})
+        vehicle_type = metadata.get("vehicle_type", "Unknown") if isinstance(metadata, dict) else "Unknown"
 
         results: list[DiagnosisDict] = []
-        for check in self.checks:
+        for check in self._checks_for_vehicle(str(vehicle_type)):
             result = check(normalized, self.thresholds)
             if result and result["confidence"] > 0:
                 results.append(result)

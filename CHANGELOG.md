@@ -13,8 +13,9 @@ Final GSoC milestone achieved. The project has reached **9.5/10 Project Quality*
 
 ### Added
 - **BASiC Dataset Integration**: Ingested and normalized 140+ high-fidelity flight logs from Zenodo (8195068).
-- **Interactive 3D Mission Replay**: Plotly.js-powered 3D trajectory reconstruction with interactive causality markers.
-- **AI Integrity Validation**: Side-by-side comparison UI for Heuristic vs. ML engine transparency.
+- **Interactive 3D Mission Replay:** Added an immersive 3D Plotly dashboard that renders the flight path and drops causal event markers for physical insight.
+- **Autonomous Agent Skill (SKILL.md):** The project is now an officially documented AI "Skill," allowing external agents (like Claude or Cursor) to natively diagnose `.BIN` files over CLI.
+- **AI Integrity Output:** A side-by-side validation report was added to prove the ML model's decisions against legacy heuristics.
 - **Subsystem Radar Blame**: Dynamic radar chart for multi-factor "Blame Ranking."
 - **Crash Causality Timeline**: Visual swimlane reconstructing the exact sequence of failure onset.
 - **Formal Model Card**: Comprehensive documentation of architecture, feature engineering, and calibration.

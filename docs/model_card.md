@@ -10,11 +10,11 @@ This model is a **Hybrid Causal Arbiter** designed to diagnose autonomous vehicl
 | **False Critical Rate** | 8.2% | **< 1.0%** | < 2.0% | ✅ PASS |
 | **Analysis Latency** | < 200ms | **< 350ms** | < 1s | ⚡ OPTIMIZED |
 
-## 🏗️ Architecture: Hybrid Causal Arbitration
-The system doesn't just "predict" a label; it arbitrates between two distinct logic layers:
+## 🏗️ Architecture: Hybrid Causal Arbitration + CITA
+The system doesn't just "predict" a label; it arbitrates between two distinct logic layers using **Crash-Immune Temporal Arbitration (CITA)**:
 1.  **Deterministic Layer (Rule Engine):** Scans for hard hardware failures (e.g. `VIBE.VibeZ > 60`, `ERR.Subsys=17`).
 2.  **Statistical Layer (XGBoost):** Analyzes 90+ features (FFT peaks, motor spread variance, EKF innovation spikes) to find patterns rules miss.
-3.  **Arbiter:** Resolves conflicts. If the Rule Engine finds 100% proof of a crash, it wins. If the rules are silent but the ML sees a "Mechanical Failure" pattern with 90% confidence, the AI wins.
+3.  **CITA Arbiter:** Resolves conflicts using per-subsystem `t_anomaly` timestamps — the exact microsecond each parameter first breached its threshold. The earliest onset wins, eliminating post-crash data contamination (the "compass hallucination" problem). Unlike fixed time-windows, CITA adapts to each log's unique failure timeline.
 
 ## 📚 Training Data ("The Data Buffet")
 The model was trained on a diverse composite dataset:

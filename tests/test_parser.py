@@ -88,6 +88,33 @@ def test_mode_changes(monkeypatch):
     assert parsed["errors"][0]["subsystem_name"] == "FAILSAFE_RADIO"
 
 
+def test_vehicle_detection_from_plane_boot_message(monkeypatch):
+    fake_messages = [
+        _FakeMessage("MSG", {"Message": "ArduPlane 4.5.0", "TimeUS": 1000}),
+    ]
+    monkeypatch.setattr(
+        "src.parser.bin_parser.DFReader.DFReader_binary",
+        lambda _filepath: _FakeReader(fake_messages),
+    )
+
+    parsed = LogParser("fake.BIN").parse()
+    assert parsed["metadata"]["vehicle_type"] == "Plane"
+    assert parsed["metadata"]["firmware_version"] == "4.5.0"
+
+
+def test_vehicle_detection_from_parameters(monkeypatch):
+    fake_messages = [
+        _FakeMessage("PARM", {"Name": "SKID_STEER_OUT", "Value": 1, "TimeUS": 1000}),
+    ]
+    monkeypatch.setattr(
+        "src.parser.bin_parser.DFReader.DFReader_binary",
+        lambda _filepath: _FakeReader(fake_messages),
+    )
+
+    parsed = LogParser("fake.BIN").parse()
+    assert parsed["metadata"]["vehicle_type"] == "Rover"
+
+
 def test_duration_and_message_counts(monkeypatch):
     fake_messages = [
         _FakeMessage("VIBE", {"VibeZ": 10.0, "TimeUS": 1_000_000}),

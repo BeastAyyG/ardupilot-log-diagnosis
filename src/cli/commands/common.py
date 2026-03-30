@@ -9,45 +9,62 @@ from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
 
 
-def print_explain_box(explain_data: dict[str, Any] | None, final_diagnoses: Sequence[dict[str, Any]]) -> None:
+def print_explain_box(
+    explain_data: dict[str, Any] | None, final_diagnoses: Sequence[dict[str, Any]]
+) -> None:
     if not explain_data:
         return
 
     print("")
-    print("╔════════════════════════════════════════════════════════╗")
-    print("║  Hybrid Engine Arbitration Breakdown                  ║")
-    print("╠════════════════════════════════════════════════════════╣")
+    print("Hybrid Engine Arbitration Breakdown")
+    print("-----------------------------------")
 
-    rule_best = explain_data["rule"][0] if explain_data.get("rule") else None
-    print("║  [Rule Engine]                                         ║")
+    rule_best = explain_data.get("rule", [None])[0] if explain_data.get("rule") else None
     if rule_best:
         print(
-            f"║  Top Guess: {rule_best['failure_type'].upper():<27} ({rule_best['confidence'] * 100:3.0f}%) ║"
+            f"Rule Engine: {rule_best['failure_type']} "
+            f"({rule_best['confidence'] * 100:.0f}%)"
         )
     else:
-        print(f"║  Top Guess: {'HEALTHY':<27} (  0%) ║")
-    print("║                                                        ║")
+        print("Rule Engine: healthy (0%)")
 
-    ml_best = explain_data["ml"][0] if explain_data.get("ml") else None
-    print("║  [XGBoost ML Model]                                    ║")
+    ml_best = explain_data.get("ml", [None])[0] if explain_data.get("ml") else None
     if ml_best:
         print(
-            f"║  Top Guess: {ml_best['failure_type'].upper():<27} ({ml_best['confidence'] * 100:3.0f}%) ║"
+            f"XGBoost ML: {ml_best['failure_type']} "
+            f"({ml_best['confidence'] * 100:.0f}%)"
         )
     else:
-        print(f"║  Top Guess: {'HEALTHY':<27} (  0%) ║")
-    print("║                                                        ║")
+        print("XGBoost ML: healthy (0%)")
 
-    print("║  [Final Fused Decision]                                ║")
     if final_diagnoses:
         final_best = final_diagnoses[0]
         print(
-            f"║  Result:    {final_best['failure_type'].upper():<27} ({final_best['confidence'] * 100:3.0f}%) ║"
+            f"Final Result: {final_best['failure_type']} "
+            f"({final_best['confidence'] * 100:.0f}%)"
         )
     else:
-        print("║  Result:    HEALTHY                                    ║")
+        print("Final Result: healthy")
 
-    print("╚════════════════════════════════════════════════════════╝")
+    hypotheses = explain_data.get("hypotheses", [])
+    arbiter = explain_data.get("causal_arbiter", {})
+    if hypotheses:
+        print("")
+        print("Hypothesis Scaffolding:")
+        for idx, item in enumerate(hypotheses[:3], start=1):
+            tanomaly = item.get("tanomaly", -1.0)
+            time_text = (
+                f"T+{tanomaly / 1e6:.1f}s"
+                if isinstance(tanomaly, (int, float)) and tanomaly > 0
+                else "no onset timestamp"
+            )
+            print(
+                f"  Hypothesis {idx}: {item['failure_type']} via {item['source']} "
+                f"({item['merged_confidence'] * 100:.0f}%) from "
+                f"{item.get('lead_feature') or 'telemetry correlation'} at {time_text}."
+            )
+        if arbiter:
+            print(f"  Causal Arbiter: {arbiter.get('reason', 'no arbiter summary')}")
 
 
 def find_latest_clean_benchmark() -> tuple[str | None, str | None]:
@@ -71,11 +88,16 @@ def find_latest_clean_benchmark() -> tuple[str | None, str | None]:
     return str(dataset_dir), str(gt_path)
 
 
-def load_features(logfile: str) -> dict[str, Any]:
+def load_parsed_and_features(logfile: str) -> tuple[dict[str, Any], dict[str, Any]]:
     parser = LogParser(logfile)
     parsed = parser.parse()
     pipeline = FeaturePipeline()
-    return pipeline.extract(parsed)
+    return parsed, pipeline.extract(parsed)
+
+
+def load_features(logfile: str) -> dict[str, Any]:
+    _, features = load_parsed_and_features(logfile)
+    return features
 
 
 def ensure_extraction_success(logfile: str, features: dict[str, Any]) -> None:
