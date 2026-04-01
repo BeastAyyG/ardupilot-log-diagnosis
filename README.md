@@ -24,7 +24,7 @@ Drop a crash log → get an instant, physics-grounded root-cause diagnosis with 
 </div>
 
 > [!WARNING]  
-> **IMPORTANT CONTACT UPDATE:** My previous Discord account (**`beastayyg`**) was hacked and I no longer control it. Please ignore any messages from it. If you need to reach me regarding this project, please message my new Discord account: **`MommyChorrand`** or reach out via email.
+> **IMPORTANT CONTACT UPDATE:** My previous Discord account (**`Mommychorr07`**) was hacked and I no longer control it. Please ignore any messages from it. If you need to reach me regarding this project, please message my new Discord account: **`MommyChorrr`** or reach out via email.
 
 
 ---
