@@ -1,6 +1,7 @@
+import pytest
 from src.constants import FEATURE_NAMES
 from src.diagnosis.rules.control_and_events import check_rc_failsafe
-from src.diagnosis.rules.mechanics import check_setup_error, check_thrust_loss
+from src.diagnosis.rules.mechanics import check_setup_error, check_thrust_loss, check_motors
 from src.diagnosis.rules.power_and_system import check_power
 from src.diagnosis.rules.sensors import check_compass, check_vibration
 
@@ -61,3 +62,55 @@ def test_rule_module_rc_failsafe_detection():
     result = check_rc_failsafe(features, {})
     assert result is not None
     assert result["failure_type"] == "rc_failsafe"
+
+
+def test_rule_module_motor_healthy():
+    features = _base_features()
+    features.update({"motor_spread_max": 300.0, "motor_spread_mean": 150.0})
+    result = check_motors(features, {"motor_spread_limit": 400.0, "spread_mean_limit": 200.0})
+    assert result is None
+
+
+def test_rule_module_motor_imbalance_confirmed():
+    features = _base_features()
+    features.update({"motor_spread_max": 601.0, "motor_spread_mean": 301.0})
+    result = check_motors(features, {"motor_spread_limit": 400.0, "spread_mean_limit": 200.0})
+    assert result is not None
+    assert result["failure_type"] == "motor_imbalance"
+    assert result["confidence"] == pytest.approx(0.95)
+    assert result["severity"] == "critical"
+    assert result["reason_code"] == "confirmed"
+
+
+def test_rule_module_motor_imbalance_uncertain():
+    features = _base_features()
+    features.update({"motor_spread_max": 450.0, "motor_spread_mean": 250.0})
+    result = check_motors(features, {"motor_spread_limit": 400.0, "spread_mean_limit": 200.0})
+    assert result is not None
+    assert result["failure_type"] == "motor_imbalance"
+    assert result["confidence"] == pytest.approx(0.55)
+    assert result["severity"] == "warning"
+    assert result["reason_code"] == "uncertain"
+
+
+def test_rule_module_motor_pid_tuning_detection():
+    features = _base_features()
+    features.update({
+        "motor_spread_max": 601.0,
+        "motor_spread_mean": 150.0,
+        "motor_spread_std": 20.0,
+        "att_roll_std": 15.0
+    })
+    result = check_motors(features, {"motor_spread_limit": 400.0, "spread_mean_limit": 200.0})
+    assert result is not None
+    assert result["failure_type"] == "pid_tuning_issue"
+    assert result["confidence"] == pytest.approx(0.80)
+    assert result["severity"] == "critical"
+    assert result["reason_code"] == "confirmed"
+
+
+def test_rule_module_motor_low_confidence():
+    features = _base_features()
+    features.update({"motor_spread_max": 450.0, "motor_spread_mean": 150.0})
+    result = check_motors(features, {"motor_spread_limit": 400.0, "spread_mean_limit": 200.0})
+    assert result is None
