@@ -91,9 +91,9 @@ Open a GitHub Issue with the `question` label, or refer to [`AGENTS.md`](AGENTS.
 
 ## Log File Handling
 
-Binary `.BIN` log files should never be committed directly to the repository.
+Large binary `.BIN` log files should not be committed directly to the repository.
 They are marked as binary in `.gitattributes` to avoid large diffs.
-Use the provided sample logs in `tests/` for development and testing.
+Small sample logs for testing are permitted in the `tests/` directory.
 
 ---
 
@@ -102,4 +102,4 @@ Use the provided sample logs in `tests/` for development and testing.
 This project follows the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
 By participating, you are expected to uphold this code.
 
-If you witness or experience unacceptable behavior, please report it by opening a GitHub issue or contacting the maintainer directly via GitHub.
+If you witness or experience unacceptable behavior, please report it by contacting the maintainer privately via GitHub or email.
