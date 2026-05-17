@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import fnmatch
 import logging
 import os
 from argparse import _SubParsersAction
@@ -32,6 +33,27 @@ def register(subparsers: _SubParsersAction) -> None:
         required=True,
         help="Path to save the output CSV summary",
     )
+    parser.add_argument(
+        "--include",
+        nargs="*",
+        default=[],
+        metavar="PATTERN",
+        help=(
+            "Only process files whose names match at least one of these glob "
+            "patterns (e.g. '*.BIN' 'flight_*'). When omitted all .BIN files "
+            "are included."
+        ),
+    )
+    parser.add_argument(
+        "--exclude",
+        nargs="*",
+        default=[],
+        metavar="PATTERN",
+        help=(
+            "Skip files whose names match any of these glob patterns "
+            "(e.g. 'test_*' 'tmp_*'). Applied after --include filtering."
+        ),
+    )
     parser.set_defaults(func=run)
 
 
@@ -43,12 +65,26 @@ def run(args) -> None:
         print(f"Directory {directory} not found.")
         return
 
-    # Recursively scan for .BIN files (case-insensitive)
+    include_patterns = getattr(args, "include", []) or []
+    exclude_patterns = getattr(args, "exclude", []) or []
+
+    # Recursively scan for .BIN files (case-insensitive), applying glob filters
     bin_files = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.upper().endswith(".BIN"):
-                bin_files.append(Path(root) / file)
+            if not file.upper().endswith(".BIN"):
+                continue
+            # --include: must match at least one pattern (skip check when list is empty)
+            if include_patterns and not any(
+                fnmatch.fnmatch(file, pat) for pat in include_patterns
+            ):
+                continue
+            # --exclude: skip if matches any pattern
+            if exclude_patterns and any(
+                fnmatch.fnmatch(file, pat) for pat in exclude_patterns
+            ):
+                continue
+            bin_files.append(Path(root) / file)
 
     # Sort files to ensure deterministic processing order
     bin_files.sort()
