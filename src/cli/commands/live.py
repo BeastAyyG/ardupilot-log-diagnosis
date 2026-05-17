@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import time
 import logging
@@ -43,21 +43,24 @@ def run(args) -> None:
         return
 
     print("Waiting for heartbeat...")
-    conn.wait_heartbeat()
-    print(f"Heartbeat from system (system {conn.target_system} component {conn.target_component})")
+    heartbeat = conn.recv_match(type="HEARTBEAT", blocking=True, timeout=30)
+    if heartbeat is None:
+        print("Timeout waiting for heartbeat. Check connection and vehicle power.")
+        return
 
-    # Storage for the rolling window
+    print(f"Heartbeat received from system {heartbeat.get_srcSystem()} component {heartbeat.get_srcComponent()}")
+
     messages_queue = []
     parameters = {}
     vehicle_type = "Unknown"
     firmware_version = "Unknown"
-    
+
     pipeline = FeaturePipeline()
     rule_engine = RuleEngine()
     formatter = DiagnosisFormatter()
 
     last_eval_time = time.time()
-    
+
     INTERESTING_MESSAGE_TYPES = {
         "VIBE", "MAG", "BAT", "CURR", "GPS", "RCOU", "XKF4", "NKF4",
         "PARM", "ERR", "EV", "MODE", "MSG", "CTUN", "ATT", "RATE",
@@ -65,9 +68,6 @@ def run(args) -> None:
     }
 
     def vehicle_from_heartbeat(mav_type: int) -> str:
-        # MAV_TYPE constants
-        # 1: FIXED_WING, 2: QUADROTOR, 3: COAXIAL, 4: HELICOPTER
-        # 10: GROUND_ROVER, 12: SUBMARINE, 13: HEXAROTOR, 14: OCTOROTOR, 15: TRICOPTER
         if mav_type in (2, 3, 4, 13, 14, 15):
             return "Copter"
         elif mav_type == 1:
@@ -81,60 +81,71 @@ def run(args) -> None:
     print("Listening for messages. Press Ctrl+C to stop.")
     try:
         while True:
-            # We use non-blocking receive to allow periodic evaluation
-            msg = conn.recv_match(blocking=False)
             current_time = time.time()
-            
-            if msg:
+
+            while True:
+                msg = conn.recv_match(blocking=False)
+                if msg is None:
+                    break
+
                 msg_type = msg.get_type()
-                
-                # Update vehicle type if not known
+                msg_time = time.time()
+
                 if msg_type == "HEARTBEAT" and vehicle_type == "Unknown":
                     vehicle_type = vehicle_from_heartbeat(msg.type)
-                
+
+                if msg_type == "AUTOPILOT_VERSION":
+                    major = (msg.flight_sw_version >> 24) & 0xFF
+                    minor = (msg.flight_sw_version >> 16) & 0xFF
+                    patch = (msg.flight_sw_version >> 8) & 0xFF
+                    firmware_version = f"{major}.{minor}.{patch}"
+
                 if msg_type == "PARAM_VALUE":
-                    parameters[msg.param_id] = msg.param_value
+                    param_id = msg.param_id
+                    if isinstance(param_id, bytes):
+                        param_id = param_id.decode("utf-8").rstrip("\x00")
+                    parameters[param_id] = msg.param_value
 
                 if msg_type in INTERESTING_MESSAGE_TYPES or msg_type == "STATUSTEXT":
-                    # Convert to df_reader dict format
                     msg_dict = msg.to_dict()
-                    # MAVLink messages don't always have TimeUS. We fake it using local time 
-                    # so that rolling window and temporal anomaly logic still runs.
                     if "time_boot_ms" in msg_dict:
                         msg_dict["TimeUS"] = msg_dict["time_boot_ms"] * 1000
                     elif "time_usec" in msg_dict:
                         msg_dict["TimeUS"] = msg_dict["time_usec"]
                     else:
-                        msg_dict["TimeUS"] = int(current_time * 1e6)
+                        msg_dict["TimeUS"] = int(msg_time * 1e6)
 
-                    # ArduPilot dataflash uses different names for some messages
-                    # Map MAVLink message types to Dataflash message types where necessary
                     df_msg_type = msg_type
                     if msg_type == "STATUSTEXT":
                         df_msg_type = "MSG"
                         msg_dict["Message"] = msg_dict.get("text", "")
 
                     messages_queue.append({
-                        "local_recv_time": current_time,
+                        "local_recv_time": msg_time,
                         "type": df_msg_type,
                         "dict": msg_dict
                     })
 
-            # Prune old messages
-            messages_queue = [m for m in messages_queue if current_time - m["local_recv_time"] <= window_size]
+            messages_queue = [
+                m for m in messages_queue
+                if current_time - m["local_recv_time"] <= window_size
+            ]
 
-            # Periodic evaluation
             if current_time - last_eval_time >= eval_interval:
                 last_eval_time = current_time
-                
+
                 if not messages_queue:
                     continue
-                
-                # Build parsed_log dict
+
+                duration = (
+                    messages_queue[-1]["local_recv_time"] - messages_queue[0]["local_recv_time"]
+                    if len(messages_queue) > 1 else 0.0
+                )
+
                 parsed_data = cast(ParsedLog, {
                     "metadata": {
                         "filepath": "live_stream",
-                        "duration_sec": window_size,
+                        "duration_sec": duration,
                         "vehicle_type": vehicle_type,
                         "firmware_version": firmware_version,
                         "total_messages": len(messages_queue),
@@ -151,22 +162,19 @@ def run(args) -> None:
                 for m in messages_queue:
                     m_type = m["type"]
                     m_dict = m["dict"]
-                    
                     parsed_data["metadata"]["message_types"][m_type] = \
                         parsed_data["metadata"]["message_types"].get(m_type, 0) + 1
-                    
                     if m_type not in parsed_data["messages"]:
                         parsed_data["messages"][m_type] = []
                     parsed_data["messages"][m_type].append(m_dict)
 
-                # Extract features and diagnose
                 try:
                     features = pipeline.extract(parsed_data)
                     diagnoses = rule_engine.diagnose(features)
-                    
-                    # Filter diagnoses to only show warnings or critical
-                    alert_diagnoses = [d for d in diagnoses if d.get("severity") in ("warning", "critical")]
-                    
+                    alert_diagnoses = [
+                        d for d in diagnoses
+                        if d.get("severity") in ("warning", "critical")
+                    ]
                     if alert_diagnoses:
                         print(f"\n--- Diagnoses at {time.strftime('%H:%M:%S')} ---")
                         output = formatter.format_terminal(
@@ -179,7 +187,6 @@ def run(args) -> None:
                             explain_data=None
                         )
                         print(output)
-                        
                 except Exception as e:
                     logger.warning(f"Error during live evaluation: {e}")
 
@@ -187,3 +194,5 @@ def run(args) -> None:
 
     except KeyboardInterrupt:
         print("\nStopping live diagnosis.")
+    finally:
+        conn.close()
