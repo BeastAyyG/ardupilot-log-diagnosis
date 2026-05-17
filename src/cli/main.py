@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import argparse
-
+import importlib.metadata
 from .commands import COMMAND_MODULES
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="ArduPilot Log Diagnosis Tool")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"ardupilot-log-diagnosis, version {importlib.metadata.version('ardupilot-log-diagnosis')}"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     for module in COMMAND_MODULES:
