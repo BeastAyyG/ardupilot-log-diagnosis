@@ -370,6 +370,7 @@
         Export CSV
     </button>
 </div>
+</div>
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
@@ -909,10 +910,10 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
             alert('Compare API failed');
             return;
         }
+const data = await response.json();
+window.comparisonData = data;
 
-        const data = await response.json();
-
-        console.log('Compare Result:', data);
+console.log('Compare Result:', data);
 
         // Destroy old charts before creating new ones
         if (vibrationChart) vibrationChart.destroy();
@@ -931,24 +932,15 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
                 datasets: [
                     {
                         label: 'Vibe X',
-                        data: [
-                            data.trends.vibe_x_mean.first_value,
-                            data.trends.vibe_x_mean.last_value
-                        ]
+                        data: data.metrics_timeline.map(m => m.vibe_x_mean)
                     },
                     {
                         label: 'Vibe Y',
-                        data: [
-                            data.trends.vibe_y_mean.first_value,
-                            data.trends.vibe_y_mean.last_value
-                        ]
+                        data: data.metrics_timeline.map(m => m.vibe_y_mean)
                     },
                     {
                         label: 'Vibe Z',
-                        data: [
-                            data.trends.vibe_z_mean.first_value,
-                            data.trends.vibe_z_mean.last_value
-                        ]
+                         data: data.metrics_timeline.map(m => m.vibe_z_mean)
                     }
                 ]
             },
@@ -969,10 +961,7 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
                 labels: data.flight_order,
                 datasets: [{
                     label: 'Battery Voltage Min',
-                    data: [
-    data.trends.bat_volt_min.first_value || null,
-    data.trends.bat_volt_min.last_value || null
-]
+                    data: data.metrics_timeline.map(m => m.bat_volt_min)
                 }]
             },
             options: {
@@ -992,19 +981,13 @@ document.getElementById('compareBtn').addEventListener('click', async () => {
                 labels: data.flight_order,
                 datasets: [
                     {
-                        label: 'EKF Position Variance',
-                        data: [
-                            data.trends.ekf_pos_var_max.first_value,
-                            data.trends.ekf_pos_var_max.last_value
-                        ]
-                    },
-                    {
-                        label: 'EKF Velocity Variance',
-                        data: [
-                            data.trends.ekf_vel_var_max.first_value,
-                            data.trends.ekf_vel_var_max.last_value
-                        ]
-                    }
+    label: 'EKF Position Variance',
+    data: data.metrics_timeline.map(m => m.ekf_pos_var_max)
+},
+{
+    label: 'EKF Velocity Variance',
+    data: data.metrics_timeline.map(m => m.ekf_vel_var_max)
+}
                 ]
             },
             options: {
@@ -1040,6 +1023,54 @@ alert('Comparison successful!');
         console.error(err);
         alert('Comparison failed');
     }
+});
+document.getElementById('exportCsvBtn')
+.addEventListener('click', () => {
+    if (!window.comparisonData) {
+        alert('Please compare flights first.');
+        return;
+    }
+
+    const rows = [
+        [
+            'Flight',
+            'Vibe X',
+            'Vibe Y',
+            'Vibe Z',
+            'Battery Voltage',
+            'EKF Position Variance',
+            'EKF Velocity Variance'
+        ]
+    ];
+
+    window.comparisonData.metrics_timeline.forEach((m, index) => {
+        rows.push([
+            window.comparisonData.flight_order[index],
+            m.vibe_x_mean,
+            m.vibe_y_mean,
+            m.vibe_z_mean,
+            m.bat_volt_min,
+            m.ekf_pos_var_max,
+            m.ekf_vel_var_max
+        ]);
+    });
+
+    const csvContent = rows
+        .map(row => row.join(','))
+        .join('\n');
+
+    const blob = new Blob([csvContent], {
+        type: 'text/csv'
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+
+    a.href = url;
+    a.download = 'flight_comparison.csv';
+    a.click();
+
+    URL.revokeObjectURL(url);
 });
     </script>
 </body>
