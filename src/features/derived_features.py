@@ -37,7 +37,7 @@ class DerivedFeaturesExtractor:
 
     def _safe_div(self, num, den, default=0.0) -> float:
         """
-       Safely divide two numbers, returning a default value if the denominator is invalid.
+        Safely divide two numbers, returning a default value if the denominator is invalid.
 
         Args:
             num: Numerator value.
@@ -66,7 +66,7 @@ class DerivedFeaturesExtractor:
 
         Returns:
             dict: A dictionary mapping feature names to their computed float values.
-
+                  Missing base features default to 0.0 via dict.get().
         """
         f = self.base_features
 
@@ -101,7 +101,7 @@ class DerivedFeaturesExtractor:
         vcr = self._safe_div(vibe_z_max, vibe_clip_total + 1.0)
 
         # 7. GPS Reliability Score
-        gps_fix_pct = 1.0 - f.get("gps_flags_error_pct", 0.0) # rough proxy for fix pct
+        gps_fix_pct = 1.0 - f.get("gps_flags_error_pct", 0.0)  # rough proxy for fix pct
         gps_nsats_min = f.get("gps_nsats_min", 0.0)
         gps_hdop_mean = f.get("gps_hdop_mean", 0.0)
         grs = self._safe_div(gps_fix_pct * gps_nsats_min, gps_hdop_mean)
