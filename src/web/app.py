@@ -59,8 +59,16 @@ async def shutdown_event():
 class ConnectRequest(BaseModel):
     connection_string: str
 
+# FIX 3: Add token auth to /api/live/connect endpoint
+# Prevents unauthorized callers from restarting the streamer or
+# triggering arbitrary TCP/UDP/serial connections
 @app.post("/api/live/connect")
-async def connect_live_stream(req: ConnectRequest):
+async def connect_live_stream(req: ConnectRequest, token: str = Query(None)):
+    expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "")
+    if not expected_token:
+        raise HTTPException(status_code=503, detail="Server auth token not configured")
+    if token != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     global streamer
     if streamer and streamer.is_running:
         streamer.stop()
@@ -72,7 +80,9 @@ async def connect_live_stream(req: ConnectRequest):
 @app.post("/api/live/stop")
 async def stop_live_stream(token: str = Query(None)):
     expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "")
-    if expected_token and token != expected_token:
+    if not expected_token:
+        raise HTTPException(status_code=503, detail="Server auth token not configured")
+    if token != expected_token:
         raise HTTPException(status_code=401, detail="Unauthorized")
     global streamer
     if streamer and streamer.is_running:
@@ -82,8 +92,10 @@ async def stop_live_stream(token: str = Query(None)):
 
 @app.websocket("/api/live/stream")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
-    expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "ardupilot")
-    if token != expected_token:
+    # FIX: Do not fall back to a predictable default token
+    # If MAVLINK_AUTH_TOKEN is not set, reject all connections
+    expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "")
+    if not expected_token or token != expected_token:
         await websocket.close(code=1008)
         return
 

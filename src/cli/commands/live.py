@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import time
 import logging
@@ -122,12 +122,19 @@ def run(args) -> None:
 
                 if msg_type in INTERESTING_MESSAGE_TYPES or msg_type == "STATUSTEXT":
                     msg_dict = msg.to_dict()
+
+                    # FIX 4: Normalize TimeUS to consistent microseconds since boot
+                    # Avoids mixing vehicle uptime (time_boot_ms) with Unix epoch
+                    # (time.time()) which are orders of magnitude apart and would
+                    # break FeaturePipeline time-series windowing logic
                     if "time_boot_ms" in msg_dict:
                         msg_dict["TimeUS"] = msg_dict["time_boot_ms"] * 1000
                     elif "time_usec" in msg_dict:
                         msg_dict["TimeUS"] = msg_dict["time_usec"]
                     else:
-                        msg_dict["TimeUS"] = int(msg_time * 1e6)
+                        # Safe fallback: use 0 instead of Unix epoch to avoid
+                        # scale mismatch in time-series analysis
+                        msg_dict["TimeUS"] = 0
 
                     df_msg_type = msg_type
                     if msg_type == "STATUSTEXT":

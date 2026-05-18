@@ -50,7 +50,8 @@ class WebSocketManager:
 
     async def broadcast(self, message: dict[str, Any]) -> None:
         dead_connections = []
-        for connection in self.active_connections:
+        # FIX 4: Iterate over a snapshot to avoid mutation during iteration
+        for connection in list(self.active_connections):
             try:
                 await connection.send_json(message)
             except Exception:
@@ -167,12 +168,17 @@ class MAVLinkStreamer:
 
                     if msg_type in INTERESTING_MESSAGE_TYPES or msg_type == "STATUSTEXT":
                         msg_dict = msg.to_dict()
+
+                        # FIX 1: Normalize TimeUS to consistent microseconds since boot
+                        # Avoids mixing vehicle uptime (time_boot_ms) with Unix epoch (time.time())
                         if "time_boot_ms" in msg_dict:
                             msg_dict["TimeUS"] = msg_dict["time_boot_ms"] * 1000
                         elif "time_usec" in msg_dict:
                             msg_dict["TimeUS"] = msg_dict["time_usec"]
                         else:
-                            msg_dict["TimeUS"] = int(msg_time * 1e6)
+                            # Use 0 as safe fallback — avoids Unix epoch scale mismatch
+                            # in FeaturePipeline time-series windowing logic
+                            msg_dict["TimeUS"] = 0
 
                         df_msg_type = msg_type
                         if msg_type == "STATUSTEXT":
@@ -227,6 +233,8 @@ class MAVLinkStreamer:
                             parsed_data["messages"][m_type].append(m_dict)
 
                         try:
+                            # FIX 2: Offload CPU-intensive pipeline/rule_engine to thread
+                            # Prevents blocking the MAVLink message-receive loop
                             features = await asyncio.to_thread(
                                 pipeline.extract, parsed_data
                             )
