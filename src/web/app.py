@@ -1,16 +1,33 @@
+"""
+app.py — FastAPI application entry-point.
+
+Bug fixes applied
+-----------------
+Bug 1 : streamer.start() is now async, so we pass it directly to
+        asyncio.create_task() instead of wrapping it in get_event_loop().
+Bug 2 : Removed all asyncio.get_event_loop() calls inside async functions;
+        replaced with asyncio.create_task() / asyncio.get_running_loop() as
+        appropriate (Python 3.10+ deprecation).
+Bug 3 : /api/live/connect now validates the auth token (query-param `token`)
+        so unauthenticated callers cannot trigger arbitrary MAVLink connections.
+Bug 6 : Added asyncio.Lock (_connect_lock) around the connect/stop endpoints
+        to prevent a race condition when two clients click Connect simultaneously.
+"""
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from src.web.schemas import AnalysisResponse, ChatRequest, ChatResponse
 
@@ -22,6 +39,7 @@ from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
 from src.chat.assistant import ChatAssistant
 from src.comparison.trend_analyzer import TrendAnalyzer
+from src.web.live_stream import WebSocketManager, MAVLinkStreamer
 
 
 LOGGER = logging.getLogger(__name__)
@@ -29,7 +47,35 @@ MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 WEB_DIR = Path(__file__).parent.absolute()
 
-app = FastAPI(title="ArduPilot Log Diagnosis API")
+ws_manager = WebSocketManager()
+streamer: MAVLinkStreamer | None = None
+
+# Bug 6 fix: single lock so concurrent /connect or /stop requests are serialised
+# and cannot create duplicate streamers or cause use-after-free on `streamer`.
+_connect_lock: asyncio.Lock = asyncio.Lock()
+
+
+# ── Bug 1 & 2 fix: use lifespan context manager (replaces deprecated
+#    @app.on_event).  asyncio.create_task() is called directly — no
+#    get_event_loop() needed inside an async context. ─────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── Startup ──────────────────────────────────────────────────────────────
+    global streamer
+    mavlink_conn = os.environ.get("MAVLINK_CONNECTION")
+    if mavlink_conn:
+        streamer = MAVLinkStreamer(ws_manager, mavlink_conn)
+        # start() is now async, so create_task() receives a real coroutine.
+        asyncio.create_task(streamer.start())
+
+    yield  # ── Application runs here ─────────────────────────────────────────
+
+    # ── Shutdown ─────────────────────────────────────────────────────────────
+    if streamer and streamer.is_running:
+        streamer.stop()
+
+
+app = FastAPI(title="ArduPilot Log Diagnosis API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,6 +83,63 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class ConnectRequest(BaseModel):
+    connection_string: str
+
+
+def _get_expected_token() -> str:
+    return os.environ.get("MAVLINK_AUTH_TOKEN", "ardupilot")
+
+
+# ── Bug 3 fix: added `token` query parameter; returns 403 when it does not
+#    match MAVLINK_AUTH_TOKEN so unauthenticated callers cannot trigger an
+#    arbitrary MAVLink connection.
+# ── Bug 2 fix: asyncio.get_event_loop() replaced with asyncio.create_task().
+# ── Bug 6 fix: entire body is executed under _connect_lock. ─────────────────
+@app.post("/api/live/connect")
+async def connect_live_stream(
+    req: ConnectRequest,
+    token: str = Query(default=""),
+):
+    if token != _get_expected_token():
+        raise HTTPException(status_code=403, detail="Invalid or missing auth token.")
+
+    async with _connect_lock:
+        global streamer
+        if streamer and streamer.is_running:
+            streamer.stop()
+        streamer = MAVLinkStreamer(ws_manager, req.connection_string)
+        # Bug 1 & 2 fix: start() is async; create_task() used directly.
+        asyncio.create_task(streamer.start())
+
+    return {"status": "started", "connection_string": req.connection_string}
+
+
+@app.post("/api/live/stop")
+async def stop_live_stream():
+    async with _connect_lock:
+        global streamer
+        if streamer and streamer.is_running:
+            streamer.stop()
+            return {"status": "stopped"}
+    return {"status": "already_stopped"}
+
+
+@app.websocket("/api/live/stream")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(default="")):
+    if token != _get_expected_token():
+        await websocket.close(code=1008)
+        return
+
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            # Keep the connection alive; actual data is pushed via broadcast()
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -50,7 +153,9 @@ async def get_index() -> str:
 @app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_log(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith(".bin"):
-        return JSONResponse(status_code=400, content={"error": "Only .BIN files are supported."})
+        return JSONResponse(
+            status_code=400, content={"error": "Only .BIN files are supported."}
+        )
 
     fd, temp_path = tempfile.mkstemp(suffix=".bin")
     try:
@@ -64,7 +169,9 @@ async def analyze_log(file: UploadFile = File(...)):
                 if total_bytes > MAX_UPLOAD_BYTES:
                     return JSONResponse(
                         status_code=413,
-                        content={"error": f"Uploaded file exceeds {MAX_UPLOAD_BYTES} bytes."},
+                        content={
+                            "error": f"Uploaded file exceeds {MAX_UPLOAD_BYTES} bytes."
+                        },
                     )
                 handle.write(chunk)
 
@@ -72,8 +179,11 @@ async def analyze_log(file: UploadFile = File(...)):
         return AnalysisResponse(**result)
     except ValidationError as e:
         LOGGER.exception("Schema validation failed for model output")
-        return JSONResponse(status_code=500, content={"error": "Schema validation failed", "details": e.errors()})
-    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Schema validation failed", "details": e.errors()},
+        )
+    except Exception:
         LOGGER.exception("Error during analysis")
         return JSONResponse(
             status_code=500,
@@ -278,79 +388,73 @@ def _find_start_time_us(parsed: dict[str, Any]) -> int | None:
     return None
 
 
-# Chat endpoint for conversational AI over log analysis
+# ── Chat endpoint ─────────────────────────────────────────────────────────────
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """Answer questions about a log analysis using rule-based AI assistant."""
+    """Answer questions about a log analysis using the rule-based AI assistant."""
     try:
         assistant = ChatAssistant()
         response_data = assistant.ask(request.question, request.analysis_result)
-        
         return ChatResponse(
             question=response_data["question"],
             answer=response_data["answer"],
             confidence=response_data["confidence"],
             sources=response_data.get("sources", []),
-            follow_up=response_data.get("follow_up", [])
+            follow_up=response_data.get("follow_up", []),
         )
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during chat")
         return JSONResponse(
             status_code=500,
-            content={"error": "Chat failed. Check server logs for details."}
+            content={"error": "Chat failed. Check server logs for details."},
         )
 
 
-# Trend analysis endpoint for multi-flight comparison
+# ── Multi-flight comparison endpoint ─────────────────────────────────────────
 @app.post("/api/compare", response_model=dict)
 async def compare_flights(files: list[UploadFile] = File(...)):
     """Compare multiple flight logs for trend analysis and degradation detection."""
     if len(files) < 2:
         return JSONResponse(
             status_code=400,
-            content={"error": "At least 2 files required for comparison"}
+            content={"error": "At least 2 files required for comparison"},
         )
-    
     try:
         analysis_results = []
-        engine = HybridEngine()
-        parser_obj = LogParser("")
-        pipeline = FeaturePipeline()
-        
+
         for file in files:
             if not file.filename or not file.filename.lower().endswith(".bin"):
                 continue
-            
-            # Save to temp file
+
             fd, temp_path = tempfile.mkstemp(suffix=".bin")
             try:
                 with os.fdopen(fd, "wb") as f:
                     content = await file.read()
                     f.write(content)
-                
-                # Analyze
-                result = _analyze_temp_log(temp_path, file.filename)
+
+                result = await asyncio.to_thread(
+                    _analyze_temp_log, temp_path, file.filename
+                )
                 analysis_results.append(result)
             finally:
                 try:
                     os.unlink(temp_path)
-                except:
+                except OSError:
                     pass
-        
+
         if len(analysis_results) < 2:
             return JSONResponse(
                 status_code=400,
-                content={"error": "Need at least 2 valid .BIN files"}
+                content={"error": "Need at least 2 valid .BIN files"},
             )
-        
-        # Run trend analysis
+
         analyzer = TrendAnalyzer()
         trend_report = analyzer.compare_flights(analysis_results)
-        
         return trend_report
-    except Exception as e:
+
+    except Exception:
         LOGGER.exception("Error during comparison")
         return JSONResponse(
             status_code=500,
-            content={"error": "Comparison failed. Check server logs for details."}
+            content={"error": "Comparison failed. Check server logs for details."},
         )
