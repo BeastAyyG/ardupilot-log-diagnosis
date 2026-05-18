@@ -19,7 +19,7 @@ def register(subparsers: _SubParsersAction) -> None:
         "live", help="Connect to a live MAVLink stream and run diagnostics in real-time"
     )
     parser.add_argument(
-        "connection", help="MAVLink connection string (e.g., tcp:127.0.0.1:5760, /dev/ttyUSB0)"
+        "connection", help="MAVLink connection string (e.g., tcp:127.0.0.1:5760)"
     )
     parser.add_argument(
         "--window", type=float, default=30.0, help="Rolling window size in seconds"
@@ -35,6 +35,14 @@ def run(args) -> None:
     window_size = args.window
     eval_interval = args.interval
 
+    # FIX 1: Validate --window and --interval are positive
+    if window_size <= 0:
+        print("Error: --window must be a positive number.")
+        return
+    if eval_interval <= 0:
+        print("Error: --interval must be a positive number.")
+        return
+
     print(f"Connecting to {connection_string}...")
     try:
         conn = mavutil.mavlink_connection(connection_string)
@@ -42,52 +50,58 @@ def run(args) -> None:
         print(f"Failed to connect: {e}")
         return
 
-    print("Waiting for heartbeat...")
-    heartbeat = conn.recv_match(type="HEARTBEAT", blocking=True, timeout=30)
-    if heartbeat is None:
-        print("Timeout waiting for heartbeat. Check connection and vehicle power.")
-        return
-
-    print(f"Heartbeat received from system {heartbeat.get_srcSystem()} component {heartbeat.get_srcComponent()}")
-
-    messages_queue = []
-    parameters = {}
-    vehicle_type = "Unknown"
-    firmware_version = "Unknown"
-
-    pipeline = FeaturePipeline()
-    rule_engine = RuleEngine()
-    formatter = DiagnosisFormatter()
-
-    last_eval_time = time.time()
-
-    INTERESTING_MESSAGE_TYPES = {
-        "VIBE", "MAG", "BAT", "CURR", "GPS", "RCOU", "XKF4", "NKF4",
-        "PARM", "ERR", "EV", "MODE", "MSG", "CTUN", "ATT", "RATE",
-        "PM", "FTN1", "IMU", "POWR"
-    }
-
-    def vehicle_from_heartbeat(mav_type: int) -> str:
-        if mav_type in (2, 3, 4, 13, 14, 15):
-            return "Copter"
-        elif mav_type == 1:
-            return "Plane"
-        elif mav_type == 10:
-            return "Rover"
-        elif mav_type == 12:
-            return "Sub"
-        return "Unknown"
-
-    print("Listening for messages. Press Ctrl+C to stop.")
+    # FIX 2: Wrap everything in try/finally so conn.close() always runs
     try:
+        print("Waiting for heartbeat...")
+        heartbeat = conn.recv_match(type="HEARTBEAT", blocking=True, timeout=30)
+        if heartbeat is None:
+            print("Timeout waiting for heartbeat. Check connection and vehicle power.")
+            return
+
+        print(f"Heartbeat received from system {heartbeat.get_srcSystem()} "
+              f"component {heartbeat.get_srcComponent()}")
+
+        messages_queue = []
+        parameters = {}
+        vehicle_type = "Unknown"
+        firmware_version = "Unknown"
+
+        pipeline = FeaturePipeline()
+        rule_engine = RuleEngine()
+        formatter = DiagnosisFormatter()
+
+        last_eval_time = time.time()
+
+        INTERESTING_MESSAGE_TYPES = {
+            "VIBE", "MAG", "BAT", "CURR", "GPS", "RCOU", "XKF4", "NKF4",
+            "PARM", "ERR", "EV", "MODE", "MSG", "CTUN", "ATT", "RATE",
+            "PM", "FTN1", "IMU", "POWR"
+        }
+
+        def vehicle_from_heartbeat(mav_type: int) -> str:
+            if mav_type in (2, 3, 4, 13, 14, 15):
+                return "Copter"
+            elif mav_type == 1:
+                return "Plane"
+            elif mav_type == 10:
+                return "Rover"
+            elif mav_type == 12:
+                return "Sub"
+            return "Unknown"
+
+        print("Listening for messages. Press Ctrl+C to stop.")
+
         while True:
             current_time = time.time()
 
-            while True:
+            # FIX 3: Bound drain loop to max 100 messages to avoid starvation
+            msgs_read = 0
+            while msgs_read < 100:
                 msg = conn.recv_match(blocking=False)
                 if msg is None:
                     break
 
+                msgs_read += 1
                 msg_type = msg.get_type()
                 msg_time = time.time()
 
@@ -182,7 +196,11 @@ def run(args) -> None:
                             features.get("_metadata", {}),
                             decision=None,
                             similar_cases=[],
-                            runtime_info={"engine": "rule", "ml_available": False, "ml_reason": "live mode"},
+                            runtime_info={
+                                "engine": "rule",
+                                "ml_available": False,
+                                "ml_reason": "live mode"
+                            },
                             parameter_warnings=[],
                             explain_data=None
                         )
@@ -195,4 +213,5 @@ def run(args) -> None:
     except KeyboardInterrupt:
         print("\nStopping live diagnosis.")
     finally:
+        # FIX 2: Always close connection on ALL exit paths
         conn.close()
