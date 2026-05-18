@@ -160,7 +160,7 @@
                         <p class="text-gray-500 text-xs mt-2 text-center">or click to browse</p>
                         <input type="file" id="file-input" class="hidden" accept=".BIN,.bin">
                     </div>
-
+                    
                     <!-- Progress Simulation (Hidden by default) -->
                     <div id="progress-container" class="hidden mt-6">
                         <div class="flex justify-between text-xs text-gray-400 mb-2 code-font">
@@ -300,7 +300,76 @@
             </div>
         </main>
     </div>
+    <div class="glass-panel p-6 mt-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h3 class="text-sm uppercase tracking-widest text-cyan-400 font-bold">
+                Multi-Flight Comparison Dashboard
+            </h3>
+            <p class="text-gray-400 text-sm mt-1">
+                Compare vibration, battery sag and EKF drift across logs
+            </p>
+        </div>
+    </div>
 
+    <div class="mb-6">
+        <label class="block text-gray-300 text-sm mb-2">
+            Select Multiple Flight Logs
+        </label>
+
+        <input
+            type="file"
+            id="compareLogs"
+            multiple
+            accept=".bin,.BIN"
+            class="w-full bg-gray-900 border border-cyan-700 rounded-lg p-3 text-white"
+        />
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <div class="glass-panel p-4 h-[300px]">
+        <h4 class="text-cyan-400 mb-3">
+            Vibration Trend
+        </h4>
+        <canvas id="vibrationChart"></canvas>
+    </div>
+
+    <div class="glass-panel p-4 h-[300px]">
+        <h4 class="text-green-400 mb-3">
+            Battery Sag
+        </h4>
+        <canvas id="batteryChart"></canvas>
+    </div>
+
+    <div class="glass-panel p-4 h-[300px]">
+        <h4 class="text-purple-400 mb-3">
+            EKF Variance Drift
+        </h4>
+        <canvas id="ekfChart"></canvas>
+    </div>
+
+</div>
+
+<div id="comparisonSummary"
+     class="glass-panel p-4 mt-4 text-sm text-gray-300 max-h-[120px] overflow-auto">
+</div>
+
+<div class="flex gap-4 mt-6">
+    <button
+        id="compareBtn"
+        class="bg-cyan-600 hover:bg-cyan-500 px-5 py-2 rounded-lg text-white"
+    >
+        Compare Flights
+    </button>
+
+    <button
+        id="exportCsvBtn"
+        class="bg-green-600 hover:bg-green-500 px-5 py-2 rounded-lg text-white"
+    >
+        Export CSV
+    </button>
+</div>
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
@@ -811,6 +880,167 @@
                 Plotly.newPlot(target, [tx, ty, tz], layout, {responsive: true});
             }
         }
+      let vibrationChart = null;
+let batteryChart = null;
+let ekfChart = null;
+
+document.getElementById('compareBtn').addEventListener('click', async () => {
+    const filesInput = document.getElementById('compareLogs');
+    const files = filesInput.files;
+
+    if (files.length < 2) {
+        alert('Please select at least 2 flight logs');
+        return;
+    }
+
+    const formData = new FormData();
+
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+
+    try {
+        const response = await fetch('/api/compare', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            alert('Compare API failed');
+            return;
+        }
+
+        const data = await response.json();
+
+        console.log('Compare Result:', data);
+
+        // Destroy old charts before creating new ones
+        if (vibrationChart) vibrationChart.destroy();
+        if (batteryChart) batteryChart.destroy();
+        if (ekfChart) ekfChart.destroy();
+
+        // --------------------
+        // VIBRATION CHART
+        // --------------------
+        const vibrationCanvas = document.getElementById('vibrationChart');
+
+        vibrationChart = new Chart(vibrationCanvas, {
+            type: 'line',
+            data: {
+                labels: data.flight_order,
+                datasets: [
+                    {
+                        label: 'Vibe X',
+                        data: [
+                            data.trends.vibe_x_mean.first_value,
+                            data.trends.vibe_x_mean.last_value
+                        ]
+                    },
+                    {
+                        label: 'Vibe Y',
+                        data: [
+                            data.trends.vibe_y_mean.first_value,
+                            data.trends.vibe_y_mean.last_value
+                        ]
+                    },
+                    {
+                        label: 'Vibe Z',
+                        data: [
+                            data.trends.vibe_z_mean.first_value,
+                            data.trends.vibe_z_mean.last_value
+                        ]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // --------------------
+        // BATTERY CHART
+        // --------------------
+        const batteryCanvas = document.getElementById('batteryChart');
+
+        batteryChart = new Chart(batteryCanvas, {
+            type: 'bar',
+            data: {
+                labels: data.flight_order,
+                datasets: [{
+                    label: 'Battery Voltage Min',
+                    data: [
+    data.trends.bat_volt_min.first_value || null,
+    data.trends.bat_volt_min.last_value || null
+]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // --------------------
+        // EKF CHART
+        // --------------------
+        const ekfCanvas = document.getElementById('ekfChart');
+
+        ekfChart = new Chart(ekfCanvas, {
+            type: 'line',
+            data: {
+                labels: data.flight_order,
+                datasets: [
+                    {
+                        label: 'EKF Position Variance',
+                        data: [
+                            data.trends.ekf_pos_var_max.first_value,
+                            data.trends.ekf_pos_var_max.last_value
+                        ]
+                    },
+                    {
+                        label: 'EKF Velocity Variance',
+                        data: [
+                            data.trends.ekf_vel_var_max.first_value,
+                            data.trends.ekf_vel_var_max.last_value
+                        ]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+       document.getElementById('comparisonSummary').innerHTML = `
+    <h4 class="text-cyan-400 mb-2 font-bold">
+        Comparison Summary
+    </h4>
+
+    <p>
+        📉 Vibration Z Change:
+        ${data.trends.vibe_z_mean.change_percent.toFixed(2)}%
+    </p>
+
+    <p>
+        🔋 Battery Voltage Change:
+        ${data.trends.bat_volt_min.change_percent.toFixed(2)}%
+    </p>
+
+    <p>
+        🧭 EKF Position Drift:
+        ${data.trends.ekf_pos_var_max.change_percent.toFixed(2)}%
+    </p>
+`;
+
+alert('Comparison successful!');
+
+    } catch (err) {
+        console.error(err);
+        alert('Comparison failed');
+    }
+});
     </script>
 </body>
 </html>
