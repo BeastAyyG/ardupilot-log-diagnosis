@@ -37,7 +37,7 @@ class DerivedFeaturesExtractor:
 
     def _safe_div(self, num, den, default=0.0) -> float:
         """
-        Safely divide two numbers, returning a default value on invalid input.
+       Safely divide two numbers, returning a default value if the denominator is invalid.
 
         Args:
             num: Numerator value.
@@ -55,7 +55,7 @@ class DerivedFeaturesExtractor:
         """
         Compute all derived features from base features.
 
-        Computes seven physics-informed derived features:
+        Computes physics-informed derived features including:
         - Thrust-to-weight ratio
         - Voltage internal resistance
         - Attitude tracking error
@@ -67,8 +67,6 @@ class DerivedFeaturesExtractor:
         Returns:
             dict: A dictionary mapping feature names to their computed float values.
 
-        Raises:
-            KeyError: If required base features are missing and no default is set.
         """
         f = self.base_features
 
@@ -83,7 +81,7 @@ class DerivedFeaturesExtractor:
         vir = self._safe_div(bat_volt_range, bat_curr_max)
 
         # 3. Attitude Tracking Error
-        att_desroll_err = f.get("att_roll_err_max", 0.0)
+        att_desroll_err = f.get("att_roll_err_max", 0.0)  # Use max error as proxy
         att_roll_std = f.get("att_roll_std", 0.0)
         ate = self._safe_div(att_desroll_err, att_roll_std)
 
@@ -103,7 +101,7 @@ class DerivedFeaturesExtractor:
         vcr = self._safe_div(vibe_z_max, vibe_clip_total + 1.0)
 
         # 7. GPS Reliability Score
-        gps_fix_pct = 1.0 - f.get("gps_flags_error_pct", 0.0)
+        gps_fix_pct = 1.0 - f.get("gps_flags_error_pct", 0.0) # rough proxy for fix pct
         gps_nsats_min = f.get("gps_nsats_min", 0.0)
         gps_hdop_mean = f.get("gps_hdop_mean", 0.0)
         grs = self._safe_div(gps_fix_pct * gps_nsats_min, gps_hdop_mean)
