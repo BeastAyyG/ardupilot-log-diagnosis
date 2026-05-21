@@ -62,7 +62,6 @@ def save_reliability_diagram(
     n_bins: int = 10,
 ) -> None:
     """Save a reliability diagram PNG."""
-
     if not confidences:
         plt.figure(figsize=(6, 6))
         plt.text(0.5, 0.5, "No calibration data available", ha="center")
@@ -102,8 +101,6 @@ def save_reliability_diagram(
 
     plt.savefig(output_path)
     plt.close()
-
-
 # ---------------------------------------------------------------------------
 # Abstention rate
 # ---------------------------------------------------------------------------
@@ -190,6 +187,7 @@ def generate_calibration_report(
     correct_flags,
     output_path="benchmark_reliability.png"
     )
+    
     fcr = compute_false_critical_rate(results)
     abstention = compute_abstention_rate(decisions or [])
 

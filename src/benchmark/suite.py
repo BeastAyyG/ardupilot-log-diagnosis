@@ -87,5 +87,5 @@ class BenchmarkSuite:
                 results.add_error(filename, str(e), "DIAGNOSIS_FAILED")
 
         generate_calibration_report(results.log_results)
-        
+
         return results
