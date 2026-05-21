@@ -213,7 +213,7 @@ def test_empty_bin_file_returns_non_zero_exit(tmp_path):
     test_args = ["main", "analyze", str(empty_bin)]
 
     with patch.object(sys, "argv", test_args):
-        try:
+        with pytest.raises(SystemExit) as exc_info:
             main()
-        except SystemExit as exc:
-            assert exc.code != 0
+
+    assert exc_info.value.code not in (0, None)

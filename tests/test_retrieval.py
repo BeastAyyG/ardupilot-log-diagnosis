@@ -87,7 +87,7 @@ def test_empty_features_dict_returns_empty(tmp_path):
 
 
 def test_zero_vectors_return_empty(tmp_path):
-    """Should safely handle zero vectors without crashing."""
+    """Should safely handle stored zero vectors without crashing."""
     retrieval = FailureRetrieval(str(tmp_path / "test.json"))
 
     retrieval.add_known_failure(
@@ -95,5 +95,5 @@ def test_zero_vectors_return_empty(tmp_path):
         "vibration_high"
     )
 
-    res = retrieval.find_similar({})
+    res = retrieval.find_similar({"vibe_z_max": 100.0})
     assert res == []
