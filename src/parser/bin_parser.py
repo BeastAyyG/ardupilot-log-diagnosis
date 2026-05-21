@@ -29,7 +29,7 @@ class LogParser:
         "POWR",
     }
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str) -> None:
         self.filepath = filepath
         self.logger = logging.getLogger(__name__)
 

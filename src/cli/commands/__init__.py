@@ -14,3 +14,19 @@ COMMAND_MODULES = [
     ui,
     live,
 ]
+
+__all__ = [
+    "analyze",
+    "batch",
+    "benchmark",
+    "collect_forum",
+    "compare",
+    "demo",
+    "features",
+    "import_clean",
+    "label",
+    "mine_expert_labels",
+    "ui",
+    "live",
+    "COMMAND_MODULES",
+]

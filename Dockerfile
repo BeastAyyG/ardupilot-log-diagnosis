@@ -22,5 +22,9 @@ COPY models/ /app/models/
 # Expose the API port
 EXPOSE 8000
 
+#HEATHCHECK
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')" || exit 1
+
 # Run the FastAPI server
 CMD ["python", "-m", "uvicorn", "src.web.app:app", "--host", "0.0.0.0", "--port", "8000"]

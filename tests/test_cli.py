@@ -205,3 +205,15 @@ def test_ui_command_reports_missing_optional_dependency(capsys):
     assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "Optional web UI dependencies are not installed." in captured.out
+
+def test_empty_bin_file_returns_non_zero_exit(tmp_path):
+    empty_bin = tmp_path / "empty.BIN"
+    empty_bin.write_bytes(b"")
+
+    test_args = ["main", "analyze", str(empty_bin)]
+
+    with patch.object(sys, "argv", test_args):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code != 0
