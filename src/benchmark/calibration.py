@@ -11,6 +11,7 @@ These satisfy Hard Gate E and P4-03.
 from __future__ import annotations
 
 from typing import List, Tuple
+import matplotlib.pyplot as plt
 
 
 # ---------------------------------------------------------------------------
@@ -52,6 +53,55 @@ def compute_ece(
         ece += (size / n) * abs(avg_acc - avg_conf)
 
     return float(ece)
+
+
+def save_reliability_diagram(
+    confidences: List[float],
+    correct: List[bool],
+    output_path: str = "reliability_diagram.png",
+    n_bins: int = 10,
+) -> None:
+    """Save a reliability diagram PNG."""
+
+    if not confidences:
+        plt.figure(figsize=(6, 6))
+        plt.text(0.5, 0.5, "No calibration data available", ha="center")
+        plt.title("Reliability Diagram")
+        plt.savefig(output_path)
+        plt.close()
+        return
+
+    bin_acc = []
+    bin_conf = []
+
+    bins = [[] for _ in range(n_bins)]
+
+    for conf, corr in zip(confidences, correct):
+        idx = min(int(conf * n_bins), n_bins - 1)
+        bins[idx].append((conf, corr))
+
+    for bucket in bins:
+        if bucket:
+            avg_conf = sum(c for c, _ in bucket) / len(bucket)
+            avg_acc = sum(1 for _, ok in bucket if ok) / len(bucket)
+        else:
+            avg_conf = 0
+            avg_acc = 0
+
+        bin_conf.append(avg_conf)
+        bin_acc.append(avg_acc)
+
+    plt.figure(figsize=(6, 6))
+    plt.plot([0, 1], [0, 1], linestyle="--", label="Perfect Calibration")
+    plt.bar(bin_conf, bin_acc, width=0.08)
+    plt.xlabel("Confidence")
+    plt.ylabel("Accuracy")
+    plt.title("Reliability Diagram")
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(output_path)
+    plt.close()
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +185,11 @@ def generate_calibration_report(
             correct_flags.append(is_correct)
 
     ece = compute_ece(confidences, correct_flags)
+    save_reliability_diagram(
+    confidences,
+    correct_flags,
+    output_path="benchmark_reliability.png"
+    )
     fcr = compute_false_critical_rate(results)
     abstention = compute_abstention_rate(decisions or [])
 
