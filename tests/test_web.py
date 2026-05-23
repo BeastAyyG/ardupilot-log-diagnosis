@@ -18,6 +18,9 @@ class _DummyParser:
                         "Lng": -1220845678,
                         "Alt": 25,
                         "TimeUS": 2_000_000,
+                        "HDop": 1.2,
+                        "NSats": 10,
+                        "Status": 3,
                     }
                 ],
                 "VIBE": [],
@@ -97,6 +100,25 @@ def test_api_analyze_handles_gps_only_logs(monkeypatch):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["rule_output_only"] == "gps_quality_poor"
-    assert data["time_series"]["gps"][0]["t"] == 0.0
+
+    # Core metadata
     assert data["metadata"]["filename"] == "gps_only.bin"
+    assert data["rule_output_only"] == "gps_quality_poor"
+
+    # GPS path time series
+    assert data["time_series"]["gps"][0]["t"] == 0.0
+
+    # GPS quality — summary stats
+    assert data["gps_quality"]["avg_hdop"] == 1.2
+    assert data["gps_quality"]["min_satellites"] == 10
+
+    # GPS quality — time-series lengths
+    assert len(data["gps_quality"]["hdop"]) == 1
+    assert len(data["gps_quality"]["sat_count"]) == 1
+    assert len(data["gps_quality"]["fix_type"]) == 1
+
+    # GPS quality — fix_type value for the single message (Status=3)
+    assert data["gps_quality"]["fix_type"][0]["v"] == 3
+
+    # GPS quality — TTFF: single message already has Status=3, so offset is 0.0 s
+    assert data["gps_quality"]["ttff_sec"] == 0.0

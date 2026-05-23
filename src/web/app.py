@@ -175,7 +175,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
     decision = evaluate_decision(diagnoses)
     explain_data["decision"] = decision
 
-    time_series, timeline_events = _build_visualization_data(parsed, features)
+    time_series, timeline_events, gps_quality = _build_visualization_data(parsed, features)
     rule_diagnoses = RuleEngine().diagnose(features)
     rule_output_only = rule_diagnoses[0]["failure_type"] if rule_diagnoses else "nominal"
 
@@ -191,6 +191,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
         "explain_data": explain_data,
         "time_series": time_series,
         "timeline_events": timeline_events,
+        "gps_quality": gps_quality,
         "rule_output_only": rule_output_only,
         "rule_output_diagnoses": rule_diagnoses,
     }
@@ -198,8 +199,16 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
 
 def _build_visualization_data(
     parsed: dict[str, Any], features: dict[str, Any]
-) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, Any]]:
     time_series: dict[str, list[dict[str, Any]]] = {"gps": [], "vibe": []}
+    gps_quality: dict[str, Any] = {
+        "hdop": [],
+        "sat_count": [],
+        "fix_type": [],
+        "avg_hdop": 0.0,
+        "min_satellites": 0,
+        "ttff_sec": None,
+    }
     start_time = _find_start_time_us(parsed)
 
     vibe_msgs = parsed.get("messages", {}).get("VIBE", [])
@@ -231,14 +240,39 @@ def _build_visualization_data(
         )
 
     step_gps = max(1, len(gps_msgs) // 500)
+    hdop_sum = 0.0
+    hdop_count = 0
+    min_sats = None
+
     for msg in gps_msgs[::step_gps]:
         lat = msg.get("Lat")
         lng = msg.get("Lng")
         alt = msg.get("Alt", 0)
         t_us = msg.get("TimeUS")
-        if lat and lng and lat != 0 and lng != 0 and t_us is not None:
+
+        hdop = msg.get("HDop", 0.0)
+        nsats = msg.get("NSats", 0)
+        status = msg.get("Status", 0)
+
+        if t_us is not None:
             if start_time is None:
                 start_time = t_us
+            t_s = round((t_us - start_time) / 1e6, 2)
+
+            gps_quality["hdop"].append({"t": t_s, "v": hdop})
+            gps_quality["sat_count"].append({"t": t_s, "v": nsats})
+            gps_quality["fix_type"].append({"t": t_s, "v": status})
+
+            hdop_sum += hdop
+            hdop_count += 1
+            if min_sats is None or nsats < min_sats:
+                min_sats = nsats
+
+            # Time-to-first-fix: earliest message where Status >= 3 (3-D fix)
+            if gps_quality["ttff_sec"] is None and status >= 3:
+                gps_quality["ttff_sec"] = t_s
+
+        if lat and lng and lat != 0 and lng != 0 and t_us is not None:
             time_series["gps"].append(
                 {
                     "t": round((t_us - start_time) / 1e6, 2),
@@ -247,6 +281,11 @@ def _build_visualization_data(
                     "alt": alt,
                 }
             )
+
+    if hdop_count > 0:
+        gps_quality["avg_hdop"] = round(hdop_sum / hdop_count, 2)
+    if min_sats is not None:
+        gps_quality["min_satellites"] = min_sats
 
     def get_gps_at(t_target: float) -> dict[str, Any] | None:
         if not time_series["gps"]:
@@ -326,24 +365,34 @@ def _build_visualization_data(
     )
     timeline_events.sort(key=lambda event: event["t_sec"])
 
-    return time_series, timeline_events
+    return time_series, timeline_events, gps_quality
 
 
 def _find_start_time_us(parsed: dict[str, Any]) -> int | None:
+    """Return the earliest timestamp (us) seen across all message streams.
+
+    Using the first-seen value from a single stream can produce negative time
+    offsets when GPS messages begin earlier than VIBE messages (or vice versa).
+    Taking the true minimum across every stream prevents that.
+    """
+    candidates: list[int] = []
+
     message_groups = parsed.get("messages", {})
     for message_type in ("VIBE", "GPS"):
         for msg in message_groups.get(message_type, []):
             t_us = msg.get("TimeUS")
             if t_us is not None:
-                return t_us
+                candidates.append(t_us)
+                break  # only the first timestamp from each stream is needed
 
     for collection_name in ("errors", "mode_changes", "events"):
         for item in parsed.get(collection_name, []):
             t_us = item.get("time_us")
             if t_us is not None:
-                return t_us
+                candidates.append(t_us)
+                break
 
-    return None
+    return min(candidates) if candidates else None
 
 
 @app.post("/api/chat", response_model=ChatResponse)
