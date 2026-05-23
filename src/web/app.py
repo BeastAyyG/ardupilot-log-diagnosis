@@ -143,7 +143,7 @@ async def analyze_log(file: UploadFile = File(...)):
     except ValidationError as e:
         LOGGER.exception("Schema validation failed for model output")
         return JSONResponse(status_code=500, content={"error": "Schema validation failed", "details": e.errors()})
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during analysis")
         return JSONResponse(
             status_code=500,
@@ -412,7 +412,7 @@ async def chat(request: ChatRequest):
             sources=response_data.get("sources", []),
             follow_up=response_data.get("follow_up", [])
         )
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during chat")
         return JSONResponse(
             status_code=500,
@@ -452,7 +452,7 @@ async def compare_flights(files: list[UploadFile] = File(...)):
         analyzer = TrendAnalyzer()
         trend_report = analyzer.compare_flights(analysis_results)
         return trend_report
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during comparison")
         return JSONResponse(
             status_code=500,
