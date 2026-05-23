@@ -24,10 +24,18 @@ from src.chat.assistant import ChatAssistant
 from src.comparison.trend_analyzer import TrendAnalyzer
 from src.web.live_stream import WebSocketManager, MAVLinkStreamer
 
-# Global instance to avoid redundant config parsing on every request
-RULE_ENGINE = RuleEngine()
 
 LOGGER = logging.getLogger(__name__)
+
+# Lazy singleton — instantiated once on first use so tests can monkeypatch RuleEngine freely
+_rule_engine: RuleEngine | None = None
+
+
+def _get_rule_engine() -> RuleEngine:
+    global _rule_engine
+    if _rule_engine is None:
+        _rule_engine = RuleEngine()
+    return _rule_engine
 MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 WEB_DIR = Path(__file__).parent.absolute()
@@ -178,7 +186,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
     explain_data["decision"] = decision
 
     time_series, timeline_events, gps_quality = _build_visualization_data(parsed, features)
-    rule_diagnoses = RULE_ENGINE.diagnose(features)
+    rule_diagnoses = _get_rule_engine().diagnose(features)
     rule_output_only = rule_diagnoses[0]["failure_type"] if rule_diagnoses else "nominal"
 
     return {
@@ -241,9 +249,8 @@ def _build_visualization_data(
             }
         )
 
-    # --- Summary stats computed on the FULL dataset for accuracy ---
-    # Computing avg_hdop, min_satellites, and ttff_sec inside the sampled
-    # loop risks missing brief satellite drops or the exact first-fix moment.
+    # --- Summary stats on FULL dataset for accuracy ---
+    # Sampling would miss brief satellite drops or the exact first-fix moment.
     if gps_msgs:
         hdops = [m.get("HDop", 0.0) for m in gps_msgs]
         sats = [m.get("NSats", 0) for m in gps_msgs]
@@ -290,7 +297,7 @@ def _build_visualization_data(
                 }
             )
 
-    # Summary stats are now pre-calculated on the full dataset
+    # Summary stats pre-calculated on full dataset above
 
     def get_gps_at(t_target: float) -> dict[str, Any] | None:
         if not time_series["gps"]:
