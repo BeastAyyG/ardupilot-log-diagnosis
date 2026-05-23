@@ -92,6 +92,7 @@ def _response_to_dict(response) -> dict:
 
 
 def test_api_analyze_handles_gps_without_vibe(monkeypatch):
+    monkeypatch.setattr(web_app, "_rule_engine", None)  # reset singleton so monkeypatch takes effect
     monkeypatch.setattr(web_app, "LogParser", _FakeParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _FakePipeline)
     monkeypatch.setattr(web_app, "HybridEngine", _FakeHybridEngine)
@@ -125,6 +126,7 @@ def test_api_analyze_handles_gps_without_vibe(monkeypatch):
 
 
 def test_api_rule_output_only_is_string(monkeypatch):
+    monkeypatch.setattr(web_app, "_rule_engine", None)  # reset singleton so monkeypatch takes effect
     monkeypatch.setattr(web_app, "LogParser", _FakeParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _FakePipeline)
     monkeypatch.setattr(web_app, "HybridEngine", _FakeHybridEngine)
@@ -138,6 +140,7 @@ def test_api_rule_output_only_is_string(monkeypatch):
 
 
 def test_api_rejects_oversized_upload(monkeypatch):
+    monkeypatch.setattr(web_app, "_rule_engine", None)  # reset singleton so monkeypatch takes effect
     monkeypatch.setattr(web_app, "MAX_UPLOAD_BYTES", 4)
 
     class _ExplodingParser:
@@ -180,6 +183,7 @@ def test_api_ttff_none_when_no_fix(monkeypatch):
         def extract(self, _parsed):
             return {"_metadata": {"duration_sec": 1.0, "vehicle_type": "Copter"}}
 
+    monkeypatch.setattr(web_app, "_rule_engine", None)  # reset singleton so monkeypatch takes effect
     monkeypatch.setattr(web_app, "LogParser", _NoFixParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _NoFixPipeline)
     monkeypatch.setattr(web_app, "HybridEngine", _FakeHybridEngine)
@@ -210,6 +214,7 @@ def test_api_gps_quality_safe_defaults_when_no_gps(monkeypatch):
         def extract(self, _parsed):
             return {"_metadata": {"duration_sec": 5.0, "vehicle_type": "Copter"}}
 
+    monkeypatch.setattr(web_app, "_rule_engine", None)  # reset singleton so monkeypatch takes effect
     monkeypatch.setattr(web_app, "LogParser", _NoGpsParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _NoGpsPipeline)
     monkeypatch.setattr(web_app, "HybridEngine", _FakeHybridEngine)

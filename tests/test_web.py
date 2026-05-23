@@ -75,6 +75,7 @@ class _DummyRuleEngine:
 
 
 def test_api_analyze_handles_gps_only_logs(monkeypatch):
+    monkeypatch.setattr(web_app, "_rule_engine", None)  # reset singleton so monkeypatch takes effect
     monkeypatch.setattr(web_app, "LogParser", _DummyParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _DummyPipeline)
     monkeypatch.setattr(web_app, "HybridEngine", _DummyHybridEngine)
