@@ -24,6 +24,8 @@ from src.chat.assistant import ChatAssistant
 from src.comparison.trend_analyzer import TrendAnalyzer
 from src.web.live_stream import WebSocketManager, MAVLinkStreamer
 
+# Global instance to avoid redundant config parsing on every request
+RULE_ENGINE = RuleEngine()
 
 LOGGER = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 64 * 1024 * 1024
@@ -176,7 +178,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
     explain_data["decision"] = decision
 
     time_series, timeline_events, gps_quality = _build_visualization_data(parsed, features)
-    rule_diagnoses = RuleEngine().diagnose(features)
+    rule_diagnoses = RULE_ENGINE.diagnose(features)
     rule_output_only = rule_diagnoses[0]["failure_type"] if rule_diagnoses else "nominal"
 
     return {
@@ -239,10 +241,25 @@ def _build_visualization_data(
             }
         )
 
+    # --- Summary stats computed on the FULL dataset for accuracy ---
+    # Computing avg_hdop, min_satellites, and ttff_sec inside the sampled
+    # loop risks missing brief satellite drops or the exact first-fix moment.
+    if gps_msgs:
+        hdops = [m.get("HDop", 0.0) for m in gps_msgs]
+        sats = [m.get("NSats", 0) for m in gps_msgs]
+        gps_quality["avg_hdop"] = round(sum(hdops) / len(hdops), 2) if hdops else 0.0
+        gps_quality["min_satellites"] = min(sats) if sats else 0
+
+        for m in gps_msgs:
+            if m.get("Status", 0) >= 3:
+                t_us = m.get("TimeUS")
+                if t_us is not None:
+                    ref_time = start_time if start_time is not None else t_us
+                    gps_quality["ttff_sec"] = round((t_us - ref_time) / 1e6, 2)
+                break
+
+    # --- Sampled loop: build time-series lists for display only ---
     step_gps = max(1, len(gps_msgs) // 500)
-    hdop_sum = 0.0
-    hdop_count = 0
-    min_sats = None
 
     for msg in gps_msgs[::step_gps]:
         lat = msg.get("Lat")
@@ -263,15 +280,6 @@ def _build_visualization_data(
             gps_quality["sat_count"].append({"t": t_s, "v": nsats})
             gps_quality["fix_type"].append({"t": t_s, "v": status})
 
-            hdop_sum += hdop
-            hdop_count += 1
-            if min_sats is None or nsats < min_sats:
-                min_sats = nsats
-
-            # Time-to-first-fix: earliest message where Status >= 3 (3-D fix)
-            if gps_quality["ttff_sec"] is None and status >= 3:
-                gps_quality["ttff_sec"] = t_s
-
         if lat and lng and lat != 0 and lng != 0 and t_us is not None:
             time_series["gps"].append(
                 {
@@ -282,10 +290,7 @@ def _build_visualization_data(
                 }
             )
 
-    if hdop_count > 0:
-        gps_quality["avg_hdop"] = round(hdop_sum / hdop_count, 2)
-    if min_sats is not None:
-        gps_quality["min_satellites"] = min_sats
+    # Summary stats are now pre-calculated on the full dataset
 
     def get_gps_at(t_target: float) -> dict[str, Any] | None:
         if not time_series["gps"]:
