@@ -1,31 +1,68 @@
-```
 # Dependencies
+
 .venv/
+
 venv/
+
 __pycache__/
+
 *.pyc
+
 *.pyo
+
 *.pyd
 
+
+
+
+
 # Build artifacts
+
 build/
+
 dist/
+
 *.egg-info/
 
+
+
+
+
 # Logs and temporary files
+
 *.log
+
 *.tmp
 
+
+
+
+
 # Environment files
+
 .env
+
 .env.local
+
 *.env.*
 
+
+
+
+
 # Editors
+
 .vscode/
+
 .idea/
 
+
+
+
+
 # OS specific
+
 .DS_Store
+
 Thumbs.db
-```
+

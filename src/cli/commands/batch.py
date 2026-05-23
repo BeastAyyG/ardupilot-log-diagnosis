@@ -1,137 +1,163 @@
 from __future__ import annotations
 
 import csv
+import fnmatch
+import logging
 import os
 from argparse import _SubParsersAction
 from pathlib import Path
+from tqdm import tqdm
 
-from src.cli.formatter import DiagnosisFormatter
-from src.diagnosis.decision_policy import evaluate_decision
-from src.diagnosis.hybrid_engine import HybridEngine
-from src.diagnosis.rule_engine import RuleEngine
-from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
+from src.features.pipeline import FeaturePipeline
+from src.diagnosis.hybrid_engine import HybridEngine
+from src.diagnosis.decision_policy import evaluate_decision
+
+logger = logging.getLogger(__name__)
 
 
 def register(subparsers: _SubParsersAction) -> None:
     parser = subparsers.add_parser(
-        "batch-analyze",
-        aliases=["batch"],
-        help="Batch analyze a directory of .BIN logs — writes CSV summary + per-log JSON",
+        "batch",
+        help="Batch analyze a directory of .BIN logs recursively",
     )
-    parser.add_argument("directory", help="Directory containing .BIN files")
-    parser.add_argument("--output-dir", "-o", default=None, help="Directory for per-log JSON reports and batch_summary.csv")
-    parser.add_argument("--engine", choices=["rule", "hybrid"], default="hybrid", help="Diagnosis engine to use (default: hybrid)")
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        default=".",
+        help="Directory containing .BIN files to scan (default: current directory)",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        required=True,
+        help="Path to save the output CSV summary",
+    )
+    parser.add_argument(
+        "--include",
+        nargs="*",
+        default=[],
+        metavar="PATTERN",
+        help=(
+            "Only process files whose names match at least one of these glob "
+            "patterns (e.g. '*.BIN' 'flight_*'). When omitted all .BIN files "
+            "are included."
+        ),
+    )
+    parser.add_argument(
+        "--exclude",
+        nargs="*",
+        default=[],
+        metavar="PATTERN",
+        help=(
+            "Skip files whose names match any of these glob patterns "
+            "(e.g. 'test_*' 'tmp_*'). Applied after --include filtering."
+        ),
+    )
     parser.set_defaults(func=run)
 
 
 def run(args) -> None:
     directory = args.directory
+    output_path = args.output
+
     if not os.path.exists(directory):
         print(f"Directory {directory} not found.")
         return
 
-    output_dir = args.output_dir
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
+    include_patterns = getattr(args, "include", []) or []
+    exclude_patterns = getattr(args, "exclude", []) or []
 
-    pipeline = FeaturePipeline()
-    engine = HybridEngine() if getattr(args, "engine", "hybrid") != "rule" else RuleEngine()
+    # Recursively scan for .BIN files (case-insensitive), applying glob filters
+    bin_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if not file.upper().endswith(".BIN"):
+                continue
+            # --include: must match at least one pattern (skip check when list is empty)
+            if include_patterns and not any(
+                fnmatch.fnmatch(file, pat) for pat in include_patterns
+            ):
+                continue
+            # --exclude: skip if matches any pattern
+            if exclude_patterns and any(
+                fnmatch.fnmatch(file, pat) for pat in exclude_patterns
+            ):
+                continue
+            bin_files.append(Path(root) / file)
 
-    bin_files = sorted(filename for filename in os.listdir(directory) if filename.upper().endswith(".BIN"))
+    # Sort files to ensure deterministic processing order
+    bin_files.sort()
+
     if not bin_files:
-        print(f"No .BIN files found in {directory}")
-        if output_dir:
-            csv_path = os.path.join(output_dir, "batch_summary.csv")
-            fieldnames = ["filename", "status", "top_diagnosis", "confidence", "severity", "requires_review"]
-            with open(csv_path, "w", newline="") as csv_file:
-                csv.DictWriter(csv_file, fieldnames=fieldnames).writeheader()
-            print(f"Summary CSV  -> {csv_path} (header only — no logs found)")
+        print("No .BIN files found")
         return
 
-    formatter = DiagnosisFormatter()
-    rows = []
-    healthy = fail = error = 0
+    pipeline = FeaturePipeline()
+    engine = HybridEngine()
 
-    col_w = max(len(filename) for filename in bin_files) + 2
-    header = f"{'File':<{col_w}} | {'Status':<9} | {'Top Diagnosis':<30} | Conf"
-    print(header)
-    print("-" * len(header))
+    # Open CSV for writing and stream rows directly to keep memory usage low
+    with open(output_path, "w", newline="", encoding="utf-8") as csv_file:
+        fieldnames = [
+            "filename",
+            "duration",
+            "vehicle",
+            "diagnosis",
+            "confidence",
+            "requires_review",
+        ]
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
 
-    for filename in bin_files:
-        filepath = os.path.join(directory, filename)
-        try:
-            parsed = LogParser(filepath).parse()
-            features = pipeline.extract(parsed)
-            metadata = features.get("_metadata", {})
-            if not metadata.get("extraction_success", True):
-                raise ValueError("Extraction failed: empty or corrupt log")
+        for filepath in tqdm(bin_files, desc="Analyzing logs"):
+            # Compute relative path to the scanned directory
+            rel_path = os.path.relpath(str(filepath), start=str(directory))
+            # Normalize path to use forward slashes (standard cross-platform representation)
+            rel_path = rel_path.replace("\\", "/")
 
-            diagnoses = engine.diagnose(features)
-            decision = evaluate_decision(diagnoses)
+            try:
+                # 1. Parse the file
+                parser = LogParser(str(filepath))
+                parsed = parser.parse()
 
-            if not diagnoses:
-                status = "HEALTHY"
-                top_label = "-"
-                conf = 0.0
-                severity = "-"
-                healthy += 1
-            else:
-                top = diagnoses[0]
-                top_label = top["failure_type"]
-                conf = top["confidence"]
-                severity = top["severity"]
-                status = "CRITICAL" if severity == "critical" else "WARNING"
-                fail += 1
+                # 2. Extract features
+                features = pipeline.extract(parsed)
+                metadata = features.get("_metadata", {})
 
-            rows.append(
-                {
-                    "filename": filename,
-                    "status": status,
-                    "top_diagnosis": top_label,
-                    "confidence": f"{conf:.2f}",
-                    "severity": severity,
-                    "requires_review": decision.get("requires_human_review", False),
-                }
-            )
-            conf_str = f"{conf:.0%}" if conf > 0 else "-"
-            print(f"{filename:<{col_w}} | {status:<9} | {top_label:<30} | {conf_str}")
+                # 3. Check extraction success
+                if not metadata.get("extraction_success", True):
+                    raise ValueError("Extraction failed: empty or corrupt log")
 
-            if output_dir:
-                stem = Path(filename).stem
-                report_json = formatter.format_json(diagnoses, metadata, features, decision=decision)
-                json_path = os.path.join(output_dir, f"{stem}_report.json")
-                with open(json_path, "w") as json_file:
-                    json_file.write(report_json)
-        except Exception as exc:
-            error += 1
-            rows.append({"filename": filename, "status": "ERROR", "error": str(exc)})
-            print(f"{filename:<{col_w}} | {'ERROR':<9} | {str(exc)[:30]:<30} | -")
+                # 4. Diagnose
+                diagnoses = engine.diagnose(features)
 
-    print(f"\nSummary: {healthy} healthy · {fail} issues · {error} errors · {len(bin_files)} total")
+                # 5. Evaluate decision
+                decision = evaluate_decision(diagnoses)
 
-    incident_rows = [row for row in rows if row.get("status") not in ("ERROR", "HEALTHY")]
-    if incident_rows:
-        clusters: dict[str, list[str]] = {}
-        for row in incident_rows:
-            label = row.get("top_diagnosis", "unknown")
-            clusters.setdefault(label, []).append(row["filename"])
-        print("\nDuplicate Incident Clusters:")
-        for label, files in sorted(clusters.items(), key=lambda item: -len(item[1])):
-            print(f"  [{len(files):>2}x] {label}")
-            for filename in files:
-                print(f"         · {filename}")
+                # 6. Extract fields
+                duration = float(metadata.get("duration_sec", 0.0))
+                vehicle = metadata.get("vehicle_type", "Unknown")
 
-    if output_dir:
-        csv_path = os.path.join(output_dir, "batch_summary.csv")
-        fieldnames = ["filename", "status", "top_diagnosis", "confidence", "severity", "requires_review"]
-        with open(csv_path, "w", newline="") as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames, extrasaction="ignore")
-            writer.writeheader()
-            if rows:
-                writer.writerows(rows)
-        if rows:
-            print(f"Summary CSV  -> {csv_path}")
-            print(f"JSON reports -> {output_dir}/*.json")
-        else:
-            print(f"Summary CSV  -> {csv_path} (header only — no logs processed)")
+                if diagnoses:
+                    top_diag = diagnoses[0]
+                    diagnosis = top_diag["failure_type"]
+                    confidence = float(top_diag["confidence"])
+                else:
+                    diagnosis = "healthy"
+                    confidence = 0.0
+
+                requires_review = bool(decision.get("requires_human_review", False))
+
+                # 7. Stream row to CSV
+                writer.writerow({
+                    "filename": rel_path,
+                    "duration": duration,
+                    "vehicle": vehicle,
+                    "diagnosis": diagnosis,
+                    "confidence": confidence,
+                    "requires_review": requires_review,
+                })
+                csv_file.flush()
+
+            except Exception as exc:
+                logger.warning(f"Failed to analyze {rel_path}: {exc}")

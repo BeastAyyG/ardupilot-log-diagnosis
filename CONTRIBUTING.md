@@ -86,3 +86,20 @@ All 56 tests must pass. The CI workflow enforces this on every push and pull req
 ## Questions?
 
 Open a GitHub Issue with the `question` label, or refer to [`AGENTS.md`](AGENTS.md) for a full picture of the project's goals and operating policy.
+
+---
+
+## Log File Handling
+
+Large binary `.BIN` log files should not be committed directly to the repository.
+They are marked as binary in `.gitattributes` to avoid large diffs.
+Small sample logs for testing are permitted in the `tests/` directory.
+
+---
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+By participating, you are expected to uphold this code.
+
+If you witness or experience unacceptable behavior, please report it by contacting the maintainer privately via GitHub or email.

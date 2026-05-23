@@ -1,1 +1,4 @@
 data/kaggle_backups/ardupilot-master-log-pool-v2/*.bin filter=lfs diff=lfs merge=lfs -text
+# Mark all binary log files to avoid accidental diffs
+*.BIN binary
+*.log -diff

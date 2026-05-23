@@ -1,4 +1,16 @@
+"""
+Derived feature extraction for ArduPilot flight log analysis.
+
+This module computes physics-informed derived features from base extractor
+outputs. These features are used as inputs to the diagnosis engine to detect
+anomalies such as vibration issues, EKF failures, and GPS degradation.
+
+Expected inputs: a dict of base features extracted from a parsed .BIN log file.
+Outputs: a dict of derived scalar features ready for model inference.
+"""
+
 import numpy as np
+
 
 class DerivedFeaturesExtractor:
     """Computes physics-informed derived features from base extractor outputs."""
@@ -14,14 +26,48 @@ class DerivedFeaturesExtractor:
     ]
 
     def __init__(self, base_features: dict):
+        """
+        Initialize the extractor with base features.
+
+        Args:
+            base_features (dict): Dictionary of base features extracted from
+                a parsed ArduPilot .BIN log file.
+        """
         self.base_features = base_features
 
-    def _safe_div(self, num, den, default=0.0):
+    def _safe_div(self, num, den, default=0.0) -> float:
+        """
+        Safely divide two numbers, returning a default value if the denominator is invalid.
+
+        Args:
+            num: Numerator value.
+            den: Denominator value.
+            default (float): Value to return if division is invalid. Defaults to 0.0.
+
+        Returns:
+            float: Result of num / den, or default if den is None, 0.0, or NaN.
+        """
         if den is None or den == 0.0 or np.isnan(den):
             return default
         return float(num) / float(den)
 
     def extract(self) -> dict:
+        """
+        Compute all derived features from base features.
+
+        Computes physics-informed derived features including:
+        - Thrust-to-weight ratio
+        - Voltage internal resistance
+        - Attitude tracking error
+        - EKF health composite score
+        - Motor symmetry index
+        - Vibration-to-clip ratio
+        - GPS reliability score
+
+        Returns:
+            dict: A dictionary mapping feature names to their computed float values.
+                  Missing base features default to 0.0 via dict.get().
+        """
         f = self.base_features
 
         # 1. Thrust to Weight Ratio
