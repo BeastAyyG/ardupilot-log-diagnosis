@@ -153,7 +153,6 @@ def _format_terminal_comparison(report: Dict[str, Any]) -> str:
             continue
         
         change_pct = data.get("change_percent", 0)
-        direction = data.get("direction", "stable")
         arrow = "↑" if change_pct > 0 else ("↓" if change_pct < 0 else "→")
         
         lines.append(f"{metric.replace('_', ' ').title()}: {arrow} {abs(change_pct):.1f}%")
