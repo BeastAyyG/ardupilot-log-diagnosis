@@ -12,7 +12,7 @@ class Metadata(BaseModel):
 class Diagnosis(BaseModel):
     failure_type: str
     confidence: float
-    evidence: list[str]
+    evidence: list[dict[str, Any]]
     recommendation: str
 
     model_config = ConfigDict(extra="allow")
@@ -36,7 +36,7 @@ class AnalysisResponse(BaseModel):
     metadata: Metadata
     features: dict[str, Any]
     diagnoses: list[Diagnosis]
-    parameter_warnings: list[str]
+    parameter_warnings: list[dict[str, Any]]
     explain_data: ExplainData
     time_series: dict[str, list[dict[str, Any]]]
     timeline_events: list[TimelineEvent]

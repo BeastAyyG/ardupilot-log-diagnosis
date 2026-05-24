@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import ValidationError
@@ -73,7 +73,7 @@ async def analyze_log(file: UploadFile = File(...)):
     except ValidationError as e:
         LOGGER.exception("Schema validation failed for model output")
         return JSONResponse(status_code=500, content={"error": "Schema validation failed", "details": e.errors()})
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during analysis")
         return JSONResponse(
             status_code=500,
@@ -293,7 +293,7 @@ async def chat(request: ChatRequest):
             sources=response_data.get("sources", []),
             follow_up=response_data.get("follow_up", [])
         )
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during chat")
         return JSONResponse(
             status_code=500,
@@ -313,10 +313,6 @@ async def compare_flights(files: list[UploadFile] = File(...)):
     
     try:
         analysis_results = []
-        engine = HybridEngine()
-        parser_obj = LogParser("")
-        pipeline = FeaturePipeline()
-        
         for file in files:
             if not file.filename or not file.filename.lower().endswith(".bin"):
                 continue
@@ -334,7 +330,7 @@ async def compare_flights(files: list[UploadFile] = File(...)):
             finally:
                 try:
                     os.unlink(temp_path)
-                except:
+                except Exception:
                     pass
         
         if len(analysis_results) < 2:
@@ -348,7 +344,7 @@ async def compare_flights(files: list[UploadFile] = File(...)):
         trend_report = analyzer.compare_flights(analysis_results)
         
         return trend_report
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during comparison")
         return JSONResponse(
             status_code=500,
