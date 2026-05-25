@@ -7,13 +7,16 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from dotenv import load_dotenv
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import ValidationError
 
 from src.web.schemas import AnalysisResponse, ChatRequest, ChatResponse
-
 from src.diagnosis.decision_policy import evaluate_decision
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.parameter_validation import validate_parameters
@@ -23,6 +26,7 @@ from src.parser.bin_parser import LogParser
 from src.chat.assistant import ChatAssistant
 from src.comparison.trend_analyzer import TrendAnalyzer
 
+load_dotenv()
 
 LOGGER = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 64 * 1024 * 1024
@@ -30,17 +34,35 @@ UPLOAD_CHUNK_SIZE = 1024 * 1024
 WEB_DIR = Path(__file__).parent.absolute()
 
 app = FastAPI(title="ArduPilot Log Diagnosis API")
+
+# Rate limiter setup
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS setup — reads from environment variable, falls back to allow all
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
+ALLOWED_ORIGINS = (
+    ["*"]
+    if _raw_origins.strip() == "*"
+    else [o.strip() for o in _raw_origins.split(",") if o.strip()]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials="*" not in ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+RATE_LIMIT_ANALYZE = os.getenv("RATE_LIMIT_ANALYZE", "10/minute")
+RATE_LIMIT_CHAT = os.getenv("RATE_LIMIT_CHAT", "20/minute")
+RATE_LIMIT_COMPARE = os.getenv("RATE_LIMIT_COMPARE", "5/minute")
+
 
 @app.get("/", response_class=HTMLResponse)
 async def get_index() -> str:
+    """Serve the frontend dashboard HTML."""
     index_path = WEB_DIR / "index.html"
     if index_path.exists():
         return index_path.read_text(encoding="utf-8")
@@ -48,7 +70,9 @@ async def get_index() -> str:
 
 
 @app.post("/api/analyze", response_model=AnalysisResponse)
-async def analyze_log(file: UploadFile = File(...)):
+@limiter.limit(RATE_LIMIT_ANALYZE)
+async def analyze_log(request: Request, file: UploadFile = File(...)):
+    """Accept a .BIN file upload and return a full diagnostic analysis."""
     if not file.filename or not file.filename.lower().endswith(".bin"):
         return JSONResponse(status_code=400, content={"error": "Only .BIN files are supported."})
 
@@ -73,7 +97,7 @@ async def analyze_log(file: UploadFile = File(...)):
     except ValidationError as e:
         LOGGER.exception("Schema validation failed for model output")
         return JSONResponse(status_code=500, content={"error": "Schema validation failed", "details": e.errors()})
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during analysis")
         return JSONResponse(
             status_code=500,
@@ -89,6 +113,7 @@ async def analyze_log(file: UploadFile = File(...)):
 
 
 def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
+    """Run the full parse → feature extraction → diagnosis pipeline on a temp log file."""
     parser = LogParser(temp_path)
     parsed = parser.parse()
 
@@ -131,6 +156,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
 def _build_visualization_data(
     parsed: dict[str, Any], features: dict[str, Any]
 ) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+    """Build GPS and vibration time series and timeline events for visualisation."""
     time_series: dict[str, list[dict[str, Any]]] = {"gps": [], "vibe": []}
     start_time = _find_start_time_us(parsed)
 
@@ -181,6 +207,7 @@ def _build_visualization_data(
             )
 
     def get_gps_at(t_target: float) -> dict[str, Any] | None:
+        """Return the GPS point closest in time to t_target."""
         if not time_series["gps"]:
             return None
         return min(time_series["gps"], key=lambda point: abs(point["t"] - t_target))
@@ -262,6 +289,7 @@ def _build_visualization_data(
 
 
 def _find_start_time_us(parsed: dict[str, Any]) -> int | None:
+    """Return the earliest TimeUS timestamp found across all message types."""
     message_groups = parsed.get("messages", {})
     for message_type in ("VIBE", "GPS"):
         for msg in message_groups.get(message_type, []):
@@ -278,14 +306,13 @@ def _find_start_time_us(parsed: dict[str, Any]) -> int | None:
     return None
 
 
-# Chat endpoint for conversational AI over log analysis
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """Answer questions about a log analysis using rule-based AI assistant."""
+@limiter.limit(RATE_LIMIT_CHAT)
+async def chat(request: Request, body: ChatRequest):
+    """Answer questions about a log analysis using the rule-based AI assistant."""
     try:
         assistant = ChatAssistant()
-        response_data = assistant.ask(request.question, request.analysis_result)
-        
+        response_data = assistant.ask(body.question, body.analysis_result)
         return ChatResponse(
             question=response_data["question"],
             answer=response_data["answer"],
@@ -293,7 +320,7 @@ async def chat(request: ChatRequest):
             sources=response_data.get("sources", []),
             follow_up=response_data.get("follow_up", [])
         )
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during chat")
         return JSONResponse(
             status_code=500,
@@ -301,54 +328,57 @@ async def chat(request: ChatRequest):
         )
 
 
-# Trend analysis endpoint for multi-flight comparison
 @app.post("/api/compare", response_model=dict)
-async def compare_flights(files: list[UploadFile] = File(...)):
+@limiter.limit(RATE_LIMIT_COMPARE)
+async def compare_flights(request: Request, files: list[UploadFile] = File(...)):
     """Compare multiple flight logs for trend analysis and degradation detection."""
     if len(files) < 2:
         return JSONResponse(
             status_code=400,
             content={"error": "At least 2 files required for comparison"}
         )
-    
+
     try:
         analysis_results = []
-        engine = HybridEngine()
-        parser_obj = LogParser("")
-        pipeline = FeaturePipeline()
-        
+
         for file in files:
             if not file.filename or not file.filename.lower().endswith(".bin"):
                 continue
-            
-            # Save to temp file
+
             fd, temp_path = tempfile.mkstemp(suffix=".bin")
             try:
-                with os.fdopen(fd, "wb") as f:
-                    content = await file.read()
-                    f.write(content)
-                
-                # Analyze
-                result = _analyze_temp_log(temp_path, file.filename)
+                total_bytes = 0
+                with os.fdopen(fd, "wb") as handle:
+                    while True:
+                        chunk = await file.read(UPLOAD_CHUNK_SIZE)
+                        if not chunk:
+                            break
+                        total_bytes += len(chunk)
+                        if total_bytes > MAX_UPLOAD_BYTES:
+                            return JSONResponse(
+                                status_code=413,
+                                content={"error": f"File {file.filename} exceeds {MAX_UPLOAD_BYTES} bytes."},
+                            )
+                        handle.write(chunk)
+                result = await asyncio.to_thread(_analyze_temp_log, temp_path, file.filename)
                 analysis_results.append(result)
             finally:
+                await file.close()
                 try:
                     os.unlink(temp_path)
-                except:
+                except OSError:
                     pass
-        
+
         if len(analysis_results) < 2:
             return JSONResponse(
                 status_code=400,
                 content={"error": "Need at least 2 valid .BIN files"}
             )
-        
-        # Run trend analysis
+
         analyzer = TrendAnalyzer()
         trend_report = analyzer.compare_flights(analysis_results)
-        
         return trend_report
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during comparison")
         return JSONResponse(
             status_code=500,

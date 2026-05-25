@@ -100,3 +100,65 @@ def test_api_analyze_handles_gps_only_logs(monkeypatch):
     assert data["rule_output_only"] == "gps_quality_poor"
     assert data["time_series"]["gps"][0]["t"] == 0.0
     assert data["metadata"]["filename"] == "gps_only.bin"
+
+
+def test_rate_limit_analyze(monkeypatch):
+    monkeypatch.setattr(web_app, "LogParser", _DummyParser)
+    monkeypatch.setattr(web_app, "FeaturePipeline", _DummyPipeline)
+    monkeypatch.setattr(web_app, "HybridEngine", _DummyHybridEngine)
+    monkeypatch.setattr(web_app, "RuleEngine", _DummyRuleEngine)
+    monkeypatch.setattr(
+        web_app,
+        "evaluate_decision",
+        lambda _diagnoses: {
+            "status": "uncertain",
+            "requires_human_review": True,
+            "top_guess": "gps_quality_poor",
+            "top_confidence": 0.71,
+            "rationale": ["GPS quality degraded."],
+            "ranked_subsystems": [],
+        },
+    )
+
+    web_app.limiter.reset()
+
+    client = TestClient(web_app.app, raise_server_exceptions=False)
+
+    for i in range(10):
+        response = client.post(
+            "/api/analyze",
+            files={"file": ("flight.bin", b"dummy", "application/octet-stream")},
+        )
+        assert response.status_code == 200, f"Request {i+1} should succeed"
+
+    response = client.post(
+        "/api/analyze",
+        files={"file": ("flight.bin", b"dummy", "application/octet-stream")},
+    )
+    assert response.status_code == 429, "11th request should be rate limited"
+
+
+def test_cors_wildcard_by_default():
+    client = TestClient(web_app.app)
+    response = client.options(
+        "/api/analyze",
+        headers={
+            "Origin": "http://example.com",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert response.headers.get("access-control-allow-origin") in ("*", "http://example.com")
+
+
+def test_cors_restricted_origin(monkeypatch):
+    monkeypatch.setenv("ALLOWED_ORIGINS", "https://myapp.com")
+    monkeypatch.setattr(web_app, "ALLOWED_ORIGINS", ["https://myapp.com"])
+    client = TestClient(web_app.app)
+    response = client.options(
+        "/api/analyze",
+        headers={
+            "Origin": "http://evil.com",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert "http://evil.com" not in response.headers.get("access-control-allow-origin", "")

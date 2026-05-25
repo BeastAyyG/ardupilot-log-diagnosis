@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-import asyncio
-import io
-import json
-
 import pytest
-from starlette.datastructures import UploadFile
-from starlette.responses import JSONResponse
+from fastapi.testclient import TestClient
 
 fastapi = pytest.importorskip("fastapi")
-
 from src.web import app as web_app
 
 
@@ -75,40 +69,36 @@ class _FakeRuleEngine:
         ]
 
 
-def _make_upload(payload: bytes, filename: str = "flight.BIN") -> UploadFile:
-    return UploadFile(file=io.BytesIO(payload), filename=filename)
-
-
-def _response_to_dict(response) -> dict:
-    """Extract dict from either AnalysisResponse (pydantic) or JSONResponse."""
-    if isinstance(response, JSONResponse):
-        return json.loads(response.body)
-    # Pydantic model (AnalysisResponse)
-    return response.model_dump()
-
-
-def test_api_analyze_handles_gps_without_vibe(monkeypatch):
+def _make_client(monkeypatch):
+    """Helper that patches all heavy dependencies and returns a TestClient."""
     monkeypatch.setattr(web_app, "LogParser", _FakeParser)
     monkeypatch.setattr(web_app, "FeaturePipeline", _FakePipeline)
     monkeypatch.setattr(web_app, "HybridEngine", _FakeHybridEngine)
     monkeypatch.setattr(web_app, "RuleEngine", _FakeRuleEngine)
+    web_app.limiter.reset()
+    return TestClient(web_app.app, raise_server_exceptions=False)
 
-    response = asyncio.run(web_app.analyze_log(_make_upload(b"abc")))
-    payload = _response_to_dict(response)
 
+def test_api_analyze_handles_gps_without_vibe(monkeypatch):
+    client = _make_client(monkeypatch)
+    response = client.post(
+        "/api/analyze",
+        files={"file": ("flight.BIN", b"abc", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
     assert payload["time_series"]["gps"][0]["t"] == 0.0
     assert payload["metadata"]["vehicle"] == "QuadPlane"
 
 
 def test_api_rule_output_only_is_string(monkeypatch):
-    monkeypatch.setattr(web_app, "LogParser", _FakeParser)
-    monkeypatch.setattr(web_app, "FeaturePipeline", _FakePipeline)
-    monkeypatch.setattr(web_app, "HybridEngine", _FakeHybridEngine)
-    monkeypatch.setattr(web_app, "RuleEngine", _FakeRuleEngine)
-
-    response = asyncio.run(web_app.analyze_log(_make_upload(b"abc")))
-    payload = _response_to_dict(response)
-
+    client = _make_client(monkeypatch)
+    response = client.post(
+        "/api/analyze",
+        files={"file": ("flight.BIN", b"abc", "application/octet-stream")},
+    )
+    assert response.status_code == 200
+    payload = response.json()
     assert payload["rule_output_only"] == "compass_interference"
     assert isinstance(payload["rule_output_only"], str)
 
@@ -121,9 +111,12 @@ def test_api_rejects_oversized_upload(monkeypatch):
             raise AssertionError("parser should not run for oversized uploads")
 
     monkeypatch.setattr(web_app, "LogParser", _ExplodingParser)
+    web_app.limiter.reset()
 
-    response = asyncio.run(web_app.analyze_log(_make_upload(b"12345")))
-    payload = _response_to_dict(response)
-
+    client = TestClient(web_app.app, raise_server_exceptions=False)
+    response = client.post(
+        "/api/analyze",
+        files={"file": ("flight.BIN", b"12345", "application/octet-stream")},
+    )
     assert response.status_code == 413
-    assert "exceeds" in payload["error"]
+    assert "exceeds" in response.json()["error"]
