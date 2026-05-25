@@ -1,950 +1,978 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArduPilot AI Log Diagnosis</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #fbfbfd;
-    --foreground: #1f2430;
-    --card: #ffffff;
-    --muted: #f3f4f7;
-    --muted-text: #6b7280;
-    --border: #e5e7eb;
-    --primary: #7c3aed;
-    --primary-soft: #f3e8ff;
-    --accent: #06b6d4;
-    --success: #16a34a;
-    --warning: #f59e0b;
-    --danger: #dc2626;
-    --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.06);
-    --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.08);
-    --shadow-float: 0 16px 40px rgba(15, 23, 42, 0.12);
-    --gradient-subtle: linear-gradient(180deg, #fbfbfd 0%, #f6f2ff 100%);
-    --gradient-accent: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aerolog — AI Flight Log Diagnosis</title>
 
-  * {
-    box-sizing: border-box;
-  }
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
-  html {
-    scroll-behavior: smooth;
-  }
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--foreground);
-    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    letter-spacing: -0.01em;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .code-font {
-    font-family: "JetBrains Mono", monospace;
-  }
-
-  .text-gradient {
-    background: var(--gradient-accent);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .section-subtle {
-    background: var(--gradient-subtle);
-  }
-
-  .product-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    box-shadow: var(--shadow-soft);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  }
-
-  .product-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-card);
-    border-color: #d8dbe2;
-  }
-
-  .btn-primary {
-    background: var(--foreground);
-    color: white;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-card);
-    opacity: 0.92;
-  }
-
-  .btn-secondary {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--foreground);
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-  }
-
-  .btn-secondary:hover {
-    background: var(--muted);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    padding: 0.35rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--muted-text);
-    box-shadow: var(--shadow-soft);
-  }
-
-  .drop-zone {
-    border: 1.5px dashed var(--border);
-    background: var(--card);
-    transition: all 0.25s ease;
-  }
-
-  .drop-zone:hover,
-  .drop-zone.dragover {
-    border-color: var(--primary);
-    background: var(--primary-soft);
-    box-shadow: var(--shadow-card);
-    transform: translateY(-2px);
-  }
-
-  .progress-track {
-    height: 7px;
-    width: 100%;
-    overflow: hidden;
-    border-radius: 999px;
-    background: var(--muted);
-  }
-
-  .progress-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--gradient-accent);
-    transition: width 0.25s ease;
-  }
-
-  .evidence-card {
-    border-left: 3px solid var(--border);
-    transition: all 0.2s ease;
-  }
-
-  .evidence-card:hover {
-    border-left-color: var(--primary);
-    background: #fafafa;
-  }
-
-  .sev-critical {
-    color: var(--danger);
-  }
-
-  .sev-warning {
-    color: var(--warning);
-  }
-
-  .sev-info {
-    color: var(--accent);
-  }
-
-  .sev-safe {
-    color: var(--success);
-  }
-
-  .scan-line {
-    display: none;
-  }
-
-  .timeline-node {
-    transition: transform 0.2s ease;
-  }
-
-  .timeline-node:hover {
-    transform: translateX(-50%) scale(1.08) !important;
-  }
-
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(14px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .fade-up {
-    animation: fadeUp 0.45s ease both;
-  }
-
-  @media (max-width: 768px) {
-    #timeline-swimlane {
-      min-width: 620px;
+  <style>
+    :root {
+      --bg: #fbfbfd;
+      --foreground: #1f2430;
+      --card: #ffffff;
+      --muted: #f3f4f7;
+      --muted-text: #6b7280;
+      --border: #e5e7eb;
+      --primary: #7c3aed;
+      --primary-soft: #f3e8ff;
+      --accent: #2563eb;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --shadow-float: 0 16px 40px rgba(15, 23, 42, 0.12);
+      --gradient-subtle: linear-gradient(180deg, #fbfbfd 0%, #f6f2ff 100%);
+      --gradient-accent: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
     }
 
-    #final-decision {
-      font-size: 1.75rem;
+    * {
+      box-sizing: border-box;
     }
-  }
-</style>
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--foreground);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .code-font {
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .text-gradient {
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .section-subtle {
+      background: var(--gradient-subtle);
+    }
+
+    .product-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card);
+      border-color: #d8dbe2;
+    }
+
+    .btn-primary {
+      background: var(--foreground);
+      color: white;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-card);
+      opacity: 0.92;
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--foreground);
+      border-radius: 10px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted-text);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border);
+      background: var(--card);
+      transition: all 0.25s ease;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: var(--shadow-card);
+      transform: translateY(-2px);
+    }
+
+    .progress-track {
+      height: 7px;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--muted);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--gradient-accent);
+      transition: width 0.25s ease;
+    }
+
+    .evidence-card {
+      border-left: 3px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .evidence-card:hover {
+      border-left-color: var(--primary);
+      background: #fafafa;
+    }
+
+    .sev-critical {
+      color: var(--danger);
+    }
+
+    .sev-warning {
+      color: var(--warning);
+    }
+
+    .sev-info {
+      color: var(--accent);
+    }
+
+    .sev-safe {
+      color: var(--success);
+    }
+
+    .timeline-node {
+      transition: transform 0.2s ease;
+    }
+
+    .timeline-node:hover {
+      transform: translateX(-50%) scale(1.08) !important;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.45s ease both;
+    }
+
+    @media (max-width: 768px) {
+      #timeline-swimlane {
+        min-width: 620px;
+      }
+
+      #final-decision {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center">
 
-    <div class="max-w-6xl w-full">
-        <!-- Header -->
-        <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
-  <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center gap-2.5">
-      <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-sm">
-        <span class="text-sm text-white">✈</span>
-      </div>
-      <span class="text-[15px] font-semibold tracking-tight text-slate-950">Aerolog</span>
-      <span class="ml-1 hidden text-xs font-medium text-slate-500 sm:inline">/ Diagnosis</span>
-    </div>
-
-    <nav class="hidden items-center gap-7 text-sm text-slate-500 md:flex">
-      <a class="transition-colors hover:text-slate-950" href="#workflow">How it works</a>
-      <a class="transition-colors hover:text-slate-950" href="#analysis">Analysis</a>
-      <a class="transition-colors hover:text-slate-950" href="#docs">Docs</a>
-    </nav>
-
-    <div class="flex items-center gap-2">
-      <button class="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950 sm:inline-flex">
-        Sign in
-      </button>
-      <a href="#workflow" class="btn-primary px-3.5 py-1.5 text-sm">
-        Get started
-      </a>
-    </div>
-  </div>
-</header>
-
-<section class="relative overflow-hidden border-b border-slate-200/80 section-subtle">
-  <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
-    <div class="mx-auto max-w-3xl text-center fade-up">
-      <div class="badge mb-6">
-        <span class="text-violet-600">✦</span>
-        AI-powered flight log analysis
+<body class="bg-[#fbfbfd] text-slate-900">
+  <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-sm">
+          <span class="text-sm text-white">✈</span>
+        </div>
+        <span class="text-[15px] font-semibold tracking-tight text-slate-950">Aerolog</span>
+        <span class="ml-1 hidden text-xs font-medium text-slate-500 sm:inline">/ Diagnosis</span>
       </div>
 
-      <h1 class="text-balance text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-        Understand any drone crash <span class="text-gradient">in seconds.</span>
-      </h1>
+      <nav class="hidden items-center gap-7 text-sm text-slate-500 md:flex">
+        <a class="transition-colors hover:text-slate-950" href="#workflow">How it works</a>
+        <a class="transition-colors hover:text-slate-950" href="#analysis">Analysis</a>
+        <a class="transition-colors hover:text-slate-950" href="#docs">Docs</a>
+      </nav>
 
-      <p class="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
-        Drop an ArduPilot <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[13px] font-medium text-slate-900">.BIN</code>
-        log and get an instant root-cause diagnosis, subsystem health, and a clear timeline of what went wrong.
-      </p>
-
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <a href="#workflow" class="btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm">
-          Upload a log
-          <span>→</span>
-        </a>
-        <a href="#analysis" class="btn-secondary px-5 py-2.5 text-sm">
-          See sample report
+      <div class="flex items-center gap-2">
+        <button class="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950 sm:inline-flex">
+          Sign in
+        </button>
+        <a href="#workflow" class="btn-primary px-3.5 py-1.5 text-sm">
+          Get started
         </a>
       </div>
+    </div>
+  </header>
 
-      <div class="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-slate-500">
-        <span>Built for drone safety teams</span>
-        <span class="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-block"></span>
-        <span>ArduPilot compatible</span>
-        <span class="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-block"></span>
-        <span>Root-cause focused reports</span>
+  <section class="relative overflow-hidden border-b border-slate-200/80 section-subtle">
+    <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+      <div class="mx-auto max-w-3xl text-center fade-up">
+        <div class="badge mb-6">
+          <span class="text-violet-600">✦</span>
+          AI-powered flight log analysis
+        </div>
+
+        <h1 class="text-balance text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          Understand any drone crash <span class="text-gradient">in seconds.</span>
+        </h1>
+
+        <p class="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
+          Drop an ArduPilot
+          <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[13px] font-medium text-slate-900">.BIN</code>
+          log and get an instant root-cause diagnosis, subsystem health, and a clear timeline of what went wrong.
+        </p>
+
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <a href="#workflow" class="btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm">
+            Upload a log
+            <span>→</span>
+          </a>
+          <a href="#analysis" class="btn-secondary px-5 py-2.5 text-sm">
+            See sample report
+          </a>
+        </div>
+
+        <div class="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-slate-500">
+          <span>Built for drone safety teams</span>
+          <span class="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-block"></span>
+          <span>ArduPilot compatible</span>
+          <span class="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-block"></span>
+          <span>Root-cause focused reports</span>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Left Column: Upload & Metadata -->
-            <section id="workflow" class="space-y-8 -mt-8 relative z-10">
-                
-                <!-- Upload Panel -->
-              <div class="product-card fade-up p-6 sm:p-8 relative bg-white" id="upload-panel">
-                    <h2 class="text-lg font-semibold mb-4 text-cyan-400">Telemetry Ingestion</h2>
-                    
-                    <div id="drop-zone" class="drop-zone rounded-3xl p-10 sm:p-12 flex flex-col items-center justify-center cursor-pointer relative">
-                        <svg class="w-12 h-12 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        <p class="text-slate-900 text-center text-lg font-semibold">Drag & Drop .BIN file</p>
-                        <p class="mt-2 text-center text-sm text-slate-500">or click to browse</p>
-                        <input type="file" id="file-input" class="hidden" accept=".BIN,.bin">
-                    </div>
+  <main class="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 pb-16 sm:px-6 lg:grid-cols-3 lg:px-8">
+    <section id="workflow" class="relative z-10 -mt-8 space-y-8">
+      <div class="product-card fade-up p-6 sm:p-8" id="upload-panel">
+        <div class="mb-6">
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Step 1</p>
+          <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Upload your flight log</h2>
+          <p class="mt-1 text-sm text-slate-500">
+            Drop a <code class="rounded bg-slate-100 px-1 py-0.5 text-[12px]">.BIN</code> file. The log is analyzed locally by the diagnostic pipeline.
+          </p>
+        </div>
 
-                    <!-- Progress Simulation (Hidden by default) -->
-                    <div id="progress-container" class="hidden mt-6">
-                        <div class="flex justify-between text-xs text-gray-400 mb-2 code-font">
-                            <span id="progress-text">INITIALIZING...</span>
-                            <span id="progress-pct">0%</span>
-                        </div>
-                        <div class="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
-                            <div id="progress-bar" class="h-full bg-cyan-400 w-0 transition-all duration-300 shadow-[0_0_10px_#00f3ff]"></div>
-                        </div>
-                    </div>
-                </div>
+        <div id="drop-zone" class="drop-zone rounded-3xl p-10 sm:p-12 flex flex-col items-center justify-center cursor-pointer relative">
+          <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+            <svg class="h-7 w-7 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+          </div>
 
-                <!-- Flight Metadata (Hidden until parsed) -->
-                <div id="metadata-panel" class="product-card bg-white p-6 hidden fade-in">
-                    <h2 class="text-lg font-semibold mb-4 text-purple-400">Flight Metadata</h2>
-                    <ul class="space-y-3 text-sm code-font">
-                        <li class="flex justify-between border-b border-gray-800 pb-1">
-                            <span class="text-gray-500">Filename</span>
-                            <span id="meta-filename" class=text-slate-900 font-medium">--</span>
-                        </li>
-                        <li class="flex justify-between border-b border-gray-800 pb-1">
-                            <span class="text-gray-500">Duration</span>
-                            <span id="meta-duration" class="text-slate-900 font-medium">--</span>
-                        </li>
-                        <li class="flex justify-between border-b border-gray-800 pb-1">
-                            <span class="text-gray-500">Vehicle Type</span>
-                            <span id="meta-vehicle" class="text-slate-900font-medium">--</span>
-                        </li>
-                    </ul>
-                </div>
+          <p class="text-center text-lg font-semibold text-slate-900">Drag and drop your flight log</p>
+          <p class="mt-2 text-center text-sm text-slate-500">or click to browse .BIN files</p>
+
+          <span class="mt-5 inline-flex items-center rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+            Choose file
+          </span>
+
+          <input type="file" id="file-input" class="hidden" accept=".BIN,.bin">
+        </div>
+
+        <div id="progress-container" class="hidden mt-6">
+          <div class="mb-2 flex justify-between text-xs text-slate-500 code-font">
+            <span id="progress-text">INITIALIZING...</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-bar" class="progress-fill w-0"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="metadata-panel" class="product-card hidden p-6 fade-up">
+        <div class="mb-5">
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Step 2</p>
+          <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-950">Flight Metadata</h2>
+        </div>
+
+        <ul class="space-y-3 text-sm code-font">
+          <li class="flex justify-between gap-4 border-b border-slate-200 pb-3">
+            <span class="text-slate-500">Filename</span>
+            <span id="meta-filename" class="text-right font-medium text-slate-900 break-all">--</span>
+          </li>
+          <li class="flex justify-between border-b border-slate-200 pb-3">
+            <span class="text-slate-500">Duration</span>
+            <span id="meta-duration" class="font-medium text-slate-900">--</span>
+          </li>
+          <li class="flex justify-between border-b border-slate-200 pb-3">
+            <span class="text-slate-500">Vehicle Type</span>
+            <span id="meta-vehicle" class="font-medium text-slate-900">--</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="analysis" class="lg:col-span-2">
+      <div id="results-dashboard" class="hidden space-y-8">
+        <div class="mb-2 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Step 3 · Report</p>
+            <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+              Diagnosis report
+            </h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn-secondary px-3 py-1.5 text-xs">Export PDF</button>
+            <button class="btn-primary px-3 py-1.5 text-xs">Share report</button>
+          </div>
+        </div>
+
+        <div class="product-card border-l-4 p-6" id="verdict-banner">
+          <div class="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
+            <div>
+              <p class="mb-1 text-xs font-bold uppercase tracking-widest text-slate-500">Arbiter Decision</p>
+              <h2 id="final-decision" class="text-3xl font-extrabold uppercase tracking-wide">UNKNOWN</h2>
+              <p id="top-guess" class="mt-1 text-lg font-medium text-slate-500"></p>
             </div>
 
-            <!-- Right Column: Results Dashboard (Hidden until ready) -->
-            <div id="results-dashboard" class="lg:col-span-2 space-y-8 hidden">
-                
-                <!-- Verdict Header -->
-                <div class="product-card bg-white p-6 border-l-4" id="verdict-banner">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs uppercase tracking-widest text-gray-500 mb-1 font-bold">Arbiter Decision</p>
-                            <h2 id="final-decision" class="text-3xl font-extrabold uppercase tracking-wide">UNKNOWN</h2>
-                            <p id="top-guess" class="text-lg mt-1 font-medium text-gray-400"></p>
-                        </div>
-                        <div class="text-right">
-                            <div id="confidence-ring" class="relative w-20 h-20 flex items-center justify-center rounded-full bg-gray-800 shadow-inner">
-                                <svg class="absolute w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                    <path class="text-gray-700" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                                    <path id="conf-svg-path" class="text-cyan-400" stroke-dasharray="0, 100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="transition: stroke-dasharray 1s ease-out;"/>
-                                </svg>
-                                <span id="conf-text" class="absolute text-lg font-bold code-font">--%</span>
-                            </div>
-                            <p class="text-[10px] text-gray-500 mt-2 uppercase">Calibrated Conf</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Radar Chart -->
-                    <div class="product-card bg-white p-6 flex flex-col items-center">
-                        <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-4 font-bold w-full text-left">Subsystem Radar</h3>
-                        <div class="w-full relative h-[250px] flex justify-center items-center">
-                            <canvas id="radarChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Human Review / Actions -->
-                    <div class="product-card bg-white p-6 relative overflow-hidden">
-                        <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-4 font-bold">Review Status</h3>
-                        
-                        <div id="human-review-box" class="rounded-lg p-4 bg-gray-800/50 border border-gray-700 mb-4">
-                            <div class="flex items-center mb-2">
-                                <span id="rv-icon" class="mr-2">✔️</span>
-                                <h4 id="rv-title" class="font-bold">Automated Clearance</h4>
-                            </div>
-                            <ul id="rv-rationale" class="text-sm text-gray-400 list-disc pl-5 space-y-1">
-                                <!-- inserted via JS -->
-                            </ul>
-                        </div>
-
-                        <div id="recommendation-box" class="mt-6">
-                            <h4 class="text-xs text-gray-500 uppercase font-bold mb-2">Action Items</h4>
-                            <p id="recommendation-text" class="text-sm text-slate-900 leading-relaxed italic border-l-2 border-cyan-500 pl-3">
-                                --
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Evidence Timeline -->
-                <div class="product-card bg-white p-6">
-                    <h3 class="text-sm uppercase tracking-widest text-gray-500 font-bold mb-6">Telemetry Evidence Chain</h3>
-                    <div id="evidence-container" class="space-y-4">
-                        <!-- Evidence items injected here -->
-                    </div>
-                </div>
-
-                <!-- Annotated Crash Causality Timeline -->
-                <div class="product-card bg-white p-6" id="crash-timeline-panel">
-                    <div class="flex items-center mb-6 space-x-3">
-                        <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ff003c]"></div>
-                        <h3 class="text-sm uppercase tracking-widest text-red-400 font-bold">Crash Causality Timeline</h3>
-                    </div>
-                    <p class="text-xs text-gray-500 mb-6 italic">Events reconstructed from raw telemetry — ordered by first occurrence. Root cause is the earliest event in the chain.</p>
-
-                    <!-- Swimlane track -->
-                    <div class="relative">
-                        <!-- The horizontal bar -->
-                        <div class="absolute top-[18px] left-0 right-0 h-[2px] bg-gray-700 z-0"></div>
-                        <!-- Event nodes rendered by JS -->
-                        <div id="timeline-swimlane" class="relative flex items-start justify-between min-h-[80px]">
-                            <!-- injected dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Legend -->
-                    <div class="flex space-x-6 mt-8 text-xs text-gray-500">
-                        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-blue-400 mr-2"></span> Mode Change</span>
-                        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 mr-2"></span> Warning</span>
-                        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-2"></span> Critical</span>
-                        <span class="flex items-center"><span class="inline-block w-3 h-3 rounded-full bg-red-600 mr-2"></span> Crash / Failsafe</span>
-                    </div>
-                </div>
-
-                <!-- Interactive Telemetry Visualizer -->
-                <div class="product-card bg-white p-6" id="telemetry-panel">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-sm uppercase tracking-widest text-gray-400 font-bold flex items-center"><span class="w-2 h-2 rounded-full bg-cyan-400 mr-2 pulse"></span> Interactive Telemetry</h3>
-                        <div class="space-x-2">
-                            <button id="btn-plot-vibe" class="text-xs bg-gray-800 hover:text-slate-900 hover:border-cyan-400 text-slate-900px-3 py-1 rounded border border-gray-600 transition-colors">Vibrations</button>
-                            <button id="btn-plot-gps" class="text-xs bg-gray-800 hover:text-slate-900 hover:border-purple-400 text-slate-900 px-3 py-1 rounded border border-gray-600 transition-colors">3D Flight Path</button>
-                        </div>
-                    </div>
-                    <div id="plotly-chart" class="w-full h-[400px] rounded bg-slate-50 overflow-hidden">
-                        <div class="flex items-center justify-center h-full text-gray-500 italic text-sm">Waiting for telemetry data...</div>
-                    </div>
-                </div>
+            <div class="text-left sm:text-right">
+              <div id="confidence-ring" class="relative flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 shadow-inner">
+                <svg class="absolute h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
+                  <path class="text-slate-200" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path id="conf-svg-path" class="text-violet-600" stroke-dasharray="0, 100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="transition: stroke-dasharray 1s ease-out;"/>
+                </svg>
+                <span id="conf-text" class="absolute text-lg font-bold code-font">--%</span>
+              </div>
+              <p class="mt-2 text-[10px] uppercase text-slate-500">Calibrated Conf</p>
             </div>
-        </main>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div class="product-card p-6 flex flex-col items-center">
+            <h3 class="mb-4 w-full text-left text-sm font-bold uppercase tracking-widest text-slate-500">Subsystem Radar</h3>
+            <div class="relative flex h-[250px] w-full items-center justify-center">
+              <canvas id="radarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="product-card p-6">
+            <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-slate-500">Review Status</h3>
+
+            <div id="human-review-box" class="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div class="mb-2 flex items-center">
+                <span id="rv-icon" class="mr-2">✔️</span>
+                <h4 id="rv-title" class="font-bold text-slate-900">Automated Clearance</h4>
+              </div>
+              <ul id="rv-rationale" class="list-disc space-y-1 pl-5 text-sm text-slate-500"></ul>
+            </div>
+
+            <div id="recommendation-box" class="mt-6">
+              <h4 class="mb-2 text-xs font-bold uppercase tracking-widest text-slate-500">Action Items</h4>
+              <p id="recommendation-text" class="border-l-2 border-violet-500 pl-3 text-sm leading-relaxed text-slate-700 italic">
+                --
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="product-card p-6">
+          <h3 class="mb-6 text-sm font-bold uppercase tracking-widest text-slate-500">Telemetry Evidence Chain</h3>
+          <div id="evidence-container" class="space-y-4"></div>
+        </div>
+
+        <div class="product-card p-6" id="crash-timeline-panel">
+          <div class="mb-6 flex items-center space-x-3">
+            <div class="h-3 w-3 rounded-full bg-red-500"></div>
+            <h3 class="text-sm font-bold uppercase tracking-widest text-red-500">Crash Causality Timeline</h3>
+          </div>
+
+          <p class="mb-6 text-xs italic text-slate-500">
+            Events reconstructed from raw telemetry — ordered by first occurrence. Root cause is the earliest event in the chain.
+          </p>
+
+          <div class="relative overflow-x-auto pb-3">
+            <div class="absolute left-0 right-0 top-[18px] z-0 h-[2px] bg-slate-200"></div>
+            <div id="timeline-swimlane" class="relative flex min-h-[90px] items-start justify-between"></div>
+          </div>
+
+          <div class="mt-8 flex flex-wrap gap-4 text-xs text-slate-500">
+            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-blue-400"></span> Mode Change</span>
+            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-yellow-400"></span> Warning</span>
+            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-orange-500"></span> Critical</span>
+            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-red-600"></span> Crash / Failsafe</span>
+          </div>
+        </div>
+
+        <div class="product-card p-6" id="telemetry-panel">
+          <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <h3 class="flex items-center text-sm font-bold uppercase tracking-widest text-slate-500">
+              <span class="mr-2 h-2 w-2 rounded-full bg-violet-500"></span>
+              Interactive Telemetry
+            </h3>
+
+            <div class="flex flex-wrap gap-2">
+              <button id="btn-plot-vibe" class="btn-secondary px-3 py-1.5 text-xs">Vibrations</button>
+              <button id="btn-plot-gps" class="btn-secondary px-3 py-1.5 text-xs">3D Flight Path</button>
+            </div>
+          </div>
+
+          <div id="plotly-chart" class="h-[400px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+            <div class="flex h-full items-center justify-center text-sm italic text-slate-500">
+              Waiting for telemetry data...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="docs" class="border-t border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
+      <p>© 2026 Aerolog · Built for drone safety teams.</p>
+      <div class="flex items-center gap-5">
+        <a class="hover:text-slate-950" href="#">Privacy</a>
+        <a class="hover:text-slate-950" href="#">Security</a>
+        <a class="hover:text-slate-950" href="#">Status</a>
+      </div>
     </div>
+  </footer>
 
-    <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        
-        let radarChartInstance = null;
-        let currentTimeSeries = null;
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
 
-        // Utility to format seconds to mm:ss
-        function formatDuration(sec) {
-            if (!sec) return "0s";
-            const m = Math.floor(sec / 60);
-            const s = Math.floor(sec % 60);
-            return `${m}m ${s}s`;
+    let radarChartInstance = null;
+    let currentTimeSeries = null;
+
+    function formatDuration(sec) {
+      if (!sec) return "0s";
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}m ${s}s`;
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files), false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    }
+
+    async function handleFiles(files) {
+      if (files.length === 0) return;
+
+      const file = files[0];
+
+      if (!file.name.toLowerCase().endsWith('.bin')) {
+        alert("Please upload a .BIN DataFlash log.");
+        return;
+      }
+
+      document.getElementById('progress-container').classList.remove('hidden');
+      document.getElementById('results-dashboard').classList.add('hidden');
+      document.getElementById('metadata-panel').classList.add('hidden');
+
+      const dropZoneObj = document.getElementById('drop-zone');
+      dropZoneObj.style.opacity = '0.55';
+      dropZoneObj.style.pointerEvents = 'none';
+
+      const stages = [
+        { p: 15, text: "PARSING MAVLINK MESSAGES..." },
+        { p: 35, text: "EXTRACTING TELEMETRY FEATURES..." },
+        { p: 60, text: "RUNNING RULE ENGINE..." },
+        { p: 85, text: "INFERRING XGBOOST PROBABILITIES..." },
+        { p: 95, text: "APPLYING CAUSAL ARBITRATION..." }
+      ];
+
+      let stageIdx = 0;
+      const progBar = document.getElementById('progress-bar');
+      const progText = document.getElementById('progress-text');
+      const progPct = document.getElementById('progress-pct');
+
+      const animInterval = setInterval(() => {
+        if (stageIdx < stages.length) {
+          progBar.style.width = `${stages[stageIdx].p}%`;
+          progText.innerText = stages[stageIdx].text;
+          progPct.innerText = `${stages[stageIdx].p}%`;
+          stageIdx++;
         }
+      }, 400);
 
-        // Setup Drag & Drop
-        dropZone.addEventListener('click', () => fileInput.click());
-        
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData
         });
 
-        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        clearInterval(animInterval);
+        progBar.style.width = '100%';
+        progText.innerText = "ANALYSIS COMPLETE";
+        progPct.innerText = "100%";
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        if (!response.ok) {
+          const err = await response.json();
+          alert("Error: " + (err.error || "Failed context"));
+          resetUpload();
+          return;
+        }
+
+        const data = await response.json();
+
+        setTimeout(() => {
+          populateDashboard(data);
+        }, 500);
+
+      } catch (err) {
+        console.error(err);
+        alert("Network error occurred.");
+        resetUpload();
+      }
+    }
+
+    function resetUpload() {
+      document.getElementById('progress-container').classList.add('hidden');
+      const dropZoneObj = document.getElementById('drop-zone');
+      dropZoneObj.style.opacity = '1';
+      dropZoneObj.style.pointerEvents = 'auto';
+      fileInput.value = '';
+    }
+
+    function populateDashboard(data) {
+      window.lastData = data;
+
+      document.getElementById('metadata-panel').classList.remove('hidden');
+      document.getElementById('results-dashboard').classList.remove('hidden');
+
+      document.getElementById('meta-filename').innerText = data.metadata.filename;
+      document.getElementById('meta-duration').innerText = formatDuration(data.metadata.duration);
+      document.getElementById('meta-vehicle').innerText = data.metadata.vehicle;
+
+      const decisionData = data.explain_data?.decision || {};
+      const status = decisionData.status || "healthy";
+      const topGuess = decisionData.top_guess || "none";
+      const topConf = (decisionData.top_confidence || 0) * 100;
+      const humanReview = decisionData.requires_human_review || false;
+
+      const verdictBanner = document.getElementById('verdict-banner');
+      const finalDecisionEl = document.getElementById('final-decision');
+      const topGuessEl = document.getElementById('top-guess');
+      const confSvgPath = document.getElementById('conf-svg-path');
+      const confText = document.getElementById('conf-text');
+
+      verdictBanner.classList.remove('border-red-500', 'border-orange-500', 'border-green-500', 'border-slate-300');
+      confSvgPath.classList.remove('text-red-500', 'text-orange-500', 'text-green-500', 'text-violet-600');
+
+      confText.innerText = `${topConf.toFixed(0)}%`;
+
+      setTimeout(() => {
+        confSvgPath.style.strokeDasharray = `${topConf}, 100`;
+      }, 100);
+
+      if (status === "confirmed") {
+        verdictBanner.classList.add('border-red-500');
+        finalDecisionEl.innerText = "NOT SAFE TO FLY ✘";
+        finalDecisionEl.className = "text-3xl font-extrabold tracking-wide sev-critical";
+        topGuessEl.innerText = topGuess.replace(/_/g, " ").toUpperCase();
+        confSvgPath.classList.add('text-red-500');
+      } else if (status === "uncertain") {
+        verdictBanner.classList.add('border-orange-500');
+        finalDecisionEl.innerText = "UNCERTAIN ⚠";
+        finalDecisionEl.className = "text-3xl font-extrabold tracking-wide sev-warning";
+        topGuessEl.innerText = "Suspected: " + topGuess.replace(/_/g, " ").toUpperCase();
+        confSvgPath.classList.add('text-orange-500');
+      } else {
+        verdictBanner.classList.add('border-green-500');
+        finalDecisionEl.innerText = "HEALTHY ✓";
+        finalDecisionEl.className = "text-3xl font-extrabold tracking-wide sev-safe";
+        topGuessEl.innerText = "No critical anomalies detected";
+        confSvgPath.classList.add('text-green-500');
+      }
+
+      updateRadarChart(decisionData.ranked_subsystems || []);
+
+      const rvTitle = document.getElementById('rv-title');
+      const rvIcon = document.getElementById('rv-icon');
+      const rvRationale = document.getElementById('rv-rationale');
+      const rvBox = document.getElementById('human-review-box');
+
+      rvRationale.innerHTML = '';
+
+      if (humanReview) {
+        rvBox.className = "mb-4 rounded-2xl border border-orange-200 bg-orange-50 p-4";
+        rvTitle.innerText = "HUMAN REVIEW REQUIRED";
+        rvTitle.className = "font-bold text-orange-600";
+        rvIcon.innerText = "⚠️";
+
+        (decisionData.rationale || []).forEach(r => {
+          const li = document.createElement('li');
+          li.innerText = r;
+          rvRationale.appendChild(li);
+        });
+      } else {
+        rvBox.className = "mb-4 rounded-2xl border border-green-200 bg-green-50 p-4";
+        rvTitle.innerText = "Automated Clearance";
+        rvTitle.className = "font-bold text-green-600";
+        rvIcon.innerText = "✔️";
+
+        const li = document.createElement('li');
+        li.innerText = (decisionData.rationale && decisionData.rationale.length)
+          ? decisionData.rationale[0]
+          : "No conflicting signatures detected.";
+        rvRationale.appendChild(li);
+      }
+
+      const topDiag = (data.diagnoses && data.diagnoses.length > 0) ? data.diagnoses[0] : null;
+
+      document.getElementById('recommendation-text').innerText =
+        topDiag ? topDiag.recommendation : "Log appears nominal within tested thresholds.";
+
+      buildEvidenceUI(data.diagnoses || []);
+      buildCrashTimeline(data.timeline_events || []);
+
+      currentTimeSeries = data.time_series || null;
+      setTimeout(() => renderPlotlyChart('vibe'), 100);
+
+      resetUpload();
+    }
+
+    function updateRadarChart(rankedSubsystems) {
+      const ctx = document.getElementById('radarChart').getContext('2d');
+
+      const top5 = rankedSubsystems.slice(0, 5);
+      const labels = top5.map(s => s.subsystem.split('/')[0]);
+      const dataPts = top5.map(s => s.likelihood * 100);
+
+      if (labels.length === 0) {
+        labels.push("Healthy");
+        dataPts.push(100);
+      }
+
+      if (radarChartInstance) {
+        radarChartInstance.destroy();
+      }
+
+      radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Blame Likelihood (%)',
+            data: dataPts,
+            backgroundColor: 'rgba(124, 58, 237, 0.12)',
+            borderColor: '#7c3aed',
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#7c3aed',
+            pointHoverBackgroundColor: '#7c3aed',
+            pointHoverBorderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { color: 'rgba(148, 163, 184, 0.22)' },
+              grid: { color: 'rgba(148, 163, 184, 0.22)' },
+              pointLabels: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+              ticks: { display: false, min: 0, max: 100 }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    function buildEvidenceUI(diagnoses) {
+      const container = document.getElementById('evidence-container');
+      container.innerHTML = '';
+
+      if (diagnoses.length === 0) {
+        container.innerHTML = `<p class="text-sm italic text-slate-500">No actionable evidence thresholds triggered.</p>`;
+        return;
+      }
+
+      diagnoses.forEach(diag => {
+        const diagType = diag.failure_type.replace(/_/g, " ").toUpperCase();
+        const confPct = Math.round(diag.confidence * 100);
+
+        const card = document.createElement('div');
+        card.className = "rounded-2xl border border-slate-200 bg-slate-50 p-4 evidence-card";
+
+        let evtHtml = `
+          <h4 class="mb-2 font-bold text-slate-900">
+            ${diagType}
+            <span class="ml-2 rounded-full bg-white px-2 py-1 text-xs text-slate-600 border border-slate-200">Conf: ${confPct}%</span>
+          </h4>
+        `;
+
+        evtHtml += `<div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">`;
+
+        diag.evidence.forEach(ev => {
+          let valDisplay = typeof ev.value === 'number' ? ev.value.toFixed(2) : ev.value;
+          let thrDisplay = ev.threshold !== undefined ? ev.threshold : "N/A";
+
+          if (typeof ev.value === 'object' && ev.value !== null) {
+            valDisplay = "Context Match";
+          }
+
+          evtHtml += `
+            <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs code-font">
+              <div>
+                <span class="mb-1 block text-slate-500">Feature</span>
+                <span class="text-slate-900">${ev.feature}</span>
+              </div>
+              <div class="text-right">
+                <span class="mb-1 block text-slate-500">Value / Limit</span>
+                <span class="font-bold text-violet-600">${valDisplay}</span>
+                <span class="mx-1 text-slate-400">/</span>
+                <span class="text-slate-500">${thrDisplay}</span>
+              </div>
+            </div>
+          `;
         });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        evtHtml += `</div>`;
+        card.innerHTML = evtHtml;
+        container.appendChild(card);
+      });
+
+      const ruleOutput =
+        typeof window.lastData?.rule_output_only === 'string'
+          ? window.lastData.rule_output_only
+          : window.lastData?.rule_output_only?.failure_type || 'NOMINAL';
+
+      const validationCard = document.createElement('div');
+      validationCard.className = "mt-8 rounded-2xl border border-slate-200 bg-white p-6";
+      validationCard.innerHTML = `
+        <h3 class="mb-4 flex justify-between gap-3 text-sm font-bold uppercase tracking-widest text-slate-500">
+          AI Integrity Validation
+          <span class="rounded-full bg-slate-100 px-2 py-1 text-[10px] text-slate-500">XGBOOST-HYBRID-v1</span>
+        </h3>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p class="mb-1 text-[10px] font-bold uppercase text-slate-500">Legacy Rule Engine</p>
+            <p class="text-sm font-bold text-slate-700">${String(ruleOutput).toUpperCase()}</p>
+          </div>
+          <div class="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <p class="mb-1 text-[10px] font-bold uppercase text-violet-600">Hybrid AI Decision</p>
+            <p class="text-sm font-bold text-violet-700">${(window.lastData?.explain_data?.decision?.top_guess || "NOMINAL").toUpperCase()}</p>
+          </div>
+        </div>
+        <p class="mt-4 text-[10px] italic text-slate-500">
+          Comparison shows how the ML layer filters false positives and handles multi-factor failures better than legacy static rules.
+        </p>
+      `;
+      container.appendChild(validationCard);
+    }
+
+    function buildCrashTimeline(events) {
+      const lane = document.getElementById('timeline-swimlane');
+      lane.innerHTML = '';
+
+      if (!events || events.length === 0) {
+        lane.innerHTML = '<p class="text-xs italic text-slate-500">No events extracted from log.</p>';
+        return;
+      }
+
+      const totalDur = events[events.length - 1].t_sec || 1;
+
+      const SEV_COLORS = {
+        normal: { dot: 'bg-blue-400', text: 'text-blue-500', border: 'border-blue-200' },
+        warning: { dot: 'bg-yellow-400', text: 'text-yellow-600', border: 'border-yellow-200' },
+        critical: { dot: 'bg-orange-500', text: 'text-orange-600', border: 'border-orange-200' },
+        crash: { dot: 'bg-red-600', text: 'text-red-600', border: 'border-red-200' },
+        vibe_spike: { dot: 'bg-yellow-400', text: 'text-yellow-600', border: 'border-yellow-200' }
+      };
+
+      events.forEach((ev, idx) => {
+        const pct = totalDur > 0 ? ((ev.t_sec / totalDur) * 100).toFixed(1) : 0;
+        const colors = SEV_COLORS[ev.severity] || SEV_COLORS.normal;
+        const isCrash = ev.severity === 'crash';
+
+        const node = document.createElement('div');
+        node.className = 'timeline-node flex flex-col items-center z-10';
+        node.style.position = 'absolute';
+        node.style.left = `${pct}%`;
+        node.style.transform = 'translateX(-50%)';
+        node.style.top = '0';
+
+        node.innerHTML = `
+          <div class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 ${colors.border} ${colors.dot} text-xs font-bold text-white"
+               title="${ev.label} @ T+${ev.t_sec}s">
+            ${isCrash ? '✕' : (idx + 1)}
+          </div>
+          <div class="mt-3 max-w-[100px] text-center">
+            <p class="text-[10px] ${colors.text} font-bold leading-tight">${ev.label}</p>
+            <p class="text-[9px] text-slate-500 code-font">T+${ev.t_sec}s</p>
+          </div>
+        `;
+        lane.appendChild(node);
+      });
+
+      lane.style.minHeight = '100px';
+    }
+
+    document.getElementById('btn-plot-gps').addEventListener('click', () => renderPlotlyChart('gps'));
+    document.getElementById('btn-plot-vibe').addEventListener('click', () => renderPlotlyChart('vibe'));
+
+    function renderPlotlyChart(type) {
+      if (!currentTimeSeries) return;
+
+      const target = document.getElementById('plotly-chart');
+
+      if (type === 'gps') {
+        const trk = currentTimeSeries.gps;
+
+        if (!trk || trk.length === 0) {
+          target.innerHTML = '<div class="flex h-full items-center justify-center text-slate-500">No geographic trajectory data in log.</div>';
+          return;
+        }
+
+        const lats = trk.map(p => p.lat);
+        const lngs = trk.map(p => p.lng);
+        const alts = trk.map(p => p.alt);
+
+        const trace = {
+          type: 'scatter3d',
+          mode: 'lines',
+          x: lngs,
+          y: lats,
+          z: alts,
+          line: { width: 4, color: '#7c3aed' },
+          name: "Flight Path"
+        };
+
+        const markers = {
+          type: 'scatter3d',
+          mode: 'markers+text',
+          x: [],
+          y: [],
+          z: [],
+          text: [],
+          marker: {
+            size: 8,
+            color: [],
+            line: { color: 'white', width: 1 }
+          },
+          name: "Event Markers",
+          textposition: 'top center',
+          hoverinfo: 'text'
+        };
+
+        const SEV_COLOR_MAP = {
+          crash: '#dc2626',
+          critical: '#f97316',
+          warning: '#eab308',
+          error: '#dc2626'
+        };
+
+        (window.lastData?.timeline_events || []).forEach(ev => {
+          if (ev.gps) {
+            markers.x.push(ev.gps.lng);
+            markers.y.push(ev.gps.lat);
+            markers.z.push(ev.gps.alt);
+            markers.text.push(ev.label);
+            markers.marker.color.push(SEV_COLOR_MAP[ev.severity] || '#7c3aed');
+          }
         });
 
-        dropZone.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files), false);
+        const layout = {
+          title: 'Interactive 3D Mission Replay',
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent',
+          font: { color: '#334155' },
+          margin: { l: 0, r: 0, b: 0, t: 34 },
+          scene: {
+            xaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lng', gridcolor: 'rgba(148,163,184,0.2)' },
+            yaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lat', gridcolor: 'rgba(148,163,184,0.2)' },
+            zaxis: { showgrid: true, zeroline: true, showline: true, title: 'Alt (m)', gridcolor: 'rgba(148,163,184,0.24)' }
+          }
+        };
 
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
+        Plotly.newPlot(target, [trace, markers], layout, { responsive: true });
+
+      } else if (type === 'vibe') {
+        const trk = currentTimeSeries.vibe;
+
+        if (!trk || trk.length === 0) {
+          target.innerHTML = '<div class="flex h-full items-center justify-center text-slate-500">No vibration data in log.</div>';
+          return;
         }
 
-        async function handleFiles(files) {
-            if (files.length === 0) return;
-            const file = files[0];
-            
-            if (!file.name.toLowerCase().endsWith('.bin')) {
-                alert("Please upload a .BIN dataflash log.");
-                return;
-            }
+        const t = trk.map(p => p.t);
 
-            // UI Transitions
-            document.getElementById('upload-panel').classList.add('glow-border');
-            document.getElementById('progress-container').classList.remove('hidden');
-            document.getElementById('results-dashboard').classList.add('hidden');
-            document.getElementById('metadata-panel').classList.add('hidden');
-            
-            const dropZoneObj = document.getElementById('drop-zone');
-            dropZoneObj.style.opacity = '0.5';
-            dropZoneObj.style.pointerEvents = 'none';
+        const tx = { x: t, y: trk.map(p => p.x), type: 'scatter', name: 'VibeX', line: { color: '#7c3aed' } };
+        const ty = { x: t, y: trk.map(p => p.y), type: 'scatter', name: 'VibeY', line: { color: '#16a34a' } };
+        const tz = { x: t, y: trk.map(p => p.z), type: 'scatter', name: 'VibeZ', line: { color: '#dc2626' } };
 
-            // Fake progress animation for UX (since parsing is fast but users love watching bars)
-            const stages = [
-                {p: 15, text: "PARSING MAVLINK MESSAGES..."},
-                {p: 35, text: "EXTRACTING 60+ TELEMETRY FEATURES..."},
-                {p: 60, text: "RUNNING DETERMINISTIC RULE ENGINE..."},
-                {p: 85, text: "INFERRING XGBOOST CLASSIFIER PROBABILITIES..."},
-                {p: 95, text: "APPLYING CAUSAL ARBITRATION OVERRIDE..."}
-            ];
-            
-            let stageIdx = 0;
-            const progBar = document.getElementById('progress-bar');
-            const progText = document.getElementById('progress-text');
-            const progPct = document.getElementById('progress-pct');
+        const layout = {
+          title: 'Chassis Vibration Timeline',
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent',
+          font: { color: '#334155' },
+          xaxis: { title: 'Time (s)', gridcolor: 'rgba(148,163,184,0.22)' },
+          yaxis: { title: 'Vibration Level (m/s²)', gridcolor: 'rgba(148,163,184,0.22)' },
+          margin: { l: 50, r: 20, b: 40, t: 44 },
+          legend: { orientation: "h", y: 1.1 }
+        };
 
-            const animInterval = setInterval(() => {
-                if(stageIdx < stages.length) {
-                    progBar.style.width = `${stages[stageIdx].p}%`;
-                    progText.innerText = stages[stageIdx].text;
-                    progPct.innerText = `${stages[stageIdx].p}%`;
-                    stageIdx++;
-                }
-            }, 400);
-
-            // Actual file upload
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                clearInterval(animInterval);
-                progBar.style.width = '100%';
-                progText.innerText = "ANALYSIS COMPLETE";
-                progPct.innerText = "100%";
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    alert("Error: " + (err.error || "Failed context"));
-                    resetUpload();
-                    return;
-                }
-
-                const data = await response.json();
-                
-                setTimeout(() => {
-                    populateDashboard(data);
-                }, 500); // give the 100% bar a half-sec to be seen
-                
-            } catch (err) {
-                console.error(err);
-                alert("Network error occurred.");
-                resetUpload();
-            }
-        }
-
-        function resetUpload() {
-            document.getElementById('progress-container').classList.add('hidden');
-            const dropZoneObj = document.getElementById('drop-zone');
-            dropZoneObj.style.opacity = '1';
-            dropZoneObj.style.pointerEvents = 'auto';
-            fileInput.value = '';
-        }
-
-        function populateDashboard(data) {
-            window.lastData = data; // store for sub-functions
-            // Unhide dashboards
-            document.getElementById('metadata-panel').classList.remove('hidden');
-            document.getElementById('results-dashboard').classList.remove('hidden');
-            
-            // Metadata
-            document.getElementById('meta-filename').innerText = data.metadata.filename;
-            document.getElementById('meta-duration').innerText = formatDuration(data.metadata.duration);
-            document.getElementById('meta-vehicle').innerText = data.metadata.vehicle;
-
-            // Decision mapping
-            const decisionData = data.explain_data?.decision || {};
-            const status = decisionData.status || "healthy";
-            const topGuess = decisionData.top_guess || "none";
-            const topConf = (decisionData.top_confidence || 0) * 100;
-            const humanReview = decisionData.requires_human_review || false;
-
-            const verdictBanner = document.getElementById('verdict-banner');
-            const finalDecisionEl = document.getElementById('final-decision');
-            const topGuessEl = document.getElementById('top-guess');
-            const confSvgPath = document.getElementById('conf-svg-path');
-            const confText = document.getElementById('conf-text');
-
-            verdictBanner.classList.remove('border-red-500', 'border-orange-500', 'border-green-500', 'border-gray-500');
-            confSvgPath.classList.remove('text-red-500', 'text-orange-500', 'text-green-500', 'text-cyan-400');
-            
-            confText.innerText = `${topConf.toFixed(0)}%`;
-
-            // Stroke dash array handles the circle fill: "value, 100"
-            // Wait a tick so the CSS transition triggers
-            setTimeout(() => {
-                confSvgPath.style.strokeDasharray = `${topConf}, 100`;
-            }, 100);
-
-            if (status === "confirmed") {
-                verdictBanner.classList.add('border-red-500');
-                finalDecisionEl.innerText = "NOT SAFE TO FLY ✘";
-                finalDecisionEl.className = "text-3xl font-extrabold tracking-wide sev-critical";
-                topGuessEl.innerText = topGuess.replace(/_/g, " ").toUpperCase();
-                confSvgPath.classList.add('text-red-500');
-            } else if (status === "uncertain") {
-                verdictBanner.classList.add('border-orange-500');
-                finalDecisionEl.innerText = "UNCERTAIN ⚠";
-                finalDecisionEl.className = "text-3xl font-extrabold tracking-wide sev-warning";
-                topGuessEl.innerText = "Suspected: " + topGuess.replace(/_/g, " ").toUpperCase();
-                confSvgPath.classList.add('text-orange-500');
-            } else {
-                verdictBanner.classList.add('border-green-500');
-                finalDecisionEl.innerText = "HEALTHY ✓";
-                finalDecisionEl.className = "text-3xl font-extrabold tracking-wide sev-safe";
-                topGuessEl.innerText = "No critical anomalies detected";
-                confSvgPath.classList.add('text-green-500');
-            }
-
-            // Radar Chart for subsystems
-            updateRadarChart(decisionData.ranked_subsystems || []);
-
-            // Human Review status
-            const rvTitle = document.getElementById('rv-title');
-            const rvIcon = document.getElementById('rv-icon');
-            const rvRationale = document.getElementById('rv-rationale');
-            const rvBox = document.getElementById('human-review-box');
-            
-            rvRationale.innerHTML = '';
-            
-            if (humanReview) {
-                rvBox.className = "rounded-lg p-4 bg-orange-900/20 border border-orange-700/50 mb-4";
-                rvTitle.innerText = "HUMAN REVIEW REQUIRED";
-                rvTitle.className = "font-bold text-orange-400";
-                rvIcon.innerText = "⚠️";
-                
-                (decisionData.rationale || []).forEach(r => {
-                    const li = document.createElement('li');
-                    li.innerText = r;
-                    rvRationale.appendChild(li);
-                });
-            } else {
-                rvBox.className = "rounded-lg p-4 bg-green-900/10 border border-green-800/30 mb-4";
-                rvTitle.innerText = "Automated Clearance";
-                rvTitle.className = "font-bold text-green-500";
-                rvIcon.innerText = "✔️";
-                
-                const li = document.createElement('li');
-                li.innerText = (decisionData.rationale && decisionData.rationale.length) 
-                    ? decisionData.rationale[0] 
-                    : "No conflicting signatures detected.";
-                rvRationale.appendChild(li);
-            }
-
-            // Recommendation text
-            const topDiag = (data.diagnoses && data.diagnoses.length > 0) ? data.diagnoses[0] : null;
-            document.getElementById('recommendation-text').innerText = 
-                topDiag ? topDiag.recommendation : "Log appears nominal within tested thresholds.";
-
-            // Evidence UI
-            buildEvidenceUI(data.diagnoses || []);
-
-            // ★ Crash Causality Timeline ★
-            buildCrashTimeline(data.timeline_events || []);
-            
-            // Render Plotly UI
-            currentTimeSeries = data.time_series || null;
-            setTimeout(() => renderPlotlyChart('vibe'), 100);
-
-            // Allow re-upload
-            resetUpload();
-        }
-
-        function updateRadarChart(rankedSubsystems) {
-            const ctx = document.getElementById('radarChart').getContext('2d');
-            
-            // Limit to Top 5 for chart clarity
-            const top5 = rankedSubsystems.slice(0, 5);
-            
-            const labels = top5.map(s => s.subsystem.split('/')[0]); // Shorten label
-            const dataPts = top5.map(s => s.likelihood * 100);
-
-            // Handle empty case
-            if(labels.length === 0) {
-                labels.push("Healthy"); dataPts.push(100);
-            }
-
-            if (radarChartInstance) {
-                radarChartInstance.destroy();
-            }
-
-            radarChartInstance = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Blame Likelihood (%)',
-                        data: dataPts,
-                        backgroundColor: 'rgba(0, 243, 255, 0.2)',
-                        borderColor: '#00f3ff',
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#00f3ff',
-                        pointHoverBackgroundColor: '#00f3ff',
-                        pointHoverBorderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            pointLabels: { color: '#a0aec0', font: { family: 'JetBrains Mono', size: 10 } },
-                            ticks: { display: false, min: 0, max: 100 }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        }
-
-        function buildEvidenceUI(diagnoses) {
-            const container = document.getElementById('evidence-container');
-            container.innerHTML = '';
-            
-            if (diagnoses.length === 0) {
-                container.innerHTML = `<p class="text-gray-500 italic text-sm">No actionable evidence thresholds triggered.</p>`;
-                return;
-            }
-
-            diagnoses.forEach(diag => {
-                const diagType = diag.failure_type.replace(/_/g, " ").toUpperCase();
-                const confPct = Math.round(diag.confidence * 100);
-                
-                const card = document.createElement('div');
-                card.className = "bg-slate-50 border border-slate-200 rounded-md p-4 evidence-card";
-                
-                let evtHtml = `<h4 class="font-bold text-cyan-400 mb-2">${diagType} <span class="bg-gray-700 text-slate-900 text-xs px-2 py-1 rounded ml-2">Conf: ${confPct}%</span></h4>`;
-                
-                evtHtml += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">`;
-                
-                diag.evidence.forEach(ev => {
-                    let valDisplay = typeof ev.value === 'number' ? ev.value.toFixed(2) : ev.value;
-                    let thrDisplay = ev.threshold !== undefined ? ev.threshold : "N/A";
-                    
-                    // Special rendering for object value (contextual overrides)
-                    if (typeof ev.value === 'object' && ev.value !== null) {
-                        valDisplay = "Context Match";
-                    }
-
-                    evtHtml += `
-                        <div class="bg-white rounded p-3 text-xs code-font flex justify-between items-center border border-gray-700/50">
-                            <div>
-                                <span class="text-slate-500 block mb-1">Feature</span>
-                                <span class="text-slate-900">${ev.feature}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-slate-500 block mb-1">Value / Limit</span>
-                                <span class="text-purple-400 font-bold">${valDisplay}</span>
-                                <span class="text-gray-600 mx-1">/</span>
-                                <span class="text-gray-400">${thrDisplay}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                evtHtml += `</div>`;
-                card.innerHTML = evtHtml;
-            });
-
-            // Add Side-by-Side Validation Report
-            const ruleOutput =
-                typeof window.lastData?.rule_output_only === 'string'
-                    ? window.lastData.rule_output_only
-                    : window.lastData?.rule_output_only?.failure_type || 'NOMINAL';
-            const validationCard = document.createElement('div');
-            validationCard.className = "mt-8 product-card bg-white p-6 border border-cyan-500/30 overflow-hidden relative";
-            validationCard.innerHTML = `
-
-                <div class="scan-line"></div>
-                <h3 class="text-sm uppercase tracking-widest text-cyan-400 font-bold mb-4 flex justify-between">
-                    AI Integrity Validation
-                    <span class="text-[10px] text-gray-500 bg-white px-2 py-1 rounded">XGBOOST-HYBRID-v1</span>
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-3 bg-black/20 rounded border border-gray-800">
-                        <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Legacy Rule Engine</p>
-                        <p class="text-sm font-bold text-gray-400">${String(ruleOutput).toUpperCase()}</p>
-                    </div>
-                    <div class="p-3 bg-cyan-900/10 rounded border border-cyan-500/20">
-                        <p class="text-[10px] text-cyan-500 uppercase font-bold mb-1">Hybrid AI Decision</p>
-                        <p class="text-sm font-bold text-cyan-400">${(window.lastData?.explain_data?.decision?.top_guess || "NOMINAL").toUpperCase()}</p>
-                    </div>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-4 italic">Comparison shows how the ML layer filters false positives and handles multi-factor failures better than legacy static rules.</p>
-            `;
-            container.appendChild(validationCard);
-        }
-
-        function buildCrashTimeline(events) {
-            const lane = document.getElementById('timeline-swimlane');
-            lane.innerHTML = '';
-            if (!events || events.length === 0) {
-                lane.innerHTML = '<p class="text-gray-500 italic text-xs">No events extracted from log.</p>';
-                return;
-            }
-
-            const totalDur = events[events.length - 1].t_sec || 1;
-            const SEV_COLORS = {
-                normal:   { dot: 'bg-blue-400',   text: 'text-blue-400',   border: 'border-blue-500/40' },
-                warning:  { dot: 'bg-yellow-400',  text: 'text-yellow-400',  border: 'border-yellow-500/40' },
-                critical: { dot: 'bg-orange-500',  text: 'text-orange-400',  border: 'border-orange-500/40' },
-                crash:    { dot: 'bg-red-600',     text: 'text-red-400',     border: 'border-red-600/50' },
-                vibe_spike: { dot: 'bg-yellow-300', text: 'text-yellow-300', border: 'border-yellow-300/40' },
-            };
-
-            events.forEach((ev, idx) => {
-                const pct = totalDur > 0 ? ((ev.t_sec / totalDur) * 100).toFixed(1) : 0;
-                const colors = SEV_COLORS[ev.severity] || SEV_COLORS.normal;
-                const isFirst = idx === 0;
-                const isCrash = ev.severity === 'crash';
-
-                const node = document.createElement('div');
-                node.className = 'flex flex-col items-center z-10';
-                node.style.position = 'absolute';
-                node.style.left = `${pct}%`;
-                node.style.transform = 'translateX(-50%)';
-                node.style.top = '0';
-
-                // Outer glow for crash
-                const dotGlow = isCrash ? 'shadow-[0_0_12px_#ff003c] ring-2 ring-red-600' : '';
-
-                node.innerHTML = `
-                    <div class="w-8 h-8 rounded-full border-2 ${colors.border} ${colors.dot} ${dotGlow} flex items-center justify-center text-white text-xs font-bold cursor-pointer transition-transform hover:scale-125"
-                         title="${ev.label} @ T+${ev.t_sec}s">
-                        ${isCrash ? '✕' : (idx + 1)}
-                    </div>
-                    <div class="mt-2 max-w-[90px] text-center">
-                        <p class="text-[9px] ${colors.text} font-bold leading-tight">${ev.label}</p>
-                        <p class="text-[9px] text-gray-500 code-font">T+${ev.t_sec}s</p>
-                    </div>
-                `;
-                lane.appendChild(node);
-            });
-
-            // Fix min-height so labels don't overlap the bar
-            lane.style.minHeight = '90px';
-        }
-
-        document.getElementById('btn-plot-gps').addEventListener('click', () => renderPlotlyChart('gps'));
-        document.getElementById('btn-plot-vibe').addEventListener('click', () => renderPlotlyChart('vibe'));
-
-        function renderPlotlyChart(type) {
-            if (!currentTimeSeries) return;
-            const target = document.getElementById('plotly-chart');
-            
-            if (type === 'gps') {
-                const trk = currentTimeSeries.gps;
-                if (!trk || trk.length === 0) {
-                    target.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No geographic trajectory data in log.</div>';
-                    return;
-                }
-                const lats = trk.map(p => p.lat);
-                const lngs = trk.map(p => p.lng);
-                const alts = trk.map(p => p.alt);
-                
-                const trace = {
-                    type: 'scatter3d',
-                    mode: 'lines',
-                    x: lngs,
-                    y: lats,
-                    z: alts,
-                    line: { width: 4, color: '#9d00ff' },
-                    name: "Flight Path"
-                };
-                
-                const markers = {
-                    type: 'scatter3d',
-                    mode: 'markers+text',
-                    x: [], y: [], z: [],
-                    text: [],
-                    marker: {
-                        size: 8,
-                        color: [],
-                        line: { color: 'white', width: 1 }
-                    },
-                    name: "Event Markers",
-                    textposition: 'top center',
-                    hoverinfo: 'text'
-                };
-
-                const SEV_COLOR_MAP = {
-                    'crash': '#ff003c',
-                    'critical': '#ff5e00',
-                    'warning': '#facc15',
-                    'error': '#ff003c'
-                };
-
-                (window.lastData?.timeline_events || []).forEach(ev => {
-                    if (ev.gps) {
-                        markers.x.push(ev.gps.lng);
-                        markers.y.push(ev.gps.lat);
-                        markers.z.push(ev.gps.alt);
-                        markers.text.push(ev.label);
-                        markers.marker.color.push(SEV_COLOR_MAP[ev.severity] || '#00f3ff');
-                    }
-                });
-                
-                const layout = {
-                    title: 'Interactive 3D Mission Replay',
-                    paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'transparent',
-                    font: { color: '#a0aec0' },
-                    margin: { l: 0, r: 0, b: 0, t: 30 },
-                    scene: {
-                        xaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lng', gridcolor: 'rgba(255,255,255,0.05)' },
-                        yaxis: { showgrid: false, zeroline: false, showline: false, title: 'Lat', gridcolor: 'rgba(255,255,255,0.05)' },
-                        zaxis: { showgrid: true, zeroline: true, showline: true, title: 'Alt (m)', gridcolor: 'rgba(255,255,255,0.1)' }
-                    }
-                };
-                Plotly.newPlot(target, [trace, markers], layout, {responsive: true});
-            } else if (type === 'vibe') {
-                const trk = currentTimeSeries.vibe;
-                if (!trk || trk.length === 0) {
-                    target.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No vibration data in log.</div>';
-                    return;
-                }
-                const t = trk.map(p => p.t);
-                const tx = { x: t, y: trk.map(p => p.x), type: 'scatter', name: 'VibeX', line: {color: '#00f3ff'} };
-                const ty = { x: t, y: trk.map(p => p.y), type: 'scatter', name: 'VibeY', line: {color: '#00ff66'} };
-                const tz = { x: t, y: trk.map(p => p.z), type: 'scatter', name: 'VibeZ', line: {color: '#ff003c'} };
-                
-                const layout = {
-                    title: 'Chassis Vibration Timeline',
-                    paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'transparent',
-                    font: { color: '#a0aec0' },
-                    xaxis: { title: 'Time (s)', gridcolor: 'rgba(255,255,255,0.1)' },
-                    yaxis: { title: 'Vibration Level (m/s²)', gridcolor: 'rgba(255,255,255,0.1)' },
-                    margin: { l: 50, r: 20, b: 40, t: 40 },
-                    legend: { orientation: "h", y: 1.1 }
-                };
-                Plotly.newPlot(target, [tx, ty, tz], layout, {responsive: true});
-            }
-        }
-    </script>
+        Plotly.newPlot(target, [tx, ty, tz], layout, { responsive: true });
+      }
+    }
+  </script>
 </body>
 </html>
