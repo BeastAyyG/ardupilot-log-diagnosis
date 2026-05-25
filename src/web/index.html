@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aerolog — AI Flight Log Diagnosis</title>
+  <title>ArduPilot Log Diagnosis</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -27,18 +27,13 @@
       --danger: #dc2626;
       --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.06);
       --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.08);
-      --shadow-float: 0 16px 40px rgba(15, 23, 42, 0.12);
       --gradient-subtle: linear-gradient(180deg, #fbfbfd 0%, #f6f2ff 100%);
       --gradient-accent: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
@@ -49,9 +44,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .code-font {
-      font-family: "JetBrains Mono", monospace;
-    }
+    .code-font { font-family: "JetBrains Mono", monospace; }
 
     .text-gradient {
       background: var(--gradient-accent);
@@ -60,9 +53,7 @@
       color: transparent;
     }
 
-    .section-subtle {
-      background: var(--gradient-subtle);
-    }
+    .section-subtle { background: var(--gradient-subtle); }
 
     .product-card {
       background: var(--card);
@@ -73,7 +64,7 @@
     }
 
     .product-card:hover {
-      transform: translateY(-3px);
+      transform: translateY(-2px);
       box-shadow: var(--shadow-card);
       border-color: #d8dbe2;
     }
@@ -101,9 +92,7 @@
       transition: all 0.2s ease;
     }
 
-    .btn-secondary:hover {
-      background: var(--muted);
-    }
+    .btn-secondary:hover { background: var(--muted); }
 
     .badge {
       display: inline-flex;
@@ -117,6 +106,27 @@
       font-weight: 600;
       color: var(--muted-text);
       box-shadow: var(--shadow-soft);
+    }
+
+    .workflow-step {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .workflow-dot {
+      display: flex;
+      height: 2.25rem;
+      width: 2.25rem;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
     }
 
     .drop-zone {
@@ -158,53 +168,27 @@
       background: #fafafa;
     }
 
-    .sev-critical {
-      color: var(--danger);
-    }
+    .sev-critical { color: var(--danger); }
+    .sev-warning { color: var(--warning); }
+    .sev-info { color: var(--accent); }
+    .sev-safe { color: var(--success); }
 
-    .sev-warning {
-      color: var(--warning);
-    }
-
-    .sev-info {
-      color: var(--accent);
-    }
-
-    .sev-safe {
-      color: var(--success);
-    }
-
-    .timeline-node {
-      transition: transform 0.2s ease;
-    }
+    .timeline-node { transition: transform 0.2s ease; }
 
     .timeline-node:hover {
       transform: translateX(-50%) scale(1.08) !important;
     }
 
     @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(14px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .fade-up {
-      animation: fadeUp 0.45s ease both;
-    }
+    .fade-up { animation: fadeUp 0.45s ease both; }
 
     @media (max-width: 768px) {
-      #timeline-swimlane {
-        min-width: 620px;
-      }
-
-      #final-decision {
-        font-size: 1.75rem;
-      }
+      #timeline-swimlane { min-width: 620px; }
+      #final-decision { font-size: 1.75rem; }
     }
   </style>
 </head>
@@ -216,74 +200,95 @@
         <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-sm">
           <span class="text-sm text-white">✈</span>
         </div>
-        <span class="text-[15px] font-semibold tracking-tight text-slate-950">Aerolog</span>
-        <span class="ml-1 hidden text-xs font-medium text-slate-500 sm:inline">/ Diagnosis</span>
+        <span class="text-[15px] font-semibold tracking-tight text-slate-950">ArduPilot Log Diagnosis</span>
       </div>
 
       <nav class="hidden items-center gap-7 text-sm text-slate-500 md:flex">
-        <a class="transition-colors hover:text-slate-950" href="#workflow">How it works</a>
+        <a class="transition-colors hover:text-slate-950" href="#workflow">Workflow</a>
         <a class="transition-colors hover:text-slate-950" href="#analysis">Analysis</a>
         <a class="transition-colors hover:text-slate-950" href="#docs">Docs</a>
       </nav>
 
-      <div class="flex items-center gap-2">
-        <button class="hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950 sm:inline-flex">
-          Sign in
-        </button>
-        <a href="#workflow" class="btn-primary px-3.5 py-1.5 text-sm">
-          Get started
-        </a>
-      </div>
+      <a href="#upload-panel" class="btn-primary px-3.5 py-1.5 text-sm">
+        Upload log
+      </a>
     </div>
   </header>
 
   <section class="relative overflow-hidden border-b border-slate-200/80 section-subtle">
-    <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
-      <div class="mx-auto max-w-3xl text-center fade-up">
-        <div class="badge mb-6">
-          <span class="text-violet-600">✦</span>
-          AI-powered flight log analysis
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+        <div class="fade-up">
+          <div class="badge mb-6">
+            <span class="text-violet-600">✦</span>
+            Flight log diagnosis for ArduPilot telemetry
+          </div>
+
+          <h1 class="max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+            Diagnose flight logs with a clearer <span class="text-gradient">desktop-first workflow.</span>
+          </h1>
+
+          <p class="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            Upload compatible ArduPilot log/data files and review root-cause diagnosis, confidence scoring,
+            subsystem evidence, crash timeline, and telemetry charts in one focused dashboard.
+          </p>
+
+          <div class="mt-8 flex flex-wrap items-center gap-3">
+            <a href="#upload-panel" class="btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm">
+              Upload log file
+              <span>→</span>
+            </a>
+            <a href="#analysis" class="btn-secondary px-5 py-2.5 text-sm">
+              View report layout
+            </a>
+          </div>
         </div>
 
-        <h1 class="text-balance text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-          Understand any drone crash <span class="text-gradient">in seconds.</span>
-        </h1>
+        <div id="workflow" class="product-card p-6">
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Analysis Workflow</p>
+          <div class="mt-5 space-y-5">
+            <div class="workflow-step">
+              <span class="workflow-dot">1</span>
+              <div>
+                <p class="font-semibold text-slate-950">Upload log/data file</p>
+                <p class="text-sm text-slate-500">Supports .BIN and .LOG compatible files.</p>
+              </div>
+            </div>
 
-        <p class="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
-          Drop an ArduPilot
-          <code class="rounded bg-slate-100 px-1.5 py-0.5 text-[13px] font-medium text-slate-900">.BIN</code>
-          log and get an instant root-cause diagnosis, subsystem health, and a clear timeline of what went wrong.
-        </p>
+            <div class="h-6 border-l border-slate-200 ml-[1.1rem]"></div>
 
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <a href="#workflow" class="btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm">
-            Upload a log
-            <span>→</span>
-          </a>
-          <a href="#analysis" class="btn-secondary px-5 py-2.5 text-sm">
-            See sample report
-          </a>
-        </div>
+            <div class="workflow-step">
+              <span class="workflow-dot">2</span>
+              <div>
+                <p class="font-semibold text-slate-950">Analyze telemetry</p>
+                <p class="text-sm text-slate-500">Extracts signals, anomalies, and subsystem evidence.</p>
+              </div>
+            </div>
 
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-slate-500">
-          <span>Built for drone safety teams</span>
-          <span class="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-block"></span>
-          <span>ArduPilot compatible</span>
-          <span class="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-block"></span>
-          <span>Root-cause focused reports</span>
+            <div class="h-6 border-l border-slate-200 ml-[1.1rem]"></div>
+
+            <div class="workflow-step">
+              <span class="workflow-dot">3</span>
+              <div>
+                <p class="font-semibold text-slate-950">Review diagnosis</p>
+                <p class="text-sm text-slate-500">Inspect verdict, confidence, timeline, and charts.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <main class="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 pb-16 sm:px-6 lg:grid-cols-3 lg:px-8">
-    <section id="workflow" class="relative z-10 -mt-8 space-y-8">
+  <main class="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-3 lg:px-8">
+    <section class="space-y-8">
       <div class="product-card fade-up p-6 sm:p-8" id="upload-panel">
         <div class="mb-6">
-          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Step 1</p>
-          <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Upload your flight log</h2>
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Log Upload</p>
+          <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Upload flight log</h2>
           <p class="mt-1 text-sm text-slate-500">
-            Drop a <code class="rounded bg-slate-100 px-1 py-0.5 text-[12px]">.BIN</code> file. The log is analyzed locally by the diagnostic pipeline.
+            Drop a <code class="rounded bg-slate-100 px-1 py-0.5 text-[12px]">.BIN</code>
+            or <code class="rounded bg-slate-100 px-1 py-0.5 text-[12px]">.LOG</code> file.
           </p>
         </div>
 
@@ -294,14 +299,14 @@
             </svg>
           </div>
 
-          <p class="text-center text-lg font-semibold text-slate-900">Drag and drop your flight log</p>
-          <p class="mt-2 text-center text-sm text-slate-500">or click to browse .BIN files</p>
+          <p class="text-center text-lg font-semibold text-slate-900">Drag and drop your log file</p>
+          <p class="mt-2 text-center text-sm text-slate-500">or click to browse .BIN / .LOG files</p>
 
           <span class="mt-5 inline-flex items-center rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
             Choose file
           </span>
 
-          <input type="file" id="file-input" class="hidden" accept=".BIN,.bin">
+          <input type="file" id="file-input" class="hidden" accept=".BIN,.bin,.LOG,.log">
         </div>
 
         <div id="progress-container" class="hidden mt-6">
@@ -317,8 +322,8 @@
 
       <div id="metadata-panel" class="product-card hidden p-6 fade-up">
         <div class="mb-5">
-          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Step 2</p>
-          <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-950">Flight Metadata</h2>
+          <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Flight Metadata</p>
+          <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-950">Parsed log details</h2>
         </div>
 
         <ul class="space-y-3 text-sm code-font">
@@ -342,9 +347,9 @@
       <div id="results-dashboard" class="hidden space-y-8">
         <div class="mb-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Step 3 · Report</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-violet-600">Diagnosis Report</p>
             <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Diagnosis report
+              Analysis dashboard
             </h2>
           </div>
           <div class="flex items-center gap-2">
@@ -421,13 +426,6 @@
             <div class="absolute left-0 right-0 top-[18px] z-0 h-[2px] bg-slate-200"></div>
             <div id="timeline-swimlane" class="relative flex min-h-[90px] items-start justify-between"></div>
           </div>
-
-          <div class="mt-8 flex flex-wrap gap-4 text-xs text-slate-500">
-            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-blue-400"></span> Mode Change</span>
-            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-yellow-400"></span> Warning</span>
-            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-orange-500"></span> Critical</span>
-            <span class="flex items-center"><span class="mr-2 inline-block h-3 w-3 rounded-full bg-red-600"></span> Crash / Failsafe</span>
-          </div>
         </div>
 
         <div class="product-card p-6" id="telemetry-panel">
@@ -455,7 +453,7 @@
 
   <footer id="docs" class="border-t border-slate-200 bg-white">
     <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-      <p>© 2026 Aerolog · Built for drone safety teams.</p>
+      <p>© 2026 ArduPilot Log Diagnosis · Built for drone safety teams.</p>
       <div class="flex items-center gap-5">
         <a class="hover:text-slate-950" href="#">Privacy</a>
         <a class="hover:text-slate-950" href="#">Security</a>
@@ -510,9 +508,11 @@
       if (files.length === 0) return;
 
       const file = files[0];
+      const validExtensions = ['.bin', '.log'];
+      const fileName = file.name.toLowerCase();
 
-      if (!file.name.toLowerCase().endsWith('.bin')) {
-        alert("Please upload a .BIN DataFlash log.");
+      if (!validExtensions.some(ext => fileName.endsWith(ext))) {
+        alert("Please upload a .BIN or .LOG flight log.");
         return;
       }
 
@@ -525,7 +525,7 @@
       dropZoneObj.style.pointerEvents = 'none';
 
       const stages = [
-        { p: 15, text: "PARSING MAVLINK MESSAGES..." },
+        { p: 15, text: "PARSING LOG MESSAGES..." },
         { p: 35, text: "EXTRACTING TELEMETRY FEATURES..." },
         { p: 60, text: "RUNNING RULE ENGINE..." },
         { p: 85, text: "INFERRING XGBOOST PROBABILITIES..." },
