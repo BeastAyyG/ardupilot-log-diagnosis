@@ -9,7 +9,7 @@ joblib
 pyyaml
 pandas
 imbalanced-learn
-matplotlib
+matplotli
 fastapi
 uvicorn
 python-multipart

@@ -7,10 +7,16 @@ from .commands import COMMAND_MODULES
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="ArduPilot Log Diagnosis Tool")
+    # provide a safe version string: prefer installed metadata, fallback to a dev label
+    try:
+        _version = importlib.metadata.version('ardupilot-log-diagnosis')
+    except importlib.metadata.PackageNotFoundError:
+        _version = "dev (no package metadata)"
+
     parser.add_argument(
         "--version",
         action="version",
-        version=f"ardupilot-log-diagnosis, version {importlib.metadata.version('ardupilot-log-diagnosis')}"
+        version=f"ardupilot-log-diagnosis, version {_version}"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

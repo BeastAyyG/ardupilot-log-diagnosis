@@ -31,6 +31,7 @@ src/cli/commands/demo.py
 src/cli/commands/features.py
 src/cli/commands/import_clean.py
 src/cli/commands/label.py
+src/cli/commands/live.py
 src/cli/commands/mine_expert_labels.py
 src/cli/commands/ui.py
 src/comparison/__init__.py
@@ -75,11 +76,13 @@ src/parser/__init__.py
 src/parser/bin_parser.py
 src/retrieval/__init__.py
 src/retrieval/similarity.py
+src/tools/__init__.py
 src/tools/analyze_thrust.py
 src/tuning/__init__.py
 src/tuning/advisor.py
 src/web/app.py
 src/web/schemas.py
+tests/test_batch.py
 tests/test_benchmark.py
 tests/test_benchmark_metrics.py
 tests/test_clean_import.py
