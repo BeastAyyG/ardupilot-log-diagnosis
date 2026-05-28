@@ -39,8 +39,9 @@ def _get_version() -> str:
         pyproject_path = Path(__file__).resolve().parents[2] / "pyproject.toml"
         if pyproject_path.exists():
             for line in pyproject_path.read_text(encoding="utf-8").splitlines():
-                if line.strip().startswith("version"):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+                parts = line.strip().split("=", 1)
+                if len(parts) == 2 and parts[0].strip() == "version":
+                    return parts[1].strip().strip('"').strip("'")
         return "dev"
 
 APP_VERSION = _get_version()
