@@ -13,6 +13,7 @@ from .system import SystemExtractor
 from .events import EventExtractor
 from .fft_analysis import FFTExtractor
 from src.contracts import FeatureDict, ParsedLog
+from src.diagnosis.parameter_drift import detect_parameter_drift, summarize_drift
 
 
 class FeaturePipeline:
@@ -76,6 +77,24 @@ class FeaturePipeline:
             all_features.update(features)
 
         extraction_time = time.time() - start_time
+
+        # Parameter-drift signals (advisory). Computed from the raw PARM stream
+        # and stashed under private '_'-prefixed keys so they never enter the
+        # public 94-feature schema or the ML vector. The check_parameter_drift
+        # rule and the CLI/Web advisory channel consume these.
+        from src.constants import DEFAULT_THRESHOLDS
+
+        parm_messages = messages.get("PARM", [])
+        drift_events = detect_parameter_drift(
+            parm_messages,
+            settle_sec=float(DEFAULT_THRESHOLDS.get("param_drift_settle_sec", 5.0)),
+            min_rel_change=float(DEFAULT_THRESHOLDS.get("param_drift_min_rel_change", 0.0)),
+        )
+        drift_summary = summarize_drift(drift_events)
+        all_features["_param_drift_events"] = drift_events
+        all_features["_param_drift_count"] = drift_summary["count"]
+        all_features["_param_drift_max_rel_change"] = drift_summary["max_rel_change"]
+        all_features["_param_drift_tanomaly"] = drift_summary["tanomaly"]
 
         # Determine if extraction produced meaningful data.
         # A corrupt or empty log will have duration=0 and very few message families.

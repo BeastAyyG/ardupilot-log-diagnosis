@@ -48,6 +48,7 @@ class AnalysisResponse(BaseModel):
     features: dict[str, Any]
     diagnoses: list[Diagnosis]
     parameter_warnings: list[dict]
+    parameter_drift: list[dict] = []
     explain_data: ExplainData
     time_series: dict[str, list[dict[str, Any]]]
     timeline_events: list[TimelineEvent]

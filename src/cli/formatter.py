@@ -74,6 +74,7 @@ class DiagnosisFormatter:
         similar_cases: Optional[list] = None,
         runtime_info: Optional[dict] = None,
         parameter_warnings: Optional[list[dict]] = None,
+        parameter_drift: Optional[list[dict]] = None,
         explain_data: Optional[dict] = None,
     ) -> str:
         filename = metadata.get("log_file", "unknown").split("/")[-1]
@@ -93,6 +94,12 @@ class DiagnosisFormatter:
         if parameter_warnings:
             lines.append(_c("Pre-Flight & Parameter Validation", _YELLOW, _BOLD))
             for item in parameter_warnings:
+                lines.append(f"  - {item['message']}")
+            lines.append("")
+
+        if parameter_drift:
+            lines.append(_c("Parameter Drift (In-Flight Changes)", _YELLOW, _BOLD))
+            for item in parameter_drift:
                 lines.append(f"  - {item['message']}")
             lines.append("")
 
@@ -186,6 +193,7 @@ class DiagnosisFormatter:
         similar_cases: Optional[list] = None,
         runtime_info: Optional[dict] = None,
         parameter_warnings: Optional[list[dict]] = None,
+        parameter_drift: Optional[list[dict]] = None,
         explain_data: Optional[dict] = None,
     ) -> str:
         return json.dumps(
@@ -196,6 +204,7 @@ class DiagnosisFormatter:
                 "decision": decision or {},
                 "similar_cases": similar_cases or [],
                 "parameter_warnings": parameter_warnings or [],
+                "parameter_drift": parameter_drift or [],
                 "explain_data": explain_data or {},
                 "features_summary": {
                     k: v for k, v in features.items() if not k.startswith("_")
@@ -213,6 +222,7 @@ class DiagnosisFormatter:
         similar_cases: Optional[list] = None,
         runtime_info: Optional[dict] = None,
         parameter_warnings: Optional[list[dict]] = None,
+        parameter_drift: Optional[list[dict]] = None,
         explain_data: Optional[dict] = None,
     ) -> str:
         filename = metadata.get("log_file", "unknown").split("/")[-1]
@@ -232,6 +242,12 @@ class DiagnosisFormatter:
                 f'<div class="warning-box">{item["message"]}</div>' for item in parameter_warnings
             )
             sections.append(f'<div class="card"><h2>Pre-Flight & Parameter Validation</h2>{warning_html}</div>')
+
+        if parameter_drift:
+            drift_html = "".join(
+                f'<div class="warning-box">{item["message"]}</div>' for item in parameter_drift
+            )
+            sections.append(f'<div class="card"><h2>Parameter Drift (In-Flight Changes)</h2>{drift_html}</div>')
 
         if not diagnoses:
             sections.append('<div class="card"><span class="badge healthy">HEALTHY</span> No critical failures detected.</div>')

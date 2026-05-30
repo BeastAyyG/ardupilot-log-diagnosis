@@ -6,6 +6,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+- **In-Flight Parameter Drift Detection (#39):** New `src/diagnosis/parameter_drift.py`
+  builds per-parameter value timelines from the `PARM` message stream and flags
+  parameters that change *after* the boot-time parameter dump (e.g. live AutoTune
+  of `ATC_RAT_RLL_P`, or a companion computer / GCS re-syncing parameters).
+  - A domain-aware ignore-list suppresses ArduPilot's auto-learned and bookkeeping
+    parameters (`MOT_THST_HOVER`, `STAT_*`, `SYSID_*`, `MIS_TOTAL`, learned
+    compass/INS/baro calibration, …) so healthy flights do not false-positive.
+  - New `check_parameter_drift` rule registered in the `RuleEngine` for all
+    vehicle types.
+  - Drift is an **advisory** signal (`ADVISORY_LABELS`), surfaced via
+    `engine.advisories` and the explain panel. It is deliberately routed out of
+    the scored crash-diagnosis list, so it never affects the ML feature/label
+    schema, the manifest hash, the CITA causal arbiter, or benchmark scoring.
+  - Reported in the CLI (terminal / JSON / HTML) and in the web dashboard
+    (advisory panel + crash-causality timeline markers).
+
+### Notes
+- No changes to the frozen 94-feature schema (`FEATURE_NAMES`) or the crash
+  label taxonomy (`VALID_LABELS`); the trained XGBoost classifier remains
+  available (manifest hashes unchanged). Drift signals travel as private
+  `_param_drift_*` keys, mirroring the existing `_thrust_loss_*` convention.
+
+---
+
 ## [2.0.0] — 2026-03-16 — GSoC Final Breakthrough
 
 ### Summary

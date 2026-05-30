@@ -43,6 +43,11 @@ class HybridEngine:
 
     def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
         rule_results = self.rules.diagnose(features)
+        # Advisory diagnoses (e.g. parameter_drift) are produced inside the rule
+        # engine but routed out of the scored crash list. Surface them here so
+        # the CLI/Web layers and the explain panel can show them, while keeping
+        # them out of the crash root-cause arbitration and the benchmark.
+        self.advisories: list[DiagnosisDict] = list(getattr(self.rules, "advisories", []))
         ml_results = self.ml.predict(features) if self.ml.available else []
         anomaly_info = {"is_anomaly": False, "anomaly_score": 0.0}
 
@@ -183,6 +188,7 @@ class HybridEngine:
                 "rule": rule_results,
                 "ml": ml_results,
                 "anomaly": anomaly_info,
+                "advisories": self.advisories,
                 "hypotheses": build_hypotheses(),
                 "causal_arbiter": arbiter or {},
                 "final": final_diagnoses,

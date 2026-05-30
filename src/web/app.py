@@ -16,6 +16,7 @@ from src.web.schemas import AnalysisResponse, ChatRequest, ChatResponse
 
 from src.diagnosis.decision_policy import evaluate_decision
 from src.diagnosis.hybrid_engine import HybridEngine
+from src.diagnosis.parameter_drift import drift_findings
 from src.diagnosis.parameter_validation import validate_parameters
 from src.diagnosis.rule_engine import RuleEngine
 from src.features.pipeline import FeaturePipeline
@@ -181,11 +182,28 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
         features,
         features.get("_metadata", {}).get("vehicle_type", "Unknown"),
     )
+    parameter_drift = drift_findings(features)
 
     decision = evaluate_decision(diagnoses)
     explain_data["decision"] = decision
 
     time_series, timeline_events, gps_quality = _build_visualization_data(parsed, features)
+
+    # Surface in-flight parameter changes on the crash-causality timeline so they
+    # line up visually with telemetry events.
+    for event in features.get("_param_drift_events", []) or []:
+        t_sec = event.get("t_sec")
+        if not isinstance(t_sec, (int, float)) or t_sec < 0:
+            continue
+        timeline_events.append(
+            {
+                "t_sec": float(t_sec),
+                "type": "parameter_drift",
+                "label": f"{event.get('parameter', '?')}: {event.get('old_value')} -> {event.get('new_value')}",
+                "severity": "warning" if event.get("tuning_critical") else "info",
+            }
+        )
+    timeline_events.sort(key=lambda e: e.get("t_sec", 0.0))
     rule_diagnoses = _get_rule_engine().diagnose(features)
     rule_output_only = rule_diagnoses[0]["failure_type"] if rule_diagnoses else "nominal"
 
@@ -198,6 +216,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
         "features": features,
         "diagnoses": diagnoses,
         "parameter_warnings": parameter_warnings,
+        "parameter_drift": parameter_drift,
         "explain_data": explain_data,
         "time_series": time_series,
         "timeline_events": timeline_events,

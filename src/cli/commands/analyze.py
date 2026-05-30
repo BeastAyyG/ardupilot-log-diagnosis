@@ -5,6 +5,7 @@ from typing import Any, cast
 
 from src.diagnosis.decision_policy import evaluate_decision
 from src.diagnosis.hybrid_engine import HybridEngine
+from src.diagnosis.parameter_drift import drift_findings
 from src.diagnosis.parameter_validation import validate_parameters
 from src.diagnosis.rule_engine import RuleEngine
 from src.retrieval.similarity import FailureRetrieval
@@ -46,6 +47,7 @@ def run(args) -> None:
         features,
         features.get("_metadata", {}).get("vehicle_type", "Unknown"),
     )
+    parameter_drift = drift_findings(features)
 
     retrieval = FailureRetrieval()
     similar_cases = retrieval.find_similar(features)
@@ -68,6 +70,7 @@ def run(args) -> None:
             similar_cases=similar_cases,
             runtime_info=runtime_info,
             parameter_warnings=parameter_warnings,
+            parameter_drift=parameter_drift,
             explain_data=explain_data,
         )
     elif getattr(args, "format", "terminal") == "html":
@@ -79,6 +82,7 @@ def run(args) -> None:
             similar_cases=similar_cases,
             runtime_info=runtime_info,
             parameter_warnings=parameter_warnings,
+            parameter_drift=parameter_drift,
             explain_data=explain_data,
         )
     else:
@@ -89,6 +93,7 @@ def run(args) -> None:
             similar_cases=similar_cases,
             runtime_info=runtime_info,
             parameter_warnings=parameter_warnings,
+            parameter_drift=parameter_drift,
             explain_data=explain_data,
         )
 

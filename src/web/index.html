@@ -318,6 +318,14 @@
                     </div>
                 </div>
 
+                <!-- Parameter Drift (in-flight parameter changes) -->
+                <div id="param-drift-panel" class="glass-panel p-6 hidden">
+                    <h3 class="text-sm uppercase tracking-widest text-gray-500 font-bold mb-6">Parameter Drift &mdash; In-Flight Changes</h3>
+                    <div id="param-drift-container" class="space-y-3">
+                        <!-- Drift advisories injected here -->
+                    </div>
+                </div>
+
                 <!-- Annotated Crash Causality Timeline -->
                 <div class="glass-panel p-6" id="crash-timeline-panel">
                     <div class="flex items-center mb-6 space-x-3">
@@ -647,6 +655,9 @@
             // Evidence UI
             buildEvidenceUI(data.diagnoses || []);
 
+            // Parameter drift advisory (in-flight parameter changes)
+            renderParameterDrift(data.parameter_drift || []);
+
             // ★ Crash Causality Timeline ★
             buildCrashTimeline(data.timeline_events || []);
             
@@ -707,6 +718,42 @@
                         legend: { display: false }
                     }
                 }
+            });
+        }
+
+        function renderParameterDrift(drift) {
+            const panel = document.getElementById('param-drift-panel');
+            const container = document.getElementById('param-drift-container');
+            if (!panel || !container) return;
+            container.innerHTML = '';
+
+            if (!drift || drift.length === 0) {
+                panel.classList.add('hidden');
+                return;
+            }
+            panel.classList.remove('hidden');
+
+            drift.forEach(item => {
+                const critical = !!item.tuning_critical;
+                const accent = critical ? 'border-yellow-500/50' : 'border-cyan-500/30';
+                const tag = critical ? 'text-yellow-400' : 'text-cyan-400';
+                const when = (typeof item.t_sec === 'number' && item.t_sec >= 0)
+                    ? `T+${item.t_sec.toFixed(1)}s` : 'mid-flight';
+                const card = document.createElement('div');
+                card.className = `bg-gray-800/40 rounded-md p-4 border ${accent}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold ${tag} code-font">${item.parameter || '?'}</span>
+                        <span class="text-xs text-gray-500 code-font">${when}</span>
+                    </div>
+                    <div class="text-xs text-gray-300 code-font mb-2">
+                        ${item.old_value} <span class="text-gray-600">&rarr;</span>
+                        <span class="text-purple-400 font-bold">${item.new_value}</span>
+                        ${critical ? '<span class="ml-2 text-yellow-500">[tuning-critical]</span>' : ''}
+                    </div>
+                    <p class="text-xs text-gray-400 italic">${item.message || ''}</p>
+                `;
+                container.appendChild(card);
             });
         }
 

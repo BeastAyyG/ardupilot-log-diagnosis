@@ -75,6 +75,7 @@ def evaluate_decision(
         "mechanical_failure": "Hardware/Frame",
         "ekf_failure": "Navigation/EKF",
         "rc_failsafe": "Radio/Receiver",
+        "parameter_drift": "Config/Parameters",
         "crash_unknown": "Unknown",
     }
 
