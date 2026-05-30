@@ -13,7 +13,7 @@ The following versions of **ArduPilot Log Diagnosis** are currently supported wi
 To report a security vulnerability in **ArduPilot Log Diagnosis**, please contact the maintainer directly:
 
 - 👤 Reaching out to the maintainer directly via their profile: [BeastAyyG](https://github.com/BeastAyyG)
-- 💬 Sending a private message through GitHub's messaging or social links listed in the profile
+- 💬 Sending a private message through social links listed in the profile
 
 > Please **do not** open a public GitHub issue for security vulnerabilities.
 
