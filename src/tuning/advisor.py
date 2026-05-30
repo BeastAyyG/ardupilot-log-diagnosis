@@ -1,7 +1,6 @@
 """Tuning advisor for PID analysis and tuning recommendations."""
 
-import math
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
 

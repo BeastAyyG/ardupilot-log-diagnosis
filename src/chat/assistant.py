@@ -126,7 +126,7 @@ class ChatAssistant:
         
         is_high = vibe_z > threshold or vibe_clip > clip_threshold
         
-        text = f"Vibration analysis: "
+        text = "Vibration analysis: "
         if is_high:
             text += f"Vibration levels are HIGH. VibeZ mean: {vibe_z:.2f} m/s² (threshold: {threshold}), "
             text += f"Total clips: {vibe_clip:.0f} (threshold: {clip_threshold}). "

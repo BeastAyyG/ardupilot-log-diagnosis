@@ -42,7 +42,7 @@ def filter_sequence(seq: FeatureSequence):
             smoothed_states=smoothed.tolist(),
             transient_noise_detected=noise_detected
         )
-    except Exception as e:
+    except Exception:
         # Fallback if model isn't trained yet
         return FilterResponse(
             smoothed_states=[0] * len(seq.features),

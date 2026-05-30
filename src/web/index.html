@@ -136,6 +136,10 @@
                 <p class="text-gray-400 text-sm mt-1 code-font">Hybrid Rule/XGBoost Engine v1.0.0</p>
             </div>
             <div class="flex items-center space-x-4">
+                <button id="btn-live-mode" class="btn-glow px-4 py-2 text-xs font-bold rounded-lg shadow-lg flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 mr-2 animate-pulse"></span>
+                    LIVE STREAM
+                </button>
                 <div class="text-right">
                     <p class="text-xs text-gray-500 uppercase tracking-widest">System Status</p>
                     <p class="text-sm font-bold text-green-400 code-font flex items-center">
@@ -145,11 +149,42 @@
             </div>
         </header>
 
+        <!-- Live Stream Panel — full-width, above the main grid, hidden by default -->
+        <div id="live-stream-panel" class="hidden glass-panel p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-neon-blue font-bold text-lg flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
+                    Live MAVLink Stream
+                </h2>
+                <button id="btn-close-live" class="btn-glow px-3 py-1 rounded text-sm">✕ Close</button>
+            </div>
+            <div class="flex flex-wrap gap-4 mb-4">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="text-xs text-gray-500 uppercase block mb-1">MAVLink Connection</label>
+                    <input id="live-conn-string" type="text" placeholder="tcp:127.0.0.1:5760"
+                           class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white code-font focus:border-cyan-400 focus:outline-none"/>
+                </div>
+                <div class="w-48">
+                    <label class="text-xs text-gray-500 uppercase block mb-1">Auth Token</label>
+                    <input id="live-auth-token" type="password" placeholder="Enter token from server console"
+                           class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white code-font focus:border-cyan-400 focus:outline-none"/>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button id="btn-start-live" class="btn-glow px-5 py-2 rounded text-sm font-bold">▶ Connect</button>
+                    <button id="btn-stop-live" class="hidden bg-red-700 hover:bg-red-600 text-white px-5 py-2 rounded text-sm font-bold transition-colors">■ Disconnect</button>
+                </div>
+            </div>
+            <div id="live-status-log"
+                 class="bg-black rounded p-3 h-40 overflow-y-auto code-font text-xs text-green-400 border border-gray-800">
+                <div>&gt; <span class="text-gray-500">Ready to connect...</span></div>
+            </div>
+        </div>
+
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <!-- Left Column: Upload & Metadata -->
             <div class="space-y-8">
-                
+
                 <!-- Upload Panel -->
                 <div class="glass-panel p-6 relative overflow-hidden" id="upload-panel">
                     <h2 class="text-lg font-semibold mb-4 text-cyan-400">Telemetry Ingestion</h2>
@@ -188,6 +223,32 @@
                         <li class="flex justify-between border-b border-gray-800 pb-1">
                             <span class="text-gray-500">Vehicle Type</span>
                             <span id="meta-vehicle" class="text-gray-300 font-medium">--</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- GPS Quality Panel (Hidden until parsed) -->
+                <div id="gps-quality-panel" class="glass-panel p-6 hidden fade-in mt-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="mr-2">🛰️</span>
+                        <span class="text-cyan-400">GPS Quality</span>
+                    </h2>
+                    <ul class="space-y-3 text-sm code-font">
+                        <li class="flex justify-between border-b border-gray-800 pb-1">
+                            <span class="text-gray-500">Avg HDOP</span>
+                            <span id="meta-avg-hdop" class="font-medium">--</span>
+                        </li>
+                        <li class="flex justify-between border-b border-gray-800 pb-1">
+                            <span class="text-gray-500">Min Satellites</span>
+                            <span id="meta-min-sats" class="font-medium">--</span>
+                        </li>
+                        <li class="flex justify-between border-b border-gray-800 pb-1">
+                            <span class="text-gray-500">Min Fix Type</span>
+                            <span id="meta-min-fix" class="font-medium">--</span>
+                        </li>
+                        <li class="flex justify-between pb-1">
+                            <span class="text-gray-500">Time to First Fix</span>
+                            <span id="meta-ttff" class="font-medium">--</span>
                         </li>
                     </ul>
                 </div>
@@ -291,6 +352,7 @@
                         <div class="space-x-2">
                             <button id="btn-plot-vibe" class="text-xs bg-gray-800 hover:text-cyan-400 hover:border-cyan-400 text-gray-300 px-3 py-1 rounded border border-gray-600 transition-colors">Vibrations</button>
                             <button id="btn-plot-gps" class="text-xs bg-gray-800 hover:text-purple-400 hover:border-purple-400 text-gray-300 px-3 py-1 rounded border border-gray-600 transition-colors">3D Flight Path</button>
+                            <button id="btn-plot-gps-quality" class="text-xs bg-gray-800 hover:text-green-400 hover:border-green-400 text-gray-300 px-3 py-1 rounded border border-gray-600 transition-colors">GPS Quality</button>
                         </div>
                     </div>
                     <div id="plotly-chart" class="w-full h-[400px] rounded bg-black/30 overflow-hidden">
@@ -356,6 +418,7 @@
             document.getElementById('progress-container').classList.remove('hidden');
             document.getElementById('results-dashboard').classList.add('hidden');
             document.getElementById('metadata-panel').classList.add('hidden');
+            document.getElementById('gps-quality-panel').classList.add('hidden');
             
             const dropZoneObj = document.getElementById('drop-zone');
             dropZoneObj.style.opacity = '0.5';
@@ -431,12 +494,71 @@
             window.lastData = data; // store for sub-functions
             // Unhide dashboards
             document.getElementById('metadata-panel').classList.remove('hidden');
+            document.getElementById('gps-quality-panel').classList.remove('hidden');
             document.getElementById('results-dashboard').classList.remove('hidden');
             
             // Metadata
             document.getElementById('meta-filename').innerText = data.metadata.filename;
             document.getElementById('meta-duration').innerText = formatDuration(data.metadata.duration);
             document.getElementById('meta-vehicle').innerText = data.metadata.vehicle;
+
+            // GPS Quality
+            if (data.gps_quality) {
+                const avgHdop = data.gps_quality.avg_hdop;
+                const minSats = data.gps_quality.min_satellites;
+                const elHdop = document.getElementById('meta-avg-hdop');
+                const elSats = document.getElementById('meta-min-sats');
+
+                elHdop.innerText = avgHdop;
+                elHdop.className = "font-medium";
+                if (avgHdop <= 1.5) elHdop.classList.add("text-green-400");
+                else if (avgHdop <= 2.5) elHdop.classList.add("text-yellow-400");
+                else {
+                    elHdop.classList.add("text-red-500", "animate-pulse");
+                    elHdop.innerText += " ⚠ (POOR)";
+                }
+
+                elSats.innerText = minSats;
+                elSats.className = "font-medium";
+                if (minSats >= 8) elSats.classList.add("text-green-400");
+                else if (minSats >= 6) elSats.classList.add("text-yellow-400");
+                else {
+                    elSats.classList.add("text-red-500", "animate-pulse");
+                    elSats.innerText += " ⚠ (LOW)";
+                }
+
+                // Min Fix Type — derived from fix_type time series
+                const elFix = document.getElementById('meta-min-fix');
+                const FIX_LABELS = {0: 'No Fix', 1: 'Dead Reckoning', 2: '2D Fix', 3: '3D Fix', 4: 'DGPS', 5: 'RTK Float', 6: 'RTK Fixed'};
+                const fixVals = (data.gps_quality.fix_type || []).map(p => p.v);
+                if (fixVals.length > 0) {
+                    const minFix = Math.min(...fixVals);
+                    elFix.innerText = FIX_LABELS[minFix] ?? `Type ${minFix}`;
+                    elFix.className = "font-medium " + (
+                        minFix >= 3 ? "text-green-400" :
+                        minFix >= 2 ? "text-yellow-400" :
+                        "text-red-500"
+                    );
+                } else {
+                    elFix.innerText = "N/A";
+                    elFix.className = "font-medium text-gray-500";
+                }
+
+                // Time-to-first-fix
+                const elTTFF = document.getElementById('meta-ttff');
+                const ttff = data.gps_quality.ttff_sec;
+                if (ttff === null || ttff === undefined) {
+                    elTTFF.innerText = "No fix achieved ⚠";
+                    elTTFF.className = "font-medium text-red-500 animate-pulse";
+                } else {
+                    elTTFF.innerText = `${ttff.toFixed(1)} s`;
+                    elTTFF.className = "font-medium " + (
+                        ttff <= 5  ? "text-green-400" :
+                        ttff <= 15 ? "text-yellow-400" :
+                        "text-red-500"
+                    );
+                }
+            }
 
             // Decision mapping
             const decisionData = data.explain_data?.decision || {};
@@ -635,6 +757,7 @@
                 
                 evtHtml += `</div>`;
                 card.innerHTML = evtHtml;
+                container.appendChild(card);
             });
 
             // Add Side-by-Side Validation Report
@@ -717,6 +840,7 @@
 
         document.getElementById('btn-plot-gps').addEventListener('click', () => renderPlotlyChart('gps'));
         document.getElementById('btn-plot-vibe').addEventListener('click', () => renderPlotlyChart('vibe'));
+        document.getElementById('btn-plot-gps-quality').addEventListener('click', () => renderPlotlyChart('gps_quality'));
 
         function renderPlotlyChart(type) {
             if (!currentTimeSeries) return;
@@ -809,7 +933,263 @@
                     legend: { orientation: "h", y: 1.1 }
                 };
                 Plotly.newPlot(target, [tx, ty, tz], layout, {responsive: true});
+            } else if (type === 'gps_quality') {
+                const trk = window.lastData?.gps_quality;
+                if (!trk || !trk.hdop || trk.hdop.length === 0) {
+                    target.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">No GPS quality data in log.</div>';
+                    return;
+                }
+                
+                const hdop_t = trk.hdop.map(p => p.t);
+                const thdop = { x: hdop_t, y: trk.hdop.map(p => p.v), type: 'scatter', name: 'HDOP', yaxis: 'y1', line: {color: '#00f3ff'} };
+                const tsat = { x: trk.sat_count.map(p => p.t), y: trk.sat_count.map(p => p.v), type: 'scatter', name: 'Satellites', yaxis: 'y2', line: {color: '#00ff66'} };
+                const tfix = { x: trk.fix_type.map(p => p.t), y: trk.fix_type.map(p => p.v), type: 'scatter', name: 'Fix Type', yaxis: 'y3', line: {color: '#9d00ff'} };
+                
+                const layout = {
+                    title: 'GPS Quality Metrics',
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    font: { color: '#a0aec0' },
+                    xaxis: { title: 'Time (s)', gridcolor: 'rgba(255,255,255,0.1)' },
+                    yaxis: { title: 'HDOP', gridcolor: 'rgba(255,255,255,0.1)', side: 'left' },
+                    yaxis2: { title: 'Sats', overlaying: 'y', side: 'right', showgrid: false },
+                    yaxis3: { title: 'Fix Type', overlaying: 'y', side: 'right', position: 0.95, showgrid: false, range: [0, 4] },
+                    margin: { l: 50, r: 60, b: 40, t: 40 },
+                    legend: { orientation: "h", y: 1.1 }
+                };
+                Plotly.newPlot(target, [thdop, tsat, tfix], layout, {responsive: true});
             }
+        }
+
+        // Live Stream Logic
+        const btnLiveMode = document.getElementById('btn-live-mode');
+        const livePanel = document.getElementById('live-stream-panel');
+        const btnCloseLive = document.getElementById('btn-close-live');
+        const btnStartLive = document.getElementById('btn-start-live');
+        const btnStopLive = document.getElementById('btn-stop-live');
+        const liveStatusLog = document.getElementById('live-status-log');
+        let liveSocket = null;
+
+        // ── Hardening 3: reconnect state ─────────────────────────────────────
+        // Track the active connection parameters so the back-off reconnect
+        // loop can re-open the WebSocket without user interaction.
+        let _reconnectConnStr = null;
+        let _reconnectToken   = null;
+        let _reconnectAttempt = 0;
+        let _reconnectTimer   = null;
+        const RECONNECT_BASE_MS  = 1000;   // 1 s initial back-off
+        const RECONNECT_MAX_MS   = 30000;  // 30 s cap
+        const RECONNECT_MAX_TRIES = 10;    // give up after this many attempts
+
+        function logToLiveUI(msg, isError=false) {
+            const el = document.createElement('div');
+            el.innerHTML = `> <span class="${isError ? 'text-red-400' : 'text-gray-300'}">${msg}</span>`;
+            liveStatusLog.appendChild(el);
+            liveStatusLog.scrollTop = liveStatusLog.scrollHeight;
+        }
+
+        btnLiveMode.addEventListener('click', () => {
+            livePanel.classList.remove('hidden');
+            livePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        btnCloseLive.addEventListener('click', () => {
+            livePanel.classList.add('hidden');
+            _cancelReconnect();
+            if (liveSocket) {
+                liveSocket.close();
+                liveSocket = null;
+            }
+        });
+
+        // ── Hardening 3: cancel any pending reconnect timer ──────────────────
+        function _cancelReconnect() {
+            if (_reconnectTimer !== null) {
+                clearTimeout(_reconnectTimer);
+                _reconnectTimer = null;
+            }
+            _reconnectAttempt = 0;
+        }
+
+        // ── Core function that opens (or re-opens) the WebSocket ─────────────
+        function _openWebSocket(connStr, token) {
+            const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            liveSocket = new WebSocket(
+                `${wsProto}//${location.host}/api/live/stream?token=${encodeURIComponent(token)}`
+            );
+
+            liveSocket.onopen = () => {
+                _reconnectAttempt = 0;   // reset back-off on successful connect
+                logToLiveUI("WebSocket connected.", false);
+                btnStartLive.classList.add('hidden');
+                btnStopLive.classList.remove('hidden');
+                btnStartLive.disabled = false;
+            };
+
+            // ── Hardening 3: safe JSON parse with try/catch ───────────────
+            liveSocket.onmessage = (event) => {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (parseErr) {
+                    console.error("WebSocket message parse error:", parseErr, "raw:", event.data);
+                    logToLiveUI("Warning: received malformed message from server.", true);
+                    return;
+                }
+
+                // Ignore server-side pings (keepalive heartbeats)
+                if (data.type === 'ping') return;
+
+                if (data.type === 'status' || data.type === 'error') {
+                    logToLiveUI(data.message, data.type === 'error');
+                } else if (data.type === 'evaluation') {
+                    logToLiveUI(
+                        `[EVAL] Received ${data.metadata.total_messages} msgs | Diagnoses: ${data.diagnoses.length}`
+                    );
+
+                    // ── Bug B fix: use data.decision from the server instead
+                    //    of hard-coding { status: "healthy" }.  Fall back to a
+                    //    safe default only when the field is absent (old server).
+                    const serverDecision = data.decision || {
+                        status: "healthy",
+                        top_guess: "nominal",
+                        top_confidence: 0,
+                        ranked_subsystems: [],
+                        rationale: [],
+                        requires_human_review: false,
+                    };
+
+                    const dashboardData = {
+                        metadata: {
+                            filename: "LIVE STREAM",
+                            duration: data.metadata.duration_sec,
+                            vehicle: data.metadata.vehicle_type
+                        },
+                        explain_data: { decision: serverDecision },
+                        diagnoses: data.diagnoses,
+                        time_series: null,
+                        timeline_events: [],
+                        rule_output_only: data.diagnoses.length > 0
+                            ? data.diagnoses[0].failure_type
+                            : "nominal"
+                    };
+                    populateDashboard(dashboardData);
+                }
+            };
+
+            // ── Hardening 3: exponential back-off reconnect on unexpected close
+            liveSocket.onclose = (evt) => {
+                const wasClean = evt.wasClean;
+                logToLiveUI(
+                    wasClean
+                        ? "WebSocket disconnected."
+                        : `WebSocket lost (code ${evt.code}). Attempting reconnect…`,
+                    !wasClean
+                );
+
+                // Only reconnect when: stream is still "started" by user, the
+                // close was not intentional (wasClean = user clicked Stop or
+                // Close), and we have not exceeded the attempt limit.
+                if (
+                    !wasClean &&
+                    _reconnectConnStr !== null &&
+                    _reconnectAttempt < RECONNECT_MAX_TRIES
+                ) {
+                    const delay = Math.min(
+                        RECONNECT_BASE_MS * Math.pow(2, _reconnectAttempt),
+                        RECONNECT_MAX_MS
+                    );
+                    _reconnectAttempt++;
+                    logToLiveUI(
+                        `Reconnect attempt ${_reconnectAttempt}/${RECONNECT_MAX_TRIES} in ${delay / 1000}s…`
+                    );
+                    _reconnectTimer = setTimeout(() => {
+                        _reconnectTimer = null;
+                        _openWebSocket(_reconnectConnStr, _reconnectToken);
+                    }, delay);
+                } else {
+                    if (_reconnectAttempt >= RECONNECT_MAX_TRIES) {
+                        logToLiveUI("Max reconnect attempts reached. Please restart manually.", true);
+                    }
+                    _cancelReconnect();
+                    resetLiveUI();
+                }
+            };
+
+            liveSocket.onerror = () => {
+                // onerror is always followed by onclose — logging once is enough.
+                logToLiveUI("WebSocket error — see browser console for details.", true);
+            };
+        }
+
+        btnStartLive.addEventListener('click', async () => {
+            const connStr = document.getElementById('live-conn-string').value.trim();
+            const token = document.getElementById('live-auth-token').value.trim();
+
+            if (!connStr) {
+                logToLiveUI("Error: Connection string required.", true);
+                return;
+            }
+
+            logToLiveUI(`Starting stream at ${connStr}…`);
+            btnStartLive.disabled = true;
+
+            try {
+                // ── Bug A fix: token must be sent as a query param on this
+                //    POST request — the server validates it before accepting
+                //    the MAVLink connection.  Previously the token was omitted
+                //    here, causing every connect attempt to return HTTP 403.
+                const res = await fetch(
+                    `/api/live/connect?token=${encodeURIComponent(token)}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ connection_string: connStr })
+                    }
+                );
+
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => ({}));
+                    throw new Error(
+                        res.status === 403
+                            ? "Auth failed: check your stream token."
+                            : (errBody.detail || "Failed to start stream backend.")
+                    );
+                }
+
+                // Store for reconnect loop
+                _reconnectConnStr = connStr;
+                _reconnectToken   = token;
+                _reconnectAttempt = 0;
+
+                _openWebSocket(connStr, token);
+
+            } catch (err) {
+                logToLiveUI(err.message, true);
+                btnStartLive.disabled = false;
+            }
+        });
+
+        btnStopLive.addEventListener('click', async () => {
+            logToLiveUI("Stopping stream…");
+            // Disarm reconnect before closing so onclose treats it as intentional
+            _cancelReconnect();
+            _reconnectConnStr = null;
+            _reconnectToken   = null;
+            try {
+                await fetch('/api/live/stop', { method: 'POST' });
+            } catch (e) {}
+            if (liveSocket) {
+                liveSocket.close();
+                liveSocket = null;
+            }
+            resetLiveUI();
+        });
+
+        function resetLiveUI() {
+            btnStartLive.classList.remove('hidden');
+            btnStopLive.classList.add('hidden');
+            btnStartLive.disabled = false;
         }
     </script>
 </body>
