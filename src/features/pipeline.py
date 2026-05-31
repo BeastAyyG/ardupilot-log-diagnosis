@@ -1,3 +1,4 @@
+import math
 import time
 from typing import cast
 from .vibration import VibrationExtractor
@@ -125,6 +126,13 @@ class FeaturePipeline:
             "auto_labels": evt_auto_labels,
             "extraction_success": extraction_success,
         }
+
+        # --- Sanitize NaNs before returning ---
+        # Real logs (especially EKF failures) often contain NaN/Inf in telemetry.
+        # Scikit-learn will crash if these enter the feature matrix, so we revert them to 0.0.
+        for key, value in all_features.items():
+            if isinstance(value, float) and not math.isfinite(value):
+                all_features[key] = 0.0
 
         return cast(FeatureDict, all_features)
 

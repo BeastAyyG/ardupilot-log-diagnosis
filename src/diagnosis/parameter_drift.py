@@ -22,7 +22,7 @@ Two cooperating surfaces consume this module:
 """
 
 from __future__ import annotations
-
+import math
 from typing import Any, Iterable, Mapping, Sequence
 
 # Parameters ArduPilot itself rewrites in flight, or pure bookkeeping/statistics
@@ -97,7 +97,10 @@ def _is_tuning_critical(name: str) -> bool:
 
 def _coerce_float(value: Any) -> float | None:
     try:
-        return float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return None
+        return v
     except (TypeError, ValueError):
         return None
 
