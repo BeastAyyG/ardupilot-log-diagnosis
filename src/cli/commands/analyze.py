@@ -47,7 +47,11 @@ def run(args) -> None:
         features,
         features.get("_metadata", {}).get("vehicle_type", "Unknown"),
     )
-    parameter_drift = drift_findings(features)
+    # Use the engine's active thresholds so YAML/CLI overrides apply to drift too.
+    rule_thresholds = getattr(engine, "thresholds", None) or getattr(
+        getattr(engine, "rules", None), "thresholds", None
+    )
+    parameter_drift = drift_findings(features, rule_thresholds)
 
     retrieval = FailureRetrieval()
     similar_cases = retrieval.find_similar(features)

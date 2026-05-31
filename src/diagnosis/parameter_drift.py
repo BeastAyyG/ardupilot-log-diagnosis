@@ -162,19 +162,26 @@ def detect_parameter_drift(
         if abs_change <= _EPS:
             continue  # logged again with an identical value — not a change
 
-        last_value[name] = new_value
-
         t_us = _coerce_float(msg.get("TimeUS"))
         t_sec = ((t_us - t0) / 1e6) if t_us is not None else -1.0
 
-        # Skip the boot dump window; only count genuine runtime changes.
+        # During the boot-dump / settle window keep the baseline current (so the
+        # post-boot "takeoff" value is what later changes are compared against)
+        # but do not emit drift.
         if t_us is not None and t_sec < settle_sec:
+            last_value[name] = new_value
             continue
 
         rel_change = abs_change / max(abs(old_value), _EPS)
         if rel_change < min_rel_change:
+            # Below threshold: do NOT advance the baseline. Otherwise a slow
+            # creep through several individually-small steps would silently
+            # reset the reference each step and never be detected. Keeping the
+            # original baseline lets cumulative drift cross the threshold later.
             continue
 
+        # Accepted change: advance the baseline and record the event.
+        last_value[name] = new_value
         change_count[name] = change_count.get(name, 0) + 1
         events.append(
             {
@@ -217,6 +224,36 @@ def summarize_drift(events: Sequence[Mapping[str, Any]]) -> dict[str, float]:
     }
 
 
+def _drift_knobs(thresholds: Mapping[str, Any] | None) -> tuple[float, float]:
+    """Resolve (settle_sec, min_rel_change) from an active threshold mapping.
+
+    Falls back to the module defaults when a key is absent. This is what lets a
+    custom ``RuleEngine`` threshold config (e.g. loaded from YAML) actually take
+    effect — detection is run lazily by the rule and the findings generator, not
+    baked in at feature-extraction time.
+    """
+    t = thresholds or {}
+    return (
+        float(t.get("param_drift_settle_sec", DEFAULT_SETTLE_SEC)),
+        float(t.get("param_drift_min_rel_change", DEFAULT_MIN_REL_CHANGE)),
+    )
+
+
+def detect_drift_from_features(
+    features: Mapping[str, Any], thresholds: Mapping[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    """Run drift detection on the raw PARM stream stashed in ``features``.
+
+    Reads the private ``_raw_parm_messages`` key injected by the pipeline and
+    applies the supplied ``thresholds`` (so per-engine overrides are honoured).
+    """
+    raw = features.get("_raw_parm_messages") or []
+    settle_sec, min_rel_change = _drift_knobs(thresholds)
+    return detect_parameter_drift(
+        raw, settle_sec=settle_sec, min_rel_change=min_rel_change
+    )
+
+
 def _format_value(value: float) -> str:
     # Compact human formatting: integers without trailing ".0", else 4 sig figs.
     if abs(value - round(value)) < 1e-9:
@@ -224,16 +261,15 @@ def _format_value(value: float) -> str:
     return f"{value:.4g}"
 
 
-def drift_findings(features: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Build advisory dicts (CLI/UI shape) from injected ``_param_drift_events``.
+def findings_from_events(events: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Build advisory dicts (CLI/UI shape) from a list of drift events.
 
     Mirrors the structure produced by ``validate_parameters`` (``severity``,
     ``parameter``, ``message`` + structured extras) so the existing formatter
     and web schema can render it without special-casing.
     """
-    events = features.get("_param_drift_events") or []
     findings: list[dict[str, Any]] = []
-    for event in events:
+    for event in events or []:
         name = event.get("parameter", "?")
         old_text = _format_value(float(event.get("old_value", 0.0)))
         new_text = _format_value(float(event.get("new_value", 0.0)))
@@ -262,3 +298,10 @@ def drift_findings(features: Mapping[str, Any]) -> list[dict[str, Any]]:
             }
         )
     return findings
+
+
+def drift_findings(
+    features: Mapping[str, Any], thresholds: Mapping[str, Any] | None = None
+) -> list[dict[str, Any]]:
+    """Detect drift from ``features`` (honouring ``thresholds``) and format it."""
+    return findings_from_events(detect_drift_from_features(features, thresholds))

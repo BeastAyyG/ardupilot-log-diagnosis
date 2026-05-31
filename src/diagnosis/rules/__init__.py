@@ -6,6 +6,7 @@ from .mechanics import (
     check_thrust_loss,
 )
 from .parameters import check_parameter_drift
+from .parameters import check_parameter_drift
 from .power_and_system import check_power, check_system
 from .sensors import check_compass, check_ekf, check_gps, check_vibration
 

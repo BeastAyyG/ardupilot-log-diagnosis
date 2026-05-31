@@ -1,3 +1,4 @@
+import html
 import json
 import os
 import sys
@@ -245,7 +246,8 @@ class DiagnosisFormatter:
 
         if parameter_drift:
             drift_html = "".join(
-                f'<div class="warning-box">{item["message"]}</div>' for item in parameter_drift
+                f'<div class="warning-box">{html.escape(str(item["message"]))}</div>'
+                for item in parameter_drift
             )
             sections.append(f'<div class="card"><h2>Parameter Drift (In-Flight Changes)</h2>{drift_html}</div>')
 

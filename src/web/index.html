@@ -721,6 +721,15 @@
             });
         }
 
+        function escapeHtml(value) {
+            return String(value === null || value === undefined ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function renderParameterDrift(drift) {
             const panel = document.getElementById('param-drift-panel');
             const container = document.getElementById('param-drift-container');
@@ -743,15 +752,15 @@
                 card.className = `bg-gray-800/40 rounded-md p-4 border ${accent}`;
                 card.innerHTML = `
                     <div class="flex items-center justify-between mb-1">
-                        <span class="font-bold ${tag} code-font">${item.parameter || '?'}</span>
-                        <span class="text-xs text-gray-500 code-font">${when}</span>
+                        <span class="font-bold ${tag} code-font">${escapeHtml(item.parameter || '?')}</span>
+                        <span class="text-xs text-gray-500 code-font">${escapeHtml(when)}</span>
                     </div>
                     <div class="text-xs text-gray-300 code-font mb-2">
-                        ${item.old_value} <span class="text-gray-600">&rarr;</span>
-                        <span class="text-purple-400 font-bold">${item.new_value}</span>
+                        ${escapeHtml(item.old_value)} <span class="text-gray-600">&rarr;</span>
+                        <span class="text-purple-400 font-bold">${escapeHtml(item.new_value)}</span>
                         ${critical ? '<span class="ml-2 text-yellow-500">[tuning-critical]</span>' : ''}
                     </div>
-                    <p class="text-xs text-gray-400 italic">${item.message || ''}</p>
+                    <p class="text-xs text-gray-400 italic">${escapeHtml(item.message || '')}</p>
                 `;
                 container.appendChild(card);
             });
