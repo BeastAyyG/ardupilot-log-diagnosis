@@ -96,6 +96,11 @@ class FeaturePipeline:
         all_features["_param_drift_max_rel_change"] = drift_summary["max_rel_change"]
         all_features["_param_drift_tanomaly"] = drift_summary["tanomaly"]
 
+        all_features["_raw_parm_messages"] = [
+            {"TimeUS": m.get("TimeUS"), "Name": m.get("Name"), "Value": m.get("Value")}
+            for m in messages.get("PARM", [])
+        ]
+
         # Determine if extraction produced meaningful data.
         # A corrupt or empty log will have duration=0 and very few message families.
         # This flag lets callers distinguish 'genuinely healthy' from 'empty parse'.
