@@ -45,7 +45,7 @@ an individual is officially representing the community in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the project maintainers.
+reported privately to the project maintainers through GitHub.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
