@@ -8,10 +8,10 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from src.web.schemas import AnalysisResponse, ChatRequest, ChatResponse
 
@@ -23,9 +23,20 @@ from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
 from src.chat.assistant import ChatAssistant
 from src.comparison.trend_analyzer import TrendAnalyzer
+from src.web.live_stream import WebSocketManager, MAVLinkStreamer
 
 
 LOGGER = logging.getLogger(__name__)
+
+# Lazy singleton — instantiated once on first use so tests can monkeypatch RuleEngine freely
+_rule_engine: RuleEngine | None = None
+
+
+def _get_rule_engine() -> RuleEngine:
+    global _rule_engine
+    if _rule_engine is None:
+        _rule_engine = RuleEngine()
+    return _rule_engine
 MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 WEB_DIR = Path(__file__).parent.absolute()
@@ -54,6 +65,73 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+ws_manager = WebSocketManager()
+streamer: MAVLinkStreamer | None = None
+
+@app.on_event("startup")
+async def startup_event():
+    global streamer
+    mavlink_conn = os.environ.get("MAVLINK_CONNECTION")
+    if mavlink_conn:
+        streamer = MAVLinkStreamer(ws_manager, mavlink_conn)
+        streamer.start()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    if streamer:
+        streamer.stop()
+
+
+class ConnectRequest(BaseModel):
+    connection_string: str
+
+# FIX 3: Add token auth to /api/live/connect endpoint
+# Prevents unauthorized callers from restarting the streamer or
+# triggering arbitrary TCP/UDP/serial connections
+@app.post("/api/live/connect")
+async def connect_live_stream(req: ConnectRequest, token: str = Query(None)):
+    expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "")
+    if not expected_token:
+        raise HTTPException(status_code=503, detail="Server auth token not configured")
+    if token != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    global streamer
+    if streamer and streamer.is_running:
+        streamer.stop()
+    streamer = MAVLinkStreamer(ws_manager, req.connection_string)
+    streamer.start()
+    return {"status": "started", "connection_string": req.connection_string}
+
+# FIX 5: Add token auth to /api/live/stop endpoint
+@app.post("/api/live/stop")
+async def stop_live_stream(token: str = Query(None)):
+    expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "")
+    if not expected_token:
+        raise HTTPException(status_code=503, detail="Server auth token not configured")
+    if token != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    global streamer
+    if streamer and streamer.is_running:
+        streamer.stop()
+        return {"status": "stopped"}
+    return {"status": "already_stopped"}
+
+@app.websocket("/api/live/stream")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
+    # FIX: Do not fall back to a predictable default token
+    # If MAVLINK_AUTH_TOKEN is not set, reject all connections
+    expected_token = os.environ.get("MAVLINK_AUTH_TOKEN", "")
+    if not expected_token or token != expected_token:
+        await websocket.close(code=1008)
+        return
+
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -126,8 +204,8 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
     decision = evaluate_decision(diagnoses)
     explain_data["decision"] = decision
 
-    time_series, timeline_events = _build_visualization_data(parsed, features)
-    rule_diagnoses = RuleEngine().diagnose(features)
+    time_series, timeline_events, gps_quality = _build_visualization_data(parsed, features)
+    rule_diagnoses = _get_rule_engine().diagnose(features)
     rule_output_only = rule_diagnoses[0]["failure_type"] if rule_diagnoses else "nominal"
 
     return {
@@ -142,6 +220,7 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
         "explain_data": explain_data,
         "time_series": time_series,
         "timeline_events": timeline_events,
+        "gps_quality": gps_quality,
         "rule_output_only": rule_output_only,
         "rule_output_diagnoses": rule_diagnoses,
     }
@@ -149,8 +228,16 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
 
 def _build_visualization_data(
     parsed: dict[str, Any], features: dict[str, Any]
-) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], dict[str, Any]]:
     time_series: dict[str, list[dict[str, Any]]] = {"gps": [], "vibe": []}
+    gps_quality: dict[str, Any] = {
+        "hdop": [],
+        "sat_count": [],
+        "fix_type": [],
+        "avg_hdop": 0.0,
+        "min_satellites": 0,
+        "ttff_sec": None,
+    }
     start_time = _find_start_time_us(parsed)
 
     vibe_msgs = parsed.get("messages", {}).get("VIBE", [])
@@ -181,15 +268,45 @@ def _build_visualization_data(
             }
         )
 
+    # --- Summary stats on FULL dataset for accuracy ---
+    # Sampling would miss brief satellite drops or the exact first-fix moment.
+    if gps_msgs:
+        hdops = [m.get("HDop", 0.0) for m in gps_msgs]
+        sats = [m.get("NSats", 0) for m in gps_msgs]
+        gps_quality["avg_hdop"] = round(sum(hdops) / len(hdops), 2) if hdops else 0.0
+        gps_quality["min_satellites"] = min(sats) if sats else 0
+
+        for m in gps_msgs:
+            if m.get("Status", 0) >= 3:
+                t_us = m.get("TimeUS")
+                if t_us is not None:
+                    ref_time = start_time if start_time is not None else t_us
+                    gps_quality["ttff_sec"] = round((t_us - ref_time) / 1e6, 2)
+                break
+
+    # --- Sampled loop: build time-series lists for display only ---
     step_gps = max(1, len(gps_msgs) // 500)
+
     for msg in gps_msgs[::step_gps]:
         lat = msg.get("Lat")
         lng = msg.get("Lng")
         alt = msg.get("Alt", 0)
         t_us = msg.get("TimeUS")
-        if lat and lng and lat != 0 and lng != 0 and t_us is not None:
+
+        hdop = msg.get("HDop", 0.0)
+        nsats = msg.get("NSats", 0)
+        status = msg.get("Status", 0)
+
+        if t_us is not None:
             if start_time is None:
                 start_time = t_us
+            t_s = round((t_us - start_time) / 1e6, 2)
+
+            gps_quality["hdop"].append({"t": t_s, "v": hdop})
+            gps_quality["sat_count"].append({"t": t_s, "v": nsats})
+            gps_quality["fix_type"].append({"t": t_s, "v": status})
+
+        if lat and lng and lat != 0 and lng != 0 and t_us is not None:
             time_series["gps"].append(
                 {
                     "t": round((t_us - start_time) / 1e6, 2),
@@ -198,6 +315,8 @@ def _build_visualization_data(
                     "alt": alt,
                 }
             )
+
+    # Summary stats pre-calculated on full dataset above
 
     def get_gps_at(t_target: float) -> dict[str, Any] | None:
         if not time_series["gps"]:
@@ -277,34 +396,41 @@ def _build_visualization_data(
     )
     timeline_events.sort(key=lambda event: event["t_sec"])
 
-    return time_series, timeline_events
+    return time_series, timeline_events, gps_quality
 
 
 def _find_start_time_us(parsed: dict[str, Any]) -> int | None:
+    """Return the earliest timestamp (us) seen across all message streams.
+
+    Using the first-seen value from a single stream can produce negative time
+    offsets when GPS messages begin earlier than VIBE messages (or vice versa).
+    Taking the true minimum across every stream prevents that.
+    """
+    candidates: list[int] = []
+
     message_groups = parsed.get("messages", {})
     for message_type in ("VIBE", "GPS"):
         for msg in message_groups.get(message_type, []):
             t_us = msg.get("TimeUS")
             if t_us is not None:
-                return t_us
+                candidates.append(t_us)
+                break  # only the first timestamp from each stream is needed
 
     for collection_name in ("errors", "mode_changes", "events"):
         for item in parsed.get(collection_name, []):
             t_us = item.get("time_us")
             if t_us is not None:
-                return t_us
+                candidates.append(t_us)
+                break
 
-    return None
+    return min(candidates) if candidates else None
 
 
-# Chat endpoint for conversational AI over log analysis
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """Answer questions about a log analysis using rule-based AI assistant."""
     try:
         assistant = ChatAssistant()
         response_data = assistant.ask(request.question, request.analysis_result)
-        
         return ChatResponse(
             question=response_data["question"],
             answer=response_data["answer"],
@@ -312,7 +438,7 @@ async def chat(request: ChatRequest):
             sources=response_data.get("sources", []),
             follow_up=response_data.get("follow_up", [])
         )
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during chat")
         return JSONResponse(
             status_code=500,
@@ -320,54 +446,39 @@ async def chat(request: ChatRequest):
         )
 
 
-# Trend analysis endpoint for multi-flight comparison
 @app.post("/api/compare", response_model=dict)
 async def compare_flights(files: list[UploadFile] = File(...)):
-    """Compare multiple flight logs for trend analysis and degradation detection."""
     if len(files) < 2:
         return JSONResponse(
             status_code=400,
             content={"error": "At least 2 files required for comparison"}
         )
-    
     try:
         analysis_results = []
-        engine = HybridEngine()
-        parser_obj = LogParser("")
-        pipeline = FeaturePipeline()
-        
         for file in files:
             if not file.filename or not file.filename.lower().endswith(".bin"):
                 continue
-            
-            # Save to temp file
             fd, temp_path = tempfile.mkstemp(suffix=".bin")
             try:
                 with os.fdopen(fd, "wb") as f:
                     content = await file.read()
                     f.write(content)
-                
-                # Analyze
                 result = _analyze_temp_log(temp_path, file.filename)
                 analysis_results.append(result)
             finally:
                 try:
                     os.unlink(temp_path)
-                except:
+                except Exception:
                     pass
-        
         if len(analysis_results) < 2:
             return JSONResponse(
                 status_code=400,
                 content={"error": "Need at least 2 valid .BIN files"}
             )
-        
-        # Run trend analysis
         analyzer = TrendAnalyzer()
         trend_report = analyzer.compare_flights(analysis_results)
-        
         return trend_report
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during comparison")
         return JSONResponse(
             status_code=500,

@@ -1,4 +1,3 @@
-import sys
 from src.parsers.binary import BinaryParser
 
 parser = BinaryParser()

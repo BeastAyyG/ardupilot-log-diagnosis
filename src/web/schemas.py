@@ -12,7 +12,7 @@ class Metadata(BaseModel):
 class Diagnosis(BaseModel):
     failure_type: str
     confidence: float
-    evidence: list[str]
+    evidence: list[dict]
     recommendation: str
 
     model_config = ConfigDict(extra="allow")
@@ -32,14 +32,26 @@ class TimelineEvent(BaseModel):
     gps: dict[str, Any] | None = None
 
 
+class GPSQuality(BaseModel):
+    hdop: list[dict[str, Any]]
+    sat_count: list[dict[str, Any]]
+    fix_type: list[dict[str, Any]]
+    avg_hdop: float
+    min_satellites: int
+    # Time (seconds from log start) until the first 3-D GPS fix was achieved.
+    # None when no fix was ever recorded in the log.
+    ttff_sec: float | None = None
+
+
 class AnalysisResponse(BaseModel):
     metadata: Metadata
     features: dict[str, Any]
     diagnoses: list[Diagnosis]
-    parameter_warnings: list[str]
+    parameter_warnings: list[dict]
     explain_data: ExplainData
     time_series: dict[str, list[dict[str, Any]]]
     timeline_events: list[TimelineEvent]
+    gps_quality: GPSQuality
     rule_output_only: str
     rule_output_diagnoses: list[dict[str, Any]]
 

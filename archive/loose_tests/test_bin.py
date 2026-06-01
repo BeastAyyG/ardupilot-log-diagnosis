@@ -1,4 +1,5 @@
-import os, sys, time
+import os
+import time
 
 print("Importing pymavlink...", flush=True)
 from pymavlink import mavutil
