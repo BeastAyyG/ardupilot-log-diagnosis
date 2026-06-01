@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import ValidationError
@@ -92,7 +92,7 @@ async def analyze_log(file: UploadFile = File(...)):
     except ValidationError as e:
         LOGGER.exception("Schema validation failed for model output")
         return JSONResponse(status_code=500, content={"error": "Schema validation failed", "details": e.errors()})
-    except Exception as e:
+    except Exception:
         LOGGER.exception("Error during analysis")
         return JSONResponse(
             status_code=500,
