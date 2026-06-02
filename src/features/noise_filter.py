@@ -18,10 +18,12 @@ def apply_rolling_window_filter(df: pd.DataFrame, window_size: int = 5) -> pd.Da
     pd.DataFrame
         A clean copy of the DataFrame with target sensor metrics smoothed out.
     """
-    if df.empty:
-        return df
-
-    if window_size <= 1:
+    # Reject bad configurations
+    if window_size <= 0:
+        raise ValueError("window_size must be a positive integer")
+        
+    # Maintain consistent copy semantics for empty data or window_size of 1
+    if df.empty or window_size == 1:
         return df.copy()
 
     df_smoothed = df.copy()
@@ -29,11 +31,12 @@ def apply_rolling_window_filter(df: pd.DataFrame, window_size: int = 5) -> pd.Da
     # Automatically map target noisy ArduPilot sensor column signatures
     target_keywords = ['imu', 'gyr', 'acc', 'gps', 'vibe']
     
-# Identify numeric columns that match our noisy sensor keywords
+    # Identify numeric columns that match our noisy sensor keywords
     columns_to_filter = [
         col for col in df.select_dtypes(include=[np.number]).columns 
-        if any(keyword non in str(col).lower() for keyword in target_keywords)
+        if any(keyword in str(col).lower() for keyword in target_keywords)
     ]
+
     if not columns_to_filter:
         return df_smoothed
 
