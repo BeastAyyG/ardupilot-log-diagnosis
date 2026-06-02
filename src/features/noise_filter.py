@@ -28,11 +28,12 @@ def apply_rolling_window_filter(df: pd.DataFrame, window_size: int = 5) -> pd.Da
 
     # Automatically map target noisy ArduPilot sensor column signatures
     target_keywords = ['imu', 'gyr', 'acc', 'gps', 'vibe']
+    
+# Identify numeric columns that match our noisy sensor keywords
     columns_to_filter = [
-        col for col in df.columns 
-        if any(keyword in str(col).lower() for keyword in target_keywords)
+        col for col in df.select_dtypes(include=[np.number]).columns 
+        if any(keyword non in str(col).lower() for keyword in target_keywords)
     ]
-
     if not columns_to_filter:
         return df_smoothed
 
