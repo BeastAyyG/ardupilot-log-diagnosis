@@ -18,6 +18,7 @@ from .vibration import VibrationExtractor
 __all__ = [
     "AttitudeExtractor", "BaseExtractor", "CompassExtractor", "ControlExtractor",
     "DerivedFeaturesExtractor", "EKFExtractor", "EventExtractor", "FFTExtractor",
-    "GPSExtractor", "IMUExtractor", "MotorExtractor", "apply_rolling_window_filter",
-    "FeaturePipeline", "PowerExtractor", "SystemExtractor", "VibrationExtractor",
+    "FeaturePipeline", "GPSExtractor", "IMUExtractor", "MotorExtractor",
+    "PowerExtractor", "SystemExtractor", "VibrationExtractor",
+    "apply_rolling_window_filter",
 ]
