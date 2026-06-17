@@ -170,4 +170,18 @@ FAILURE_RECOMMENDATIONS = {
         "Before next flight: Verify motor order with 'Motor Test' in Mission Planner — each motor "
         "should spin in the direction shown in the ArduPilot motor order diagram for your frame type."
     ),
+
+    "parameter_drift": (
+        "One or more parameters changed value during the flight. ArduPilot logs a PARM message "
+        "whenever a parameter is written, so a change after the boot-time parameter dump means a "
+        "value was deliberately set in flight — typically live AutoTune-style tuning by the "
+        "operator, or a companion computer / GCS re-syncing parameters. This is informational, "
+        "not necessarily a fault, but it matters for reproducing the flight: the configuration at "
+        "the end of the log differs from the configuration at takeoff. "
+        "First checks: (1) Confirm the change was intentional — unexpected mid-flight writes can "
+        "indicate a misbehaving script or an unstable telemetry link re-pushing parameters. "
+        "(2) If a tuning-critical gain (ATC_/PSC_/MOT_) was altered, re-evaluate stability margins "
+        "for the segment after the change. (3) Pin the final parameter set and re-run analysis if "
+        "you need a consistent baseline."
+    ),
 }

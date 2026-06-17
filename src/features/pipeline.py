@@ -1,3 +1,4 @@
+import math
 import time
 from typing import cast
 from .vibration import VibrationExtractor
@@ -13,6 +14,7 @@ from .system import SystemExtractor
 from .events import EventExtractor
 from .fft_analysis import FFTExtractor
 from src.contracts import FeatureDict, ParsedLog
+from src.diagnosis.parameter_drift import detect_parameter_drift, summarize_drift
 
 
 class FeaturePipeline:
@@ -77,6 +79,29 @@ class FeaturePipeline:
 
         extraction_time = time.time() - start_time
 
+        # Parameter-drift signals (advisory). Computed from the raw PARM stream
+        # and stashed under private '_'-prefixed keys so they never enter the
+        # public 94-feature schema or the ML vector. The check_parameter_drift
+        # rule and the CLI/Web advisory channel consume these.
+        from src.constants import DEFAULT_THRESHOLDS
+
+        parm_messages = messages.get("PARM", [])
+        drift_events = detect_parameter_drift(
+            parm_messages,
+            settle_sec=float(DEFAULT_THRESHOLDS.get("param_drift_settle_sec", 5.0)),
+            min_rel_change=float(DEFAULT_THRESHOLDS.get("param_drift_min_rel_change", 0.0)),
+        )
+        drift_summary = summarize_drift(drift_events)
+        all_features["_param_drift_events"] = drift_events
+        all_features["_param_drift_count"] = drift_summary["count"]
+        all_features["_param_drift_max_rel_change"] = drift_summary["max_rel_change"]
+        all_features["_param_drift_tanomaly"] = drift_summary["tanomaly"]
+
+        all_features["_raw_parm_messages"] = [
+            {"TimeUS": m.get("TimeUS"), "Name": m.get("Name"), "Value": m.get("Value")}
+            for m in messages.get("PARM", [])
+        ]
+
         # Determine if extraction produced meaningful data.
         # A corrupt or empty log will have duration=0 and very few message families.
         # This flag lets callers distinguish 'genuinely healthy' from 'empty parse'.
@@ -101,6 +126,13 @@ class FeaturePipeline:
             "auto_labels": evt_auto_labels,
             "extraction_success": extraction_success,
         }
+
+        # --- Sanitize NaNs before returning ---
+        # Real logs (especially EKF failures) often contain NaN/Inf in telemetry.
+        # Scikit-learn will crash if these enter the feature matrix, so we revert them to 0.0.
+        for key, value in all_features.items():
+            if isinstance(value, float) and not math.isfinite(value):
+                all_features[key] = 0.0
 
         return cast(FeatureDict, all_features)
 

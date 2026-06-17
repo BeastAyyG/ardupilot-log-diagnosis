@@ -17,6 +17,15 @@ VALID_LABELS = [
     "setup_error",
 ]
 
+# Advisory diagnosis types are produced by rules but are NOT crash-failure
+# classes: they describe operator/config behaviour rather than a fault. The
+# engines route these out of the scored crash-diagnosis list (so they never
+# affect the ML schema, the benchmark, or CITA arbitration) and expose them
+# separately via ``engine.advisories``.
+ADVISORY_LABELS = [
+    "parameter_drift",
+]
+
 FEATURE_NAMES = [
     "vibe_x_mean",
     "vibe_y_mean",
@@ -129,6 +138,11 @@ DEFAULT_THRESHOLDS = {
     "ekf_variance_warn": 0.5,
     "ekf_variance_fail": 1.5,
     "powr_vcc_min": 4.5,
+    # Parameter-drift detection (advisory). settle_sec ignores the boot-time
+    # parameter dump; min_rel_change=0 flags any genuine runtime change of a
+    # non-ignored parameter.
+    "param_drift_settle_sec": 5.0,
+    "param_drift_min_rel_change": 0.0,
 }
 
 ERR_SUBSYSTEM_MAP = {

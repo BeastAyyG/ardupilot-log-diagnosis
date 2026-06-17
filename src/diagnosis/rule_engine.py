@@ -5,7 +5,7 @@ from typing import Callable, Optional, cast
 
 import yaml
 
-from src.constants import DEFAULT_THRESHOLDS
+from src.constants import ADVISORY_LABELS, DEFAULT_THRESHOLDS
 from src.contracts import DiagnosisDict, FeatureDict
 from .rules import (
     check_compass,
@@ -14,6 +14,7 @@ from .rules import (
     check_gps,
     check_mechanical_failure,
     check_motors,
+    check_parameter_drift,
     check_pid_tuning,
     check_power,
     check_rc_failsafe,
@@ -25,6 +26,7 @@ from .rules import (
 
 
 RuleCheck = Callable[[FeatureDict, dict], DiagnosisDict | None]
+_ADVISORY_LABELS = frozenset(ADVISORY_LABELS)
 
 
 class RuleEngine:
@@ -58,7 +60,11 @@ class RuleEngine:
             check_system,
             check_rc_failsafe,
             check_events,
+            check_parameter_drift,
         ]
+        # Advisory diagnoses (e.g. parameter_drift) produced by the most recent
+        # diagnose() call. Populated each run; routed out of the returned list.
+        self.advisories: list[DiagnosisDict] = []
 
     def _checks_for_vehicle(self, vehicle_type: str) -> list[RuleCheck]:
         vehicle_type = (vehicle_type or "Unknown").lower()
@@ -71,6 +77,7 @@ class RuleEngine:
                 check_system,
                 check_rc_failsafe,
                 check_events,
+                check_parameter_drift,
             ]
         if vehicle_type == "sub":
             return [
@@ -80,6 +87,7 @@ class RuleEngine:
                 check_system,
                 check_rc_failsafe,
                 check_events,
+                check_parameter_drift,
             ]
         return list(self.checks)
 
@@ -97,10 +105,17 @@ class RuleEngine:
         vehicle_type = metadata.get("vehicle_type", "Unknown") if isinstance(metadata, dict) else "Unknown"
 
         results: list[DiagnosisDict] = []
+        advisories: list[DiagnosisDict] = []
         for check in self._checks_for_vehicle(str(vehicle_type)):
             result = check(normalized, self.thresholds)
             if result and result["confidence"] > 0:
-                results.append(result)
+                if result["failure_type"] in _ADVISORY_LABELS:
+                    advisories.append(result)
+                else:
+                    results.append(result)
+
+        advisories.sort(key=lambda item: item["confidence"], reverse=True)
+        self.advisories = advisories
 
         results.sort(key=lambda item: item["confidence"], reverse=True)
         return results
