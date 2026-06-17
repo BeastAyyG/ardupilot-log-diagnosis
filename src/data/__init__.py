@@ -7,9 +7,7 @@ from .forum_orchestrator import run_orchestration
 from .merge_batches import get_file_hash, merge_datasets
 
 __all__ = [
-    "LabelExtraction", "fetch_and_label", "run_auto_labeler",
-    "FileRecord", "run_clean_import",
-    "collect_forum_logs",
+    "FileRecord", "LabelExtraction", "collect_forum_logs", "fetch_and_label",
+    "get_file_hash", "merge_datasets", "run_auto_labeler", "run_clean_import",
     "run_orchestration",
-    "get_file_hash", "merge_datasets",
 ]

@@ -7,6 +7,6 @@ from .parameter_validation import validate_parameters
 from .rule_engine import RuleEngine
 
 __all__ = [
-    "AnomalyDetector", "evaluate_decision", "FailureType", "Severity",
-    "HybridEngine", "MLClassifier", "validate_parameters", "RuleEngine",
+    "AnomalyDetector", "FailureType", "HybridEngine", "MLClassifier",
+    "RuleEngine", "Severity", "evaluate_decision", "validate_parameters",
 ]
