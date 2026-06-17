@@ -14,3 +14,5 @@ COMMAND_MODULES = [
     ui,
     live,
 ]
+
+__all__ = ["COMMAND_MODULES"]
