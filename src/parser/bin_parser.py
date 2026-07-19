@@ -3,6 +3,7 @@ from typing import cast
 from pymavlink import DFReader
 from src.constants import ERR_SUBSYSTEM_MAP, ERR_AUTO_LABEL_MAP, MODE_NAMES, EV_NAMES
 from src.contracts import ParsedLog
+from src.diagnosis.log_quality import LogQualityEngine
 
 
 class LogParser:
@@ -193,5 +194,17 @@ class LogParser:
             parsed_data["metadata"]["vehicle_type"] = self._vehicle_from_parameters(
                 parsed_data["parameters"]
             )
+
+        try:
+            parsed_data["metadata"]["quality_report"] = LogQualityEngine().evaluate(parsed_data)
+        except Exception as exc:
+            self.logger.warning(f"Error evaluating log quality: {exc}")
+            parsed_data["metadata"]["quality_report"] = {
+                "overall_status": "UNKNOWN",
+                "duration_sec": parsed_data["metadata"].get("duration_sec", 0.0),
+                "total_messages": parsed_data["metadata"].get("total_messages", 0),
+                "capabilities": {},
+                "actionable_recommendations": [],
+            }
 
         return cast(ParsedLog, parsed_data)

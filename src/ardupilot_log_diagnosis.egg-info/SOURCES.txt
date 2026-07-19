@@ -68,6 +68,7 @@ src/features/fft_analysis.py
 src/features/gps.py
 src/features/imu.py
 src/features/motors.py
+src/features/noise_filter.py
 src/features/pipeline.py
 src/features/power.py
 src/features/system.py
@@ -83,6 +84,7 @@ src/tuning/advisor.py
 src/web/app.py
 src/web/live_stream.py
 src/web/schemas.py
+tests/test_batch.py
 tests/test_benchmark.py
 tests/test_benchmark_metrics.py
 tests/test_clean_import.py

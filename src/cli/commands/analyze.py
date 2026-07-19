@@ -31,12 +31,36 @@ def register(subparsers: _SubParsersAction) -> None:
     parser.add_argument("-o", "--output", help="Save report to file")
     parser.add_argument("--explain", action="store_true", help="Show Hybrid Engine Arbitration Breakdown")
     parser.add_argument("--no-ml", action="store_true", help="Force rule-based only diagnosis")
+    parser.add_argument("--check-quality", action="store_true", help="Inspect log quality and diagnostic capability gates only")
     parser.set_defaults(func=run)
 
 
 def run(args) -> None:
     parsed, features = load_parsed_and_features(args.logfile)
     ensure_extraction_success(args.logfile, features)
+    metadata = features.get("_metadata", {})
+
+    if getattr(args, "check_quality", False):
+        import json
+        quality_report = metadata.get("quality_report", {})
+        if args.json or getattr(args, "format", "terminal") == "json":
+            write_or_print_output(json.dumps(quality_report, indent=2), args.output, "Quality Report")
+            return
+        lines = [
+            f"=== Log Quality & Capability Report: {quality_report.get('overall_status', 'UNKNOWN')} ===",
+            f"Log: {args.logfile}",
+            f"Duration: {quality_report.get('duration_sec', 0.0):.1f}s | Messages: {quality_report.get('total_messages', 0)}",
+            "",
+            "Diagnostic Capabilities:",
+        ]
+        for cap_name, cap_info in quality_report.get("capabilities", {}).items():
+            if isinstance(cap_info, dict):
+                lines.append(f"  [{cap_info.get('status', 'UNKNOWN')}] {cap_name} (Rate: {cap_info.get('current_rate_hz', 0.0):.1f}Hz)")
+                lines.append(f"    Reason: {cap_info.get('reason')}")
+                if cap_info.get("recommendation"):
+                    lines.append(f"    Recommendation: {cap_info.get('recommendation')}")
+        write_or_print_output("\n".join(lines), args.output, "Quality Report")
+        return
 
     engine = RuleEngine() if args.no_ml else HybridEngine()
     diagnoses = engine.diagnose(features)

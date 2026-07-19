@@ -7,13 +7,14 @@ Severity = Literal["critical", "warning", "info"]
 DecisionStatus = Literal["healthy", "uncertain", "confirmed"]
 
 
-class ParsedMetadata(TypedDict):
+class ParsedMetadata(TypedDict, total=False):
     filepath: str
     duration_sec: float
     vehicle_type: str
     firmware_version: str
     total_messages: int
     message_types: dict[str, int]
+    quality_report: dict[str, Any]
 
 
 class ParsedError(TypedDict, total=False):
@@ -62,6 +63,7 @@ class FeatureMetadata(TypedDict, total=False):
     total_features: int
     auto_labels: list[str]
     extraction_success: bool
+    quality_report: dict[str, Any]
 
 
 FeatureValue: TypeAlias = Any

@@ -1,7 +1,8 @@
-from . import analyze, batch, benchmark, collect_forum, compare, demo, features, import_clean, label, mine_expert_labels, ui, live
+from . import analyze, batch, benchmark, collect_forum, compare, demo, export, features, import_clean, label, mine_expert_labels, ui, live
 
 COMMAND_MODULES = [
     analyze,
+    export,
     features,
     benchmark,
     batch,
