@@ -90,6 +90,20 @@ class DiagnosisFormatter:
             "",
         ]
 
+        quality_report = metadata.get("quality_report", {})
+        if quality_report and isinstance(quality_report, dict) and quality_report.get("overall_status") != "UNKNOWN":
+            overall_status = quality_report.get("overall_status", "RELIABLE")
+            q_color = _GREEN if overall_status == "RELIABLE" else (_YELLOW if overall_status == "DEGRADED" else _RED)
+            lines.append(_c(f"Log Quality & Capability Check: {overall_status}", q_color, _BOLD))
+            for cap_name, cap_info in quality_report.get("capabilities", {}).items():
+                if isinstance(cap_info, dict) and cap_info.get("status") in ("DEGRADED", "UNSUPPORTED"):
+                    c_status = cap_info.get("status", "")
+                    c_color = _YELLOW if c_status == "DEGRADED" else _RED
+                    lines.append(f"  [{_c(c_status, c_color)}] {cap_name}: {cap_info.get('reason')}")
+                    if cap_info.get("recommendation"):
+                        lines.append(_c(f"     -> Recommendation: {cap_info.get('recommendation')}", _CYAN))
+            lines.append("")
+
         if parameter_warnings:
             lines.append(_c("Pre-Flight & Parameter Validation", _YELLOW, _BOLD))
             for item in parameter_warnings:
@@ -222,6 +236,21 @@ class DiagnosisFormatter:
         vehicle = f"{metadata.get('vehicle_type', 'Unknown')} {metadata.get('firmware', '')}".strip()
 
         sections = []
+        quality_report = metadata.get("quality_report", {})
+        if quality_report and isinstance(quality_report, dict) and quality_report.get("overall_status") != "UNKNOWN":
+            overall_status = quality_report.get("overall_status", "RELIABLE")
+            q_class = "healthy" if overall_status == "RELIABLE" else ("warning" if overall_status == "DEGRADED" else "critical")
+            q_html = f'<h2><span class="badge {q_class}">{overall_status}</span> Log Quality & Capability Check</h2>'
+            for cap_name, cap_info in quality_report.get("capabilities", {}).items():
+                if isinstance(cap_info, dict) and cap_info.get("status") in ("DEGRADED", "UNSUPPORTED"):
+                    c_status = cap_info.get("status", "")
+                    c_class = "warning" if c_status == "DEGRADED" else "critical"
+                    q_html += f'<div class="similar-case"><span class="badge {c_class}">{c_status}</span> <strong>{cap_name}:</strong> {cap_info.get("reason")}'
+                    if cap_info.get("recommendation"):
+                        q_html += f'<div style="margin-top:.3rem;color:#2471a3">-> Recommendation: {cap_info["recommendation"]}</div>'
+                    q_html += '</div>'
+            sections.append(f'<div class="card">{q_html}</div>')
+
         if runtime_info:
             sections.append(
                 f'<div class="card"><strong>Runtime:</strong> {runtime_info.get("engine", "unknown")}</div>'

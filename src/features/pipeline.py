@@ -13,6 +13,7 @@ from .system import SystemExtractor
 from .events import EventExtractor
 from .fft_analysis import FFTExtractor
 from src.contracts import FeatureDict, ParsedLog
+from src.diagnosis.log_quality import LogQualityEngine
 
 
 class FeaturePipeline:
@@ -85,6 +86,13 @@ class FeaturePipeline:
         extraction_success = not (duration == 0.0 and n_message_families < 3)
 
         # Add metadata
+        quality_report = parsed_log.get("metadata", {}).get("quality_report")
+        if not quality_report:
+            try:
+                quality_report = LogQualityEngine().evaluate(parsed_log)
+            except Exception:
+                quality_report = {}
+
         all_features["_metadata"] = {
             "log_file": parsed_log.get("metadata", {}).get("filepath", "unknown"),
             "duration_sec": duration,
@@ -100,6 +108,7 @@ class FeaturePipeline:
             "total_features": len([k for k in all_features if not k.startswith("_")]),
             "auto_labels": evt_auto_labels,
             "extraction_success": extraction_success,
+            "quality_report": quality_report,
         }
 
         return cast(FeatureDict, all_features)
