@@ -119,4 +119,8 @@ def run(args) -> None:
     write_or_print_output(output, args.output, "Report")
 
     if getattr(args, "explain", False) and explain_data:
-        print_explain_box(explain_data, cast(list[dict[str, Any]], diagnoses))
+        print_explain_box(
+            explain_data,
+            cast(list[dict[str, Any]], diagnoses),
+            metadata,
+        )

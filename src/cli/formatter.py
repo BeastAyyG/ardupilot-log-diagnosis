@@ -25,6 +25,17 @@ def _c(text: str, *codes: str) -> str:
     return "".join(codes) + text + _RESET
 
 
+def _format_onset_time(tanomaly: object, metadata: FeatureMetadata) -> str:
+    if not isinstance(tanomaly, (int, float)) or tanomaly <= 0:
+        return "no onset timestamp"
+
+    origin_us = metadata.get("first_time_us", 0)
+    relative_us = float(tanomaly)
+    if isinstance(origin_us, (int, float)) and origin_us > 0 and tanomaly >= origin_us:
+        relative_us -= float(origin_us)
+    return f"T+{relative_us / 1e6:.1f}s"
+
+
 _HTML_TEMPLATE = """\
 <!DOCTYPE html>
 <html lang="en">
@@ -142,11 +153,7 @@ class DiagnosisFormatter:
             lines.append(_c("Hypothesis Scaffolding", _BOLD))
             for idx, item in enumerate(hypotheses[:3], start=1):
                 tanomaly = item.get("tanomaly", -1.0)
-                time_text = (
-                    f"T+{tanomaly / 1e6:.1f}s"
-                    if isinstance(tanomaly, (int, float)) and tanomaly > 0
-                    else "no onset timestamp"
-                )
+                time_text = _format_onset_time(tanomaly, metadata)
                 lines.append(
                     f"  Hypothesis {idx}: {item['failure_type']} "
                     f"({item['merged_confidence'] * 100:.0f}%) via {item['source']} "
@@ -160,9 +167,33 @@ class DiagnosisFormatter:
             lines.append(f"Decision: {decision.get('status', 'unknown').upper()}")
             top_guess = decision.get("top_guess")
             if top_guess:
-                lines.append(
-                    f"Top Guess: {top_guess.upper()} ({int(float(decision.get('top_confidence', 0.0)) * 100)}%)"
+                selected_by_arbiter = (
+                    (explain_data or {})
+                    .get("causal_arbiter", {})
+                    .get("selected_failure_type")
+                    == top_guess
                 )
+                guess_label = "Likely Root Cause" if selected_by_arbiter else "Top Guess"
+                lines.append(
+                    f"{guess_label}: {top_guess.upper()} "
+                    f"({int(float(decision.get('top_confidence', 0.0)) * 100)}%)"
+                )
+                strongest = max(
+                    diagnoses,
+                    key=lambda item: float(item.get("confidence", 0.0)),
+                    default=None,
+                )
+                if (
+                    strongest
+                    and strongest.get("failure_type") != top_guess
+                    and float(strongest.get("confidence", 0.0))
+                    > float(decision.get("top_confidence", 0.0))
+                ):
+                    lines.append(
+                        "Highest-Confidence Finding: "
+                        f"{str(strongest['failure_type']).upper()} "
+                        f"({int(float(strongest['confidence']) * 100)}%)"
+                    )
             subsystems = decision.get("ranked_subsystems", [])
             if subsystems:
                 lines.append("Subsystem Blame Ranking:")
@@ -284,11 +315,7 @@ class DiagnosisFormatter:
             items = []
             for idx, item in enumerate(hypotheses[:3], start=1):
                 tanomaly = item.get("tanomaly", -1.0)
-                time_text = (
-                    f"T+{tanomaly / 1e6:.1f}s"
-                    if isinstance(tanomaly, (int, float)) and tanomaly > 0
-                    else "no onset timestamp"
-                )
+                time_text = _format_onset_time(tanomaly, metadata)
                 items.append(
                     f'<div class="hypothesis"><strong>Hypothesis {idx}:</strong> '
                     f'{item["failure_type"]} via {item["source"]} '

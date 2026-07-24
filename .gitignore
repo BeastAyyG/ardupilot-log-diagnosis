@@ -34,6 +34,24 @@ dist/
 
 *.tmp
 
+# Raw flight-log working sets and local audit snapshots
+
+*.bin
+
+*.BIN
+
+data/combined_dataset/
+
+data/final_training_dataset_2026-02-23/dataset/
+
+data/clean_imports/*/benchmark_ready/dataset/
+
+data/to_label/provisional_auto_labels_*.json
+
+archive/*-models-*/
+
+omkar_tree.json
+
 
 
 

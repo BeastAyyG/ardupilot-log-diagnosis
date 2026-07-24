@@ -16,38 +16,45 @@ import argparse
 import json
 import os
 import sys
+from itertools import pairwise
 from pathlib import Path
 
 import joblib
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")          # headless
-import matplotlib.pyplot as plt   # noqa: E402
+import matplotlib.pyplot as plt
 
 ECE_PASS_THRESHOLD = 0.08
 
 
+def _configure_stdout() -> None:
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8", errors="replace")
+
+
 def compute_ece(y_true: np.ndarray, probs: np.ndarray, n_bins: int = 10) -> float:
-    """Compute scalar ECE across all classes (macro average)."""
-    n_classes = probs.shape[1]
-    ece_per_class = []
+    """Compute standard top-label Expected Calibration Error."""
+    if len(y_true) == 0:
+        raise ValueError("ECE requires at least one evaluation sample")
 
-    for c in range(n_classes):
-        p = probs[:, c]
-        label = (y_true == c).astype(int)
-        bins = np.linspace(0, 1, n_bins + 1)
-        bin_ece = 0.0
-        for lo, hi in zip(bins[:-1], bins[1:]):
-            mask = (p >= lo) & (p < hi)
-            if mask.sum() == 0:
-                continue
-            avg_conf = p[mask].mean()
-            avg_acc = label[mask].mean()
-            bin_ece += mask.sum() * abs(avg_conf - avg_acc)
-        ece_per_class.append(bin_ece / len(y_true))
-
-    return float(np.mean(ece_per_class))
+    predicted = np.argmax(probs, axis=1)
+    confidence = np.max(probs, axis=1)
+    correct = (predicted == y_true).astype(float)
+    bins = np.linspace(0, 1, n_bins + 1)
+    ece = 0.0
+    for index, (lo, hi) in enumerate(pairwise(bins)):
+        upper = confidence <= hi if index == n_bins - 1 else confidence < hi
+        mask = (confidence >= lo) & upper
+        if mask.sum() == 0:
+            continue
+        ece += (mask.sum() / len(y_true)) * abs(
+            confidence[mask].mean() - correct[mask].mean()
+        )
+    return float(ece)
 
 
 def reliability_diagram(y_true, probs, class_names, output_path):
@@ -58,15 +65,16 @@ def reliability_diagram(y_true, probs, class_names, output_path):
     cols = min(4, n_classes)
     rows = (n_classes + cols - 1) // cols
 
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows))
+    _fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows))
     axes = np.array(axes).flatten()
 
     for c, ax in zip(range(n_classes), axes):
         p = probs[:, c]
         label = (y_true == c).astype(int)
         conf_vals, acc_vals = [], []
-        for lo, hi in zip(bins[:-1], bins[1:]):
-            mask = (p >= lo) & (p < hi)
+        for index, (lo, hi) in enumerate(pairwise(bins)):
+            upper = p <= hi if index == n_bins - 1 else p < hi
+            mask = (p >= lo) & upper
             if mask.sum() == 0:
                 continue
             conf_vals.append(p[mask].mean())
@@ -92,14 +100,44 @@ def reliability_diagram(y_true, probs, class_names, output_path):
     print(f"Reliability diagram saved → {output_path}")
 
 
-def load_model_and_predict(features_csv: str, labels_csv: str):
+def load_model_and_predict(
+    features_csv: str,
+    labels_csv: str,
+    evaluation_scope: str = "saved-holdout",
+):
     bundle = joblib.load("models/classifier.joblib")
+    imputer = joblib.load("models/imputer.joblib")
     scaler = joblib.load("models/scaler.joblib")
+    manifest = json.loads(Path("models/manifest.json").read_text(encoding="utf-8"))
     model = bundle["model"]
     classes = bundle["classes"]
 
     df_feat = pd.read_csv(features_csv)
     df_lab = pd.read_csv(labels_csv)
+
+    if "flight_id" not in df_feat.columns:
+        raise ValueError("ECE evaluation requires flight_id in the feature CSV")
+    flight_ids = df_feat["flight_id"].astype(str)
+
+    if evaluation_scope == "saved-holdout":
+        holdout_ids = set(manifest.get("test_flight_ids", []))
+        if not holdout_ids:
+            raise ValueError(
+                "Model manifest has no saved grouped holdout. Retrain before "
+                "claiming an ECE score."
+            )
+        scope_mask = flight_ids.isin(holdout_ids)
+        if not scope_mask.any():
+            raise ValueError(
+                "None of the model's saved holdout flights are present in the "
+                "provided feature CSV."
+            )
+        df_feat = df_feat.loc[scope_mask].reset_index(drop=True)
+        df_lab = df_lab.loc[scope_mask].reset_index(drop=True)
+        flight_ids = flight_ids.loc[scope_mask].reset_index(drop=True)
+
+    df_feat = df_feat.drop(columns=["flight_id"])
+    df_feat = df_feat.replace([np.inf, -np.inf], np.nan)
 
     X = df_feat.values
     class_names = []
@@ -116,13 +154,16 @@ def load_model_and_predict(features_csv: str, labels_csv: str):
         sys.exit(1)
 
     X = X[keep]
+    evaluated_flight_ids = flight_ids.iloc[keep].astype(str).tolist()
     y_true = np.array([classes.index(n) for n in class_names])
-    X_scaled = scaler.transform(X)
+    X_imputed = imputer.transform(X)
+    X_scaled = scaler.transform(X_imputed)
     probs = model.predict_proba(X_scaled)
-    return y_true, probs, classes
+    return y_true, probs, classes, evaluated_flight_ids
 
 
 def main():
+    _configure_stdout()
     parser = argparse.ArgumentParser(description="Measure ECE for the trained classifier")
     parser.add_argument("--features-csv", default="training/features.csv")
     parser.add_argument("--labels-csv", default="training/labels.csv")
@@ -137,6 +178,15 @@ def main():
         default=ECE_PASS_THRESHOLD,
         help=f"ECE pass threshold (default {ECE_PASS_THRESHOLD})",
     )
+    parser.add_argument(
+        "--evaluation-scope",
+        choices=["saved-holdout", "all-provided"],
+        default="saved-holdout",
+        help=(
+            "Evaluate the grouped holdout saved by training (default), or all "
+            "rows in a separately supplied external dataset."
+        ),
+    )
     args = parser.parse_args()
 
     if not Path("models/classifier.joblib").exists():
@@ -144,14 +194,16 @@ def main():
         sys.exit(1)
 
     print("Loading model and computing ECE...")
-    y_true, probs, class_names = load_model_and_predict(
-        args.features_csv, args.labels_csv
+    y_true, probs, class_names, evaluated_flight_ids = load_model_and_predict(
+        args.features_csv,
+        args.labels_csv,
+        evaluation_scope=args.evaluation_scope,
     )
 
     ece = compute_ece(y_true, probs)
 
     print(f"\n{'='*50}")
-    print(f"  Overall ECE (macro): {ece:.4f}")
+    print(f"  Overall ECE (top-label): {ece:.4f}")
     print(f"  Target:              ≤ {args.target_ece:.2f}")
     if ece <= args.target_ece:
         print("  Result:              ✅ PASS")
@@ -167,8 +219,9 @@ def main():
         p = probs[:, c]
         label = (y_true == c).astype(int)
         class_ece = 0.0
-        for lo, hi in zip(bins[:-1], bins[1:]):
-            mask = (p >= lo) & (p < hi)
+        for index, (lo, hi) in enumerate(pairwise(bins)):
+            upper = p <= hi if index == n_bins - 1 else p < hi
+            mask = (p >= lo) & upper
             if mask.sum() == 0:
                 continue
             class_ece += mask.sum() * abs(p[mask].mean() - label[mask].mean())
@@ -187,6 +240,8 @@ def main():
         "pass": ece <= args.target_ece,
         "n_samples": len(y_true),
         "classes": class_names,
+        "evaluation_scope": args.evaluation_scope,
+        "evaluated_flight_ids": evaluated_flight_ids,
     }
     report_path = "training/ece_report.json"
     with open(report_path, "w") as f:

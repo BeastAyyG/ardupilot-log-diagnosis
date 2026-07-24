@@ -19,36 +19,36 @@ classifiers = [
 ]
 
 dependencies = [
-    "pymavlink>=2.0.0",
-    "requests>=2.28.0",
-    "numpy>=1.21.0",
-    "scipy>=1.7.0",
-    "scikit-learn>=1.0.0",
-    "xgboost>=1.5.0",
-    "joblib>=1.1.0",
-    "pyyaml>=6.0",
-    "pandas>=1.3.0",
-    "imbalanced-learn>=0.9.0",
-    "matplotlib>=3.5.0",
-    "python-dotenv>=0.19.0",
-    "tqdm>=4.64.0",
+    "pymavlink>=2.4.40,<3",
+    "requests>=2.31,<3",
+    "numpy>=1.26.4,<2",
+    "scipy>=1.11.4,<1.13",
+    "scikit-learn>=1.4.2,<1.5",
+    "xgboost>=2.0.3,<2.2",
+    "joblib>=1.3.2,<1.5",
+    "pyyaml>=6.0,<7",
+    "pandas>=2.1.4,<2.3",
+    "imbalanced-learn>=0.12,<0.13",
+    "matplotlib>=3.8,<3.10",
+    "python-dotenv>=1.0,<2",
+    "tqdm>=4.66,<5",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "httpx>=0.27.0",
+    "pytest>=7.0,<9",
+    "httpx>=0.27,<0.29",
     "ruff>=0.1.0",
     "black>=22.0.0",
     "mypy>=0.950",
-    "fastapi>=0.110.0",
-    "uvicorn>=0.27.0",
-    "python-multipart>=0.0.9",
+    "fastapi>=0.110,<0.116",
+    "uvicorn>=0.27,<0.35",
+    "python-multipart>=0.0.9,<0.1",
 ]
 web = [
-    "fastapi>=0.110.0",
-    "uvicorn>=0.27.0",
-    "python-multipart>=0.0.9",
+    "fastapi>=0.110,<0.116",
+    "uvicorn>=0.27,<0.35",
+    "python-multipart>=0.0.9,<0.1",
 ]
 forum = [
     "scrapegraph-py>=1.0.0",
@@ -62,6 +62,23 @@ ardupilot-diagnosis = "src.cli.main:main"
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src", "src.*"]
+
+[tool.setuptools.package-data]
+"src.web" = ["index.html"]
+
+[tool.setuptools.data-files]
+"share/ardupilot-log-diagnosis/models" = [
+    "models/*.joblib",
+    "models/*.json",
+    "models/*.yaml",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

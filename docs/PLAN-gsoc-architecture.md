@@ -20,7 +20,7 @@ An AI-assisted log diagnosis tool for ArduPilot `.BIN` dataflash logs. Extended 
 | Comprehensive test suite (unit + integration) | 56 tests passing | ✅ Done |
 | Root-cause Top-1 > 50% on unseen holdout | > 50–60% | 🔄 In Progress |
 | ECE (Expected Calibration Error) ≤ 0.08 | ≤ 0.08 | 🔄 Measuring |
-| False Critical Rate ≤ 10% | ≤ 10% | 🔄 In Progress |
+| False Critical Rate ≤ 5% | ≤ 5% | 🔄 In Progress |
 | Triage-time reduction ≥ 40% | ≥ 40% | ✅ Done (84% reduction) |
 
 ## 4. Tech Stack
@@ -78,7 +78,7 @@ ardupilot-log-diagnosis/
 - [x] **Leakage Check**: `validate_leakage.py` — 0 overlapping SHAs between train and holdout.
 - [x] **Project Boundaries**: `training/validate_project_boundaries.py` — CI-enforced.
 - [ ] **Final ECE report**: Target ≤ 0.08.
-- [ ] **False-critical audit**: Target ≤ 10%.
+- [ ] **False-critical audit**: Target ≤ 5%.
 
 ## 8. Data Provenance and Curation
 - Ground-truth labels audited and relabeled against the **Root-Cause Precedence policy** (`docs/root_cause_policy.md`).

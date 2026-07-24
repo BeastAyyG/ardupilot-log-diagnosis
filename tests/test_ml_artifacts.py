@@ -6,6 +6,7 @@ from src.diagnosis.ml_classifier import MLClassifier
 
 def test_ml_classifier_falls_back_when_manifest_missing(tmp_path):
     (tmp_path / "classifier.joblib").write_text("x")
+    (tmp_path / "imputer.joblib").write_text("x")
     (tmp_path / "scaler.joblib").write_text("x")
     (tmp_path / "feature_columns.json").write_text("[]")
     (tmp_path / "label_columns.json").write_text("[]")

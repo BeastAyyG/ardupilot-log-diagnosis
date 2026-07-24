@@ -14,7 +14,7 @@ class MockMAVExplorer:
 
 def test_mavexplorer_plugin_init():
     me = MockMAVExplorer("test.BIN")
-    plugin = init(me)
+    init(me)
     assert "beast_diagnose" in me.mpstate.command_map
     assert "amc_export" in me.mpstate.command_map
 

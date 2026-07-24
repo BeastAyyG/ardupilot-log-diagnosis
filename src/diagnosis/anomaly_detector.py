@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import numpy as np
 
 from src.runtime_paths import MODELS_DIR
+
 
 class AnomalyDetector:
     """Autoencoder-based anomaly detection trained on healthy flights.
@@ -29,6 +31,15 @@ class AnomalyDetector:
         try:
             import joblib
             bundle = joblib.load(self.model_path)
+            artifact_version = bundle.get("sklearn_version")
+            if artifact_version is not None:
+                try:
+                    if artifact_version != version("scikit-learn"):
+                        raise ValueError(
+                            "anomaly artifact scikit-learn version mismatch"
+                        )
+                except PackageNotFoundError as exc:
+                    raise ValueError("scikit-learn is not installed") from exc
             # Support both Autoencoder and Isolation Forest
             if "encoder" in bundle and "decoder" in bundle:
                 self.encoder = bundle["encoder"]
@@ -39,11 +50,12 @@ class AnomalyDetector:
             elif "iso_forest" in bundle:
                 self.iso_forest = bundle["iso_forest"]
                 self.scaler = bundle["scaler"]
+                self.imputer = bundle.get("imputer")
                 self.model_type = "isolation_forest"
             else:
                 raise ValueError("Unknown model bundle format")
             self.available = True
-        except Exception:
+        except Exception:  # noqa: BLE001 - optional artifacts must fail closed
             self.available = False
 
     def score(self, features: dict, feature_columns: list) -> dict:
@@ -63,16 +75,20 @@ class AnomalyDetector:
             if value is None:
                 return 0.0
             try:
-                return float(value)
+                parsed = float(value)
             except (TypeError, ValueError):
                 return 0.0
+            return parsed if np.isfinite(parsed) else 0.0
 
         vector = np.array([_safe_float(features.get(f, 0.0)) for f in feature_columns])
 
         # We need to reshape for sklearn/keras
         try:
-            X = self.scaler.transform(vector.reshape(1, -1))
-        except ValueError:
+            raw = vector.reshape(1, -1)
+            if getattr(self, "imputer", None) is not None:
+                raw = self.imputer.transform(raw)
+            X = self.scaler.transform(raw)
+        except (TypeError, ValueError):
             # Handle if feature columns don't match scaler exactly (fallback for robustness)
             return {"anomaly_score": 0.0, "is_anomaly": False, "top_deviations": []}
 

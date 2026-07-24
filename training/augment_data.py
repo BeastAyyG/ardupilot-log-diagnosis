@@ -7,6 +7,8 @@ def add_jitter(df, noise_scale=0.02):
     """Add Gaussian noise to all numerical features."""
     augmented = df.copy()
     for col in augmented.columns:
+        if col == "flight_id":
+            continue
         if augmented[col].dtype in [np.float64, np.float32, np.int64, np.int32]:
             noise = np.random.normal(0, np.abs(augmented[col]) * noise_scale)
             augmented[col] += noise
@@ -26,6 +28,8 @@ def scale_features(df):
     for prefix, (lo, hi) in scale_groups.items():
         scale = np.random.uniform(lo, hi)
         for col in augmented.columns:
+            if col == "flight_id":
+                continue
             if col.startswith(prefix):
                 augmented[col] *= scale
 

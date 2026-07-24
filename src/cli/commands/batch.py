@@ -96,6 +96,9 @@ def run(args) -> None:
     pipeline = FeaturePipeline()
     engine = HybridEngine()
 
+    output_parent = Path(output_path).expanduser().parent
+    output_parent.mkdir(parents=True, exist_ok=True)
+
     # Open CSV for writing and stream rows directly to keep memory usage low
     with open(output_path, "w", newline="", encoding="utf-8") as csv_file:
         fieldnames = [

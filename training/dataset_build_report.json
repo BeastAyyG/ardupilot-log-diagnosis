@@ -1,25 +1,38 @@
 {
-  "ground_truth_path": "data/clean_imports/basic_dataset/ground_truth.json",
-  "dataset_dir": "data/clean_imports/basic_dataset/dataset",
-  "total_entries": 70,
-  "processed": 140,
-  "failed_extraction": 0,
+  "ground_truth_path": "data\\combined_dataset\\ground_truth.json",
+  "dataset_dir": "data\\combined_dataset\\dataset",
+  "total_entries": 115,
+  "processed": 114,
+  "full_logs_processed": 114,
+  "generated_windows": 0,
+  "skipped_duplicate_windows": 0,
+  "failed_extraction": 1,
   "skipped_missing_file": 0,
   "skipped_low_confidence": 0,
   "skipped_not_trainable": 0,
   "min_confidence": "low",
   "trainable_only": true,
+  "window_sec": 0.0,
+  "window_overlap": 0.5,
+  "elapsed_seconds": 196.556,
   "label_distribution": {
-    "compass_interference": 10,
-    "ekf_failure": 10,
-    "gps_quality_poor": 10,
+    "compass_interference": 21,
+    "ekf_failure": 14,
+    "gps_quality_poor": 11,
     "healthy": 10,
-    "rc_failsafe": 10,
-    "vibration_high": 20
+    "motor_imbalance": 8,
+    "pid_tuning_issue": 2,
+    "power_instability": 5,
+    "rc_failsafe": 13,
+    "vibration_high": 30
   },
   "source_type_distribution": {
-    "BASiC_dataset": 70
+    "ArduPilot_Discuss": 32,
+    "BASiC_dataset": 70,
+    "forum_linked": 8,
+    "github": 2,
+    "human_verified_rule_candidate": 2
   },
-  "output_features": "training/features.csv",
-  "output_labels": "training/labels.csv"
+  "output_features": "training\\features.csv",
+  "output_labels": "training\\labels.csv"
 }

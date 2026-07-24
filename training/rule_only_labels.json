@@ -1,0 +1,27 @@
+{
+  "min_groups_per_class": 5,
+  "rule_only_labels": [
+    "mechanical_failure",
+    "brownout",
+    "pid_tuning_issue",
+    "crash_unknown",
+    "thrust_loss",
+    "setup_error"
+  ],
+  "per_class_flight_counts": {
+    "healthy": 10,
+    "vibration_high": 30,
+    "compass_interference": 21,
+    "power_instability": 5,
+    "gps_quality_poor": 11,
+    "motor_imbalance": 8,
+    "ekf_failure": 14,
+    "mechanical_failure": 0,
+    "brownout": 0,
+    "pid_tuning_issue": 2,
+    "rc_failsafe": 13,
+    "crash_unknown": 0,
+    "thrust_loss": 0,
+    "setup_error": 0
+  }
+}

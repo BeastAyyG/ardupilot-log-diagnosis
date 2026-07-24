@@ -51,7 +51,7 @@ detector. Every output is:
 | D4 | Reproducible benchmark pipeline | Identical metrics on repeated clean runs (Gate D) |
 | D5 | Calibration + abstention report | ECE ≤ 0.08; abstention policy documented and tested (Gate E) |
 | D6 | Triage-time reduction study | Median reduction ≥ 40 % documented in `docs/MAINTAINER_TRIAGE_REDUX.md` |
-| D7 | False-critical audit | False-critical rate ≤ 10 % with engine-level mitigation guards |
+| D7 | False-critical audit | False-critical rate ≤ 5 % with engine-level mitigation guards |
 
 ### Stretch Deliverables
 
@@ -66,8 +66,8 @@ detector. Every output is:
 | Metric | Target | Status |
 |---|---|---|
 | Root-cause Top-1 (locked unseen) | ≥ 50–60 % | Rule-Baseline Complete (ML needs data) |
-| ECE | ≤ 0.08 | ✓ Isotonic calibration applied |
-| False-critical rate | ≤ 10 % | ✓ Engine-level guards in place |
+| ECE | ≤ 0.08 | **Open: 0.1268 on the saved 22-flight holdout** |
+| False-critical rate | ≤ 5 % | ✓ Engine-level guards in place |
 | Median triage-time reduction | ≥ 40 % | ✓ 84% reduction (measured) |
 | Parse reliability | ≥ 99 % | ✓ 100 % isolated parse tests |
 
@@ -87,11 +87,11 @@ Expert-label miner (`src/data/expert_label_miner.py`) collects forum-diagnosed l
 **Fallback**: If leakage is detected, rebuild split and re-train; results are never published until Gate C passes.
 
 ### Risk R3 — Calibration ECE target not met
-**Likelihood**: Low (isotonic calibration already applied).  **Impact**: Medium (confidence not trustworthy).  
-**Mitigation**: `training/measure_ece.py` produces ECE at every training run; regression alert if ECE rises.  
+**Likelihood**: Current issue (sigmoid calibration scores ECE 0.1268). **Impact**: Medium (confidence not trustworthy).
+**Mitigation**: `training/measure_ece.py` evaluates only the saved unseen holdout by default and exits nonzero while ECE exceeds the gate. Add verified samples before tuning calibration further.
 **Fallback**: Widen abstention band (`decision_policy.py`) to compensate; document.
 
-### Risk R4 — False-critical rate exceeds 10 %
+### Risk R4 — False-critical rate exceeds 5 %
 **Likelihood**: Low (compass/motor suppression guards already ship).  **Impact**: High (maintainer trust).  
 **Mitigation**: `training/measure_fcr.py` audits FCR on the benchmark set every training run.  
 **Fallback**: Raise confidence thresholds for affected labels; add suppression guard.

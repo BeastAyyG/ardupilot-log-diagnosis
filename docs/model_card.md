@@ -1,38 +1,61 @@
-# 🧠 ArduPilot Log Diagnosis: Model Card (v1.0.0)
+# ArduPilot Log Diagnosis — Model Card
 
-This model is a **Hybrid Causal Arbiter** designed to diagnose autonomous vehicle failures from ArduPilot DataFlash logs (.BIN). It integrates a deterministic Expert Rule Engine with a high-dimensional XGBoost Gradient Boosting Classifier.
+This project combines deterministic ArduPilot rules, a calibrated XGBoost classifier,
+an Isolation Forest, and Crash-Immune Temporal Arbitration (CITA). The current artifacts
+are development models; they are not cleared for autonomous maintenance or flight-safety
+decisions.
 
-## 📊 Performance Summary (Final GSoC Gate)
-| Metric | Baseline (Rule-Only) | **Hybrid AI (Current)** | Target | Status |
-| :--- | :---: | :---: | :---: | :---: |
-| **Macro F1 Score** | 0.62 | **1.00** | > 0.80 | 🚀 EXCEEDED |
-| **Mean ECE** (Calibration) | 0.14 | **0.0001** | < 0.08 | 🛡️ PASS |
-| **False Critical Rate** | 8.2% | **< 1.0%** | < 2.0% | ✅ PASS |
-| **Analysis Latency** | < 200ms | **< 350ms** | < 1s | ⚡ OPTIMIZED |
+## Current evaluation
 
-## 🏗️ Architecture: Hybrid Causal Arbitration + CITA
-The system doesn't just "predict" a label; it arbitrates between two distinct logic layers using **Crash-Immune Temporal Arbitration (CITA)**:
-1.  **Deterministic Layer (Rule Engine):** Scans for hard hardware failures (e.g. `VIBE.VibeZ > 60`, `ERR.Subsys=17`).
-2.  **Statistical Layer (XGBoost):** Analyzes 90+ features (FFT peaks, motor spread variance, EKF innovation spikes) to find patterns rules miss.
-3.  **CITA Arbiter:** Resolves conflicts using per-subsystem `t_anomaly` timestamps — the exact microsecond each parameter first breached its threshold. The earliest onset wins, eliminating post-crash data contamination (the "compass hallucination" problem). Unlike fixed time-windows, CITA adapts to each log's unique failure timeline.
+| Metric | Result | Gate | Status |
+|---|---:|---:|---|
+| Calibrated macro F1 | 0.603 | ≥ 0.50 | Pass |
+| Uncalibrated XGBoost macro F1 | 0.669 | Reference | Measured |
+| Top-label ECE | 0.1268 | ≤ 0.08 | **Fail** |
+| Group isolation | 88 train / 22 test flights | No shared `flight_id` | Pass |
+| Exact duplicate feature rows | 0 | 0 | Pass |
 
-## 📚 Training Data ("The Data Buffet")
-The model was trained on a diverse composite dataset:
--   **ArduPilot Forums:** 24 high-confidence expert-labeled crash logs mined from discussion.ardupilot.org.
--   **Kaggle Pool:** 47 real-world flight logs from various multi-rotor platforms.
--   **BASiC Dataset:** 70 autonomous flight instances (Zenodo 8195068) covering GPS, Compass, IMU, and Baro failures.
--   **SITL Synthetic:** 12 simulated "rare-event" failure logs (Power Brownouts, MID-AIR Reboot).
+The current feature table contains 114 unique flights. The deployed artifact is still
+the pre-promotion 110-eligible snapshot recorded in `models/manifest.json`, with an
+88/22 group-isolated train/test split and zero duplicate feature rows. The July 24
+review promoted 2 `motor_imbalance` candidates out of a 24-log queue, but the
+locked-holdout retrain that included them was archived rather than deployed because its
+ECE worsened.
 
-## 🧩 Feature Engineering (90+ Dimensions)
--   **Vibration:** RMS, Max, Clipping counts, and Z-axis peak power.
--   **Power:** Voltage sag ratios, current-to-throttle correlation.
--   **Navigation:** EKF lane switching frequency, HDOP tanomaly, and position variance divergence.
--   **Control:** Motor saturation percentage, attitude error std-dev, and time-to-crash velocity vectors.
+`motor_imbalance` and `power_instability` each have only one holdout flight and scored
+zero F1 in this split. Those classes need more manually verified logs before their ML
+predictions can be treated as reliable.
 
-## 🛡️ Trust & Explainability
--   **Isotonic Calibration:** All probabilities are calibrated using Isotonic Regression to ensure "85% confidence" actually means 85% accuracy.
--   **Feature Blame:** The UI provides a "Subsystem Blame Ranking" (Radar Chart) so pilots understand *why* the AI made its decision.
--   **Out-of-Distribution (OOD) Detection:** An Isolation Forest detector warns when a log looks "weird" compared to training data.
+## Training and evaluation controls
 
----
-*Created for GSoC 2026 - ArduPilot Project.*
+- Median imputation is fitted on the training fold only.
+- Train and test groups are separated by `flight_id`.
+- SMOTE is applied only after the grouped split.
+- The outer holdout is used for reporting, not model-family selection.
+- Small-data probability calibration uses sigmoid calibration.
+- ECE is measured only on the saved unseen holdout by default.
+- Model loading fails closed when artifact or library versions are incompatible.
+
+The exact environment is recorded in `constraints.txt`; model metadata and holdout IDs
+are recorded in `models/manifest.json`.
+
+## Architecture and interpretation
+
+The rule engine produces physics-grounded evidence and recommendations. XGBoost adds a
+statistical signal when a supported failure pattern is present. The Isolation Forest
+flags out-of-distribution logs, and CITA uses anomaly onset ordering to avoid promoting
+post-impact symptoms as the root cause.
+
+Because the calibration gate currently fails, ML probabilities are advisory. A result
+marked `uncertain` requires human review, and every diagnosis should be checked against
+its raw telemetry evidence.
+
+## Data limitations
+
+The current training distribution is small and imbalanced. Provisional rule-generated
+labels are kept review-only and are not treated as verified ground truth until
+`human_verified: true` is set. Future gains should come from additional expert-reviewed,
+SHA-deduplicated logs—especially power, motor, GPS, and PID failures—not from
+duplicating full flights as artificial windows.
+
+Last verified: 2026-07-24.

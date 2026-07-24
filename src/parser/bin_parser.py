@@ -16,6 +16,7 @@ class LogParser:
         "RCOU",
         "XKF4",
         "NKF4",
+        "ARM",
         "PARM",
         "ERR",
         "EV",
@@ -66,6 +67,68 @@ class LogParser:
             return "Sub"
         return "Unknown"
 
+    @staticmethod
+    def _sum_armed_intervals(
+        records: list[dict],
+        state_field: str,
+        start_value: int,
+        stop_value: int,
+        last_time_us: int | float | None,
+    ) -> float | None:
+        """Sum complete armed intervals and a final interval ending while armed."""
+        total_us = 0.0
+        start_time_us: float | None = None
+
+        for record in records:
+            time_us = record.get("TimeUS")
+            state = record.get(state_field)
+            if not isinstance(time_us, (int, float)):
+                continue
+
+            if state == start_value and start_time_us is None:
+                start_time_us = float(time_us)
+            elif state == stop_value and start_time_us is not None:
+                if float(time_us) > start_time_us:
+                    total_us += float(time_us) - start_time_us
+                start_time_us = None
+
+        if (
+            start_time_us is not None
+            and isinstance(last_time_us, (int, float))
+            and float(last_time_us) > start_time_us
+        ):
+            total_us += float(last_time_us) - start_time_us
+
+        return total_us / 1e6 if total_us > 0 else None
+
+    @classmethod
+    def _flight_duration_sec(
+        cls,
+        messages: dict[str, list[dict]],
+        last_time_us: int | float | None,
+    ) -> float | None:
+        """Prefer ARM state records, then legacy EV 10/11 arm events."""
+        arm_records = messages.get("ARM", [])
+        for state_field in ("ArmState", "Arm", "State"):
+            if any(state_field in record for record in arm_records):
+                duration = cls._sum_armed_intervals(
+                    arm_records,
+                    state_field,
+                    start_value=1,
+                    stop_value=0,
+                    last_time_us=last_time_us,
+                )
+                if duration is not None:
+                    return duration
+
+        return cls._sum_armed_intervals(
+            messages.get("EV", []),
+            "Id",
+            start_value=10,
+            stop_value=11,
+            last_time_us=last_time_us,
+        )
+
     def parse(self) -> ParsedLog:
         """
         Parse entire .BIN file.
@@ -88,6 +151,26 @@ class LogParser:
             "mode_changes": [],
             "status_messages": [],
         })
+
+        import os
+        if os.path.exists(self.filepath) and os.path.getsize(self.filepath) == 0:
+            self.logger.error(f"Failed to open log file {self.filepath}: File is empty.")
+            return cast(ParsedLog, parsed_data)
+
+        if os.path.exists(self.filepath):
+            try:
+                with open(self.filepath, "rb") as file_obj:
+                    header_sample = file_obj.read(64 * 1024)
+            except OSError as exc:
+                self.logger.error(f"Failed to open log file {self.filepath}: {exc}")
+                return cast(ParsedLog, parsed_data)
+
+            if b"\xA3\x95" not in header_sample:
+                self.logger.error(
+                    f"Failed to parse {self.filepath}: no ArduPilot DataFlash sync "
+                    "header found in the first 64 KiB."
+                )
+                return cast(ParsedLog, parsed_data)
 
         try:
             log = DFReader.DFReader_binary(self.filepath)
@@ -186,9 +269,27 @@ class LogParser:
             self.logger.warning(
                 f"Error or log truncated while reading messages from {self.filepath}: {e}"
             )
+        finally:
+            try:
+                log.close()
+            except Exception:
+                pass
 
         if first_time is not None and last_time is not None and last_time > first_time:
-            parsed_data["metadata"]["duration_sec"] = (last_time - first_time) / 1e6
+            wall_duration_sec = (last_time - first_time) / 1e6
+            flight_duration_sec = self._flight_duration_sec(
+                parsed_data["messages"],
+                last_time,
+            )
+
+            parsed_data["metadata"]["wall_duration_sec"] = wall_duration_sec
+            if flight_duration_sec is not None:
+                parsed_data["metadata"]["flight_duration_sec"] = flight_duration_sec
+                parsed_data["metadata"]["duration_sec"] = flight_duration_sec
+            else:
+                parsed_data["metadata"]["duration_sec"] = wall_duration_sec
+            parsed_data["metadata"]["first_time_us"] = int(first_time)
+            parsed_data["metadata"]["last_time_us"] = int(last_time)
 
         if parsed_data["metadata"]["vehicle_type"] == "Unknown":
             parsed_data["metadata"]["vehicle_type"] = self._vehicle_from_parameters(

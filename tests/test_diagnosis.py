@@ -270,7 +270,7 @@ def test_compass_not_triggered_below_new_threshold():
 # =====================================================================
 # P4-03: False-Critical Audit Tests
 # Verify that healthy/normal flight profiles do NOT trigger critical
-# diagnoses (false-critical rate target: <= 10%).
+# diagnoses (false-critical rate target: <= 5%).
 # =====================================================================
 
 _HEALTHY_PROFILES = [
@@ -329,14 +329,14 @@ _HEALTHY_PROFILES = [
 
 
 def test_false_critical_rate_on_healthy_profiles():
-    """P4-03: False-critical rate must be <= 10% on known-healthy flight profiles.
+    """P4-03: False-critical rate must be <= 5% on known-healthy flight profiles.
 
     Three representative healthy profiles are used covering:
     - Indoor hover (no GPS data)
     - Nominal outdoor GPS flight
     - Slightly elevated but within-spec vibration/telemetry
 
-    With target <= 10% and 3 profiles, zero false-critical diagnoses are
+    With target <= 5% and 3 profiles, zero false-critical diagnoses are
     acceptable. Additional profiles should be added as the labeled dataset grows.
     """
     engine = RuleEngine()
@@ -352,8 +352,8 @@ def test_false_critical_rate_on_healthy_profiles():
             false_critical_count += 1
 
     false_critical_rate = false_critical_count / total_profiles
-    assert false_critical_rate <= 0.10, (
-        f"False-critical rate {false_critical_rate:.1%} exceeds 10% target. "
+    assert false_critical_rate <= 0.05, (
+        f"False-critical rate {false_critical_rate:.1%} exceeds 5% target. "
         f"{false_critical_count}/{total_profiles} healthy profiles triggered critical diagnoses."
     )
 

@@ -1,0 +1,10 @@
+{
+  "source_provisional": "data\\to_label\\provisional_auto_labels_next.json",
+  "promoted_at_utc": "2026-07-23T23:56:57.329068+00:00",
+  "total_in_provisional": 24,
+  "promoted": 2,
+  "skipped": 22,
+  "label_distribution": {
+    "motor_imbalance": 2
+  }
+}

@@ -57,9 +57,62 @@ def _normalize_url(value: str) -> str:
     return v
 
 
+def _index_backup_files(backup_roots: List[Path]) -> Dict[str, List[Path]]:
+    """Index BIN files by both stored name and de-prefixed original name."""
+    index: Dict[str, List[Path]] = {}
+    for backup_root in backup_roots:
+        if not backup_root.exists():
+            print(f"Warning: backup root does not exist: {backup_root}")
+            continue
+        for path in backup_root.rglob("*"):
+            if not path.is_file() or path.suffix.lower() != ".bin":
+                continue
+            names = {path.name.casefold()}
+            if "__" in path.name:
+                names.add(path.name.split("__", 1)[1].casefold())
+            for name in names:
+                index.setdefault(name, []).append(path)
+    return index
+
+
+def _resolve_source_file(
+    file_name: str,
+    direct_candidates: List[Path],
+    backup_index: Dict[str, List[Path]],
+    expected_sha256: str = "",
+) -> Path | None:
+    candidates = [path for path in direct_candidates if path.is_file()]
+    candidates.extend(backup_index.get(file_name.casefold(), []))
+
+    unique_candidates = []
+    seen = set()
+    for path in candidates:
+        resolved = str(path.resolve()).casefold()
+        if resolved not in seen:
+            unique_candidates.append(path)
+            seen.add(resolved)
+
+    if expected_sha256:
+        expected = expected_sha256.casefold()
+        for path in unique_candidates:
+            if _sha256(path).casefold() == expected:
+                return path
+        return None
+
+    return unique_candidates[0] if unique_candidates else None
+
+
 def _collect_verified_candidates(
-    clean_import_root: Path, exclude_batches: set[str]
+    clean_import_root: Path,
+    exclude_batches: set[str],
+    backup_index: Dict[str, List[Path]] | None = None,
+    stats: dict | None = None,
 ) -> List[dict]:
+    backup_index = backup_index or {}
+    stats = stats if stats is not None else {}
+    stats.setdefault("verified_rows", 0)
+    stats.setdefault("missing_verified_files", 0)
+
     candidates: List[dict] = []
     for manifest in sorted(
         clean_import_root.glob("*/manifests/clean_import_manifest.json")
@@ -71,21 +124,29 @@ def _collect_verified_candidates(
         for row in rows:
             if row.get("category") != "verified_labeled":
                 continue
+            stats["verified_rows"] += 1
             label = row.get("mapped_label", "")
             if label not in VALID_LABELS:
                 continue
 
-            src_file = (
-                clean_import_root
-                / batch
-                / "logs"
-                / "verified_labeled"
-                / row.get("file_name", "")
+            file_name = row.get("file_name", "")
+            sha = row.get("sha256", "")
+            batch_root = clean_import_root / batch
+            src_file = _resolve_source_file(
+                file_name,
+                [
+                    batch_root / "benchmark_ready" / "dataset" / file_name,
+                    batch_root / "logs" / "verified_labeled" / file_name,
+                    batch_root / row.get("source_path", ""),
+                ],
+                backup_index,
+                expected_sha256=sha,
             )
-            if not src_file.exists():
+            if src_file is None:
+                stats["missing_verified_files"] += 1
                 continue
 
-            sha = row.get("sha256", "") or _sha256(src_file)
+            sha = sha or _sha256(src_file)
             candidates.append(
                 {
                     "source": "verified_labeled",
@@ -102,7 +163,16 @@ def _collect_verified_candidates(
     return candidates
 
 
-def _collect_manual_candidates(manual_gt_path: Path) -> List[dict]:
+def _collect_manual_candidates(
+    manual_gt_path: Path,
+    backup_index: Dict[str, List[Path]] | None = None,
+    stats: dict | None = None,
+) -> List[dict]:
+    backup_index = backup_index or {}
+    stats = stats if stats is not None else {}
+    stats.setdefault("manual_labeled_rows", 0)
+    stats.setdefault("missing_manual_files", 0)
+
     if not manual_gt_path.exists():
         return []
 
@@ -118,11 +188,17 @@ def _collect_manual_candidates(manual_gt_path: Path) -> List[dict]:
         label = (payload.get("label") or "").strip()
         if not label:
             continue
+        stats["manual_labeled_rows"] += 1
         if label not in VALID_LABELS:
             continue
 
-        src_file = base_dir / file_name
-        if not src_file.exists():
+        src_file = _resolve_source_file(
+            file_name,
+            [base_dir / file_name, *base_dir.glob(f"*/{file_name}")],
+            backup_index,
+        )
+        if src_file is None:
+            stats["missing_manual_files"] += 1
             continue
 
         sha = _sha256(src_file)
@@ -165,6 +241,10 @@ def _write_output(output_root: Path, selected: List[dict]) -> dict:
                 "source_type": item["source_type"],
                 "expert_quote": item["expert_quote"],
                 "confidence": item["confidence"],
+                "sha256": sha,
+                "origin_batch": item["batch"],
+                "human_verified": True,
+                "trainable": True,
             }
         )
         label_counter[item["label"]] += 1
@@ -215,10 +295,24 @@ def main() -> None:
         help="Output folder containing dataset/ and ground_truth.json",
     )
     parser.add_argument(
+        "--backup-root",
+        action="append",
+        default=[],
+        help=(
+            "Optional raw-backup root to recover BIN files omitted from Git. "
+            "May be supplied more than once."
+        ),
+    )
+    parser.add_argument(
         "--exclude-batches",
         nargs="*",
         default=[],
         help="Optional clean-import batch names to exclude (useful to preserve unseen holdouts)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Resolve and validate inputs without replacing the output dataset.",
     )
     args = parser.parse_args()
 
@@ -227,19 +321,34 @@ def main() -> None:
     output_root = Path(args.output_root)
 
     exclude_batches = set(args.exclude_batches)
-    verified = _collect_verified_candidates(clean_import_root, exclude_batches)
-    manual = _collect_manual_candidates(manual_gt_path)
+    backup_roots = [Path(path) for path in args.backup_root]
+    backup_index = _index_backup_files(backup_roots)
+    collection_stats: dict = {}
+    verified = _collect_verified_candidates(
+        clean_import_root,
+        exclude_batches,
+        backup_index=backup_index,
+        stats=collection_stats,
+    )
+    manual = _collect_manual_candidates(
+        manual_gt_path,
+        backup_index=backup_index,
+        stats=collection_stats,
+    )
 
     selected = []
     seen_sha: Dict[str, str] = {}
     skipped_verified_dupes = 0
     skipped_manual_dupes = 0
+    conflicting_labels = 0
 
     # deterministic: verified first, then manual (manual only adds new SHA)
     for item in verified:
         sha = item["sha256"]
         if sha in seen_sha:
             skipped_verified_dupes += 1
+            if seen_sha[sha] != item["label"]:
+                conflicting_labels += 1
             continue
         seen_sha[sha] = item["label"]
         selected.append(item)
@@ -248,9 +357,27 @@ def main() -> None:
         sha = item["sha256"]
         if sha in seen_sha:
             skipped_manual_dupes += 1
+            if seen_sha[sha] != item["label"]:
+                conflicting_labels += 1
             continue
         seen_sha[sha] = item["label"]
         selected.append(item)
+
+    if not selected:
+        raise SystemExit(
+            "No verified training logs could be resolved; refusing to replace "
+            f"the existing dataset at {output_root}. Supply --backup-root if "
+            "the BIN files are stored outside the repository."
+        )
+
+    print(
+        f"Resolved {len(selected)} unique verified logs "
+        f"({collection_stats.get('missing_verified_files', 0)} verified and "
+        f"{collection_stats.get('missing_manual_files', 0)} manual files missing)."
+    )
+    if args.dry_run:
+        print("Dry run complete; output dataset was not changed.")
+        return
 
     if output_root.exists():
         shutil.rmtree(output_root)
@@ -264,6 +391,10 @@ def main() -> None:
             "skipped_manual_dupes": skipped_manual_dupes,
             "manual_labeled_count": len(manual),
             "excluded_batches": sorted(exclude_batches),
+            # Record source identities without leaking machine-specific paths.
+            "backup_roots": [path.name for path in backup_roots],
+            "conflicting_labels": conflicting_labels,
+            **collection_stats,
         }
     )
 
@@ -279,6 +410,9 @@ def main() -> None:
     print(f"manual_candidates={summary['manual_candidates']}")
     print(f"skipped_verified_dupes={summary['skipped_verified_dupes']}")
     print(f"skipped_manual_dupes={summary['skipped_manual_dupes']}")
+    print(f"conflicting_labels={summary['conflicting_labels']}")
+    print(f"missing_verified_files={summary['missing_verified_files']}")
+    print(f"missing_manual_files={summary['missing_manual_files']}")
     print(f"ground_truth={summary['ground_truth_path']}")
     print(f"build_summary={summary_path}")
 

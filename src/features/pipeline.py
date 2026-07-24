@@ -96,6 +96,14 @@ class FeaturePipeline:
         all_features["_metadata"] = {
             "log_file": parsed_log.get("metadata", {}).get("filepath", "unknown"),
             "duration_sec": duration,
+            "flight_duration_sec": parsed_log.get("metadata", {}).get(
+                "flight_duration_sec", 0.0
+            ),
+            "wall_duration_sec": parsed_log.get("metadata", {}).get(
+                "wall_duration_sec", 0.0
+            ),
+            "first_time_us": parsed_log.get("metadata", {}).get("first_time_us", 0),
+            "last_time_us": parsed_log.get("metadata", {}).get("last_time_us", 0),
             "vehicle_type": parsed_log.get("metadata", {}).get(
                 "vehicle_type", "Unknown"
             ),

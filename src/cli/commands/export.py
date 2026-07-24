@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from argparse import _SubParsersAction
-from typing import cast
-
 from src.cli.commands.common import (
     ensure_extraction_success,
     load_parsed_and_features,

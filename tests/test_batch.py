@@ -111,6 +111,57 @@ def test_batch_single_file_success(tmp_path):
         assert row["requires_review"] == "False"
 
 
+def test_batch_creates_parent_output_directory(tmp_path):
+    nested_output = tmp_path / "reports" / "batch" / "results.csv"
+    scan_dir = tmp_path / "scan"
+    scan_dir.mkdir()
+
+    f = scan_dir / "flight_log.bin"
+    f.write_text("dummy binary data")
+
+    fake_parsed = {
+        "metadata": {
+            "filepath": str(f),
+            "duration_sec": 12.0,
+            "vehicle_type": "Copter",
+            "firmware_version": "ArduCopter",
+            "total_messages": 10,
+            "message_types": {},
+        },
+        "messages": {},
+        "parameters": {},
+        "errors": [],
+        "events": [],
+        "mode_changes": [],
+        "status_messages": [],
+    }
+
+    fake_features = {
+        "_metadata": {
+            "log_file": str(f),
+            "duration_sec": 12.0,
+            "vehicle_type": "Copter",
+            "firmware": "ArduCopter",
+            "extraction_success": True,
+        }
+    }
+
+    test_args = ["main", "batch", str(scan_dir), "--output", str(nested_output)]
+
+    with patch("src.parser.bin_parser.LogParser.parse", return_value=fake_parsed), \
+         patch("src.features.pipeline.FeaturePipeline.extract", return_value=fake_features), \
+         patch("src.diagnosis.hybrid_engine.HybridEngine.diagnose", return_value=[]), \
+         patch("src.cli.commands.batch.evaluate_decision", return_value={"requires_human_review": False}), \
+         patch.object(sys, "argv", test_args):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code in (0, None)
+
+    assert nested_output.exists()
+    assert nested_output.parent.exists()
+
+
 def test_batch_failure_skipping(tmp_path, caplog):
     # Create 3 files:
     # 1. fail.BIN -> raises exception during parsing

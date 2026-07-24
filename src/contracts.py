@@ -10,6 +10,10 @@ DecisionStatus = Literal["healthy", "uncertain", "confirmed"]
 class ParsedMetadata(TypedDict, total=False):
     filepath: str
     duration_sec: float
+    flight_duration_sec: float
+    wall_duration_sec: float
+    first_time_us: int
+    last_time_us: int
     vehicle_type: str
     firmware_version: str
     total_messages: int
@@ -56,6 +60,10 @@ class ParsedLog(TypedDict):
 class FeatureMetadata(TypedDict, total=False):
     log_file: str
     duration_sec: float
+    flight_duration_sec: float
+    wall_duration_sec: float
+    first_time_us: int
+    last_time_us: int
     vehicle_type: str
     firmware: str
     messages_found: list[str]

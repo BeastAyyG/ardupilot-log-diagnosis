@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from src.cli.commands import ui
+from src.cli.commands.common import print_explain_box
 from src.cli.main import main
 
 
@@ -205,3 +206,28 @@ def test_ui_command_reports_missing_optional_dependency(capsys):
     assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "Optional web UI dependencies are not installed." in captured.out
+
+
+def test_explain_box_uses_log_relative_onset(capsys):
+    explain_data = {
+        "hypotheses": [
+            {
+                "failure_type": "compass_interference",
+                "source": "rule",
+                "merged_confidence": 0.8,
+                "lead_feature": "mag_field_range",
+                "tanomaly": 364_000_000,
+            }
+        ],
+        "causal_arbiter": {"reason": "selected by arbitration"},
+    }
+
+    print_explain_box(
+        explain_data,
+        [],
+        {"first_time_us": 360_000_000},
+    )
+
+    output = capsys.readouterr().out
+    assert "T+4.0s" in output
+    assert "T+364.0s" not in output

@@ -35,11 +35,23 @@ def evaluate_decision(
         )
 
     if len(diagnoses) > 1:
-        second_conf = float(diagnoses[1].get("confidence", 0.0))
-        if (top_conf - second_conf) < close_margin:
+        strongest_alternative = max(
+            diagnoses[1:],
+            key=lambda item: float(item.get("confidence", 0.0)),
+        )
+        second_conf = float(strongest_alternative.get("confidence", 0.0))
+        confidence_gap = abs(top_conf - second_conf)
+        if second_conf > top_conf:
             uncertain = True
             rationale.append(
-                f"Top-2 confidence gap is small ({top_conf:.2f} - {second_conf:.2f} < {close_margin:.2f})."
+                "Causal root-cause confidence is lower than the strongest "
+                f"competing finding ({top_conf:.2f} < {second_conf:.2f})."
+            )
+        if confidence_gap < close_margin:
+            uncertain = True
+            rationale.append(
+                "Top-2 confidence separation is small "
+                f"(|{top_conf:.2f} - {second_conf:.2f}| < {close_margin:.2f})."
             )
 
     high_conf_count = sum(

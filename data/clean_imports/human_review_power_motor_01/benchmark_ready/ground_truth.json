@@ -1,0 +1,49 @@
+{
+  "logs": [
+    {
+      "filename": "bffc80e1da__log_0049_oscillation_crash.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "source_type": "human_verified_rule_candidate",
+      "trainable": true,
+      "human_verified": true,
+      "sha256": "bffc80e1da7d30ad042d9b8a0cdb06e01b0f1dbccae3589f415b1874502cb256",
+      "auto_label_confidence": 0.95,
+      "engine": "rule",
+      "evidence": [
+        "motor_spread_max=799.0 (threshold: 600.0)",
+        "motor_spread_mean=576.1649484536083 (threshold: 300.0)",
+        "ArduPilot forum experts identified Motor 1 failure; ESC or motor fault was the likely cause."
+      ],
+      "notes": "Expert-verified from ArduPilot topic 99897. Automatic power label corrected to motor_imbalance after telemetry and incident review.",
+      "promoted_from": "data\\to_label\\provisional_auto_labels_next.json",
+      "promoted_at_utc": "2026-07-23T23:56:57.316202+00:00",
+      "original_path": "log_0049_oscillation_crash.bin"
+    },
+    {
+      "filename": "01803ce998__log_0064_flyaway.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "label": "motor_imbalance",
+      "confidence": "high",
+      "source_type": "human_verified_rule_candidate",
+      "trainable": true,
+      "human_verified": true,
+      "sha256": "01803ce998a260eb56293a2e805ce3350a9b3d1fe00fb0a90bedc149849e611e",
+      "auto_label_confidence": 0.9500000000000001,
+      "engine": "rule",
+      "evidence": [
+        "motor_spread_max=819.0 (threshold: 600.0)",
+        "motor_spread_mean=363.71811224489795 (threshold: 300.0)"
+      ],
+      "notes": "Expert-verified from ArduPilot topic 53951: large rear weight imbalance left motors 1/3 low and motors 2/4 near maximum.",
+      "promoted_from": "data\\to_label\\provisional_auto_labels_next.json",
+      "promoted_at_utc": "2026-07-23T23:56:57.329068+00:00",
+      "original_path": "log_0064_flyaway.bin"
+    }
+  ]
+}
