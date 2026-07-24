@@ -5,7 +5,7 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 219 Passing](https://img.shields.io/badge/tests-219%20passing-brightgreen)](tests/)
+[![Tests: 239 Passing](https://img.shields.io/badge/tests-239%20passing-brightgreen)](tests/)
 [![Macro F1: 0.603](https://img.shields.io/badge/Macro%20F1-0.603-blueviolet)](#-current-benchmark-results)
 [![GSoC 2026](https://img.shields.io/badge/GSoC%202026-Ready-purple)](docs/GSOC_2026_Application.md)
 
@@ -194,9 +194,11 @@ The diagnosis pipeline converts a raw `.BIN` log into an actionable root-cause v
 | **1. Parsing** | `src/parser/bin_parser.py` | Uses `pymavlink` to decode binary DataFlash messages (VIBE, MAG, GPS, EKF, RCOU, BAT, IMU, etc.) |
 | **2. Feature Extraction** | `src/features/pipeline.py` | Extracts **94 statistical features** across 7 subsystems — means, maxes, spreads, temporal anomaly timestamps |
 | **3a. Rule Engine** | `src/diagnosis/rule_engine.py` | 13 deterministic threshold checks based on ArduPilot domain knowledge |
-| **3b. ML Classifier** | `src/diagnosis/ml_classifier.py` | Calibrated XGBoost trained with group isolation, train-only imputation, and SMOTE oversampling |
+| **3b. ML Classifier** | `src/diagnosis/ml_classifier.py` | XGBoost trained with group isolation, train-only imputation, and SMOTE; currently advisory because its ECE risk gate fails |
 | **3c. Anomaly Detector** | `src/diagnosis/anomaly_detector.py` | IsolationForest trained on healthy flights — catches unknown failure modes |
-| **4. Hybrid Fusion** | `src/diagnosis/hybrid_engine.py` | Merges rule + ML signals using confidence weighting and temporal arbitration |
+| **3d. Temporal Evidence** | `src/diagnosis/temporal_evidence.py` | Auditable bounded temporal relations that support or contradict existing hypotheses |
+| **3e. Matrix Profile** | `src/diagnosis/matrix_profile.py` | Label-free multichannel discord candidate for reviewer attention |
+| **4. Selective Fusion** | `src/diagnosis/hybrid_engine.py` | Merges evidence with capability, calibration-risk, confidence, and temporal gates |
 | **5. Output** | `src/cli/` or `src/web/` | CLI text report, JSON, HTML, or interactive dashboard |
 
 ### Vehicle-Aware Routing
@@ -589,6 +591,7 @@ See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITER
 | [`docs/GSOC_2026_Application.md`](docs/GSOC_2026_Application.md) | Full GSoC 2026 application |
 | [`docs/model_card.md`](docs/model_card.md) | Technical ML specs and calibration report |
 | [`docs/TRUSTWORTHINESS_AUDIT_2026-07-24.md`](docs/TRUSTWORTHINESS_AUDIT_2026-07-24.md) | Reproduced tests, real-log duration finding, verified limits |
+| [`docs/TRUST_FIRST_IMPLEMENTATION.md`](docs/TRUST_FIRST_IMPLEMENTATION.md) | Selective decisions, ML risk gate, temporal evidence, Matrix Profile, and SITL runner |
 | [`docs/RESEARCH_BACKED_NEXT_STEPS_2026.md`](docs/RESEARCH_BACKED_NEXT_STEPS_2026.md) | Prioritized research-backed plan for trustworthy diagnosis |
 | [`docs/root_cause_policy.md`](docs/root_cause_policy.md) | CITA temporal arbitration specification |
 | [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) | Release gates & labeling policy |

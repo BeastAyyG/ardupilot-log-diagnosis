@@ -172,7 +172,7 @@ Evidence to cite: `src/diagnosis/decision_policy.py`, `training/measure_fcr.py`,
 
 > "I have already built more than the Week 4-5 deliverables in the proposal before
 > coding officially starts. The prototype has: working parser, feature pipeline, rule
-> engine, hybrid fusion engine, calibration, benchmark runner, CI, and 219 passing tests.
+> engine, hybrid fusion engine, calibration, benchmark runner, CI, and 239 passing tests.
 >
 > If I fall behind on data collection specifically, the rule-only engine is already
 > production-quality for 6 out of 8 labels. I will not hide schedule drift - the weekly

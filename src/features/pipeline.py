@@ -14,6 +14,7 @@ from .events import EventExtractor
 from .fft_analysis import FFTExtractor
 from src.contracts import FeatureDict, ParsedLog
 from src.diagnosis.log_quality import LogQualityEngine
+from src.diagnosis.temporal_analysis import analyze_temporal_discord
 
 
 class FeaturePipeline:
@@ -118,6 +119,9 @@ class FeaturePipeline:
             "extraction_success": extraction_success,
             "quality_report": quality_report,
         }
+        all_features["_temporal_discord"] = analyze_temporal_discord(
+            parsed_log
+        )
 
         return cast(FeatureDict, all_features)
 

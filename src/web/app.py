@@ -182,7 +182,16 @@ def _analyze_temp_log(temp_path: str, original_filename: str) -> dict[str, Any]:
         features.get("_metadata", {}).get("vehicle_type", "Unknown"),
     )
 
-    decision = evaluate_decision(diagnoses)
+    ml = getattr(engine, "ml", None)
+    risk_control = getattr(ml, "risk_control", {})
+    decision = evaluate_decision(
+        diagnoses,
+        metadata=features.get("_metadata", {}),
+        ml_confirmation_allowed=getattr(
+            ml, "confirmation_eligible", False
+        ),
+        ml_risk_reason=risk_control.get("reason"),
+    )
     explain_data["decision"] = decision
 
     time_series, timeline_events, gps_quality = _build_visualization_data(parsed, features)

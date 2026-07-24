@@ -122,7 +122,37 @@ class DiagnosisFormatter:
             lines.append("")
 
         if not diagnoses:
-            lines.append(_c("HEALTHY - No critical failures detected.", _GREEN, _BOLD))
+            decision_status = (decision or {}).get(
+                "status",
+                "no_fault_detected",
+            )
+            if decision_status == "insufficient_data":
+                lines.append(
+                    _c(
+                        "INSUFFICIENT DATA - The available telemetry cannot "
+                        "support a reliable diagnosis.",
+                        _RED,
+                        _BOLD,
+                    )
+                )
+            elif decision_status == "uncertain":
+                lines.append(
+                    _c(
+                        "UNCERTAIN - No fault crossed the threshold, but log "
+                        "capabilities are degraded.",
+                        _YELLOW,
+                        _BOLD,
+                    )
+                )
+            else:
+                lines.append(
+                    _c(
+                        "NO FAULT DETECTED - Supported checks found no reportable "
+                        "fault. This is not a safe-to-fly certification.",
+                        _GREEN,
+                        _BOLD,
+                    )
+                )
         else:
             for diag in diagnoses:
                 pct = int(diag["confidence"] * 100)
@@ -149,6 +179,36 @@ class DiagnosisFormatter:
 
         hypotheses = (explain_data or {}).get("hypotheses", [])
         arbiter = (explain_data or {}).get("causal_arbiter", {})
+        temporal_evidence = [
+            item
+            for item in (explain_data or {}).get("temporal_evidence", [])
+            if item.get("status") == "satisfied"
+        ]
+        if temporal_evidence:
+            lines.append(_c("Temporal Logic Evidence", _BOLD))
+            for item in temporal_evidence:
+                lines.append(
+                    f"  [{item['rule_id']}] {item['explanation']}"
+                )
+            lines.append("")
+        matrix_profile = (explain_data or {}).get("matrix_profile", {})
+        if matrix_profile.get("status") == "candidate":
+            channels = ", ".join(
+                str(item["channel"])
+                for item in matrix_profile.get("contributing_channels", [])[:3]
+            )
+            lines.append(_c("Label-Free Temporal Discord", _BOLD))
+            lines.append(
+                "  Candidate window: "
+                f"T+{float(matrix_profile.get('onset_sec', 0.0)):.1f}s "
+                f"(score={float(matrix_profile.get('score', 0.0)):.3f})"
+            )
+            if channels:
+                lines.append(f"  Leading channels: {channels}")
+            lines.append(
+                "  This is an anomaly candidate, not a failure label."
+            )
+            lines.append("")
         if hypotheses:
             lines.append(_c("Hypothesis Scaffolding", _BOLD))
             for idx, item in enumerate(hypotheses[:3], start=1):
@@ -203,12 +263,23 @@ class DiagnosisFormatter:
                 lines.append(_c("Human Review: REQUIRED", _YELLOW, _BOLD))
                 for rationale in decision.get("rationale", []):
                     lines.append(f"  - {rationale}")
+            capability = decision.get("applicable_capability")
+            if capability:
+                lines.append(
+                    "Capability Gate: "
+                    f"{capability} [{decision.get('capability_status', 'UNKNOWN')}]"
+                )
 
         if runtime_info:
             lines.append("")
             lines.append(f"Runtime: {runtime_info.get('engine', 'unknown')}")
             if runtime_info.get("ml_available") is False:
                 lines.append(f"ML Status: fallback ({runtime_info.get('ml_reason', 'ml unavailable')})")
+            elif runtime_info.get("ml_confirmation_allowed") is False:
+                lines.append(
+                    "ML Status: advisory only "
+                    f"({runtime_info.get('ml_risk_status', 'risk gate not passed')})"
+                )
 
         if similar_cases:
             lines.append("")
@@ -286,6 +357,14 @@ class DiagnosisFormatter:
             sections.append(
                 f'<div class="card"><strong>Runtime:</strong> {runtime_info.get("engine", "unknown")}</div>'
             )
+            if (
+                runtime_info.get("ml_available") is True
+                and runtime_info.get("ml_confirmation_allowed") is False
+            ):
+                sections.append(
+                    '<div class="card warning-box"><strong>ML status:</strong> '
+                    "advisory only; calibration risk gates have not passed.</div>"
+                )
 
         if parameter_warnings:
             warning_html = "".join(
@@ -294,7 +373,34 @@ class DiagnosisFormatter:
             sections.append(f'<div class="card"><h2>Pre-Flight & Parameter Validation</h2>{warning_html}</div>')
 
         if not diagnoses:
-            sections.append('<div class="card"><span class="badge healthy">HEALTHY</span> No critical failures detected.</div>')
+            decision_status = (decision or {}).get(
+                "status",
+                "no_fault_detected",
+            )
+            if decision_status == "insufficient_data":
+                empty_class = "critical"
+                empty_label = "INSUFFICIENT DATA"
+                empty_text = (
+                    "The available telemetry cannot support a reliable diagnosis."
+                )
+            elif decision_status == "uncertain":
+                empty_class = "warning"
+                empty_label = "UNCERTAIN"
+                empty_text = (
+                    "No fault crossed the threshold, but diagnostic capabilities "
+                    "are degraded."
+                )
+            else:
+                empty_class = "healthy"
+                empty_label = "NO FAULT DETECTED"
+                empty_text = (
+                    "Supported checks found no reportable fault. This is not a "
+                    "safe-to-fly certification."
+                )
+            sections.append(
+                f'<div class="card"><span class="badge {empty_class}">'
+                f"{empty_label}</span> {empty_text}</div>"
+            )
         else:
             for diag in diagnoses:
                 severity = diag["severity"].lower()
@@ -311,6 +417,34 @@ class DiagnosisFormatter:
 
         hypotheses = (explain_data or {}).get("hypotheses", [])
         arbiter = (explain_data or {}).get("causal_arbiter", {})
+        temporal_evidence = [
+            item
+            for item in (explain_data or {}).get("temporal_evidence", [])
+            if item.get("status") == "satisfied"
+        ]
+        if temporal_evidence:
+            items = "".join(
+                f'<div class="hypothesis"><strong>{item["rule_id"]}:</strong> '
+                f'{item["explanation"]}</div>'
+                for item in temporal_evidence
+            )
+            sections.append(
+                f'<div class="card"><h2>Temporal Logic Evidence</h2>{items}</div>'
+            )
+        matrix_profile = (explain_data or {}).get("matrix_profile", {})
+        if matrix_profile.get("status") == "candidate":
+            channels = ", ".join(
+                str(item["channel"])
+                for item in matrix_profile.get("contributing_channels", [])[:3]
+            )
+            sections.append(
+                '<div class="card"><h2>Label-Free Temporal Discord</h2>'
+                f'<div class="hypothesis">Candidate at '
+                f'T+{float(matrix_profile.get("onset_sec", 0.0)):.1f}s '
+                f'(score={float(matrix_profile.get("score", 0.0)):.3f}). '
+                f'Leading channels: {channels or "not available"}. '
+                "This is an anomaly candidate, not a failure label.</div></div>"
+            )
         if hypotheses:
             items = []
             for idx, item in enumerate(hypotheses[:3], start=1):

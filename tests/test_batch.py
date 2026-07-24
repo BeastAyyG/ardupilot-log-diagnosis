@@ -241,7 +241,8 @@ def test_batch_failure_skipping(tmp_path, caplog):
         assert row["filename"] == "healthy.bin"
         assert float(row["duration"]) == 10.0
         assert row["vehicle"] == "Rover"
-        assert row["diagnosis"] == "healthy"
+        assert row["decision_status"] == "no_fault_detected"
+        assert row["diagnosis"] == "no_fault_detected"
         assert float(row["confidence"]) == 0.0
         assert row["requires_review"] == "True"
 

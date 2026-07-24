@@ -28,3 +28,12 @@ def test_json_output_includes_runtime_info():
     data = json.loads(payload)
     assert data["runtime"]["ml_available"] is False
     assert data["runtime"]["engine"] == "hybrid"
+
+
+def test_saved_model_is_advisory_when_risk_gates_fail():
+    classifier = MLClassifier()
+
+    assert classifier.available is True
+    assert classifier.confirmation_eligible is False
+    assert classifier.risk_control["status"] == "advisory_only"
+    assert classifier.risk_control["ece_pass"] is False

@@ -25,7 +25,10 @@ class Severity(Enum):
 
 
 FAILURE_RECOMMENDATIONS = {
-    "healthy": "All subsystems nominal. Vibration within limits, EKF variances stable, power margins healthy. Safe to fly.",
+    "healthy": (
+        "No supported detector found a reportable fault in the available "
+        "telemetry. This result does not certify that the vehicle is safe to fly."
+    ),
 
     "vibration_high": (
         "Accelerometer clipping detected — the IMU is hitting its measurement ceiling, "
