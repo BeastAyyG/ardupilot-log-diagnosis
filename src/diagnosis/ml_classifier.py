@@ -1,15 +1,18 @@
-import os
-import json
 import hashlib
-import numpy as np
+import json
+import os
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any, cast
+
+import numpy as np
+
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.contracts import DiagnosisDict, FeatureDict
 from src.runtime_paths import MODELS_DIR, resolve_repo_path
 
 try:
     import joblib
-except Exception:
+except ImportError:
     joblib = None
 
 
@@ -37,6 +40,7 @@ class MLClassifier:
     ):
         resolved_model_dir = resolve_repo_path(model_dir) if model_dir is not None else MODELS_DIR
         self.model_path = str(resolved_model_dir / "classifier.joblib")
+        self.imputer_path = str(resolved_model_dir / "imputer.joblib")
         self.scaler_path = str(resolved_model_dir / "scaler.joblib")
         self.features_path = str(resolved_model_dir / "feature_columns.json")
         self.labels_path = str(resolved_model_dir / "label_columns.json")
@@ -52,6 +56,7 @@ class MLClassifier:
 
         required_paths = [
             self.model_path,
+            self.imputer_path,
             self.scaler_path,
             self.features_path,
             self.labels_path,
@@ -65,6 +70,7 @@ class MLClassifier:
                 else:
                     self.model = loaded_model
 
+                self.imputer = joblib.load(self.imputer_path)
                 self.scaler = joblib.load(self.scaler_path)
                 with open(self.features_path, "r") as f:
                     self.feature_columns = json.load(f)
@@ -76,11 +82,13 @@ class MLClassifier:
                 self.unavailable_reason = (
                     "available" if self.available else "manifest schema mismatch"
                 )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - optional artifacts must fail closed
                 self.unavailable_reason = f"failed to load ml artifacts: {exc}"
                 self.available = False
         else:
-            self.unavailable_reason = "missing classifier, scaler, schema, or manifest artifact"
+            self.unavailable_reason = (
+                "missing classifier, imputer, scaler, schema, or manifest artifact"
+            )
 
     def _hash_json_list(self, values: list[str]) -> str:
         payload = json.dumps(values, sort_keys=True).encode()
@@ -96,10 +104,17 @@ class MLClassifier:
 
     def _manifest_matches_runtime(self) -> bool:
         manifest = getattr(self, "manifest", {})
+        try:
+            sklearn_version = version("scikit-learn")
+            xgboost_version = version("xgboost")
+        except PackageNotFoundError:
+            return False
         return (
             manifest.get("feature_schema_hash") == self._hash_json_list(FEATURE_NAMES)
             and manifest.get("label_schema_hash") == self._hash_json_list(VALID_LABELS)
             and manifest.get("threshold_config_hash", "") == self._hash_threshold_config()
+            and manifest.get("sklearn_version") == sklearn_version
+            and manifest.get("xgboost_version") == xgboost_version
         )
 
     def _threshold_for_label(self, label: str) -> float:
@@ -208,14 +223,20 @@ class MLClassifier:
         for feat in self.feature_columns:
             val = features.get(feat, 0.0)
             if isinstance(val, (int, float)):
-                vector.append(float(val))
+                parsed = float(val)
+                vector.append(parsed if np.isfinite(parsed) else 0.0)
             else:
                 vector.append(0.0)
 
         X = np.array(vector).reshape(1, -1)
-        X_scaled = self.scaler.transform(X)
-
-        probas = cast(Any, self.model).predict_proba(X_scaled)
+        try:
+            X_imputed = self.imputer.transform(X)
+            X_scaled = self.scaler.transform(X_imputed)
+            probas = cast(Any, self.model).predict_proba(X_scaled)
+        except (TypeError, ValueError):
+            # Preserve deterministic diagnoses if an edge-case vector cannot
+            # be scored by the optional ML artifact.
+            return []
 
         diagnoses = []
         label_probs = {}

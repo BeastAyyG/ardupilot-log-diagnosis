@@ -25,3 +25,20 @@ def test_decision_confirmed_for_high_confidence_gap():
     decision = evaluate_decision(diagnoses)
     assert decision["status"] == "confirmed"
     assert decision["requires_human_review"] is False
+
+
+def test_temporal_root_cause_with_stronger_competitor_has_valid_gap_math():
+    diagnoses = [
+        {"failure_type": "vibration_high", "confidence": 0.59, "detection_method": "rule"},
+        {"failure_type": "power_instability", "confidence": 0.79, "detection_method": "ml"},
+    ]
+
+    decision = evaluate_decision(diagnoses)
+
+    assert decision["top_guess"] == "vibration_high"
+    assert decision["status"] == "uncertain"
+    assert any(
+        "lower than the strongest competing finding" in reason
+        for reason in decision["rationale"]
+    )
+    assert all("0.59 - 0.79" not in reason for reason in decision["rationale"])

@@ -190,5 +190,7 @@ MODE_NAMES = {
 }
 
 EV_NAMES = {
-    19: "GPS_LOST"  # Based on the prompt evt_gps_lost_count count of EV id=19
+    10: "ARMED",
+    11: "DISARMED",
+    19: "GPS_LOST",  # Based on evt_gps_lost_count count of EV id=19
 }

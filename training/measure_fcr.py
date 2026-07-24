@@ -3,14 +3,14 @@ Measure False Critical Rate (FCR) for the hybrid diagnosis engine.
 
 FCR = (number of CRITICAL diagnoses on verified-healthy logs) / (total healthy logs)
 
-A healthy log is one verified to have no known failures. FCR > 10% means the tool
+A healthy log is one verified to have no known failures. FCR > 5% means the tool
 is "crying wolf", which degrades maintainer trust faster than low recall does.
 
-Target: FCR ≤ 10% (production gate).
+Target: FCR ≤ 5% (production gate).
 
 Usage:
     python training/measure_fcr.py --healthy-dir data/healthy_reference_set/
-    python training/measure_fcr.py --healthy-dir <dir> --target-fcr 0.10
+    python training/measure_fcr.py --healthy-dir <dir> --target-fcr 0.05
 """
 
 import argparse
@@ -23,7 +23,7 @@ from src.features.pipeline import FeaturePipeline
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.diagnosis.decision_policy import evaluate_decision
 
-FCR_PASS_THRESHOLD = 0.10
+FCR_PASS_THRESHOLD = 0.05
 
 
 def measure_fcr(healthy_dir: str, target_fcr: float, verbose: bool) -> float:

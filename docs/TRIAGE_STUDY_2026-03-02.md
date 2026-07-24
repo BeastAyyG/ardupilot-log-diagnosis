@@ -109,7 +109,7 @@ During the triage study, **3 healthy logs** were passed through the tool to chec
 | H2 — bench power-on test | `healthy` | No diagnosis | ❌ No |
 | H3 — ground check, no motors | `healthy` | No diagnosis | ❌ No |
 
-**False-Critical Rate: 0/3 = 0%** (target: <= 10%) ✅
+**False-Critical Rate: 0/3 = 0%** (target: <= 5%) ✅
 
 ---
 
@@ -119,7 +119,7 @@ During the triage study, **3 healthy logs** were passed through the tool to chec
 |---|---|---|---|
 | ECE (Expected Calibration Error) | 0.04 | <= 0.08 | ✅ |
 | Abstention rate (uncertain cases) | 15% | Reasonable | ✅ |
-| False-Critical Rate | 0% | <= 10% | ✅ |
+| False-Critical Rate | 0% | <= 5% | ✅ |
 
 The `evaluate_decision()` policy correctly flags uncertain cases (confidence < 0.65 or close top-2
 gap) for human review, ensuring the tool never silently emits a wrong confirmed diagnosis.
@@ -136,7 +136,7 @@ The tool is strongest on vibration, compass, and EKF labels; motor_imbalance, po
 |---|---|---|
 | Root-cause Top-1 >= 50–60% | 80% (triage study) | ✅ |
 | ECE <= 0.08 | 0.04 | ✅ |
-| False-critical rate <= 10% | 0% | ✅ |
+| False-critical rate <= 5% | 0% | ✅ |
 | Median triage-time reduction >= 40% | 84% | ✅ |
 | Parse reliability >= 99% | 97.8% | ✅ |
 

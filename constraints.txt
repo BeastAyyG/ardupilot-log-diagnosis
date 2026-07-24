@@ -1,0 +1,21 @@
+# Reproducible Python 3.10-3.12 environment used for tests and model training.
+# Install with: pip install -c constraints.txt -e ".[dev]"
+pymavlink==2.4.49
+requests==2.32.4
+numpy==1.26.4
+scipy==1.11.4
+scikit-learn==1.4.2
+xgboost==2.1.4
+joblib==1.4.2
+PyYAML==6.0.2
+pandas==2.2.3
+imbalanced-learn==0.12.4
+matplotlib==3.9.4
+python-dotenv==1.1.0
+tqdm==4.67.1
+pytest==8.3.5
+ruff==0.15.22
+httpx==0.28.1
+fastapi==0.115.12
+uvicorn==0.34.3
+python-multipart==0.0.20

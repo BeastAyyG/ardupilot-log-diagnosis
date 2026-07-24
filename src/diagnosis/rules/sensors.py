@@ -165,12 +165,8 @@ def check_compass(features: FeatureDict, thresholds: dict) -> DiagnosisDict | No
 
 
 def check_gps(features: FeatureDict, thresholds: dict) -> DiagnosisDict | None:
-    gps_msg_count = features.get("gps_message_count", features.get("gps_nsats_mean", -1.0))
-    if (
-        gps_msg_count == 0.0
-        and features.get("gps_hdop_mean", 0.0) == 0.0
-        and features.get("gps_fix_pct", 0.0) == 0.0
-    ):
+    gps_nsats_mean = features.get("gps_nsats_mean", 0.0)
+    if gps_nsats_mean < 3.0:
         return None
 
     hdop = features.get("gps_hdop_mean", 0.0)

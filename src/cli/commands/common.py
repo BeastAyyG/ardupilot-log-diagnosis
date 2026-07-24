@@ -6,11 +6,14 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from src.features.pipeline import FeaturePipeline
+from src.cli.formatter import _format_onset_time
 from src.parser.bin_parser import LogParser
 
 
 def print_explain_box(
-    explain_data: dict[str, Any] | None, final_diagnoses: Sequence[dict[str, Any]]
+    explain_data: dict[str, Any] | None,
+    final_diagnoses: Sequence[dict[str, Any]],
+    metadata: dict[str, Any] | None = None,
 ) -> None:
     if not explain_data:
         return
@@ -53,11 +56,7 @@ def print_explain_box(
         print("Hypothesis Scaffolding:")
         for idx, item in enumerate(hypotheses[:3], start=1):
             tanomaly = item.get("tanomaly", -1.0)
-            time_text = (
-                f"T+{tanomaly / 1e6:.1f}s"
-                if isinstance(tanomaly, (int, float)) and tanomaly > 0
-                else "no onset timestamp"
-            )
+            time_text = _format_onset_time(tanomaly, metadata or {})
             print(
                 f"  Hypothesis {idx}: {item['failure_type']} via {item['source']} "
                 f"({item['merged_confidence'] * 100:.0f}%) from "

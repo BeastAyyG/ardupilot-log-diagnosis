@@ -10,16 +10,26 @@ Usage:
         --provisional data/to_label/provisional_auto_labels_2026-03-01.json \\
         --output-dir  data/clean_imports/human_review_batch_01/
 
-The .BIN files themselves are NOT copied (they stay in the Kaggle cache).
-The output ground_truth.json will use the original _path from the provisional
-file so build_dataset.py can find them.
+Human-approved .BIN files are copied into benchmark_ready/dataset with a
+SHA-prefixed filename so build_dataset.py can consume the batch directly.
 """
 
 import argparse
+import hashlib
 import json
 import os
+import shutil
 import sys
+from collections import Counter
 from datetime import datetime, timezone
+
+
+def _sha256(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def promote(provisional_path: str, output_dir: str, dry_run: bool = False) -> dict:
@@ -52,41 +62,94 @@ def promote(provisional_path: str, output_dir: str, dry_run: bool = False) -> di
     if dry_run:
         print("\n[DRY RUN] Would promote:")
         for entry in verified:
-            print(f"  {entry['filename']}  →  {entry['auto_label']}  ({entry['confidence']*100:.0f}%)")
+            print(
+                f"  {entry['filename']} -> {entry['auto_label']} "
+                f"({entry['confidence'] * 100:.0f}%)"
+            )
         return {"promoted": len(verified), "skipped": skipped, "dry_run": True}
+
+    prepared = []
+    for entry in verified:
+        source_path = entry.get("path", "")
+        if not os.path.isfile(source_path):
+            raise FileNotFoundError(
+                f"Verified candidate source is missing: {source_path!r}"
+            )
+        sha256 = entry.get("sha256") or _sha256(source_path)
+        if _sha256(source_path) != sha256:
+            raise ValueError(
+                f"SHA256 mismatch for verified candidate: {source_path}"
+            )
+        safe_name = os.path.basename(entry["filename"])
+        promoted_name = f"{sha256[:10]}__{safe_name}"
+        prepared.append((entry, source_path, sha256, promoted_name))
 
     # Build output structure
     bmark_dir = os.path.join(output_dir, "benchmark_ready")
+    dataset_dir = os.path.join(bmark_dir, "dataset")
     manifest_dir = os.path.join(output_dir, "manifests")
-    os.makedirs(bmark_dir, exist_ok=True)
+    os.makedirs(dataset_dir, exist_ok=True)
     os.makedirs(manifest_dir, exist_ok=True)
 
     # Build ground_truth.json entries
     gt_logs = []
-    for entry in verified:
+    manifest_rows = []
+    for entry, source_path, sha256, promoted_name in prepared:
+        destination = os.path.join(dataset_dir, promoted_name)
+        if os.path.exists(destination):
+            if _sha256(destination) != sha256:
+                raise ValueError(
+                    f"Destination collision with different content: {destination}"
+                )
+        else:
+            shutil.copy2(source_path, destination)
+
         gt_logs.append({
-            "filename": entry["filename"],
+            "filename": promoted_name,
             "labels": [entry["auto_label"]],
             "label": entry["auto_label"],
             "confidence": "high" if entry["confidence"] >= 0.75 else "medium",
-            "source_type": "hybrid_engine_auto_labeled",
+            "source_type": "human_verified_rule_candidate",
             "trainable": True,
             "human_verified": True,
+            "sha256": sha256,
             "auto_label_confidence": entry["confidence"],
             "engine": entry.get("engine"),
             "evidence": entry.get("evidence", []),
             "notes": entry.get("notes", ""),
             "promoted_from": provisional_path,
             "promoted_at_utc": datetime.now(timezone.utc).isoformat(),
-            # Keep original path reference so build_dataset.py can find the .bin
-            "_original_path": entry.get("path", ""),
+            # Keep published provenance portable and avoid embedding a
+            # contributor's absolute filesystem path in generated metadata.
+            "original_path": os.path.basename(source_path),
         })
+        manifest_rows.append(
+            {
+                "category": "verified_labeled",
+                "file_name": promoted_name,
+                "source_path": os.path.join(
+                    "benchmark_ready", "dataset", promoted_name
+                ),
+                "sha256": sha256,
+                "mapped_label": entry["auto_label"],
+                "source_url": entry.get("expert_source", ""),
+                "source_type": "human_verified_rule_candidate",
+                "expert_quote": entry.get("notes", ""),
+            }
+        )
 
     gt_path = os.path.join(bmark_dir, "ground_truth.json")
     with open(gt_path, "w") as f:
         json.dump({"logs": gt_logs}, f, indent=2)
 
     print(f"\nWrote: {gt_path} ({len(gt_logs)} entries)")
+
+    clean_manifest_path = os.path.join(
+        manifest_dir, "clean_import_manifest.json"
+    )
+    with open(clean_manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest_rows, f, indent=2)
+    print(f"Wrote: {clean_manifest_path}")
 
     # Write a human-readable import summary
     summary = {
@@ -97,7 +160,6 @@ def promote(provisional_path: str, output_dir: str, dry_run: bool = False) -> di
         "skipped": skipped,
         "label_distribution": {},
     }
-    from collections import Counter
     dist = Counter(e["auto_label"] for e in verified)
     summary["label_distribution"] = dict(sorted(dist.items(), key=lambda x: -x[1]))
 
@@ -106,9 +168,16 @@ def promote(provisional_path: str, output_dir: str, dry_run: bool = False) -> di
         json.dump(summary, f, indent=2)
     print(f"Wrote: {summary_path}")
 
-    print("\n✅ Promotion complete.")
-    print(f"   Next: run build_dataset.py pointing at {bmark_dir}/ground_truth.json")
-    print( "   Then: python3 training/train_model.py")
+    print("\nPromotion complete.")
+    print(
+        "   Batch is buildable with "
+        f"--ground-truth {bmark_dir}/ground_truth.json "
+        f"--dataset-dir {dataset_dir}"
+    )
+    print(
+        "   Merge this reviewed batch into the main training pool before "
+        "retraining; do not train on the small batch alone."
+    )
 
     return summary
 

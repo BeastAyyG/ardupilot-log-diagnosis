@@ -7,7 +7,7 @@
 ## 1. Overview
 
 This document records the calibration quality and abstention behaviour of the
-ArduPilot AI Log Diagnosis hybrid engine as of the final production release.
+ArduPilot AI Log Diagnosis hybrid engine as of the current development release.
 It satisfies the requirement in `AGENTS.md` Gate E:
 
 > *"Calibration and abstention report included."*
@@ -23,23 +23,21 @@ that quantifies how well predicted confidence scores match empirical accuracy.
 
 - An ECE of 0.05 means "when the engine says 70%, it is actually correct
   65–75% of the time" — well-calibrated.
-- An ECE above 0.15 means confidence outputs cannot be operationally trusted.
+- An ECE above the 0.08 release gate means confidence outputs remain advisory.
 
 The `training/measure_ece.py` script computes ECE from the trained
-XGBoost+Isotonic calibration model over the holdout feature/label CSV files.
+calibrated XGBoost model over the saved, group-isolated holdout flight IDs.
 
 **Production target**: ECE ≤ 0.08
 
 ### 2.2 Calibration pipeline
 
-The classifier is trained with isotonic-regression post-hoc calibration
-(`CalibratedClassifierCV(method="isotonic")`). This step fits a monotone
-mapping from raw model scores to true posterior probabilities using the
-held-out validation fold, which is separate from both training and the
-locked unseen holdout.
+For the current small dataset, the classifier uses sigmoid post-hoc calibration
+(`CalibratedClassifierCV(method="sigmoid")`). Calibration is fitted within the
+training data; the saved outer holdout is used only for final reporting.
 
 ```
-Raw XGBoost score  →  Isotonic calibration  →  calibrated probability
+Raw XGBoost score  →  Sigmoid calibration  →  calibrated probability
 ```
 
 ### 2.3 Reliability diagram
@@ -59,6 +57,10 @@ python training/measure_ece.py \
 ```
 
 The JSON report is saved to `training/ece_report.json`.
+
+The current saved-holdout result is **ECE 0.1268 on 22 unseen flight groups**.
+This fails the ≤ 0.08 production target, so ML confidence remains advisory and
+the project must not claim that the calibration gate has passed.
 
 ---
 
@@ -114,7 +116,7 @@ Abstention behaviour is verified in `tests/test_hard_gates.py` (class
 A high FCR means the tool "cries wolf" and degrades maintainer trust faster
 than a high miss-rate does.
 
-**Production target**: FCR ≤ 10%
+**Production target**: FCR ≤ 5%
 
 ### 4.2 Measurement script
 
@@ -122,7 +124,7 @@ than a high miss-rate does.
 `.BIN` flight logs and outputs:
 
 - Per-file result (clean or false-critical)
-- Aggregate FCR with pass/fail against the ≤ 10% target
+- Aggregate FCR with pass/fail against the ≤ 5% target
 - JSON report at `training/fcr_report.json`
 
 ```bash
@@ -149,11 +151,11 @@ flights:
 
 | Metric | Target | Status |
 |---|---|---|
-| ECE | ≤ 0.08 | Isotonic calibration applied; ECE measured via `measure_ece.py` |
-| FCR | ≤ 10% | Mitigation guards in place; audited via `measure_fcr.py` |
+| ECE | ≤ 0.08 | **Fail: 0.1268 on the 22-flight saved holdout** |
+| FCR | ≤ 5% | Mitigation guards in place; audited via `measure_fcr.py` |
 | Abstention coverage | 100% of uncertain cases flagged | `evaluate_decision` policy enforced in all CLI and benchmark paths |
 | Report availability | Gate E requirement | ✅ This document |
 
 ---
 
-*Last updated: 2026-03-02 — Gate E sign-off.*
+*Last updated: 2026-07-24 — calibration gate remains open.*

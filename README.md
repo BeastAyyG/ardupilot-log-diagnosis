@@ -5,8 +5,8 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 176 Passing](https://img.shields.io/badge/tests-176%20passing-brightgreen)](tests/)
-[![Macro F1: 1.00](https://img.shields.io/badge/Macro%20F1-1.00-blueviolet)](#-production-benchmark-results)
+[![Tests: 219 Passing](https://img.shields.io/badge/tests-219%20passing-brightgreen)](tests/)
+[![Macro F1: 0.603](https://img.shields.io/badge/Macro%20F1-0.603-blueviolet)](#-current-benchmark-results)
 [![GSoC 2026](https://img.shields.io/badge/GSoC%202026-Ready-purple)](docs/GSOC_2026_Application.md)
 
 **An end-to-end AI diagnostic pipeline for ArduPilot `.BIN` dataflash logs.**
@@ -37,7 +37,7 @@ Drop a crash log → get an instant, physics-grounded root-cause diagnosis with 
 - [How It Works (Architecture)](#-how-it-works--architecture)
 - [CITA — Crash-Immune Temporal Arbitration](#-crash-immune-temporal-arbitration-cita)
 - [94 Features Extracted](#-94-features-extracted)
-- [Production Benchmark Results](#-production-benchmark-results)
+- [Current Benchmark Results](#-current-benchmark-results)
 - [All Usage Modes](#-all-usage-modes)
 - [Data Pipeline & Training](#-data-pipeline--training)
 - [Cloud Execution](#-cloud-execution)
@@ -60,7 +60,7 @@ This tool automates that entire process:
 |---|---|
 | **Manual crash analysis takes 25+ minutes** | Instant analysis in **< 350ms per log** |
 | **Post-crash compass noise misdiagnosed as root cause** | **CITA temporal arbitration** eliminates this |
-| **No ML models exist for ArduPilot log diagnosis** | **Calibrated XGBoost classifier** trained on 140+ real crash logs |
+| **ML confidence can be misleading on small datasets** | Group-isolated holdout evaluation, explicit calibration gate, and fail-safe artifact loading |
 | **Hard to visualize what happened** | **3D flight replay** with causality markers at exact GPS coordinates |
 | **Labels are unreliable (forum-sourced)** | **Expert Label Mining** + SHA256 zero-leakage holdout verification |
 
@@ -113,8 +113,8 @@ FILTERED (Post-Crash Noise):
 git clone https://github.com/BeastAyyG/ardupilot-log-diagnosis.git
 cd ardupilot-log-diagnosis
 
-# Install (creates venv, installs all dependencies)
-pip install -e ".[dev]"
+# Install the tested dependency set into your active environment
+pip install -c constraints.txt -e ".[dev]"
 ```
 
 ### Analyze Your First Log
@@ -136,7 +136,7 @@ python -m src.cli.main analyze flight.BIN --format html -o report.html
 ./bootstrap.sh setup     # Create venv + install everything
 ./bootstrap.sh demo      # Try an instant demo
 ./bootstrap.sh analyze flight.BIN   # Analyze a real log
-./bootstrap.sh test      # Run all 176 tests
+./bootstrap.sh test      # Run the full test suite
 ```
 
 ### On Windows (PowerShell)
@@ -144,7 +144,7 @@ python -m src.cli.main analyze flight.BIN --format html -o report.html
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
+pip install -c constraints.txt -e ".[dev]"
 python -m src.cli.main analyze flight.BIN
 ```
 
@@ -194,7 +194,7 @@ The diagnosis pipeline converts a raw `.BIN` log into an actionable root-cause v
 | **1. Parsing** | `src/parser/bin_parser.py` | Uses `pymavlink` to decode binary DataFlash messages (VIBE, MAG, GPS, EKF, RCOU, BAT, IMU, etc.) |
 | **2. Feature Extraction** | `src/features/pipeline.py` | Extracts **94 statistical features** across 7 subsystems — means, maxes, spreads, temporal anomaly timestamps |
 | **3a. Rule Engine** | `src/diagnosis/rule_engine.py` | 13 deterministic threshold checks based on ArduPilot domain knowledge |
-| **3b. ML Classifier** | `src/diagnosis/ml_classifier.py` | Calibrated XGBoost trained on 140+ labeled crash logs with SMOTE oversampling |
+| **3b. ML Classifier** | `src/diagnosis/ml_classifier.py` | Calibrated XGBoost trained with group isolation, train-only imputation, and SMOTE oversampling |
 | **3c. Anomaly Detector** | `src/diagnosis/anomaly_detector.py` | IsolationForest trained on healthy flights — catches unknown failure modes |
 | **4. Hybrid Fusion** | `src/diagnosis/hybrid_engine.py` | Merges rule + ML signals using confidence weighting and temporal arbitration |
 | **5. Output** | `src/cli/` or `src/web/` | CLI text report, JSON, HTML, or interactive dashboard |
@@ -256,23 +256,33 @@ All features are documented in [`models/feature_columns.json`](models/feature_co
 
 ---
 
-## 📊 Production Benchmark Results
+## 📊 Current Benchmark Results
 
-Validated against **140+ real crash logs** from the BASiC Zenodo dataset and ArduPilot expert forums, using a **SHA256-deduplicated, zero-leakage** holdout set.
+The current rebuilt feature table contains **114 unique flight groups**. The deployed
+artifact remains the safer pre-merge model evaluated on a saved, group-isolated holdout
+of **22 flights** from 110 ML-eligible groups, with all eight trainable labels
+represented. The two newly expert-verified motor logs remain in the dataset, but the
+experimental retrain was not deployed because calibration worsened. These are honest
+development metrics, not a production-readiness claim.
+
+The separate release smoke benchmark is tracked in `release_benchmark_results.md` and
+`release_benchmark_results.json`; it covers 6 logs and is a sanity check, not the model
+selection metric.
 
 | Metric | Result | Target | Status |
 |---|---|---|---|
-| **Macro F1 Score** | **1.00** | ≥ 0.80 | 🚀 EXCEEDED |
-| **Calibration (ECE)** | **0.0001** | ≤ 0.08 | 🛡️ PASS |
-| **False Critical Rate** | **< 1.0%** | ≤ 2.0% | ✅ PASS |
-| **Inference Latency** | **< 350ms/log** | < 1s | ⚡ OPTIMIZED |
-| **Analysis Reliability** | 99.2% | ≥ 99% | ✅ PASS |
-| **Test Suite** | **176 passing** | All green | ✅ PASS |
+| **Calibrated Macro F1** | **0.603** | ≥ 0.50 | PASS |
+| **Uncalibrated XGBoost Macro F1** | **0.669** | Reference | Measured |
+| **Calibration (top-label ECE)** | **0.1268** | ≤ 0.08 | **FAIL — more verified data needed** |
+| **Holdout isolation** | **88 train / 22 test flights** | No shared `flight_id` | PASS |
+| **Duplicate feature rows** | **0** | 0 | PASS |
+
+The weakest holdout classes are currently `motor_failure` and `power_failure` (one test flight each). Treat ML confidence as advisory until the ECE gate passes; physics rules and causal evidence remain visible in every diagnosis.
 
 ### Reliability Diagram — Per-Label Calibration
 
 <div align="center">
-<img src="docs/assets/reliability_diagram.png" alt="Reliability Diagram — ArduPilot Classifier" width="800"/>
+<img src="docs/reliability_diagram.png" alt="Reliability Diagram — ArduPilot Classifier" width="800"/>
 
 <sub>Per-label reliability curves showing confidence vs. accuracy alignment. The closer to the diagonal "Perfect" line, the more trustworthy the confidence scores are.</sub>
 </div>
@@ -284,13 +294,13 @@ Validated against **140+ real crash logs** from the BASiC Zenodo dataset and Ard
 | Property | Value |
 |---|---|
 | **Algorithm** | XGBoost (multi-label, one-vs-rest) |
-| **Calibration** | Isotonic (post-hoc per-label) |
+| **Calibration** | Sigmoid (`CalibratedClassifierCV`) |
 | **Oversampling** | SMOTE (adaptive `k_neighbors`) |
 | **Training Set** | 192 balanced samples (after SMOTE) |
-| **Evaluation Set** | 28 unseen samples |
-| **Labels** | `compass_interference`, `ekf_failure`, `gps_quality_poor`, `healthy`, `rc_failsafe`, `vibration_high` |
+| **Evaluation Set** | 22 unseen holdout flights |
+| **Labels** | `compass_interference`, `ekf_failure`, `gps_quality_poor`, `healthy`, `motor_imbalance`, `power_instability`, `rc_failsafe`, `vibration_high` |
 | **Anomaly Detector** | IsolationForest (trained on healthy-only flights) |
-| **Best Params** | `lr=0.05, max_depth=3, min_child_weight=1, n_estimators=100` |
+| **Best Params** | `learning_rate=0.2, max_depth=4, min_child_weight=1, n_estimators=300, scale_pos_weight=1` |
 
 See [`docs/model_card.md`](docs/model_card.md) for the full architectural breakdown.
 
@@ -384,11 +394,22 @@ for d in diagnoses:
 ### Training a New Model
 
 ```bash
-# Build the dataset from labeled logs
-python training/build_dataset.py --min-confidence medium
+# Resolve verified clean-import labels, recovering BIN files from an external backup.
+# Keep frozen holdout batches out of training.
+python training/build_real_training_pool.py \
+  --backup-root "/path/to/ardupilot-complete-raw-data-backup-2026/versions/1" \
+  --exclude-batches flight_logs_dataset_2026-02-22 \
+                    forum_batch_lockbox_01 \
+                    forum_batch_lockbox_02
+
+# Extract one feature row per flight. Windowing is opt-in to avoid label noise.
+python -m training.build_dataset \
+  --ground-truth data/final_training_dataset_2026-02-23/ground_truth.json \
+  --dataset-dir data/final_training_dataset_2026-02-23/dataset \
+  --min-confidence medium
 
 # Train the classifier + anomaly detector
-python training/train_model.py
+python -m training.train_model
 
 # Validate zero leakage between train/holdout
 python validate_leakage.py
@@ -471,7 +492,7 @@ A comprehensive forensic audit was performed across the entire codebase. Below a
 
 ```
 $ python -m pytest tests/ -q
-176 passed in 127.43s ✅
+219 passed
 
 $ python /tmp/e2e_test.py
 Diagnoses: 1
@@ -510,16 +531,17 @@ ardupilot-log-diagnosis/
 │   └── runtime_paths.py     # Dynamic model directory resolution
 ├── models/                  # Versioned ML artifacts
 │   ├── classifier.joblib    #   → trained XGBoost model
+│   ├── imputer.joblib       #   → train-only median imputer
 │   ├── scaler.joblib        #   → StandardScaler
 │   ├── anomaly_detector.joblib # → IsolationForest
 │   ├── feature_columns.json #   → 94-feature schema
 │   ├── label_columns.json   #   → 6-label schema
 │   └── manifest.json        #   → version + hash integrity
 ├── training/                # Dataset build + training pipeline
-│   ├── train_model.py       #   → XGBoost + SMOTE + isotonic calibration
+│   ├── train_model.py       #   → group split + imputer + SMOTE + calibration
 │   ├── build_dataset.py     #   → feature extraction from labeled logs
 │   └── import_basic_direct.py # → BASiC Zenodo dataset importer
-├── tests/                   # 176 tests (parser, features, diagnosis, web, contracts)
+├── tests/                   # parser, features, diagnosis, leakage, web, contracts
 ├── docs/                    # Architecture, GSoC proposal, model card, policies
 │   └── assets/              #   → screenshots and diagrams
 ├── ops/                     # Expert label mining pipeline
@@ -566,9 +588,11 @@ See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITER
 |---|---|
 | [`docs/GSOC_2026_Application.md`](docs/GSOC_2026_Application.md) | Full GSoC 2026 application |
 | [`docs/model_card.md`](docs/model_card.md) | Technical ML specs and calibration report |
+| [`docs/TRUSTWORTHINESS_AUDIT_2026-07-24.md`](docs/TRUSTWORTHINESS_AUDIT_2026-07-24.md) | Reproduced tests, real-log duration finding, verified limits |
+| [`docs/RESEARCH_BACKED_NEXT_STEPS_2026.md`](docs/RESEARCH_BACKED_NEXT_STEPS_2026.md) | Prioritized research-backed plan for trustworthy diagnosis |
 | [`docs/root_cause_policy.md`](docs/root_cause_policy.md) | CITA temporal arbitration specification |
 | [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) | Release gates & labeling policy |
-| [`docs/MAINTAINER_TRIAGE_REDUX.md`](docs/MAINTAINER_TRIAGE_REDUX.md) | Triage impact study (98% time reduction) |
+| [`docs/MAINTAINER_TRIAGE_REDUX.md`](docs/MAINTAINER_TRIAGE_REDUX.md) | Triage impact study (84% time reduction) |
 | [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) | Full dataset lineage and provenance tracking |
 | [`docs/UPGRADE_ROADMAP.md`](docs/UPGRADE_ROADMAP.md) | Technical roadmap and future improvements |
 | [`CHANGELOG.md`](CHANGELOG.md) | Complete version history |
@@ -597,7 +621,7 @@ For future contributors (and AI Agents reading this repository), there are still
 
 1. **Rule Engine Refactoring (Goal 6):** Break apart the monolithic rule engine (`src/diagnosis/rule_engine.py`) into smaller, composable, testable rule modules (e.g., `rules/vibration.py`, `rules/compass.py`).
 2. **CLI Refactoring (Goal 7):** Deconstruct `src/cli/main.py` into smaller command modules (e.g., `src/cli/commands/analyze.py`) and leave `main.py` as a thin dispatcher.
-3. **Dead Label Remediation & Rule Coverage:** The ML model recognizes 6 of 14 `VALID_LABELS`. Labels like `power_instability` and `pid_tuning_issue` require further rule/ML coverage. The `check_compass` rule needs verifying to reduce its heavy reliance on the ML model fallback.
+3. **Dead Label Remediation & Rule Coverage:** The ML model recognizes 8 of 14 `VALID_LABELS`. Labels like `power_instability` and `pid_tuning_issue` require further rule/ML coverage. The `check_compass` rule needs verifying to reduce its heavy reliance on the ML model fallback.
 4. **Scaler Alignment (Anomaly Detector):** The IsolationForest anomaly detector currently uses a "healthy-only" scaler, while the XGBoost ML classifier uses a "full-dataset" scaler. These should be aligned or explicitly documented.
 5. **Bad Input Handling (Goal 9):** Ensure empty, corrupt, and partial logs are explicitly caught and handled gracefully across all batch, benchmark, and API endpoints, rather than failing deep inside the extraction pipeline.
 

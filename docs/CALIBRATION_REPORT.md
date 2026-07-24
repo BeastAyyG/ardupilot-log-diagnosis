@@ -68,7 +68,7 @@ Verified via automated test `test_decision_policy_abstains_on_borderline_healthy
 
 - 3 representative healthy flight profiles (indoor hover, outdoor GPS, slightly elevated vibration)
 - **Result**: 0/3 profiles triggered `confirmed` status with critical diagnoses
-- **False-critical rate**: 0.0% (target: ≤ 10%)
+- **False-critical rate**: 0.0% (target: ≤ 5%)
 
 ---
 

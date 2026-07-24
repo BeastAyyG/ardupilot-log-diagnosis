@@ -22,13 +22,13 @@ This project implements an open-source, hybrid automated diagnosis engine. By co
 
 ### Key Deliverables:
 1. **Interactive 3D Mission Replay UI:** A Vue/Plotly-based dashboard that visualizes crash trajectory, vibration patterns, and causality events in a single view.
-2. **Feature Extraction Pipeline:** Translates raw ArduPilot telemetry (IMU, EKF, GPS, MOT, BAT) into over 150 meaningful statistical features suitable for ML models.
-3. **Hybrid Diagnostic Engine & Anomaly Detector:** Combines deterministic telemetry rules with a calibrated XGBoost/Random Forest model. It also includes an Unsupervised Anomaly Detector (Autoencoder) to flag unseen edge-case failures.
-4. **Training Dataset & Provenance:** Integrated the official 13.9 GB BASiC Zenodo dataset and expert-mined forum labels into a unified pool of 140+ logs, guaranteeing zero-leakage holdout splits.
+2. **Feature Extraction Pipeline:** Translates raw ArduPilot telemetry (IMU, EKF, GPS, MOT, BAT) into 94 statistical and temporal features suitable for ML models.
+3. **Hybrid Diagnostic Engine & Anomaly Detector:** Combines deterministic telemetry rules with a sigmoid-calibrated XGBoost model and an Isolation Forest for out-of-distribution warnings.
+4. **Training Dataset & Provenance:** Rebuilt a SHA-deduplicated feature table of 114 unique flights and a separate 24-log human review queue, of which 2 candidates were promoted on the July 24 audit, with group-isolated holdout evaluation.
 5. **Integration Ready Engine:** A CLI and Web tool wrapper allowing maintainers to get near-instant confidence scores on exactly *why* a drone crashed.
 
 ## 3. Why am I the right person for this project?
-As an AI & ML student at SRM University AP, I have spent the last several months independently developing a working prototype of this diagnostic engine — before GSoC applications opened. This is not a proposal-stage idea; it is running code with 162 passing tests.
+As an AI & ML student at SRM University AP, I have spent the last several months independently developing a working prototype of this diagnostic engine — before GSoC applications opened. This is not a proposal-stage idea; it is running code with 219 passing tests.
 
 What I've built so far:
 - **Vehicle-Aware Ingestion**: Dynamic routing that identifies Copter vs Plane vs Rover vs Sub from boot text and `FRAME_CLASS`, safely enabling/disabling appropriate telemetry rules.
@@ -36,14 +36,14 @@ What I've built so far:
 - **True Thrust-Loss Detection**: Scans for sustained, synchronous `RCOU` motor saturation coupled with GPS/CTUN altitude descent.
 - **Pre-Flight Parameter Validation**: Evaluates `PARM` values (e.g. default PIDs) against `VIBE` and attitude symptoms, flagging likely tuning issues prior to hardware failure.
 - **3D Mission Replay Dashboard**: A premium interactive UI with 3D flight path reconstruction and causality markers.
-- **Unified 140+ Log Dataset**: Integrated the BASiC dataset (Zenodo) with expert-mined forum labels enforcing zero-leakage.
-- **176 passing tests** covering parser, feature routing, diagnosis, parameter validation, and causal arbitration.
+- **Leakage-Controlled Dataset**: 114 unique feature rows with zero exact duplicate feature vectors. The deployed artifact preserves its locked 88/22 group-isolated split from the prior 110-eligible-flight snapshot.
+- **219 passing tests** covering parser, feature routing, diagnosis, parameter validation, leakage controls, calibration, and causal arbitration.
 
 What is working well:
-- **Macro F1: 1.000** (Verified across 140+ log pool from BASiC and Forums).
-- **Calibration (ECE): 0.0001** (Target ≤ 0.08) — mathematical reliability for pilot trust.
-- **Triage time reduced from ~25 min to < 350ms (98% reduction)**.
-- **8+ Failure Families** recognized with near-perfect reliability, including vibration, compass, GPS, and RC failsafes.
+- **Calibrated macro F1: 0.603** on a 22-flight, group-isolated holdout.
+- **Calibration (top-label ECE): 0.1268**, which currently fails the ≤ 0.08 gate; ML probabilities remain advisory.
+- **94 telemetry features** extracted with physics evidence and temporal onset metadata.
+- **Eight ML-eligible failure families**, with known low-support weaknesses in motor and power failures.
 
 Next Ambition:
 - Expanding from "Retrospective Analysis" to "Real-time Edge Ingestion."
@@ -73,14 +73,14 @@ Next Ambition:
 
 ## 5. Summary of Prior Work
 - Open Source Repo: [BeastAyyG/ardupilot-log-diagnosis](https://github.com/BeastAyyG/ardupilot-log-diagnosis)
-- 162 passing tests, full CI pipeline, devcontainer support, comprehensive documentation.
+- 219 passing tests, full CI pipeline, devcontainer support, and explicit model/data integrity checks.
 - I have fixed critical data parsing bugs, integrated SMOTE for handling class imbalances, and mapped every log in the dataset back to its original forum incident so labels are fully verifiable by ArduPilot domain experts.
 
 ## 6. Known Limitations & Edge-AI Improvement Plan
 | Current Final State | GSoC Future Target |
 |---|---|
-| Macro F1 = 1.0 (on Offline Data) | Target high F1 on Live MAVLink streams |
+| Macro F1 = 0.603; ECE gate still open | Improve calibration and validate on a larger locked holdout |
 | Motor imbalance detection relies on offline processing | Real-time FFT processing on Edge hardware |
 | Heavy Python dependencies (Pandas, Scikit) | Port inference engine to C++ for companion computers |
-| 140-log dataset (Highly curated) | Expand to 1000+ with automated community submission pipeline |
+| 114 unique feature rows; class imbalance remains | Expand with expert-verified, provenance-tracked community logs |
 

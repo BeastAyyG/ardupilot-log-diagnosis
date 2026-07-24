@@ -79,4 +79,8 @@ def run(args) -> None:
             "rule": [{"failure_type": "vibration_high", "confidence": 0.85}],
             "ml": [{"failure_type": "vibration_high", "confidence": 0.62}],
         }
-        print_explain_box(dummy_explain, cast(list[dict[str, Any]], diagnoses))
+        print_explain_box(
+            dummy_explain,
+            cast(list[dict[str, Any]], diagnoses),
+            metadata,
+        )

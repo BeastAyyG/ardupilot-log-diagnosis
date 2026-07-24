@@ -198,24 +198,48 @@ class HybridEngine:
             if timed_candidates:
                 temporal_tie_window_us = 5_000_000
                 temporal_proximity_us = 30_000_000
-                extreme_confidence = 0.85
+                # Rule-only confidence is multiplied by 0.85 during fusion, so
+                # a threshold of 0.85 made this override effectively
+                # unreachable for every rule below a perfect 1.0. Allow a
+                # strongly supported later event to displace a weak early
+                # symptom while it is still inside the causal window.
+                extreme_confidence = 0.80
 
                 timed_candidates.sort(key=lambda item: (item[0], -item[1]))
-                best_time, best_conf, best_diag = timed_candidates[0]
-                root_cause = best_diag
+                onset_time, onset_conf, onset_diag = timed_candidates[0]
+                root_time, root_conf, root_cause = (
+                    onset_time,
+                    onset_conf,
+                    onset_diag,
+                )
+                arbiter_reason = (
+                    "earliest onset candidate selected by temporal arbitration"
+                )
 
                 for event_time, event_conf, event_diag in timed_candidates[1:]:
-                    time_gap = event_time - best_time
-                    if time_gap <= temporal_tie_window_us and event_conf > best_conf:
+                    time_gap = event_time - onset_time
+                    if time_gap <= temporal_tie_window_us and event_conf > root_conf:
                         root_cause = event_diag
-                        best_conf = event_conf
+                        root_time = event_time
+                        root_conf = event_conf
+                        arbiter_reason = (
+                            f"{event_diag['failure_type']} selected over earlier "
+                            f"{onset_diag['failure_type']} within the 5.0s onset "
+                            "tie window due to higher confidence"
+                        )
                     elif (
                         time_gap <= temporal_proximity_us
                         and event_conf >= extreme_confidence
-                        and event_conf > best_conf + 0.15
+                        and event_conf > root_conf + 0.15
                     ):
                         root_cause = event_diag
-                        best_conf = event_conf
+                        root_time = event_time
+                        root_conf = event_conf
+                        arbiter_reason = (
+                            f"{event_diag['failure_type']} replaced earlier "
+                            f"{onset_diag['failure_type']} inside the causal window "
+                            "because its confidence was substantially higher"
+                        )
 
                 root_cause = dict(root_cause)
                 root_cause["recommendation"] = "[ARB] " + str(
@@ -225,25 +249,34 @@ class HybridEngine:
                 for diag in merged_diagnoses:
                     if diag["failure_type"] == root_cause["failure_type"]:
                         continue
-                    is_critical_rule = (
-                        diag["detection_method"] == "rule"
+                    is_critical = (
+                        diag["detection_method"] in ("rule", "rule+ml")
                         and diag["severity"] == "critical"
                     )
-                    if is_critical_rule:
+                    event_time = tanomaly_for(diag["failure_type"])
+                    is_distant = (
+                        event_time > 0
+                        and abs(event_time - onset_time) > temporal_proximity_us
+                    )
+                    is_untimed = event_time <= 0
+                    if is_critical or is_distant or is_untimed:
                         selected.append(diag)
                     if len(selected) >= MAX_HYBRID_DIAGNOSES:
                         break
 
                 arbiter = {
                     "selected_failure_type": root_cause["failure_type"],
-                    "selected_tanomaly": best_time,
-                    "reason": "earliest onset candidate selected by temporal arbitration",
+                    "selected_tanomaly": root_time,
+                    "reason": arbiter_reason,
                 }
-                if len(timed_candidates) > 1:
+                if root_cause["failure_type"] == onset_diag["failure_type"] and len(
+                    timed_candidates
+                ) > 1:
                     second_time, _, second_diag = timed_candidates[1]
                     arbiter["reason"] = (
                         f"{root_cause['failure_type']} preceded "
-                        f"{second_diag['failure_type']} by {(second_time - best_time) / 1e6:.1f}s"
+                        f"{second_diag['failure_type']} by "
+                        f"{(second_time - onset_time) / 1e6:.1f}s"
                     )
                 set_explain(selected, arbiter)
                 return selected

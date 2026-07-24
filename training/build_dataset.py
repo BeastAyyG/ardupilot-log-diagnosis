@@ -5,6 +5,7 @@ import csv
 import json
 import os
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -15,7 +16,7 @@ if str(ROOT_DIR) not in sys.path:
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
-from .window_slicer import slice_log_into_windows
+from training.window_slicer import slice_log_into_windows
 
 CONFIDENCE_ORDER = {"low": 0, "medium": 1, "high": 2}
 
@@ -36,6 +37,9 @@ def build(
     report_path: str = "training/dataset_build_report.json",
     min_confidence: str = "low",
     trainable_only: bool = True,
+    window_sec: float = 0.0,
+    window_overlap: float = 0.5,
+    progress_every: int = 1,
 ) -> dict:
     if not os.path.exists(ground_truth_path):
         print(f"File not found: {ground_truth_path}")
@@ -58,11 +62,15 @@ def build(
     skipped_not_trainable = 0
     failed_extraction = 0
     processed = 0
+    full_logs_processed = 0
+    generated_windows = 0
+    skipped_duplicate_windows = 0
 
     label_counter = Counter()
     source_type_counter = Counter()
 
-    for log_entry in logs:
+    build_started = time.perf_counter()
+    for log_index, log_entry in enumerate(logs, start=1):
         filename = log_entry.get("filename")
         labels = log_entry.get("labels", [])
         confidence = log_entry.get("confidence", "medium")
@@ -90,27 +98,55 @@ def build(
             failed_extraction += 1
             continue
 
-        # For non-healthy logs with short duration, or for standard extraction, just use the whole log.
-        # But if slicing is requested (implied by blueprint), we slice it.
-        # We will extract features from the full log AND the slices to massively augment the dataset.
-        slices = slice_log_into_windows(parsed, window_sec=5.0, overlap=0.5)
+        slices = [parsed]
+        if window_sec > 0:
+            slices.extend(
+                slice_log_into_windows(
+                    parsed,
+                    window_sec=window_sec,
+                    overlap=window_overlap,
+                )
+            )
 
-        # Add the full log as a "slice" as well
-        slices.append(parsed)
+        # Guard against accidental repeated samples. This caught the historical
+        # TimeUS/_timestamp bug that duplicated every complete flight.
+        seen_feature_vectors: set[tuple] = set()
+        flight_id = (
+            log_entry.get("sha256")
+            or log_entry.get("sha256_prefix")
+            or filename
+        )
 
-        for log_slice in slices:
+        for slice_index, log_slice in enumerate(slices):
             features = pipeline.extract(log_slice)
+            feature_vector = tuple(features.get(name, 0.0) for name in FEATURE_NAMES)
+            if feature_vector in seen_feature_vectors:
+                skipped_duplicate_windows += 1
+                continue
+            seen_feature_vectors.add(feature_vector)
 
-            feat_row = [features.get(name, 0.0) for name in FEATURE_NAMES]
+            feat_row = list(feature_vector) + [flight_id]
             label_row = [1 if label in labels else 0 for label in VALID_LABELS]
 
             feature_rows.append(feat_row)
             label_rows.append(label_row)
             processed += 1
+            if slice_index == 0:
+                full_logs_processed += 1
+            else:
+                generated_windows += 1
 
         for label in labels:
             label_counter[label] += 1
         source_type_counter[source_type] += 1
+        if progress_every > 0 and (
+            log_index % progress_every == 0 or log_index == len(logs)
+        ):
+            elapsed = time.perf_counter() - build_started
+            print(
+                f"[{log_index}/{len(logs)}] {filename}: "
+                f"{len(seen_feature_vectors)} row(s), {elapsed:.1f}s elapsed"
+            )
 
     features_parent = os.path.dirname(output_features)
     labels_parent = os.path.dirname(output_labels)
@@ -125,7 +161,7 @@ def build(
 
     with open(output_features, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(FEATURE_NAMES)
+        writer.writerow(FEATURE_NAMES + ["flight_id"])
         writer.writerows(feature_rows)
 
     with open(output_labels, "w", newline="") as f:
@@ -133,17 +169,54 @@ def build(
         writer.writerow(VALID_LABELS)
         writer.writerows(label_rows)
 
+    # Count unique flights per class for rule-only recommendation
+    from collections import defaultdict
+    class_groups = defaultdict(set)
+    for feat_row, label_row in zip(feature_rows, label_rows):
+        flight_id = feat_row[-1]
+        for idx, val in enumerate(label_row):
+            if val == 1:
+                class_groups[VALID_LABELS[idx]].add(flight_id)
+
+    MIN_GROUPS_PER_CLASS = 5
+    rule_only_labels = []
+    per_class_flight_counts = {}
+    for label in VALID_LABELS:
+        groups_count = len(class_groups[label])
+        per_class_flight_counts[label] = groups_count
+        if groups_count < MIN_GROUPS_PER_CLASS:
+            rule_only_labels.append(label)
+
+    print(f"\nClasses with < {MIN_GROUPS_PER_CLASS} flight groups (rule-only recommendation): {rule_only_labels}")
+    for label_name in rule_only_labels:
+        print(f"  {label_name:<25} {per_class_flight_counts[label_name]} unique flights (need {MIN_GROUPS_PER_CLASS - per_class_flight_counts[label_name]} more)")
+
+    rule_only_labels_path = os.path.join(features_parent, "rule_only_labels.json")
+    with open(rule_only_labels_path, "w") as f:
+        json.dump({
+            "min_groups_per_class": MIN_GROUPS_PER_CLASS,
+            "rule_only_labels": rule_only_labels,
+            "per_class_flight_counts": per_class_flight_counts
+        }, f, indent=2)
+
+
     report = {
         "ground_truth_path": ground_truth_path,
         "dataset_dir": dataset_dir,
         "total_entries": len(logs),
         "processed": processed,
+        "full_logs_processed": full_logs_processed,
+        "generated_windows": generated_windows,
+        "skipped_duplicate_windows": skipped_duplicate_windows,
         "failed_extraction": failed_extraction,
         "skipped_missing_file": skipped_missing_file,
         "skipped_low_confidence": skipped_low_confidence,
         "skipped_not_trainable": skipped_not_trainable,
         "min_confidence": min_confidence,
         "trainable_only": trainable_only,
+        "window_sec": window_sec,
+        "window_overlap": window_overlap,
+        "elapsed_seconds": round(time.perf_counter() - build_started, 3),
         "label_distribution": dict(sorted(label_counter.items())),
         "source_type_distribution": dict(sorted(source_type_counter.items())),
         "output_features": output_features,
@@ -155,6 +228,9 @@ def build(
 
     print("Dataset built successfully.")
     print(f"Processed logs: {processed}")
+    print(f"Full flights: {full_logs_processed}")
+    print(f"Generated windows: {generated_windows}")
+    print(f"Skipped duplicate windows: {skipped_duplicate_windows}")
     print(f"Failed extractions: {failed_extraction}")
     print(f"Skipped (missing file): {skipped_missing_file}")
     print(f"Skipped (confidence): {skipped_low_confidence}")
@@ -200,6 +276,27 @@ def main() -> None:
         action="store_true",
         help="Include entries marked trainable=false",
     )
+    parser.add_argument(
+        "--window-sec",
+        type=float,
+        default=0.0,
+        help=(
+            "Optional window size in seconds. Disabled by default because blindly "
+            "copying a flight-level failure label to every window adds label noise."
+        ),
+    )
+    parser.add_argument(
+        "--window-overlap",
+        type=float,
+        default=0.5,
+        help="Fractional overlap for --window-sec (0.0 <= overlap < 1.0).",
+    )
+    parser.add_argument(
+        "--progress-every",
+        type=int,
+        default=1,
+        help="Print progress every N ground-truth entries; use 0 to disable.",
+    )
 
     args = parser.parse_args()
     build(
@@ -210,6 +307,9 @@ def main() -> None:
         report_path=args.report_out,
         min_confidence=args.min_confidence,
         trainable_only=not args.include_non_trainable,
+        window_sec=args.window_sec,
+        window_overlap=args.window_overlap,
+        progress_every=args.progress_every,
     )
 
 

@@ -1,25 +1,37 @@
 {
-  "ground_truth_path": "data/final_training_dataset_2026-02-23/ground_truth.json",
-  "dataset_dir": "data/final_training_dataset_2026-02-23/dataset",
-  "total_logs": 42,
+  "ground_truth_path": "data\\final_training_dataset_2026-02-23\\ground_truth.json",
+  "dataset_dir": "data\\final_training_dataset_2026-02-23\\dataset",
+  "total_logs": 48,
   "label_distribution": {
-    "compass_interference": 8,
+    "compass_interference": 7,
     "ekf_failure": 8,
     "gps_quality_poor": 1,
-    "motor_imbalance": 7,
+    "mechanical_failure": 10,
+    "motor_imbalance": 9,
     "pid_tuning_issue": 1,
     "power_instability": 5,
-    "rc_failsafe": 4,
-    "vibration_high": 8
+    "vibration_high": 7
   },
   "source_distribution": {
     "manual_review": 17,
-    "verified_labeled": 25
+    "verified_labeled": 31
   },
-  "verified_candidates": 76,
-  "manual_candidates": 20,
-  "skipped_verified_dupes": 51,
-  "skipped_manual_dupes": 3,
-  "manual_labeled_count": 20,
-  "excluded_batches": []
+  "verified_candidates": 57,
+  "manual_candidates": 17,
+  "skipped_verified_dupes": 26,
+  "skipped_manual_dupes": 0,
+  "manual_labeled_count": 17,
+  "excluded_batches": [
+    "flight_logs_dataset_2026-02-22",
+    "forum_batch_lockbox_01",
+    "forum_batch_lockbox_02"
+  ],
+  "backup_roots": [
+    "ardupilot-complete-raw-data-backup-2026"
+  ],
+  "conflicting_labels": 0,
+  "verified_rows": 67,
+  "missing_verified_files": 10,
+  "manual_labeled_rows": 20,
+  "missing_manual_files": 3
 }
