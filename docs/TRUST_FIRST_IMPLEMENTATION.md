@@ -145,6 +145,16 @@ discord candidate. This is a smoke test, not a benchmark result.
 
 ## Next implementation decisions
 
+### Versioned causal graph evidence
+
+`src/diagnosis/causal_graph.py` provides graph version `1.0` with explicit,
+bounded edges for power sag → motor stress, motor imbalance → vibration,
+vibration/compass/GPS degradation → EKF variance. Every edge records required
+onset evidence, a maximum delay, confounders, contradictory observations, and
+one of `satisfied`, `violated`, or `not_evaluable`. Results are attached to
+`explain_data["causal_graph"]` only; the graph cannot create or select a
+diagnosis, and existing abstention/decision policy remains authoritative.
+
 1. Run the manifest against official ArduPilot SITL and preserve the generated
    `.BIN`, run record, ArduPilot commit, parameters, seed, and vehicle model.
 2. Add grouped risk-coverage evaluation and flight-level bootstrap confidence

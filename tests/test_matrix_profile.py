@@ -42,6 +42,16 @@ def test_matrix_profile_rejects_mismatched_channel_lengths():
         )
 
 
+def test_matrix_profile_does_not_report_flat_channels_as_a_discord():
+    result = multivariate_matrix_profile(
+        {"vibration": [1.0] * 40, "gps_hdop": [2.0] * 40},
+        window_size=8,
+    )
+
+    assert result["status"] == "unavailable"
+    assert result["discord_index"] is None
+
+
 def test_temporal_analysis_resamples_supported_log_channels():
     parsed = {
         "messages": {

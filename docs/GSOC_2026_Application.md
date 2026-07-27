@@ -28,7 +28,7 @@ This project implements an open-source, hybrid automated diagnosis engine. By co
 5. **Integration Ready Engine:** A CLI and Web tool wrapper allowing maintainers to get near-instant confidence scores on exactly *why* a drone crashed.
 
 ## 3. Why am I the right person for this project?
-As an AI & ML student at SRM University AP, I have spent the last several months independently developing a working prototype of this diagnostic engine — before GSoC applications opened. This is not a proposal-stage idea; it is running code with 239 passing tests.
+As an AI & ML student at SRM University AP, I have spent the last several months independently developing a working prototype of this diagnostic engine — before GSoC applications opened. This is not a proposal-stage idea; it is running code with 251 passing tests.
 
 What I've built so far:
 - **Vehicle-Aware Ingestion**: Dynamic routing that identifies Copter vs Plane vs Rover vs Sub from boot text and `FRAME_CLASS`, safely enabling/disabling appropriate telemetry rules.
@@ -37,7 +37,7 @@ What I've built so far:
 - **Pre-Flight Parameter Validation**: Evaluates `PARM` values (e.g. default PIDs) against `VIBE` and attitude symptoms, flagging likely tuning issues prior to hardware failure.
 - **3D Mission Replay Dashboard**: A premium interactive UI with 3D flight path reconstruction and causality markers.
 - **Leakage-Controlled Dataset**: 114 unique feature rows with zero exact duplicate feature vectors. The deployed artifact preserves its locked 88/22 group-isolated split from the prior 110-eligible-flight snapshot.
-- **239 passing tests** covering parser, feature routing, diagnosis, parameter validation, leakage controls, calibration, selective decisions, temporal evidence, and causal arbitration.
+- **251 passing tests** covering parser, feature routing, diagnosis, parameter validation, leakage controls, calibration, selective decisions, temporal evidence, causal-graph evidence, metamorphic validation, and causal arbitration.
 
 What is working well:
 - **Calibrated macro F1: 0.603** on a 22-flight, group-isolated holdout.
@@ -73,7 +73,7 @@ Next Ambition:
 
 ## 5. Summary of Prior Work
 - Open Source Repo: [BeastAyyG/ardupilot-log-diagnosis](https://github.com/BeastAyyG/ardupilot-log-diagnosis)
-- 239 passing tests, full CI pipeline, devcontainer support, and explicit model/data integrity checks.
+- 251 passing tests, full CI pipeline, devcontainer support, and explicit model/data integrity checks.
 - I have fixed critical data parsing bugs, integrated SMOTE for handling class imbalances, and mapped every log in the dataset back to its original forum incident so labels are fully verifiable by ArduPilot domain experts.
 
 ## 6. Known Limitations & Edge-AI Improvement Plan

@@ -135,6 +135,18 @@ def multivariate_matrix_profile(
 
     discord_index = int(finite_indices[np.argmax(profile[finite_indices])])
     neighbor_index = int(neighbors[discord_index])
+    score = float(profile[discord_index])
+    if score <= 1e-9:
+        return {
+            "status": "unavailable",
+            "discord_index": None,
+            "nearest_neighbor_index": None,
+            "score": None,
+            "window_size": window_size,
+            "points": points,
+            "contributing_channels": [],
+            "reason": "No non-trivial discord was found in the supplied channels.",
+        }
     contributions = []
     for channel_index, channel_name in enumerate(channel_names):
         delta = (
@@ -156,7 +168,7 @@ def multivariate_matrix_profile(
         "status": "candidate",
         "discord_index": discord_index,
         "nearest_neighbor_index": neighbor_index,
-        "score": float(profile[discord_index]),
+        "score": score,
         "window_size": window_size,
         "points": points,
         "contributing_channels": contributions,

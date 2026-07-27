@@ -60,7 +60,14 @@ class FeaturePipeline:
         start_time = time.time()
 
         all_features = {name: 0.0 for name in self.get_feature_names()}
-        messages = parsed_log.get("messages", {})
+        # Exact duplicate rows can occur when logs are concatenated or a
+        # parser retries a record.  Deduplicate by canonical row content so
+        # aggregate features (means, ranges, counts) are invariant to replay.
+        raw_messages = parsed_log.get("messages", {})
+        messages = {
+            name: self._deduplicate_rows(rows)
+            for name, rows in raw_messages.items()
+        }
         parameters = parsed_log.get("parameters", {})
         vehicle_type = parsed_log.get("metadata", {}).get("vehicle_type", "Unknown")
 
@@ -124,6 +131,32 @@ class FeaturePipeline:
         )
 
         return cast(FeatureDict, all_features)
+
+    @staticmethod
+    def _deduplicate_rows(rows):
+        if not rows:
+            return rows
+        # Only deduplicate parser retries that carry a stable timestamp. A
+        # timestamp-less stream may legitimately contain repeated samples, and
+        # collapsing those would change counts and quality estimates.
+        if not all(
+            isinstance(row, dict)
+            and any(key in row for key in ("TimeUS", "time_us", "Timestamp", "timestamp"))
+            for row in rows
+        ):
+            return rows
+        seen = set()
+        unique = []
+        for row in rows:
+            if isinstance(row, dict):
+                key = tuple(sorted((str(k), repr(v)) for k, v in row.items()))
+            else:
+                key = repr(row)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(row)
+        return unique
 
     def get_feature_names(self) -> list:
         """Return ordered list of all feature names."""

@@ -5,7 +5,7 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 239 Passing](https://img.shields.io/badge/tests-239%20passing-brightgreen)](tests/)
+[![Tests: 251 Passing](https://img.shields.io/badge/tests-251%20passing-brightgreen)](tests/)
 [![Macro F1: 0.603](https://img.shields.io/badge/Macro%20F1-0.603-blueviolet)](#-current-benchmark-results)
 [![GSoC 2026](https://img.shields.io/badge/GSoC%202026-Ready-purple)](docs/GSOC_2026_Application.md)
 

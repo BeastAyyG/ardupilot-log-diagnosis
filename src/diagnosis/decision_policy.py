@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+import math
 from typing import Any, cast
 
 from src.contracts import (
@@ -49,6 +50,13 @@ SUBSYSTEM_MAP = {
 }
 
 
+def _safe_confidence(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
 def _quality_context(
     top_guess: str | None,
     metadata: Mapping[str, Any] | None,
@@ -86,7 +94,9 @@ def _rank_subsystems(diagnoses: Sequence[DiagnosisDict]) -> list[RankedSubsystem
     for diagnosis in diagnoses:
         failure_type = diagnosis.get("failure_type", "crash_unknown")
         subsystem = SUBSYSTEM_MAP.get(failure_type, "Unknown")
-        confidence = float(diagnosis.get("confidence", 0.0))
+        confidence = _safe_confidence(diagnosis.get("confidence", 0.0))
+        if not math.isfinite(confidence):
+            confidence = 0.0
         subsystem_scores[subsystem] = max(
             confidence,
             subsystem_scores.get(subsystem, 0.0),
@@ -216,9 +226,24 @@ def evaluate_decision(
         )
 
     top = diagnoses[0]
-    top_conf = float(top.get("confidence", 0.0))
+    top_conf = _safe_confidence(top.get("confidence", 0.0))
     rationale: list[str] = []
     abstention_reasons: list[str] = []
+
+    # Non-finite confidence is never evidence for a confirmed finding. Check
+    # every candidate, not only the top-ranked one, so NaN/Inf cannot hide in a
+    # competing diagnosis and bypass the ambiguity gate.
+    nonfinite_confidences = False
+    for diagnosis in diagnoses:
+        candidate_confidence = _safe_confidence(diagnosis.get("confidence", 0.0))
+        if not math.isfinite(candidate_confidence):
+            nonfinite_confidences = True
+            break
+    if nonfinite_confidences:
+        if not math.isfinite(top_conf):
+            top_conf = 0.0
+        rationale.append("A diagnosis confidence is non-finite; evidence is rejected.")
+        abstention_reasons.append("nonfinite_confidence")
 
     if capability_status == "UNSUPPORTED":
         return _decision(
@@ -236,7 +261,7 @@ def evaluate_decision(
             capability_status=capability_status,
         )
 
-    uncertain = False
+    uncertain = nonfinite_confidences
     if capability_status == "DEGRADED":
         uncertain = True
         rationale.append(
@@ -254,9 +279,13 @@ def evaluate_decision(
     if len(diagnoses) > 1:
         strongest_alternative = max(
             diagnoses[1:],
-            key=lambda item: float(item.get("confidence", 0.0)),
+            key=lambda item: _safe_confidence(item.get("confidence", 0.0)),
         )
-        second_conf = float(strongest_alternative.get("confidence", 0.0))
+        second_conf = _safe_confidence(
+            strongest_alternative.get("confidence", 0.0)
+        )
+        if not math.isfinite(second_conf):
+            second_conf = 0.0
         confidence_gap = abs(top_conf - second_conf)
         if second_conf > top_conf:
             uncertain = True
@@ -274,7 +303,10 @@ def evaluate_decision(
             abstention_reasons.append("top2_margin_too_small")
 
     high_conf_count = sum(
-        1 for d in diagnoses if float(d.get("confidence", 0.0)) >= 0.5
+        1
+        for d in diagnoses
+        if math.isfinite(_safe_confidence(d.get("confidence", 0.0)))
+        and _safe_confidence(d.get("confidence", 0.0)) >= 0.5
     )
     if high_conf_count > 1:
         uncertain = True

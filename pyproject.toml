@@ -79,6 +79,12 @@ include = ["src", "src.*"]
     "models/*.json",
     "models/*.yaml",
 ]
+"share/ardupilot-log-diagnosis/simulation" = [
+    "simulation/*.yaml",
+]
+"share/ardupilot-log-diagnosis/docs" = [
+    "docs/TRUST_FIRST_IMPLEMENTATION.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

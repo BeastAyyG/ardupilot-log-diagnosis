@@ -4,6 +4,7 @@ from .anomaly_detector import AnomalyDetector
 from .ml_classifier import MLClassifier
 from .rule_engine import RuleEngine
 from .temporal_evidence import evaluate_temporal_evidence
+from .causal_graph import evaluate_causal_graph
 from src.contracts import DiagnosisDict, FeatureDict
 
 
@@ -57,6 +58,7 @@ class HybridEngine:
             },
         )
         temporal_evidence = evaluate_temporal_evidence(features)
+        causal_graph = evaluate_causal_graph(features)
         anomaly_info = {"is_anomaly": False, "anomaly_score": 0.0}
 
         has_rule = len(rule_results) > 0
@@ -204,6 +206,7 @@ class HybridEngine:
                 "ml_risk_control": ml_risk_control,
                 "anomaly": anomaly_info,
                 "temporal_evidence": temporal_evidence,
+                "causal_graph": causal_graph,
                 "matrix_profile": features.get("_temporal_discord", {}),
                 "hypotheses": build_hypotheses(),
                 "causal_arbiter": arbiter or {},
