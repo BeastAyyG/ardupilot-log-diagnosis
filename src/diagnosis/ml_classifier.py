@@ -45,9 +45,16 @@ class MLClassifier:
         self.features_path = str(resolved_model_dir / "feature_columns.json")
         self.labels_path = str(resolved_model_dir / "label_columns.json")
         self.manifest_path = str(resolved_model_dir / "manifest.json")
+        self.risk_control_path = str(resolved_model_dir / "risk_control.json")
         self.min_probability = float(min_probability)
         self.label_thresholds = dict(LABEL_PROB_THRESHOLDS)
         self.unavailable_reason = "ml artifacts not loaded"
+        self.confirmation_eligible = False
+        self.risk_control: dict[str, Any] = {
+            "status": "missing",
+            "ml_confirmation_allowed": False,
+            "reason": "No validated ML risk-control artifact was loaded.",
+        }
 
         self.available = False
         if joblib is None:
@@ -82,6 +89,7 @@ class MLClassifier:
                 self.unavailable_reason = (
                     "available" if self.available else "manifest schema mismatch"
                 )
+                self._load_risk_control()
             except Exception as exc:  # noqa: BLE001 - optional artifacts must fail closed
                 self.unavailable_reason = f"failed to load ml artifacts: {exc}"
                 self.available = False
@@ -116,6 +124,57 @@ class MLClassifier:
             and manifest.get("sklearn_version") == sklearn_version
             and manifest.get("xgboost_version") == xgboost_version
         )
+
+    def _load_risk_control(self) -> None:
+        """Load the fail-closed confirmation gate for the saved ML model.
+
+        ML inference can remain available as an advisory signal when calibration
+        evidence fails.  It may only contribute to a confirmed diagnosis when a
+        version-linked risk-control artifact explicitly permits that use.
+        """
+        if not os.path.exists(self.risk_control_path):
+            return
+
+        try:
+            with open(self.risk_control_path, "r", encoding="utf-8") as file_obj:
+                artifact = json.load(file_obj)
+        except (OSError, ValueError, TypeError) as exc:
+            self.risk_control = {
+                "status": "invalid",
+                "ml_confirmation_allowed": False,
+                "reason": f"Risk-control artifact could not be loaded: {exc}",
+            }
+            return
+
+        manifest = getattr(self, "manifest", {})
+        linked = (
+            artifact.get("training_dataset_id") == manifest.get("training_dataset_id")
+            and artifact.get("test_flight_count") == manifest.get("test_flight_count")
+            and artifact.get("model_version") == manifest.get("model_version")
+        )
+        evidence_passes = bool(
+            artifact.get("ece_pass")
+            and artifact.get("fcr_pass")
+            and artifact.get("independent_calibration")
+        )
+        requested = bool(artifact.get("ml_confirmation_allowed"))
+        self.confirmation_eligible = bool(
+            self.available and linked and evidence_passes and requested
+        )
+
+        artifact = dict(artifact)
+        artifact["manifest_link_valid"] = linked
+        artifact["ml_confirmation_allowed"] = self.confirmation_eligible
+        if not linked:
+            artifact["status"] = "invalid"
+            artifact["reason"] = (
+                "Risk-control artifact does not match the loaded model manifest."
+            )
+        elif not evidence_passes:
+            artifact["status"] = "advisory_only"
+        elif self.confirmation_eligible:
+            artifact["status"] = "confirmation_enabled"
+        self.risk_control = artifact
 
     def _threshold_for_label(self, label: str) -> float:
         return float(self.label_thresholds.get(label, self.min_probability))

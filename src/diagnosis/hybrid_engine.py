@@ -3,6 +3,8 @@ from typing import Optional, cast
 from .anomaly_detector import AnomalyDetector
 from .ml_classifier import MLClassifier
 from .rule_engine import RuleEngine
+from .temporal_evidence import evaluate_temporal_evidence
+from .causal_graph import evaluate_causal_graph
 from src.contracts import DiagnosisDict, FeatureDict
 
 
@@ -44,6 +46,19 @@ class HybridEngine:
     def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
         rule_results = self.rules.diagnose(features)
         ml_results = self.ml.predict(features) if self.ml.available else []
+        ml_confirmation_allowed = bool(
+            getattr(self.ml, "confirmation_eligible", True)
+        )
+        ml_risk_control = getattr(
+            self.ml,
+            "risk_control",
+            {
+                "status": "not_declared",
+                "ml_confirmation_allowed": ml_confirmation_allowed,
+            },
+        )
+        temporal_evidence = evaluate_temporal_evidence(features)
+        causal_graph = evaluate_causal_graph(features)
         anomaly_info = {"is_anomaly": False, "anomaly_score": 0.0}
 
         has_rule = len(rule_results) > 0
@@ -74,8 +89,14 @@ class HybridEngine:
                 evidence.extend(ml_dict[ftype].get("evidence", []))
 
             if rule_conf > 0 and ml_prob > 0:
-                final = 0.65 * ml_prob + 0.35 * rule_conf
-                method = "rule+ml"
+                if ml_confirmation_allowed:
+                    final = 0.65 * ml_prob + 0.35 * rule_conf
+                    method = "rule+ml"
+                else:
+                    # Calibration evidence has not passed, so ML remains visible
+                    # in hypotheses but cannot inflate a rule-backed confidence.
+                    final = rule_conf * 0.85
+                    method = "rule"
             elif ml_prob > 0:
                 final = ml_prob * 0.85
                 method = "ml"
@@ -182,7 +203,11 @@ class HybridEngine:
             self.last_explain_data = {
                 "rule": rule_results,
                 "ml": ml_results,
+                "ml_risk_control": ml_risk_control,
                 "anomaly": anomaly_info,
+                "temporal_evidence": temporal_evidence,
+                "causal_graph": causal_graph,
+                "matrix_profile": features.get("_temporal_discord", {}),
                 "hypotheses": build_hypotheses(),
                 "causal_arbiter": arbiter or {},
                 "final": final_diagnoses,

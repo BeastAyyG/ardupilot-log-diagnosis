@@ -359,10 +359,10 @@ class TestGateE:
         assert decision["status"] == "confirmed"
         assert decision["requires_human_review"] is False
 
-    def test_healthy_state_on_empty_diagnoses(self):
-        """No diagnoses must produce a healthy / no-review state."""
+    def test_no_fault_detected_state_on_empty_diagnoses(self):
+        """No diagnoses must avoid claiming vehicle health."""
         decision = evaluate_decision([])
-        assert decision["status"] == "healthy"
+        assert decision["status"] == "no_fault_detected"
         assert decision["requires_human_review"] is False
         assert decision["top_confidence"] == 0.0
 

@@ -1,139 +1,135 @@
-"""
-Automated SITL failure data generator.
+"""Validate, plan, or execute controlled ArduPilot SITL scenarios.
 
-Launches ArduPilot SITL, flies a standard mission, injects a failure
-at a random time, saves the .BIN log, and labels it automatically.
+This command never fabricates placeholder `.BIN` files. Execution requires an
+already-running, armed ArduPilot SITL vehicle and a MAVLink connection.
 
-Requirements:
-    - ArduPilot SITL installed (sim_vehicle.py on PATH)
-    - pymavlink installed
-
-Usage:
-    python training/sitl_data_factory.py \
-        --runs-per-failure 50 \
-        --output-dir data/sitl_generated/
+Examples:
+    python training/sitl_data_factory.py --validate
+    python training/sitl_data_factory.py --list
+    python training/sitl_data_factory.py --scenario gps_loss
+    python training/sitl_data_factory.py --scenario gps_loss --execute \
+        --connect tcp:127.0.0.1:5760 --output-dir data/sitl_runs
 """
 
-import random
-import json
+from __future__ import annotations
+
 import argparse
+import json
+import sys
+from dataclasses import asdict
 from pathlib import Path
 
-FAILURE_CONFIGS = {
-    "vibration_high": {
-        "params": {"SIM_VIB_MOT_MAX": [5, 10, 20, 40]},  # randomize severity
-        "inject_after_sec": (15, 45),  # inject between 15-45 seconds
-        "label": "vibration_high",
-    },
-    "motor_failure_partial": {
-        "params": {"SIM_ENGINE_FAIL": [1], "SIM_ENGINE_MUL": [0.3, 0.5, 0.7]},
-        "inject_after_sec": (20, 50),
-        "label": "motor_imbalance",
-    },
-    "motor_failure_total": {
-        "params": {"SIM_ENGINE_FAIL": [1], "SIM_ENGINE_MUL": [0.0]},
-        "inject_after_sec": (20, 40),
-        "label": "mechanical_failure",
-    },
-    "gps_loss": {
-        "params": {"SIM_GPS_DISABLE": [1]},
-        "inject_after_sec": (30, 60),
-        "label": "gps_quality_poor",
-    },
-    "gps_glitch": {
-        "params": {"SIM_GPS_GLITCH_X": [50, 100, 200],
-                   "SIM_GPS_GLITCH_Y": [50, 100, 200]},
-        "inject_after_sec": (20, 50),
-        "label": "gps_quality_poor",
-    },
-    "compass_interference": {
-        "params": {"SIM_MAG_MOT": [30, 50, 80]},
-        "inject_after_sec": (15, 45),
-        "label": "compass_interference",
-    },
-    "rc_failsafe": {
-        "params": {"SIM_RC_FAIL": [1]},
-        "inject_after_sec": (30, 50),
-        "label": "rc_failsafe",
-    },
-    "battery_sag": {
-        # Simulate battery with high internal resistance
-        "params": {"SIM_BATT_VOLTAGE": [10.5, 11.0, 11.5]},
-        "inject_after_sec": (20, 40),
-        "label": "power_instability",
-    },
-    "healthy": {
-        "params": {},
-        "inject_after_sec": None,
-        "label": "healthy",
-    },
-}
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-FRAME_TYPES = ["quad", "hexa", "octa"]
+from src.simulation.scenario_runner import (
+    MavlinkSITLTransport,
+    SITLScenarioRunner,
+    load_scenarios,
+)
 
-def generate_sitl_data(runs_per_failure: int, output_dir: str):
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-    logs_dir = output_path / "logs"
-    logs_dir.mkdir(exist_ok=True)
-    ground_truth_file = output_path / "ground_truth.json"
 
-    ground_truth = {}
-    if ground_truth_file.exists():
-        with open(ground_truth_file, "r") as f:
-            ground_truth = json.load(f)
+DEFAULT_MANIFEST = (
+    ROOT_DIR
+    / "simulation"
+    / "sitl_scenarios.yaml"
+)
 
-    print(f"Generating SITL data. Target runs per failure: {runs_per_failure}")
-    print(f"Output directory: {output_dir}")
 
-    # In a real scenario, this would loop and call sim_vehicle.py
-    # Here we simulate the process to avoid requiring ArduPilot toolchain for the script to run
-    print("SITL environment not detected. Creating dummy logs for testing purposes.")
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Validated ArduPilot SITL fault-scenario runner"
+    )
+    parser.add_argument(
+        "--manifest",
+        default=str(DEFAULT_MANIFEST),
+        help="Scenario YAML manifest",
+    )
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument(
+        "--validate",
+        action="store_true",
+        help="Validate the manifest without connecting to SITL",
+    )
+    action.add_argument(
+        "--list",
+        action="store_true",
+        help="List validated scenario identifiers",
+    )
+    action.add_argument(
+        "--scenario",
+        help="Plan or execute one validated scenario",
+    )
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually inject parameters into a verified SITL connection",
+    )
+    parser.add_argument(
+        "--connect",
+        default="tcp:127.0.0.1:5760",
+        help="MAVLink connection string for an existing SITL instance",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="data/sitl_runs",
+        help="Directory for JSON run records",
+    )
+    parser.add_argument(
+        "--log-path",
+        help=(
+            "Optional .BIN produced by SITL. It is hashed and referenced, "
+            "never generated by this command."
+        ),
+    )
+    return parser
 
-    total_generated = 0
-    for failure_key, config in FAILURE_CONFIGS.items():
-        for i in range(runs_per_failure):
-            run_id = f"sitl_{failure_key}_{i:04d}"
-            log_filename = f"{run_id}.bin"
-            log_filepath = logs_dir / log_filename
 
-            # Create a dummy bin file
-            with open(log_filepath, "wb") as f:
-                f.write(b"dummy bin data")
+def main(argv: list[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    scenarios = load_scenarios(args.manifest)
 
-            # Randomize frame, wind, etc. to record in ground truth metadata
-            frame = random.choice(FRAME_TYPES)
-            wind_spd = random.randint(0, 15)
-            weight = random.uniform(1.0, 5.0)
+    if args.validate:
+        print(
+            f"Validated {len(scenarios)} SITL scenarios from "
+            f"{Path(args.manifest)}"
+        )
+        return 0
 
-            params_used = {}
-            for param, values in config["params"].items():
-                params_used[param] = random.choice(values)
+    if args.list:
+        for scenario in scenarios.values():
+            labels = ", ".join(scenario.expected_diagnoses) or "control"
+            print(f"{scenario.id}: {scenario.description} [{labels}]")
+        return 0
 
-            ground_truth[log_filename] = {
-                "label": config["label"],
-                "source": "sitl",
-                "sim_config": {
-                    "failure_key": failure_key,
-                    "frame": frame,
-                    "wind_spd": wind_spd,
-                    "weight_kg": weight,
-                    "params": params_used
-                }
-            }
-            total_generated += 1
-            print(f"Generated {log_filename} -> {config['label']}")
+    scenario = scenarios.get(args.scenario)
+    if scenario is None:
+        available = ", ".join(sorted(scenarios))
+        raise SystemExit(
+            f"Unknown scenario {args.scenario!r}. Available: {available}"
+        )
 
-    with open(ground_truth_file, "w") as f:
-        json.dump(ground_truth, f, indent=4)
+    if not args.execute:
+        print(json.dumps(asdict(scenario), indent=2))
+        print(
+            "\nPlan only. Add --execute after launching and arming an "
+            "ArduPilot SITL vehicle in a stable hover."
+        )
+        return 0
 
-    print(f"\nGeneration complete. {total_generated} logs created in {logs_dir}")
-    print(f"Ground truth written to {ground_truth_file}")
+    transport = MavlinkSITLTransport(args.connect)
+    try:
+        record = SITLScenarioRunner(transport).run(
+            scenario,
+            args.output_dir,
+            log_path=args.log_path,
+        )
+    finally:
+        transport.close()
+    print(json.dumps(record, indent=2))
+    return 0
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Automated SITL failure data generator.")
-    parser.add_argument("--runs-per-failure", type=int, default=5, help="Number of times to run each failure scenario")
-    parser.add_argument("--output-dir", type=str, default="data/sitl_generated", help="Output directory for logs and ground truth")
-    args = parser.parse_args()
-
-    generate_sitl_data(args.runs_per_failure, args.output_dir)
+    raise SystemExit(main())

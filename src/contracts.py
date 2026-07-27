@@ -4,7 +4,13 @@ from typing import Any, Literal, TypeAlias, TypedDict
 
 
 Severity = Literal["critical", "warning", "info"]
-DecisionStatus = Literal["healthy", "uncertain", "confirmed"]
+DecisionStatus = Literal[
+    "confirmed",
+    "uncertain",
+    "insufficient_data",
+    "no_fault_detected",
+]
+CapabilityStatus = Literal["RELIABLE", "DEGRADED", "UNSUPPORTED", "UNKNOWN"]
 
 
 class ParsedMetadata(TypedDict, total=False):
@@ -106,7 +112,11 @@ class DecisionDict(TypedDict):
     top_guess: str | None
     top_confidence: float
     rationale: list[str]
+    abstention_reasons: list[str]
     ranked_subsystems: list[RankedSubsystem]
+    applicable_capability: str | None
+    capability_status: CapabilityStatus
+    selection_policy: str
 
 
 class BenchmarkError(TypedDict):

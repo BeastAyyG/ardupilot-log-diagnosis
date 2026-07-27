@@ -105,6 +105,7 @@ def run(args) -> None:
             "filename",
             "duration",
             "vehicle",
+            "decision_status",
             "diagnosis",
             "confidence",
             "requires_review",
@@ -135,18 +136,29 @@ def run(args) -> None:
                 diagnoses = engine.diagnose(features)
 
                 # 5. Evaluate decision
-                decision = evaluate_decision(diagnoses)
+                risk_control = getattr(engine.ml, "risk_control", {})
+                decision = evaluate_decision(
+                    diagnoses,
+                    metadata=metadata,
+                    ml_confirmation_allowed=getattr(
+                        engine.ml, "confirmation_eligible", False
+                    ),
+                    ml_risk_reason=risk_control.get("reason"),
+                )
 
                 # 6. Extract fields
                 duration = float(metadata.get("duration_sec", 0.0))
                 vehicle = metadata.get("vehicle_type", "Unknown")
+                decision_status = str(
+                    decision.get("status", "no_fault_detected")
+                )
 
                 if diagnoses:
                     top_diag = diagnoses[0]
                     diagnosis = top_diag["failure_type"]
                     confidence = float(top_diag["confidence"])
                 else:
-                    diagnosis = "healthy"
+                    diagnosis = decision_status
                     confidence = 0.0
 
                 requires_review = bool(decision.get("requires_human_review", False))
@@ -156,6 +168,7 @@ def run(args) -> None:
                     "filename": rel_path,
                     "duration": duration,
                     "vehicle": vehicle,
+                    "decision_status": decision_status,
                     "diagnosis": diagnosis,
                     "confidence": confidence,
                     "requires_review": requires_review,

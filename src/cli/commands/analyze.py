@@ -64,7 +64,16 @@ def run(args) -> None:
 
     engine = RuleEngine() if args.no_ml else HybridEngine()
     diagnoses = engine.diagnose(features)
-    decision = evaluate_decision(diagnoses)
+    ml = None if args.no_ml else getattr(engine, "ml", None)
+    risk_control = getattr(ml, "risk_control", {})
+    decision = evaluate_decision(
+        diagnoses,
+        metadata=metadata,
+        ml_confirmation_allowed=(
+            None if args.no_ml else getattr(ml, "confirmation_eligible", False)
+        ),
+        ml_risk_reason=risk_control.get("reason"),
+    )
     parameter_warnings = validate_parameters(
         parsed.get("parameters", {}),
         features,
@@ -80,6 +89,18 @@ def run(args) -> None:
         "engine": "rule" if args.no_ml else "hybrid",
         "ml_available": False if args.no_ml else getattr(getattr(engine, "ml", None), "available", False),
         "ml_reason": None if args.no_ml else getattr(getattr(engine, "ml", None), "unavailable_reason", "ml unavailable"),
+        "ml_confirmation_allowed": (
+            False
+            if args.no_ml
+            else getattr(getattr(engine, "ml", None), "confirmation_eligible", False)
+        ),
+        "ml_risk_status": (
+            "disabled"
+            if args.no_ml
+            else getattr(getattr(engine, "ml", None), "risk_control", {}).get(
+                "status", "missing"
+            )
+        ),
     }
     explain_data = getattr(cast(object, engine), "last_explain_data", None)
 

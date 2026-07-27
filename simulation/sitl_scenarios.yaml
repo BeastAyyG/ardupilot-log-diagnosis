@@ -1,0 +1,176 @@
+schema_version: 1
+defaults:
+  vehicle: ArduCopter
+  frame: quad
+  precondition: armed_hover
+  baseline_sec: 15
+  injection_sec: 20
+  recovery_sec: 10
+  training_eligible: false
+  source_type: sitl_simulation
+
+scenarios:
+  - id: healthy_baseline
+    description: Control flight with no injected failure.
+    parameters: {}
+    recovery_parameters: {}
+    expected_diagnoses: []
+    expected_decision_statuses:
+      - no_fault_detected
+    parameter_confidence: documented
+    source_url: https://ardupilot.org/dev/docs/using-sitl-for-ardupilot-testing.html
+
+  - id: vibration_noise
+    description: Inject documented accelerometer noise.
+    parameters:
+      SIM_ACC_RND: 3
+    recovery_parameters:
+      SIM_ACC_RND: 0
+    expected_diagnoses:
+      - vibration_high
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: documented
+    source_url: https://ardupilot.org/dev/docs/SITL_simulation_parameters.html
+
+  - id: gps_loss
+    description: Disable the primary simulated GPS.
+    parameters:
+      SIM_GPS_DISABLE: 1
+    recovery_parameters:
+      SIM_GPS_DISABLE: 0
+    expected_diagnoses:
+      - gps_quality_poor
+      - ekf_failure
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: documented
+    source_url: https://ardupilot.org/dev/docs/SITL_simulation_parameters.html
+
+  - id: rc_loss
+    description: Simulate complete loss of RC input.
+    parameters:
+      SIM_RC_FAIL: 1
+    recovery_parameters:
+      SIM_RC_FAIL: 0
+    expected_diagnoses:
+      - rc_failsafe
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: documented
+    source_url: https://ardupilot.org/dev/docs/SITL_simulation_parameters.html
+
+  - id: strong_wind_control
+    description: Robustness control; strong steady wind is not itself a hardware fault.
+    parameters:
+      SIM_WIND_DIR: 180
+      SIM_WIND_SPD: 10
+    recovery_parameters:
+      SIM_WIND_SPD: 0
+    expected_diagnoses: []
+    expected_decision_statuses:
+      - no_fault_detected
+      - uncertain
+    parameter_confidence: documented
+    source_url: https://ardupilot.org/dev/docs/SITL_simulation_parameters.html
+
+  - id: gps_glitch
+    description: Inject a horizontal GPS position offset.
+    parameters:
+      SIM_GPS_GLITCH_X: 100
+      SIM_GPS_GLITCH_Y: 100
+    recovery_parameters:
+      SIM_GPS_GLITCH_X: 0
+      SIM_GPS_GLITCH_Y: 0
+    expected_diagnoses:
+      - gps_quality_poor
+      - ekf_failure
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: verify_at_runtime
+    source_url: https://ardupilot.org/dev/docs/sitl-parameters.html
+
+  - id: partial_motor_loss
+    description: Reduce one simulated motor's thrust multiplier.
+    parameters:
+      SIM_ENGINE_FAIL: 1
+      SIM_ENGINE_MUL: 0.5
+    recovery_parameters:
+      SIM_ENGINE_MUL: 1
+    expected_diagnoses:
+      - motor_imbalance
+      - mechanical_failure
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: verify_at_runtime
+    source_url: https://ardupilot.org/dev/docs/sitl-parameters.html
+
+  - id: total_motor_loss
+    description: Reduce one simulated motor's thrust multiplier to zero.
+    parameters:
+      SIM_ENGINE_FAIL: 1
+      SIM_ENGINE_MUL: 0
+    recovery_parameters:
+      SIM_ENGINE_MUL: 1
+    expected_diagnoses:
+      - mechanical_failure
+      - motor_imbalance
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: verify_at_runtime
+    source_url: https://ardupilot.org/dev/docs/sitl-parameters.html
+
+  - id: battery_voltage_drop
+    description: Lower the simulated battery voltage during hover.
+    parameters:
+      SIM_BATT_VOLTAGE: 10.5
+    recovery_parameters: {}
+    expected_diagnoses:
+      - power_instability
+      - brownout
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: verify_at_runtime
+    source_url: https://ardupilot.org/dev/docs/sitl-parameters.html
+
+  - id: compass_motor_interference
+    description: Inject motor-correlated magnetic interference.
+    parameters:
+      SIM_MAG_MOT: 50
+    recovery_parameters:
+      SIM_MAG_MOT: 0
+    expected_diagnoses:
+      - compass_interference
+      - ekf_failure
+    expected_decision_statuses:
+      - confirmed
+      - uncertain
+    parameter_confidence: verify_at_runtime
+    source_url: https://ardupilot.org/dev/docs/sitl-parameters.html
+
+  - id: vibration_then_gps_loss
+    description: Combined-fault scenario for causal ordering and abstention tests.
+    baseline_sec: 15
+    injection_sec: 25
+    recovery_sec: 10
+    parameters:
+      SIM_ACC_RND: 3
+      SIM_GPS_DISABLE: 1
+    recovery_parameters:
+      SIM_ACC_RND: 0
+      SIM_GPS_DISABLE: 0
+    expected_diagnoses:
+      - vibration_high
+      - gps_quality_poor
+      - ekf_failure
+    expected_decision_statuses:
+      - uncertain
+    parameter_confidence: documented
+    source_url: https://ardupilot.org/dev/docs/SITL_simulation_parameters.html

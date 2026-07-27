@@ -86,3 +86,43 @@ def test_hybrid_engine_emits_hypothesis_scaffolding():
     explain = engine.last_explain_data
     assert explain["hypotheses"][0]["failure_type"] == "thrust_loss"
     assert "preceded" in explain["causal_arbiter"]["reason"]
+
+
+def test_untrusted_ml_cannot_inflate_rule_confidence():
+    class StubRuleEngine:
+        def diagnose(self, _features):
+            return [
+                {
+                    "failure_type": "vibration_high",
+                    "confidence": 0.60,
+                    "evidence": [],
+                    "severity": "warning",
+                }
+            ]
+
+    class StubMLClassifier:
+        available = True
+        confirmation_eligible = False
+        risk_control = {
+            "status": "advisory_only",
+            "ml_confirmation_allowed": False,
+        }
+
+        def predict(self, _features):
+            return [
+                {
+                    "failure_type": "vibration_high",
+                    "confidence": 0.99,
+                    "evidence": [],
+                }
+            ]
+
+    engine = HybridEngine(
+        rule_engine=cast(Any, StubRuleEngine()),
+        ml_classifier=cast(Any, StubMLClassifier()),
+    )
+    result = engine.diagnose({})
+
+    assert result[0]["detection_method"] == "rule"
+    assert result[0]["confidence"] == 0.51
+    assert engine.last_explain_data["ml_risk_control"]["status"] == "advisory_only"

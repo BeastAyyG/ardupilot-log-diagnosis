@@ -81,7 +81,7 @@ def compute_false_critical_rate(results: List[dict]) -> float:
       - ``predicted``: list of diagnosis dicts with ``severity`` field
 
     FCR = |healthy logs with ≥1 critical prediction| / |healthy logs|
-    Target: FCR <= 0.10
+    Target: FCR <= 0.05
     """
     healthy_total = 0
     false_criticals = 0
@@ -148,6 +148,6 @@ def generate_calibration_report(
         "false_critical_rate": round(fcr, 4),
         "target_met": {
             "ece_le_0.08": ece <= 0.08,
-            "fcr_le_0.10": fcr <= 0.10,
+            "fcr_le_0.05": fcr <= 0.05,
         },
     }

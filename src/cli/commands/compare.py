@@ -84,12 +84,19 @@ def run(args) -> None:
         
         # Run diagnosis
         diagnoses = engine.diagnose(features)
-        decision = evaluate_decision(diagnoses)
+        metadata = features.get("_metadata", {})
+        risk_control = getattr(engine.ml, "risk_control", {})
+        decision = evaluate_decision(
+            diagnoses,
+            metadata=metadata,
+            ml_confirmation_allowed=getattr(
+                engine.ml, "confirmation_eligible", False
+            ),
+            ml_risk_reason=risk_control.get("reason"),
+        )
         
         # Build analysis result
         formatter = DiagnosisFormatter()
-        metadata = features.get("_metadata", {})
-        
         result = formatter.format_json(
             diagnoses,
             metadata,

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "model_version": "XGBoost+Calibration",
+  "training_dataset_id": "791aac9c2c5a9ee324b567db013462e4b97bd5249b817e0ef6d6af31d455d488",
+  "evaluation_scope": "saved-holdout",
+  "test_flight_count": 22,
+  "observed_ece": 0.12683857053232866,
+  "target_ece": 0.08,
+  "ece_pass": false,
+  "observed_false_critical_rate": null,
+  "target_false_critical_rate": 0.05,
+  "fcr_pass": false,
+  "independent_calibration": false,
+  "ml_confirmation_allowed": false,
+  "status": "advisory_only",
+  "reason": "The saved 22-flight holdout misses the ECE target and does not provide an independent false-critical-rate calibration set. ML remains advisory and cannot raise a diagnosis to confirmed."
+}

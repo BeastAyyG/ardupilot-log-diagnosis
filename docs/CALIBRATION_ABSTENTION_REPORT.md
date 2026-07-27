@@ -69,12 +69,13 @@ the project must not claim that the calibration gate has passed.
 ### 3.1 Policy definition
 
 The `src/diagnosis/decision_policy.evaluate_decision()` function applies a
-safety gate on top of the ranked diagnosis list. It returns one of three
+safety gate on top of the ranked diagnosis list. It returns one of four
 mutually exclusive states:
 
 | Status | `requires_human_review` | Meaning |
 |---|---|---|
-| `healthy` | `False` | No diagnosis produced; flight appears nominal. |
+| `no_fault_detected` | `False` | No supported detector fired; this is not a safe-to-fly certificate. |
+| `insufficient_data` | `True` | Required telemetry is missing, corrupt, or unsupported. |
 | `uncertain` | `True` | Engine is not confident enough to act autonomously — human must review. |
 | `confirmed` | `False` | Top diagnosis confidence and separation pass the safety gate. |
 
@@ -91,12 +92,16 @@ following conditions hold:
 4. **ML-only moderate prediction** — top result comes only from the ML classifier
    (not confirmed by rule engine) and confidence < 0.75.
 
+5. **ML risk control not passed** - an ML-only result cannot be confirmed unless
+   the version-linked ECE, false-critical-rate, and independent-calibration gates pass.
+
 ### 3.3 Test coverage
 
 Abstention behaviour is verified in `tests/test_hard_gates.py` (class
 `TestGateE`) and `tests/test_decision_policy.py`. Key scenarios covered:
 
-- Empty diagnosis list → `healthy`
+- Empty diagnosis list with reliable capabilities -> `no_fault_detected`
+- Empty diagnosis list with unsupported telemetry -> `insufficient_data`
 - Low-confidence top result → `uncertain`
 - Close top-2 gap → `uncertain`
 - High-confidence clear winner → `confirmed`

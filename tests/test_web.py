@@ -83,7 +83,7 @@ def test_api_analyze_handles_gps_only_logs(monkeypatch):
     monkeypatch.setattr(
         web_app,
         "evaluate_decision",
-        lambda _diagnoses: {
+        lambda _diagnoses, **_kwargs: {
             "status": "uncertain",
             "requires_human_review": True,
             "top_guess": "gps_quality_poor",
