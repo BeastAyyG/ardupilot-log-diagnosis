@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.metadata
 import logging
 import os
 import tempfile
@@ -39,6 +40,22 @@ def _get_rule_engine() -> RuleEngine:
 MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 WEB_DIR = Path(__file__).parent.absolute()
+
+def _get_version() -> str:
+    """Read version from installed package metadata, falling back to pyproject.toml."""
+    try:
+        return importlib.metadata.version("ardupilot-log-diagnosis")
+    except importlib.metadata.PackageNotFoundError:
+        # Fallback: parse pyproject.toml directly (for dev / non-installed runs)
+        pyproject_path = Path(__file__).resolve().parents[2] / "pyproject.toml"
+        if pyproject_path.exists():
+            for line in pyproject_path.read_text(encoding="utf-8").splitlines():
+                parts = line.strip().split("=", 1)
+                if len(parts) == 2 and parts[0].strip() == "version":
+                    return parts[1].strip().strip('"').strip("'")
+        return "dev"
+
+APP_VERSION = _get_version()
 
 app = FastAPI(title="ArduPilot Log Diagnosis API")
 app.add_middleware(
@@ -121,7 +138,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
 async def get_index() -> str:
     index_path = WEB_DIR / "index.html"
     if index_path.exists():
-        return index_path.read_text(encoding="utf-8")
+        html = index_path.read_text(encoding="utf-8")
+        html = html.replace("{{version}}", APP_VERSION)
+        return html
     return "UI not found"
 
 
