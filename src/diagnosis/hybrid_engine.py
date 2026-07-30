@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Optional, cast, Any
 
 from .anomaly_detector import AnomalyDetector
 from .ml_classifier import MLClassifier
@@ -41,6 +41,17 @@ class HybridEngine:
         self.ml = ml_classifier or MLClassifier()
         self.anomaly_detector = anomaly_detector or AnomalyDetector()
 
+    def _format_evidence(self, ev: Any) -> dict:
+        """Ensures evidence matches the DiagnosisEvidence Pydantic schema."""
+        if isinstance(ev, dict):
+            return {
+                "feature": ev.get("feature", "unknown"),
+                "value": ev.get("value", 0.0),
+                "threshold": ev.get("threshold", 0.0),
+                "direction": ev.get("direction", "unknown"),
+            }
+        return {"feature": "legacy", "value": str(ev), "threshold": 0.0, "direction": "N/A"}
+
     def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
         rule_results = self.rules.diagnose(features)
         ml_results = self.ml.predict(features) if self.ml.available else []
@@ -67,11 +78,13 @@ class HybridEngine:
             rule_conf = rule_dict[ftype]["confidence"] if ftype in rule_dict else 0.0
             ml_prob = ml_dict[ftype]["confidence"] if ftype in ml_dict else 0.0
 
-            evidence = []
+            raw_evidence = []
             if ftype in rule_dict:
-                evidence.extend(rule_dict[ftype].get("evidence", []))
+                raw_evidence.extend(rule_dict[ftype].get("evidence", []))
             if ftype in ml_dict and ftype not in rule_dict:
-                evidence.extend(ml_dict[ftype].get("evidence", []))
+                raw_evidence.extend(ml_dict[ftype].get("evidence", []))
+            
+            evidence = [self._format_evidence(e) for e in raw_evidence]
 
             if rule_conf > 0 and ml_prob > 0:
                 final = 0.65 * ml_prob + 0.35 * rule_conf
@@ -146,7 +159,11 @@ class HybridEngine:
                     evidence.extend(rule_dict[ftype].get("evidence", []))
                 if ftype in ml_dict and ftype not in rule_dict:
                     evidence.extend(ml_dict[ftype].get("evidence", []))
-                lead = evidence[0] if evidence else {}
+                
+                # Format hypotheses evidence as well
+                formatted_evidence = [self._format_evidence(e) for e in evidence]
+                lead = formatted_evidence[0] if formatted_evidence else {}
+                
                 hypotheses.append(
                     {
                         "failure_type": ftype,
@@ -188,6 +205,7 @@ class HybridEngine:
                 "final": final_diagnoses,
             }
 
+        # Temporal Arbitration Logic
         if merged_diagnoses and len(merged_diagnoses) > 1:
             timed_candidates = []
             for diag in merged_diagnoses:
@@ -283,3 +301,5 @@ class HybridEngine:
 
         set_explain([], {"reason": "no rule or ml diagnosis crossed thresholds"})
         return []
+
+             

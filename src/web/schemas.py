@@ -1,18 +1,21 @@
-from typing import Any
-
+from typing import Any, List, Optional
 from pydantic import BaseModel, ConfigDict
-
 
 class Metadata(BaseModel):
     filename: str
     duration: float
     vehicle: str
 
+class DiagnosisEvidence(BaseModel):
+    feature: str
+    value: Any
+    threshold: Any
+    direction: str
 
 class Diagnosis(BaseModel):
     failure_type: str
     confidence: float
-    evidence: list[dict]
+    evidence: List[DiagnosisEvidence] 
     recommendation: str
 
     model_config = ConfigDict(extra="allow")
