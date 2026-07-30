@@ -72,3 +72,28 @@ def test_default_known_failures_path_is_repo_relative(monkeypatch, tmp_path):
     assert Path(retrieval.known_failures_path).is_absolute()
     assert Path(retrieval.known_failures_path).exists()
     assert retrieval.known.get("failures")
+
+def test_empty_features_dict_returns_empty(tmp_path):
+    """Should return empty list for empty feature dictionary."""
+    retrieval = FailureRetrieval(str(tmp_path / "test.json"))
+
+    retrieval.add_known_failure(
+        {"vibe_z_max": 100.0},
+        "vibration_high"
+    )
+
+    res = retrieval.find_similar({})
+    assert res == []
+
+
+def test_zero_vectors_return_empty(tmp_path):
+    """Should safely handle stored zero vectors without crashing."""
+    retrieval = FailureRetrieval(str(tmp_path / "test.json"))
+
+    retrieval.add_known_failure(
+        {},
+        "vibration_high"
+    )
+
+    res = retrieval.find_similar({"vibe_z_max": 100.0})
+    assert res == []

@@ -25,7 +25,7 @@ class DerivedFeaturesExtractor:
         "gps_reliability_score"
     ]
 
-    def __init__(self, base_features: dict):
+    def __init__(self, base_features: dict[str, float]) -> None:
         """
         Initialize the extractor with base features.
 
@@ -35,7 +35,12 @@ class DerivedFeaturesExtractor:
         """
         self.base_features = base_features
 
-    def _safe_div(self, num, den, default=0.0) -> float:
+    def _safe_div(
+    self,
+    num: float,
+    den: float,
+    default: float = 0.0
+) -> float:
         """
         Safely divide two numbers, returning a default value if the denominator is invalid.
 
@@ -51,7 +56,7 @@ class DerivedFeaturesExtractor:
             return default
         return float(num) / float(den)
 
-    def extract(self) -> dict:
+    def extract(self) -> dict[str, float]:
         """
         Compute all derived features from base features.
 
