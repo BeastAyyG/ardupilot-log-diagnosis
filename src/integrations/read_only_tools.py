@@ -7,33 +7,46 @@ write access to the diagnostic engine.
 
 from __future__ import annotations
 
+import math
+from collections.abc import Mapping, Sequence
+from numbers import Integral, Real
 from typing import Any
 
-from src.analysis.operations_metrics import acceptance_report, compare_firmware_cohorts
-from src.analysis.operations_metrics import location_recurrence
+import numpy as np
+
+from src.analysis.aynalike import run_aynalike_checks
+from src.analysis.config_health import hardware_telemetry
+from src.analysis.health_score import calculate_health_score
 from src.analysis.methodic_review import review_methodic_step
 from src.analysis.mission_plan import mission_compliance_report, validate_mission
-from src.analysis.weather_video import build_video_overlay, video_overlay_text
+from src.analysis.operations_metrics import (
+    acceptance_report,
+    compare_firmware_cohorts,
+    location_recurrence,
+)
+from src.analysis.sensor_metrics import analyze_sensors
 from src.analysis.temporal import temporal_evidence
-from src.analysis.config_health import hardware_telemetry
-from src.analysis.aynalike import run_aynalike_checks
+from src.analysis.tuning_advanced import system_identification
+from src.analysis.tuning_metrics import analyze_tuning
+from src.analysis.weather_video import build_video_overlay, video_overlay_text
+from src.diagnosis.decision_policy import evaluate_decision
+from src.diagnosis.rule_engine import RuleEngine
+from src.features.pipeline import FeaturePipeline
 from src.fleet.alerts import evaluate_alerts
 from src.fleet.store import FleetStore
-from src.reporting.parameter_catalog import list_parameters, load_catalog, search_parameters, validate_parameter
-from src.reporting.plot_export import generate_plot
-from src.reporting.graph_pack import generate_graph_pack
-from src.reporting.artifacts import artifact_manifest
-from src.reporting.hardware import HardwareReportBuilder
-from src.analysis.sensor_metrics import analyze_sensors
-from src.analysis.tuning_metrics import analyze_tuning
-from src.analysis.tuning_advanced import system_identification
-from src.features.pipeline import FeaturePipeline
-from src.diagnosis.rule_engine import RuleEngine
-from src.diagnosis.decision_policy import evaluate_decision
-from src.analysis.health_score import calculate_health_score
 from src.parser.capabilities import get_capability_registry
 from src.parser.catalogue import get_catalogue_manifest
-
+from src.reporting.artifacts import artifact_manifest
+from src.reporting.graph_pack import generate_graph_pack
+from src.reporting.hardware import HardwareReportBuilder
+from src.reporting.parameter_catalog import (
+    list_parameters,
+    load_catalog,
+    search_parameters,
+    validate_parameter,
+)
+from src.reporting.parameter_diff import diff_parameters
+from src.reporting.plot_export import generate_plot
 
 TOOL_DEFINITIONS = [
     {"name": "capabilities", "description": "List supported formats and deterministic analysis capabilities.", "read_only": True},
@@ -69,11 +82,292 @@ TOOL_DEFINITIONS = [
     {"name": "generate_plot", "description": "Generate a headless base64 PNG from a canonical report.", "read_only": True},
     {"name": "generate_graph_pack", "description": "Generate a self-contained offline interactive HTML graph pack from a canonical report and optional parsed track.", "read_only": True},
     {"name": "artifact_manifest", "description": "Return hashes and counts for mission, fence, rally, Lua, and related logged artifacts.", "read_only": True},
+    {"name": "diagnose_flight_log", "description": "Diagnose supplied inline telemetry with the deterministic CITA-Nexus and canonical analysis paths.", "read_only": True},
+    {"name": "get_causal_dag", "description": "Build a deterministic causal DAG from supplied inline event evidence.", "read_only": True},
+    {"name": "get_param_diffs", "description": "Compare two supplied inline parameter maps without writing or loading files.", "read_only": True},
 ]
 
 
+_PATH_ARGUMENT_NAMES = {
+    "path",
+    "file",
+    "file_path",
+    "input_path",
+    "log_path",
+    "pdef_path",
+    "database_path",
+}
+
+
+def _tool_error(code: str, message: str) -> dict[str, Any]:
+    return {
+        "schema_version": "read-only-tool-error.v1",
+        "status": "invalid_argument",
+        "error": message,
+        "code": code,
+        "read_only": True,
+    }
+
+
+def _reject_path_arguments(arguments: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Reject path-shaped request fields before any helper can touch disk."""
+
+    for key in arguments:
+        normalized = str(key).strip().lower()
+        if normalized in _PATH_ARGUMENT_NAMES or normalized.endswith("_path"):
+            return _tool_error("PATH_ARGUMENT_REJECTED", f"Filesystem path arguments are not accepted: {key}")
+    return None
+
+
+def _json_safe(value: Any) -> Any:
+    """Normalize results from NumPy-backed helpers to JSON primitives."""
+
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return _json_safe(value.item())
+    if isinstance(value, Mapping):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, set):
+        return [_json_safe(item) for item in sorted(value, key=repr)]
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, (str, int, bool)) or value is None:
+        return value
+    return str(value)
+
+
+def _mapping_argument(arguments: Mapping[str, Any], name: str, *, required: bool = False) -> dict[str, Any] | None:
+    value = arguments.get(name)
+    if value is None:
+        if required:
+            return _tool_error("MISSING_ARGUMENT", f"{name} is required")
+        return None
+    if not isinstance(value, Mapping):
+        return _tool_error("INVALID_ARGUMENT", f"{name} must be an object")
+    return dict(value)
+
+
+def _finite_option(arguments: Mapping[str, Any], name: str, default: float, *, minimum: float | None = None, maximum: float | None = None) -> float | dict[str, Any]:
+    value = arguments.get(name, default)
+    if isinstance(value, bool) or not isinstance(value, Real):
+        return _tool_error("INVALID_ARGUMENT", f"{name} must be numeric")
+    value = float(value)
+    if not math.isfinite(value) or (minimum is not None and value < minimum) or (maximum is not None and value > maximum):
+        return _tool_error("INVALID_ARGUMENT", f"{name} is outside its supported range")
+    return value
+
+
+def _integer_option(arguments: Mapping[str, Any], name: str, default: int, *, minimum: int = 1) -> int | dict[str, Any]:
+    value = arguments.get(name, default)
+    if isinstance(value, bool) or not isinstance(value, Integral) or int(value) < minimum:
+        return _tool_error("INVALID_ARGUMENT", f"{name} must be an integer >= {minimum}")
+    return int(value)
+
+
+def _series_value(source: Mapping[str, Any], *names: str) -> Any:
+    for name in names:
+        if name in source:
+            return source[name]
+    return None
+
+
+def _diagnose_flight_log(arguments: Mapping[str, Any]) -> dict[str, Any]:
+    parsed = _mapping_argument(arguments, "parsed", required=True)
+    if isinstance(parsed, dict) and "error" in parsed and parsed.get("code"):
+        return parsed
+    assert isinstance(parsed, dict)
+
+    if not parsed:
+        return {
+            "schema_version": "diagnose-flight-log.v1",
+            "status": "insufficient_data",
+            "components": {},
+            "provenance": {"input": "inline_parsed", "reason": "No telemetry or canonical features were supplied."},
+            "read_only": True,
+        }
+
+    components: dict[str, Any] = {}
+    try:
+        canonical = dispatch_tool("analyze_log", {"parsed": parsed})
+        components["canonical_analysis"] = {
+            "status": "reliable" if parsed.get("messages") or parsed.get("features") else "insufficient_data",
+            "report": canonical,
+        }
+    except (KeyError, TypeError, ValueError) as exc:
+        return _tool_error("INVALID_ARGUMENT", f"parsed telemetry cannot be analyzed: {exc}")
+
+    from src.core.causality.cita_dag import build_cita_dag
+    from src.core.causality.impact_boundary import detect_impact_boundary
+    from src.core.dynamics.welch_fft import extract_welch_psd
+    from src.core.reasoning.rule_matrix_44 import evaluate_rule_matrix
+
+    times = _series_value(arguments, "times_us")
+    acceleration = _series_value(arguments, "acceleration", "acceleration_body")
+    velocity = _series_value(arguments, "velocity", "velocity_body")
+    times = times if times is not None else _series_value(parsed, "times_us")
+    acceleration = acceleration if acceleration is not None else _series_value(parsed, "acceleration", "acceleration_body")
+    velocity = velocity if velocity is not None else _series_value(parsed, "velocity", "velocity_body")
+
+    impact_result = None
+    if times is not None or acceleration is not None:
+        if times is None or acceleration is None:
+            return _tool_error("INVALID_ARGUMENT", "times_us and acceleration must be supplied together")
+        try:
+            impact_result = detect_impact_boundary(times, acceleration, velocity)
+        except (TypeError, ValueError) as exc:
+            return _tool_error("INVALID_ARGUMENT", f"impact evidence is invalid: {exc}")
+        components["impact_boundary"] = {"status": "reliable", "result": impact_result.as_dict()}
+
+    events = arguments.get("events", parsed.get("events"))
+    if events is not None:
+        if not isinstance(events, Mapping):
+            return _tool_error("INVALID_ARGUMENT", "events must be an object keyed by event name")
+        dependencies = arguments.get("dependencies")
+        if dependencies is not None:
+            if not isinstance(dependencies, Sequence) or isinstance(dependencies, (str, bytes)):
+                return _tool_error("INVALID_ARGUMENT", "dependencies must be a list of [source, target] pairs")
+            normalized_dependencies: list[tuple[str, str]] = []
+            for dependency in dependencies:
+                if not isinstance(dependency, Sequence) or isinstance(dependency, (str, bytes)) or len(dependency) != 2:
+                    return _tool_error("INVALID_ARGUMENT", "dependencies must contain two-item pairs")
+                normalized_dependencies.append((str(dependency[0]), str(dependency[1])))
+            dependencies = normalized_dependencies
+        impact_boundary_us = arguments.get("impact_boundary_us")
+        if impact_boundary_us is None and impact_result is not None:
+            impact_boundary_us = impact_result.impact_time_us
+        try:
+            dag = build_cita_dag(events, dependencies=dependencies, impact_boundary_us=impact_boundary_us)
+        except (TypeError, ValueError) as exc:
+            return _tool_error("INVALID_ARGUMENT", f"causal evidence is invalid: {exc}")
+        components["causal_dag"] = {"status": "reliable" if dag.nodes else "insufficient_data", "result": dag.as_dict()}
+
+    signal = _series_value(arguments, "vibration", "vibe", "signal")
+    signal = signal if signal is not None else _series_value(parsed, "vibration", "vibe", "signal")
+    if signal is not None:
+        sample_rate = arguments.get("sample_rate_hz", parsed.get("sample_rate_hz"))
+        if sample_rate is None:
+            components["vibration"] = {"status": "insufficient_data", "reason": "sample_rate_hz is required for spectral evidence."}
+        else:
+            rate = _finite_option({"sample_rate_hz": sample_rate}, "sample_rate_hz", 0.0, minimum=np.finfo(float).eps)
+            if isinstance(rate, dict):
+                return rate
+            try:
+                signal_size = int(np.asarray(signal).size)
+            except (TypeError, ValueError):
+                signal_size = 0
+            nperseg = _integer_option(arguments, "nperseg", min(1024, max(4, signal_size)), minimum=4)
+            if isinstance(nperseg, dict):
+                return nperseg
+            try:
+                spectrum = extract_welch_psd(signal, rate, nperseg=nperseg)
+            except (TypeError, ValueError) as exc:
+                return _tool_error("INVALID_ARGUMENT", f"vibration evidence is invalid: {exc}")
+            components["vibration"] = {"status": "reliable" if spectrum.peaks else "insufficient_data", "result": spectrum.as_dict()}
+
+    feature_source = parsed.get("features")
+    if isinstance(feature_source, Mapping):
+        findings = evaluate_rule_matrix(dict(feature_source))
+        components["rule_matrix_44"] = {
+            "status": "reliable" if findings else "insufficient_data",
+            "findings": [_json_safe(finding.as_dict()) for finding in findings],
+            "rule_count": 44,
+        }
+
+    statuses = [str(value.get("status")) for value in components.values() if isinstance(value, Mapping)]
+    reliable_count = statuses.count("reliable")
+    status = "reliable" if reliable_count and reliable_count == len(statuses) else "degraded" if reliable_count else "insufficient_data"
+    return _json_safe({
+        "schema_version": "diagnose-flight-log.v1",
+        "status": status,
+        "components": components,
+        "provenance": {
+            "input": "inline_parsed",
+            "methods": ["canonical_analysis", "impact_boundary", "cita_dag", "welch_fft", "rule_matrix_44"],
+            "claims_require_evidence": True,
+        },
+        "read_only": True,
+    })
+
+
+def _get_causal_dag(arguments: Mapping[str, Any]) -> dict[str, Any]:
+    events = _mapping_argument(arguments, "events", required=True)
+    if isinstance(events, dict) and "error" in events and events.get("code"):
+        return events
+    assert isinstance(events, dict)
+    if not events:
+        return {
+            "schema_version": "get-causal-dag.v1",
+            "status": "insufficient_data",
+            "causal_dag": None,
+            "provenance": {"input": "inline_events", "reason": "At least one event is required."},
+            "read_only": True,
+        }
+    dependencies = arguments.get("dependencies")
+    if dependencies is not None:
+        if not isinstance(dependencies, Sequence) or isinstance(dependencies, (str, bytes)):
+            return _tool_error("INVALID_ARGUMENT", "dependencies must be a list of [source, target] pairs")
+        normalized_dependencies: list[tuple[str, str]] = []
+        for dependency in dependencies:
+            if not isinstance(dependency, Sequence) or isinstance(dependency, (str, bytes)) or len(dependency) != 2:
+                return _tool_error("INVALID_ARGUMENT", "dependencies must contain two-item pairs")
+            normalized_dependencies.append((str(dependency[0]), str(dependency[1])))
+        dependencies = normalized_dependencies
+    from src.core.causality.cita_dag import build_cita_dag
+
+    try:
+        dag = build_cita_dag(events, dependencies=dependencies, impact_boundary_us=arguments.get("impact_boundary_us"))
+    except (TypeError, ValueError) as exc:
+        return _tool_error("INVALID_ARGUMENT", f"causal evidence is invalid: {exc}")
+    return _json_safe({
+        "schema_version": "get-causal-dag.v1",
+        "status": "reliable" if dag.nodes else "insufficient_data",
+        "causal_dag": dag.as_dict(),
+        "provenance": {"input": "inline_events", "method": "time-lagged-deterministic"},
+        "read_only": True,
+    })
+
+
+def _get_param_diffs(arguments: Mapping[str, Any]) -> dict[str, Any]:
+    before = _mapping_argument(arguments, "before", required=True)
+    if isinstance(before, dict) and "error" in before and before.get("code"):
+        return before
+    after = _mapping_argument(arguments, "after", required=True)
+    if isinstance(after, dict) and "error" in after and after.get("code"):
+        return after
+    assert isinstance(before, dict) and isinstance(after, dict)
+    tolerance = _finite_option(arguments, "tolerance", 1e-6, minimum=0.0, maximum=1.0)
+    if isinstance(tolerance, dict):
+        return tolerance
+    include_unchanged = arguments.get("include_unchanged", False)
+    if not isinstance(include_unchanged, bool):
+        return _tool_error("INVALID_ARGUMENT", "include_unchanged must be boolean")
+    diff = diff_parameters(before, after, tolerance=tolerance, include_unchanged=include_unchanged)
+    return _json_safe({
+        "schema_version": "get-param-diffs.v1",
+        "status": "reliable",
+        "diff": diff,
+        "provenance": {"input": "inline_parameter_maps", "method": "semantic-deterministic-diff"},
+        "read_only": True,
+    })
+
+
 def dispatch_tool(name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-    arguments = arguments or {}
+    if arguments is None:
+        arguments = {}
+    if not isinstance(arguments, dict):
+        return _tool_error("INVALID_ARGUMENT", "arguments must be an object")
+    if name in {"diagnose_flight_log", "get_causal_dag", "get_param_diffs"}:
+        rejected = _reject_path_arguments(arguments)
+        if rejected is not None:
+            return rejected
+        if name == "diagnose_flight_log":
+            return _diagnose_flight_log(arguments)
+        if name == "get_causal_dag":
+            return _get_causal_dag(arguments)
+        return _get_param_diffs(arguments)
     if name in {"capabilities", "list_platforms"}:
         return {"schema_version": "capabilities.v1", "capabilities": get_capability_registry()}
     if name == "catalogue_coverage":

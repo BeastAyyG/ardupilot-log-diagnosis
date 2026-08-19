@@ -1,9 +1,26 @@
 from __future__ import annotations
 
 import argparse
-import importlib.metadata
 import sys
-from .commands import COMMAND_MODULES
+
+_SOURCE_CHECKOUT_VERSION = "0+source"
+
+
+def _command_modules():
+    """Load command implementations only when a parser is actually built."""
+
+    from .commands import COMMAND_MODULES
+
+    return COMMAND_MODULES
+
+
+def _distribution_version() -> str:
+    from importlib import metadata
+
+    try:
+        return metadata.version("ardupilot-log-diagnosis")
+    except metadata.PackageNotFoundError:
+        return _SOURCE_CHECKOUT_VERSION
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -11,11 +28,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"ardupilot-log-diagnosis, version {importlib.metadata.version('ardupilot-log-diagnosis')}"
+        version=f"ardupilot-log-diagnosis, version {_distribution_version()}",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    for module in COMMAND_MODULES:
+    for module in _command_modules():
         module.register(subparsers)
 
     return parser

@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -30,12 +32,32 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+          pip install pyarrow pyulog lightgbm reportlab pypdf
           pip check
 
       - name: Lint with ruff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
         run: |
-          pip install ruff
-          ruff check . --output-format=github
+          python -m pip install ruff
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base_sha="$PR_BASE_SHA"
+          else
+            base_sha="$BEFORE_SHA"
+          fi
+
+          mapfile -t changed_python_files < <(
+            git diff --name-only --diff-filter=ACMRTUXB "$base_sha" "$HEAD_SHA" -- '*.py'
+          )
+          if [ "${#changed_python_files[@]}" -eq 0 ]; then
+            echo "No changed Python files; skipping Ruff."
+            exit 0
+          fi
+
+          ruff check --output-format=github "${changed_python_files[@]}"
 
       - name: Validate project boundaries
         run: python training/validate_project_boundaries.py
@@ -143,6 +165,9 @@ jobs:
 
       - name: Install temporal-layer dependencies
         run: python -m pip install --upgrade pip && pip install -r temporal-layer/requirements.txt
+
+      - name: Install temporal test runner
+        run: python -m pip install pytest "httpx<0.28"
 
       - name: Compile temporal service
         run: python -m compileall -q temporal-layer

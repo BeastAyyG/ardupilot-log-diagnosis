@@ -1,16 +1,23 @@
-import os
-import json
 import hashlib
-import numpy as np
+import json
+import os
 from typing import Any, cast
+
+import numpy as np
+
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.contracts import DiagnosisDict, FeatureDict
 from src.runtime_paths import MODELS_DIR, resolve_repo_path
 
-try:
-    import joblib
-except Exception:
-    joblib = None
+
+def _load_joblib():
+    """Load the optional model loader only when a classifier is constructed."""
+
+    try:
+        import joblib
+    except Exception:  # noqa: BLE001 - optional ML support must never be fatal
+        return None
+    return joblib
 
 
 DEFAULT_PROB_THRESHOLD = 0.55
@@ -55,8 +62,20 @@ class MLClassifier:
         self.unavailable_reason = "ml artifacts not loaded"
         self.unsupported_labels: list[str] = list(VALID_LABELS)
         self.inference_window_config = dict(DEFAULT_INFERENCE_WINDOW_CONFIG)
+        self.feature_columns: list[str] = []
+        self.label_columns: list[str] = []
+
+        try:
+            self.feature_columns = self._load_schema_columns(self.features_path)
+        except (OSError, ValueError):
+            pass
+        try:
+            self.label_columns = self._load_schema_columns(self.labels_path)
+        except (OSError, ValueError):
+            pass
 
         self.available = False
+        joblib = _load_joblib()
         if joblib is None:
             self.unavailable_reason = "joblib unavailable"
             return
@@ -77,10 +96,6 @@ class MLClassifier:
                     self.model = loaded_model
 
                 self.scaler = joblib.load(self.scaler_path)
-                with open(self.features_path, "r") as f:
-                    self.feature_columns = json.load(f)
-                with open(self.labels_path, "r") as f:
-                    self.label_columns = json.load(f)
                 self.unsupported_labels = sorted(
                     set(VALID_LABELS) - set(self.label_columns)
                 )
@@ -97,11 +112,21 @@ class MLClassifier:
                     self.unavailable_reason = (
                         "available" if self.available else "manifest schema mismatch"
                     )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - corrupt optional artifacts are non-fatal
                 self.unavailable_reason = f"failed to load ml artifacts: {exc}"
                 self.available = False
         else:
             self.unavailable_reason = "missing classifier, scaler, schema, or manifest artifact"
+
+    @staticmethod
+    def _load_schema_columns(path: str) -> list[str]:
+        with open(path, "r", encoding="utf-8") as file_obj:
+            columns = json.load(file_obj)
+        if not isinstance(columns, list) or not all(
+            isinstance(column, str) for column in columns
+        ):
+            raise ValueError(f"schema at {path} must be a list of strings")
+        return columns
 
     def _hash_json_list(self, values: list[str]) -> str:
         payload = json.dumps(values, sort_keys=True).encode()
