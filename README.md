@@ -285,13 +285,15 @@ used when Docker was unavailable.
 | Metric | Target SLA | Measured result | Status |
 |---|---:|---:|---|
 | **CLI import overhead** | Minimal | **3.53 ms** | ✅ PASS |
-| **Cold-start diagnosis** | < 250.0 ms | **233.5 ms** | ✅ PASS |
+| **Cold-start diagnosis** | < 250.0 ms | **243.5 ms** | ✅ PASS |
 | **Ingestion latency** | < 200.0 ms | **103.0 ms** | ✅ PASS |
 | **Steady-state diagnosis** | < 250.0 ms | **69.6 ms** | ✅ PASS |
 | **Peak memory allocation** | < 200.0 MiB | **162.8 MiB** | ✅ PASS |
 | **Parallel batch throughput** | > 30.0 logs/s | **1,077.9 logs/s** | ✅ PASS |
 | **Local SITL fallback** | > 900 logs/h | **104,426 logs/h** | ✅ PASS |
 | **Comprehensive test suite** | All core tests passing | **106 passed, 1 skipped** | ✅ PASS |
+
+Windows host startup is variable: the observed repeat range was 243.6–252.4 ms, with 3/4 samples under the strict gate. This is a representative measurement rather than a percentile SLA.
 
 The benchmark command is:
 
