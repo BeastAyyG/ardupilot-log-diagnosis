@@ -62,6 +62,17 @@ class MLClassifier:
         self.unavailable_reason = "ml artifacts not loaded"
         self.unsupported_labels: list[str] = list(VALID_LABELS)
         self.inference_window_config = dict(DEFAULT_INFERENCE_WINDOW_CONFIG)
+        self.feature_columns: list[str] = []
+        self.label_columns: list[str] = []
+
+        try:
+            self.feature_columns = self._load_schema_columns(self.features_path)
+        except (OSError, ValueError):
+            pass
+        try:
+            self.label_columns = self._load_schema_columns(self.labels_path)
+        except (OSError, ValueError):
+            pass
 
         self.available = False
         joblib = _load_joblib()
@@ -85,10 +96,6 @@ class MLClassifier:
                     self.model = loaded_model
 
                 self.scaler = joblib.load(self.scaler_path)
-                with open(self.features_path, "r") as f:
-                    self.feature_columns = json.load(f)
-                with open(self.labels_path, "r") as f:
-                    self.label_columns = json.load(f)
                 self.unsupported_labels = sorted(
                     set(VALID_LABELS) - set(self.label_columns)
                 )
@@ -110,6 +117,16 @@ class MLClassifier:
                 self.available = False
         else:
             self.unavailable_reason = "missing classifier, scaler, schema, or manifest artifact"
+
+    @staticmethod
+    def _load_schema_columns(path: str) -> list[str]:
+        with open(path, "r", encoding="utf-8") as file_obj:
+            columns = json.load(file_obj)
+        if not isinstance(columns, list) or not all(
+            isinstance(column, str) for column in columns
+        ):
+            raise ValueError(f"schema at {path} must be a list of strings")
+        return columns
 
     def _hash_json_list(self, values: list[str]) -> str:
         payload = json.dumps(values, sort_keys=True).encode()
