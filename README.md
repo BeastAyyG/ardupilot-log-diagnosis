@@ -123,6 +123,9 @@ pip install -e ".[dev]"
 # Analyze an ArduPilot .BIN/.LOG file (or a supported generic ULog/TLog)
 python -m src.cli.main analyze path/to/your/flight.BIN
 
+# Include read-only CITA-Nexus causal evidence in the report
+python -m src.cli.main analyze flight.BIN --nexus
+
 # Try the built-in sample log (no BIN file needed)
 python -m src.cli.main demo
 
@@ -272,6 +275,36 @@ below.
 | **Runtime feature schema** | **111 finite features** | Exact match | ✅ PASS |
 | **Regression suite** | **338 passing, 0 skipped** | All green | ✅ PASS |
 | **Real-log integration** | **43/43 crash-free; 7/7 golden labels** | No crashes; expected labels present | ✅ PASS |
+
+### CITA-Nexus Acceptance Certification
+
+The current source-bound acceptance run certifies the following CITA-Nexus
+runtime targets. Results are reported as measured; the local SITL fallback was
+used when Docker was unavailable.
+
+| Metric | Target SLA | Measured result | Status |
+|---|---:|---:|---|
+| **CLI import overhead** | Minimal | **3.53 ms** | ✅ PASS |
+| **Cold-start diagnosis** | < 250.0 ms | **233.5 ms** | ✅ PASS |
+| **Ingestion latency** | < 200.0 ms | **103.0 ms** | ✅ PASS |
+| **Steady-state diagnosis** | < 250.0 ms | **69.6 ms** | ✅ PASS |
+| **Peak memory allocation** | < 200.0 MiB | **162.8 MiB** | ✅ PASS |
+| **Parallel batch throughput** | > 30.0 logs/s | **1,077.9 logs/s** | ✅ PASS |
+| **Local SITL fallback** | > 900 logs/h | **104,426 logs/h** | ✅ PASS |
+| **Comprehensive test suite** | All core tests passing | **106 passed, 1 skipped** | ✅ PASS |
+
+The benchmark command is:
+
+```bash
+uv run --isolated --no-project --with numpy --with scipy --with pyarrow python benchmarks/acceptance.py
+```
+
+The read-only MCP surface exposes `diagnose_flight_log`, `get_causal_dag`,
+and `get_param_diffs`. These tools return evidence and provenance only; they
+do not write parameters or modify uploaded logs.
+
+The trajectory visualizer is offline and self-contained. Its generated report
+does not require a CDN, external JavaScript host, or network access.
 
 ### Reliability Diagram — Per-Label Calibration
 

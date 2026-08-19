@@ -1,16 +1,23 @@
-import os
-import json
 import hashlib
-import numpy as np
+import json
+import os
 from typing import Any, cast
+
+import numpy as np
+
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.contracts import DiagnosisDict, FeatureDict
 from src.runtime_paths import MODELS_DIR, resolve_repo_path
 
-try:
-    import joblib
-except Exception:
-    joblib = None
+
+def _load_joblib():
+    """Load the optional model loader only when a classifier is constructed."""
+
+    try:
+        import joblib
+    except Exception:  # noqa: BLE001 - optional ML support must never be fatal
+        return None
+    return joblib
 
 
 DEFAULT_PROB_THRESHOLD = 0.55
@@ -57,6 +64,7 @@ class MLClassifier:
         self.inference_window_config = dict(DEFAULT_INFERENCE_WINDOW_CONFIG)
 
         self.available = False
+        joblib = _load_joblib()
         if joblib is None:
             self.unavailable_reason = "joblib unavailable"
             return
@@ -97,7 +105,7 @@ class MLClassifier:
                     self.unavailable_reason = (
                         "available" if self.available else "manifest schema mismatch"
                     )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - corrupt optional artifacts are non-fatal
                 self.unavailable_reason = f"failed to load ml artifacts: {exc}"
                 self.available = False
         else:
