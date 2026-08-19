@@ -32,6 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+          pip install pyarrow pyulog lightgbm reportlab pypdf
           pip check
 
       - name: Lint with ruff
@@ -166,7 +167,7 @@ jobs:
         run: python -m pip install --upgrade pip && pip install -r temporal-layer/requirements.txt
 
       - name: Install temporal test runner
-        run: python -m pip install pytest
+        run: python -m pip install pytest httpx
 
       - name: Compile temporal service
         run: python -m compileall -q temporal-layer
