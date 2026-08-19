@@ -7,6 +7,14 @@ Does NOT require pytest. Run directly: python3 tests/run_integration_check.py
 import sys
 from pathlib import Path
 
+# Keep the standalone integration runner usable on Windows consoles whose
+# legacy code page cannot render the check/cross symbols used in its report.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
+
 # Ensure project root is on the path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

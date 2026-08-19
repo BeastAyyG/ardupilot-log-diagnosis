@@ -7,6 +7,8 @@ from typing import Any, Sequence
 
 from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
+from src.parser.file_format import detect_file_format, supported_format_kinds
+from src.analysis.windowing import extract_ml_feature_candidates
 
 
 def print_explain_box(
@@ -100,7 +102,49 @@ def load_features(logfile: str) -> dict[str, Any]:
     return features
 
 
+def diagnose_with_windowed_ml(
+    engine: Any, parsed: dict[str, Any], features: dict[str, Any]
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Use the artifact's training-time window contract when ML is available."""
+    classifier = getattr(engine, "ml", None)
+    window_config = (
+        classifier.get_inference_window_config()
+        if getattr(classifier, "available", False)
+        else {}
+    )
+    if not getattr(classifier, "available", False) or not window_config.get("verified", False):
+        return engine.diagnose(features), {
+            "aggregation": "full_log",
+            "candidate_count": 1,
+            "source": (
+                "legacy_model_window_contract_missing"
+                if getattr(classifier, "available", False)
+                else "rule_only_or_ml_unavailable"
+            ),
+        }
+
+    pipeline = FeaturePipeline()
+    window_features, info = extract_ml_feature_candidates(
+        parsed,
+        pipeline,
+        window_config,
+        full_features=features,
+    )
+    return engine.diagnose(features, window_features=window_features), info
+
+
 def ensure_extraction_success(logfile: str, features: dict[str, Any]) -> None:
+    path = Path(logfile)
+    if path.exists():
+        detected = detect_file_format(path)
+        if detected.get("format") in {"text_log", "px4_ulog", "mavlink_tlog", "betaflight_bbl"} and not detected.get("supported", False):
+            print("\n[ERROR] UNSUPPORTED_FORMAT")
+            print(f"  Detected: {detected.get('format_name', 'unknown format')}")
+            print(f"  Runtime-supported adapters: {', '.join(supported_format_kinds()) or 'none'}")
+            if detected.get("unsupported_reason"):
+                print(f"  Reason: {detected['unsupported_reason']}")
+            print("  Use `python -m src.cli.main capabilities` to inspect the capability registry.")
+            sys.exit(2)
     metadata = features.get("_metadata", {})
     if metadata.get("extraction_success", True):
         return
@@ -110,7 +154,7 @@ def ensure_extraction_success(logfile: str, features: dict[str, Any]) -> None:
     print(f"  Duration:  {metadata.get('duration_sec', 0):.0f}s")
     print(f"  Messages:  {metadata.get('messages_found', [])}")
     print("  This log appears to be empty or corrupt. No diagnosis produced.")
-    print("  Verify the file is a valid ArduPilot .BIN dataflash log.")
+    print("  Verify the file is a valid supported flight log (ArduPilot .BIN/.LOG, PX4 .ULG/.ULOG, MAVLink .TLOG, or optional Blackbox .BBL/.BFL).")
     sys.exit(2)
 
 

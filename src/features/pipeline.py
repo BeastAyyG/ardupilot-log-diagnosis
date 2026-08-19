@@ -1,4 +1,5 @@
 import time
+import math
 from typing import cast
 from .vibration import VibrationExtractor
 from .compass import CompassExtractor
@@ -12,6 +13,7 @@ from .control import ControlExtractor
 from .system import SystemExtractor
 from .events import EventExtractor
 from .fft_analysis import FFTExtractor
+from .derived_features import DerivedFeaturesExtractor
 from src.contracts import FeatureDict, ParsedLog
 from src.diagnosis.log_quality import LogQualityEngine
 
@@ -46,9 +48,12 @@ class FeaturePipeline:
             }
             return [extractor for extractor in self.extractors if extractor not in disabled]
         if vehicle_type == "sub":
+            # Sub vehicles still expose RCOU/CTUN actuator telemetry.  Keep
+            # motor/thrust extraction enabled so propulsion faults are not
+            # silently discarded; only aircraft-specific GPS/control/FFT
+            # extractors are disabled here.
             disabled = {
                 GPSExtractor,
-                MotorExtractor,
                 ControlExtractor,
                 FFTExtractor,
             }
@@ -76,6 +81,19 @@ class FeaturePipeline:
                 features = {}
             all_features.update(features)
 
+        all_features.update(DerivedFeaturesExtractor(all_features).extract())
+
+        # Feature vectors are consumed by rules, sklearn, exports, and the
+        # web API. Normalise missing/non-finite parser values once at this
+        # boundary so every downstream consumer receives a stable numeric
+        # schema rather than each silently applying different imputation.
+        for name in self.get_feature_names():
+            try:
+                numeric = float(all_features.get(name, 0.0))
+            except (TypeError, ValueError, OverflowError):
+                numeric = 0.0
+            all_features[name] = numeric if math.isfinite(numeric) else 0.0
+
         extraction_time = time.time() - start_time
 
         # Determine if extraction produced meaningful data.
@@ -95,6 +113,7 @@ class FeaturePipeline:
 
         all_features["_metadata"] = {
             "log_file": parsed_log.get("metadata", {}).get("filepath", "unknown"),
+            "file_format": parsed_log.get("metadata", {}).get("file_format"),
             "duration_sec": duration,
             "vehicle_type": parsed_log.get("metadata", {}).get(
                 "vehicle_type", "Unknown"
@@ -107,9 +126,18 @@ class FeaturePipeline:
             "extraction_time_sec": float(extraction_time),
             "total_features": len([k for k in all_features if not k.startswith("_")]),
             "auto_labels": evt_auto_labels,
+            "detailed_pid_logging": bool(
+                messages.get("PTUN")
+                or messages.get("PIDR")
+                or messages.get("PIDP")
+                or messages.get("PIDY")
+            ),
             "extraction_success": extraction_success,
             "quality_report": quality_report,
         }
+        for window_key in ("window_start", "window_end"):
+            if window_key in parsed_log.get("metadata", {}):
+                all_features["_metadata"][window_key] = parsed_log["metadata"][window_key]
 
         return cast(FeatureDict, all_features)
 
@@ -118,4 +146,5 @@ class FeaturePipeline:
         names = []
         for Ext in self.extractors:
             names.extend(Ext.FEATURE_NAMES)
+        names.extend(DerivedFeaturesExtractor.FEATURE_NAMES)
         return names

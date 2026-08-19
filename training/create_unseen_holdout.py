@@ -13,6 +13,24 @@ import shutil
 from collections import Counter
 from pathlib import Path
 
+import sys
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from training.data_contract import canonical_source_group
+
+
+def _merge_nonempty(base: dict, override: dict) -> dict:
+    """Merge benchmark metadata without erasing manifest provenance."""
+
+    merged = dict(base)
+    for key, value in override.items():
+        if str(value or "").strip():
+            merged[key] = value
+    return merged
+
 
 def _load_json(path: Path):
     with path.open("r", encoding="utf-8") as f:
@@ -73,9 +91,14 @@ def main() -> None:
     args = parser.parse_args()
 
     excluded_hashes = set()
+    excluded_source_groups = set()
     for batch in args.exclude_batches:
         manifest = _load_verified_manifest(batch)
-        excluded_hashes.update(row["sha256"] for row in manifest.values())
+        for row in manifest.values():
+            excluded_hashes.add(row["sha256"])
+            excluded_source_groups.add(
+                canonical_source_group(row, row.get("file_name", ""))
+            )
 
     output_root = Path(args.output_root)
     dataset_out = output_root / "dataset"
@@ -84,6 +107,7 @@ def main() -> None:
     selected_logs = []
     selected_hashes = set()
     skipped_overlap = 0
+    skipped_incident_overlap = 0
     skipped_missing = 0
 
     for batch in args.candidate_batches:
@@ -101,6 +125,15 @@ def main() -> None:
             sha = row["sha256"]
             if sha in excluded_hashes or sha in selected_hashes:
                 skipped_overlap += 1
+                continue
+
+            # Keep manifest provenance when the benchmark JSON omits or leaves
+            # a field blank.  A blind ``{**row, **log}`` merge would replace a
+            # valid source URL with an empty value and re-open incident leakage.
+            merged = _merge_nonempty(row, log)
+            source_group = canonical_source_group(merged, filename)
+            if source_group in excluded_source_groups:
+                skipped_incident_overlap += 1
                 continue
 
             src_path = dataset_dir / filename
@@ -121,6 +154,7 @@ def main() -> None:
                     "resolved_download_url": row.get("resolved_download_url", ""),
                     "sha256": sha,
                     "origin_batch": batch,
+                    "source_group": source_group,
                 }
             )
 
@@ -140,6 +174,7 @@ def main() -> None:
             "label_distribution": dict(sorted(label_counter.items())),
             "origin_batch_distribution": dict(sorted(batch_counter.items())),
             "skipped_overlap": skipped_overlap,
+            "skipped_incident_overlap": skipped_incident_overlap,
             "skipped_missing": skipped_missing,
         },
         "logs": [
@@ -149,6 +184,7 @@ def main() -> None:
                 "source_url": item["source_url"],
                 "source_type": item["source_type"],
                 "confidence": "medium",
+                "source_group": item["source_group"],
             }
             for item in selected_logs
         ],
@@ -171,6 +207,7 @@ def main() -> None:
         f"- Candidate batches: `{', '.join(args.candidate_batches)}`",
         f"- Selected unseen logs: **{len(selected_logs)}**",
         f"- Skipped due to overlap: **{skipped_overlap}**",
+        f"- Skipped due to source-incident overlap: **{skipped_incident_overlap}**",
         f"- Skipped due to missing mapping/files: **{skipped_missing}**",
         "",
         "## Label Distribution",
@@ -209,6 +246,7 @@ def main() -> None:
     print(f"output_root={output_root}")
     print(f"selected_logs={len(selected_logs)}")
     print(f"skipped_overlap={skipped_overlap}")
+    print(f"skipped_incident_overlap={skipped_incident_overlap}")
     print(f"skipped_missing={skipped_missing}")
     print(f"ground_truth={gt_path}")
     print(f"report={report_path}")

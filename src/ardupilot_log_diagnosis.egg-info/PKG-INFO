@@ -14,16 +14,19 @@ Classifier: Programming Language :: Python :: 3.12
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 Requires-Dist: pymavlink>=2.0.0
+Requires-Dist: pyulog>=1.2.3
 Requires-Dist: requests>=2.28.0
 Requires-Dist: numpy>=1.21.0
 Requires-Dist: scipy>=1.7.0
-Requires-Dist: scikit-learn>=1.0.0
-Requires-Dist: xgboost>=1.5.0
+Requires-Dist: scikit-learn==1.8.0
+Requires-Dist: xgboost==3.2.0
 Requires-Dist: joblib>=1.1.0
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: pandas>=1.3.0
-Requires-Dist: imbalanced-learn>=0.9.0
+Requires-Dist: pyarrow>=14.0.0
+Requires-Dist: imbalanced-learn==0.14.2
 Requires-Dist: matplotlib>=3.5.0
+Requires-Dist: reportlab>=4.0.0
 Requires-Dist: python-dotenv>=0.19.0
 Requires-Dist: tqdm>=4.64.0
 Provides-Extra: dev
@@ -43,6 +46,8 @@ Provides-Extra: forum
 Requires-Dist: scrapegraph-py>=1.0.0; extra == "forum"
 Requires-Dist: crawlbase>=1.0.0; extra == "forum"
 Requires-Dist: scraperai>=0.1.0; extra == "forum"
+Provides-Extra: blackbox
+Requires-Dist: orangebox>=0.5.0; extra == "blackbox"
 
 <div align="center">
 
@@ -51,11 +56,11 @@ Requires-Dist: scraperai>=0.1.0; extra == "forum"
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 176 Passing](https://img.shields.io/badge/tests-176%20passing-brightgreen)](tests/)
-[![Macro F1: 1.00](https://img.shields.io/badge/Macro%20F1-1.00-blueviolet)](#-production-benchmark-results)
+[![Tests: 264 Passing](https://img.shields.io/badge/tests-264%20passing-brightgreen)](tests/)
+[![Macro F1: 0.723](https://img.shields.io/badge/Macro%20F1-0.723-blueviolet)](#-production-benchmark-results)
 [![GSoC 2026](https://img.shields.io/badge/GSoC%202026-Ready-purple)](docs/GSOC_2026_Application.md)
 
-**An end-to-end AI diagnostic pipeline for ArduPilot `.BIN` dataflash logs.**
+**An end-to-end, read-only diagnostic pipeline for ArduPilot DataFlash `.BIN/.LOG` logs, with generic PX4 ULog and MAVLink TLog adapters.**
 
 Drop a crash log → get an instant, physics-grounded root-cause diagnosis with confidence scores, causal timelines, 3D flight replay, and actionable repair recommendations.
 
@@ -166,7 +171,7 @@ pip install -e ".[dev]"
 ### Analyze Your First Log
 
 ```bash
-# Analyze any ArduPilot .BIN file
+# Analyze an ArduPilot .BIN/.LOG file (or a supported generic ULog/TLog)
 python -m src.cli.main analyze path/to/your/flight.BIN
 
 # Try the built-in sample log (no BIN file needed)
@@ -182,7 +187,7 @@ python -m src.cli.main analyze flight.BIN --format html -o report.html
 ./bootstrap.sh setup     # Create venv + install everything
 ./bootstrap.sh demo      # Try an instant demo
 ./bootstrap.sh analyze flight.BIN   # Analyze a real log
-./bootstrap.sh test      # Run all 176 tests
+./bootstrap.sh test      # Run the full regression suite
 ```
 
 ### On Windows (PowerShell)
@@ -304,16 +309,16 @@ All features are documented in [`models/feature_columns.json`](models/feature_co
 
 ## 📊 Production Benchmark Results
 
-Validated against **140+ real crash logs** from the BASiC Zenodo dataset and ArduPilot expert forums, using a **SHA256-deduplicated, zero-leakage** holdout set.
+The benchmark below uses source-log-disjoint evaluation. Windowed samples from one flight never appear in both training and test partitions. Performance is intentionally lower than the old row-split estimate and should be treated as the current honest baseline.
 
 | Metric | Result | Target | Status |
 |---|---|---|---|
-| **Macro F1 Score** | **1.00** | ≥ 0.80 | 🚀 EXCEEDED |
-| **Calibration (ECE)** | **0.0001** | ≤ 0.08 | 🛡️ PASS |
+| **Macro F1 Score** | **0.723** | ≥ 0.70 | ✅ TARGET REACHED |
+| **Calibration (ECE)** | **0.0589** | ≤ 0.08 | 🛡️ PASS |
 | **False Critical Rate** | **< 1.0%** | ≤ 2.0% | ✅ PASS |
 | **Inference Latency** | **< 350ms/log** | < 1s | ⚡ OPTIMIZED |
 | **Analysis Reliability** | 99.2% | ≥ 99% | ✅ PASS |
-| **Test Suite** | **176 passing** | All green | ✅ PASS |
+| **Test Suite** | **264 passing** | All green | ✅ PASS |
 
 ### Reliability Diagram — Per-Label Calibration
 
@@ -350,6 +355,81 @@ See [`docs/model_card.md`](docs/model_card.md) for the full architectural breakd
 # Analyze a single log
 python -m src.cli.main analyze flight.BIN
 
+# Optional Betaflight/Cleanflight Blackbox support (.bbl/.bfl)
+pip install -e ".[blackbox]"
+python -m src.cli.main analyze flight.bbl --format json
+
+# Inspect hardware, sensors, parameters, and log quality (read-only)
+python -m src.cli.main hardware flight.BIN --format terminal
+
+# Compare two .param files or two ArduPilot .BIN parameter snapshots
+python -m src.cli.main param-diff before.param after.param --format terminal
+
+# Validate safety-sensitive parameter ranges without writing anything
+python -m src.cli.main param-validate aircraft.param --format terminal
+
+# Export one canonical report as JSON, HTML, or PDF
+python -m src.cli.main report flight.BIN --format pdf -o flight-report.pdf
+
+# Export an offline GPS track for QGIS/Google Earth (exact coordinates; scrub before sharing)
+python -m src.cli.main export flight.BIN --format gpx -o flight.gpx
+python -m src.cli.main export flight.BIN --format kml -o flight.kml
+
+# Export raw messages or a safe derived series for external analysis
+python -m src.cli.main export flight.BIN --format csv --messages GPS,BARO -o flight.csv
+python -m src.cli.main export flight.BIN --format parquet -o flight.parquet
+python -m src.cli.main export flight.BIN --format derived-json --derived GPS.Alt-BARO.Alt -o altitude-residual.json
+python -m src.cli.main export flight.BIN --format graph-pack -o flight-graphs.html
+python -m src.cli.main export flight.BIN --format artifacts -o flight-artifacts
+
+# Export manual log/video synchronization as a JSON, WebVTT, or SRT sidecar
+python -m src.cli.main video-overlay flight.BIN --sync-points sync.json --format vtt -o flight.vtt
+
+# Inspect the read-only ArduPilot parameter catalog
+python -m src.cli.main params search notch
+python -m src.cli.main params validate ATC_RAT_RLL_P 0.135 --format json
+
+# Validate a QGC WPL/JSON mission, or compare it with a flown track
+python -m src.cli.main mission mission.json
+python -m src.cli.main mission mission.json flight.BIN --tolerance-m 30
+
+# Review repeated coarse-location findings from local fleet reports
+python -m src.cli.main fleet location --aircraft-id uav-01 --db fleet.sqlite3
+
+# Review a Methodic Configurator step from a canonical report (read-only gate)
+python -m src.cli.main methodic flight-report.json --step 8.1
+
+# Create a privacy-scrubbed expert hand-off bundle
+python -m src.cli.main report flight.BIN --format bundle -o flight-review.zip --include-log
+
+# See which deterministic capabilities are available for each input format
+python -m src.cli.main capabilities
+
+# Show coverage and scope boundaries for every named catalogue tool
+python -m src.cli.main catalogue --format json -o catalogue-coverage.json
+
+# Find, parse, group, and compare logs in a directory without uploading them
+python -m src.cli.main log-finder ./logs --format json --hash -o log-index.json
+
+# Inspect persistence/transient evidence without changing the diagnosis
+python -m src.cli.main temporal flight.BIN --no-ml -o temporal.json
+
+# Run the transparent 44-card community checklist
+python -m src.cli.main checks flight.BIN -o community-checks.json
+
+# Run a read-only flight-test acceptance checklist
+python -m src.cli.main acceptance flight.BIN --require gps_metrics --require control_metrics
+
+# Build a known-good baseline from canonical JSON reports
+python -m src.cli.main baseline reports/healthy-1.json reports/healthy-2.json -o baseline.json
+
+# Compare canonical reports before/after maintenance
+python -m src.cli.main maintenance before.json after.json
+
+# Persist canonical reports in an operator-owned local SQLite store
+python -m src.cli.main fleet add report.json --aircraft-id uav-01 --db fleet.sqlite3
+python -m src.cli.main fleet trend --aircraft-id uav-01 --db fleet.sqlite3
+
 # Run the demo on the sample log
 python -m src.cli.main demo
 
@@ -376,8 +456,40 @@ python -m src.cli.main mine-expert-labels \
 # Start the server
 python -m src.cli.main ui
 
-# POST a .BIN file for analysis
+# POST a .BIN/.LOG, .ULG/.ULOG, .TLOG, or (with the blackbox extra) .BBL/.BFL file for analysis
 curl -X POST -F "file=@flight.BIN" http://localhost:8000/api/analyze
+
+# Read-only hardware report and parameter comparison endpoints
+curl -X POST -F "file=@flight.BIN" http://localhost:8000/api/hardware
+curl -X POST -F "before=@before.param" -F "after=@after.param" \
+  http://localhost:8000/api/param-diff
+curl -X POST -F "file=@aircraft.param" http://localhost:8000/api/param-validate
+
+# Offline GPX/KML track and Methodic step review from JSON payloads
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{"messages":{"GPS":[]}},"format":"gpx"}' http://localhost:8000/api/track
+curl -X POST -H "Content-Type: application/json" -d '{"report":{...},"step":"8.1"}' http://localhost:8000/api/methodic
+
+# Mission validation/compliance, plots, derived series, and parameter catalog
+curl -X POST -H "Content-Type: application/json" -d '{"mission":[{"seq":0,"lat":37.422,"lng":-122.084,"alt":20}]}' http://localhost:8000/api/mission/validate
+curl -X POST -H "Content-Type: application/json" -d '{"report":{...},"kind":"diagnoses"}' http://localhost:8000/api/plot
+curl -X POST -H "Content-Type: application/json" -d '{"report":{...},"parsed":{"messages":{"GPS":[]}}}' http://localhost:8000/api/graph-pack
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{"errors":[]},"sync":{"status":"review_only","offset_sec":2}}' http://localhost:8000/api/context/video-overlay
+# Add "format":"vtt" or "format":"srt" for editor-ready subtitle content
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{},"diagnoses":[]}' http://localhost:8000/api/context/temporal
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{}}' http://localhost:8000/api/checks/community
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{"messages":{"CMD":[]}}}' http://localhost:8000/api/artifacts
+curl "http://localhost:8000/api/params/search?query=notch"
+
+# Capability registry (including generic PX4 ULog and MAVLink TLog adapters)
+curl http://localhost:8000/api/capabilities
+curl http://localhost:8000/api/catalogue
+curl http://localhost:8000/api/tools
+
+# Optional local fleet persistence (configure ARDUPILOT_FLEET_DB)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"aircraft_id":"uav-01","report":{...}}' \
+  http://localhost:8000/api/fleet/reports
+curl "http://localhost:8000/api/fleet/trend?aircraft_id=uav-01"
 ```
 
 The `/api/analyze` endpoint returns a structured JSON response (validated via Pydantic `AnalysisResponse` schema):
@@ -395,9 +507,17 @@ The `/api/analyze` endpoint returns a structured JSON response (validated via Py
     }
   ],
   "timeline_events": [...],
-  "explain_data": { "decision": { "status": "confirmed", "top_guess": "vibration_high" } }
+  "explain_data": { "decision": { "status": "confirmed", "top_guess": "vibration_high" } },
+  "hardware_report": {
+    "schema_version": "hardware-report.v1",
+    "sensors": { "gps": { "present": true }, "esc": { "present": false } },
+    "safety_findings": [],
+    "log_quality": { "overall_status": "good" }
+  }
 }
 ```
+
+All hardware, safety, sensor, tuning, and control summaries are analysis-only. They never write parameters or alter the uploaded log. Every deterministic safety finding includes its check ID, onset time (when available), evidence, recommendation, and source URL.
 
 ### Python API — Programmatic Use
 
@@ -517,7 +637,7 @@ A comprehensive forensic audit was performed across the entire codebase. Below a
 
 ```
 $ python -m pytest tests/ -q
-176 passed in 127.43s ✅
+264 passed ✅
 
 $ python /tmp/e2e_test.py
 Diagnoses: 1
@@ -565,7 +685,7 @@ ardupilot-log-diagnosis/
 │   ├── train_model.py       #   → XGBoost + SMOTE + isotonic calibration
 │   ├── build_dataset.py     #   → feature extraction from labeled logs
 │   └── import_basic_direct.py # → BASiC Zenodo dataset importer
-├── tests/                   # 176 tests (parser, features, diagnosis, web, contracts)
+├── tests/                   # 264 tests (parser, features, diagnosis, web, exports, contracts)
 ├── docs/                    # Architecture, GSoC proposal, model card, policies
 │   └── assets/              #   → screenshots and diagrams
 ├── ops/                     # Expert label mining pipeline

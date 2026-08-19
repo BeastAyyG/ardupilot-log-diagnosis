@@ -2,7 +2,7 @@ from .base_extractor import BaseExtractor
 
 
 class SystemExtractor(BaseExtractor):
-    REQUIRED_MESSAGES = ["PM"]
+    REQUIRED_MESSAGES = []
     MESSAGE_DEPENDENCIES = ["PM", "POWR"]
     FEATURE_PREFIX = "sys_"
     FEATURE_NAMES = [
@@ -14,6 +14,9 @@ class SystemExtractor(BaseExtractor):
         "sys_vcc_range",
         "sys_vservo_min",
     ]
+
+    def has_data(self) -> bool:
+        return bool(self.messages.get("PM") or self.messages.get("POWR"))
 
     def extract(self) -> dict:
         pm_msgs = self.messages.get("PM", [])

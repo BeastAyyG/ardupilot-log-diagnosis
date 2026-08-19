@@ -11,6 +11,7 @@ class TemporalHMMFilter:
     """
     def __init__(self, n_states=3):
         self.n_states = n_states
+        self.fitted = False
         # Gaussian HMM for continuous feature streams
         self.model = hmm.GaussianHMM(n_components=n_states, covariance_type="diag", n_iter=100)
         
@@ -26,6 +27,7 @@ class TemporalHMMFilter:
         """Train the HMM on historical sequences."""
         try:
             self.model.fit(feature_sequences, lengths)
+            self.fitted = True
             logger.info("HMM training complete.")
         except Exception as e:
             logger.error(f"HMM training failed: {e}")
@@ -38,6 +40,8 @@ class TemporalHMMFilter:
         """
         if len(feature_sequence) == 0:
             return np.array([])
+        if not self.fitted:
+            raise RuntimeError("Temporal HMM is not fitted; refusing to emit synthetic healthy states.")
         
         # Viterbi decoding finds the most likely state sequence
         _, states = self.model.decode(feature_sequence)

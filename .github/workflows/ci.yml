@@ -30,6 +30,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+          pip check
 
       - name: Lint with ruff
         run: |
@@ -38,6 +39,12 @@ jobs:
 
       - name: Validate project boundaries
         run: python training/validate_project_boundaries.py
+
+      - name: Compile Python sources
+        run: python -m compileall -q src training tests llm-orchestrator
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
 
       - name: Run test suite
         run: pytest -q --tb=short
@@ -116,3 +123,29 @@ jobs:
             --dataset-dir dataset/ \
             --ground-truth ground_truth.json \
             --assert-min-f1 0.30
+
+  temporal-layer:
+    name: "Temporal Auxiliary Service"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: temporal-layer/requirements.txt
+
+      - name: Install temporal-layer dependencies
+        run: python -m pip install --upgrade pip && pip install -r temporal-layer/requirements.txt
+
+      - name: Compile temporal service
+        run: python -m compileall -q temporal-layer
+
+      - name: Run temporal service tests
+        run: pytest -q tests/test_auxiliary_services.py --tb=short

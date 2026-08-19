@@ -133,7 +133,7 @@
                 <h1 class="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">
                     ArduPilot AI Log Diagnosis
                 </h1>
-                <p class="text-gray-400 text-sm mt-1 code-font">Hybrid Rule/XGBoost Engine v1.0.0</p>
+                <p class="text-gray-400 text-sm mt-1 code-font">Hybrid Rule/ML Engine</p>
             </div>
             <div class="flex items-center space-x-4">
                 <button id="btn-live-mode" class="btn-glow px-4 py-2 text-xs font-bold rounded-lg shadow-lg flex items-center">
@@ -191,9 +191,9 @@
                     
                     <div id="drop-zone" class="drop-zone rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer relative">
                         <svg class="w-12 h-12 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        <p class="text-gray-300 text-center font-medium">Drag & Drop .BIN file</p>
+                        <p class="text-gray-300 text-center font-medium">Drag &amp; Drop a flight log</p>
                         <p class="text-gray-500 text-xs mt-2 text-center">or click to browse</p>
-                        <input type="file" id="file-input" class="hidden" accept=".BIN,.bin">
+                        <input type="file" id="file-input" class="hidden" accept=".BIN,.bin,.LOG,.log,.ULG,.ulg,.ULOG,.ulog,.TLOG,.tlog,.BBL,.bbl,.BFL,.bfl">
                     </div>
 
                     <!-- Progress Simulation (Hidden by default) -->
@@ -276,6 +276,23 @@
                             <p class="text-[10px] text-gray-500 mt-2 uppercase">Calibrated Conf</p>
                         </div>
                     </div>
+                </div>
+
+                <!-- Read-only hardware/configuration summary -->
+                <div class="glass-panel p-6" id="hardware-summary-panel">
+                    <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-4 font-bold">Hardware &amp; Log Health</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div><span class="text-gray-500 block text-xs uppercase">Errors</span><span id="hw-errors" class="font-bold">--</span></div>
+                        <div><span class="text-gray-500 block text-xs uppercase">Watchdog</span><span id="hw-watchdog" class="font-bold">--</span></div>
+                        <div><span class="text-gray-500 block text-xs uppercase">Log quality</span><span id="hw-quality" class="font-bold">--</span></div>
+                        <div><span class="text-gray-500 block text-xs uppercase">Sensors</span><span id="hw-sensors" class="font-bold">--</span></div>
+                    </div>
+                    <p id="hw-safety" class="text-xs text-gray-400 mt-4 border-l-2 border-orange-500 pl-3">No safety findings loaded.</p>
+                </div>
+
+                <div class="glass-panel p-6" id="extended-diagnostics-panel">
+                    <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-4 font-bold">Extended Read-only Diagnostics</h3>
+                    <div id="extended-diagnostics" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-300"></div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -408,8 +425,10 @@
             if (files.length === 0) return;
             const file = files[0];
             
-            if (!file.name.toLowerCase().endsWith('.bin')) {
-                alert("Please upload a .BIN dataflash log.");
+            const supportedExtensions = ['.bin', '.log', '.ulg', '.ulog', '.tlog', '.bbl', '.bfl'];
+            const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+            if (!supportedExtensions.includes(extension)) {
+                alert("Please upload a supported flight log (.BIN, .LOG, .ULG/.ULOG, .TLOG, .BBL, or .BFL).");
                 return;
             }
 
@@ -427,9 +446,9 @@
             // Fake progress animation for UX (since parsing is fast but users love watching bars)
             const stages = [
                 {p: 15, text: "PARSING MAVLINK MESSAGES..."},
-                {p: 35, text: "EXTRACTING 60+ TELEMETRY FEATURES..."},
+                {p: 35, text: "EXTRACTING TELEMETRY FEATURES..."},
                 {p: 60, text: "RUNNING DETERMINISTIC RULE ENGINE..."},
-                {p: 85, text: "INFERRING XGBOOST CLASSIFIER PROBABILITIES..."},
+                {p: 85, text: "INFERRING TRAINED ML CLASSIFIER PROBABILITIES..."},
                 {p: 95, text: "APPLYING CAUSAL ARBITRATION OVERRIDE..."}
             ];
             
@@ -566,6 +585,35 @@
             const topGuess = decisionData.top_guess || "none";
             const topConf = (decisionData.top_confidence || 0) * 100;
             const humanReview = decisionData.requires_human_review || false;
+
+            // Hardware report is read-only and comes from the same canonical
+            // analysis result as the diagnosis. Keep it visible without
+            // turning the dashboard into a parameter-writing tool.
+            const hardware = data.hardware_report || {};
+            const hardwareHealth = hardware.system_health || {};
+            const sensorMap = hardware.sensors || {};
+            const sensorCount = Object.values(sensorMap).filter(s => s && s.present).length;
+            document.getElementById('hw-errors').innerText = hardwareHealth.error_count ?? 0;
+            document.getElementById('hw-watchdog').innerText = hardwareHealth.watchdog_or_internal_error ? 'DETECTED' : 'clear';
+            document.getElementById('hw-watchdog').className = hardwareHealth.watchdog_or_internal_error ? 'font-bold text-red-400' : 'font-bold text-green-400';
+            document.getElementById('hw-quality').innerText = (hardware.log_quality || {}).overall_status || 'UNKNOWN';
+            document.getElementById('hw-sensors').innerText = `${sensorCount}/${Object.keys(sensorMap).length} present`;
+            const safetyFinding = (hardware.safety_findings || []).find(item => item.status === 'finding');
+            document.getElementById('hw-safety').innerText = safetyFinding
+                ? `${safetyFinding.check_id}: ${safetyFinding.recommendation}`
+                : 'No deterministic safety findings were emitted.';
+            const reviewQueue = hardware.human_review_queue || {};
+            const extended = [
+                ['Flight context', (hardware.flight_context || {}).status || 'UNKNOWN'],
+                ['Mission compliance', (hardware.mission_compliance || {}).status || 'UNKNOWN'],
+                ['EKF lanes', (hardware.ekf_lane_metrics || {}).status || 'UNKNOWN'],
+                ['Propulsion', (hardware.propulsion_metrics || {}).status || 'UNKNOWN'],
+                ['Tuning', (hardware.tuning_metrics || {}).schema_version ? ((hardware.tuning_metrics || {}).schema_version) : 'UNKNOWN'],
+                ['Review queue', `${(reviewQueue.questions || []).length} question(s)`],
+            ];
+            document.getElementById('extended-diagnostics').innerHTML = extended
+                .map(([label, value]) => `<div class="rounded bg-gray-800/50 border border-gray-700 p-3"><span class="text-gray-500 block uppercase">${label}</span><span class="font-bold">${value}</span></div>`)
+                .join('');
 
             const verdictBanner = document.getElementById('verdict-banner');
             const finalDecisionEl = document.getElementById('final-decision');
@@ -771,7 +819,7 @@
                 <div class="scan-line"></div>
                 <h3 class="text-sm uppercase tracking-widest text-cyan-400 font-bold mb-4 flex justify-between">
                     AI Integrity Validation
-                    <span class="text-[10px] text-gray-500 bg-gray-900 px-2 py-1 rounded">XGBOOST-HYBRID-v1</span>
+                    <span class="text-[10px] text-gray-500 bg-gray-900 px-2 py-1 rounded">HYBRID-ML-v1</span>
                 </h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="p-3 bg-black/20 rounded border border-gray-800">
@@ -1172,13 +1220,35 @@
 
         btnStopLive.addEventListener('click', async () => {
             logToLiveUI("Stopping stream…");
-            // Disarm reconnect before closing so onclose treats it as intentional
+            // The stop endpoint is token-protected just like connect and the
+            // WebSocket.  Prefer the token stored after a successful start so
+            // an operator can safely stop an active stream even if the input
+            // field was later cleared.
+            const stopToken = _reconnectToken ?? document.getElementById('live-auth-token').value.trim();
+            if (!stopToken) {
+                logToLiveUI("Cannot stop stream: the live-stream auth token is unavailable.", true);
+                return;
+            }
+            try {
+                const res = await fetch(
+                    `/api/live/stop?token=${encodeURIComponent(stopToken)}`,
+                    { method: 'POST' }
+                );
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => ({}));
+                    throw new Error(errBody.detail || "Failed to stop stream backend.");
+                }
+            } catch (err) {
+                // Keep the local socket/UI active when the server refuses the
+                // stop request; closing it would hide a still-running backend
+                // streamer from the operator.
+                logToLiveUI(err.message || "Failed to stop stream backend.", true);
+                return;
+            }
+            // Disarm reconnect before closing so onclose treats it as intentional.
             _cancelReconnect();
             _reconnectConnStr = null;
             _reconnectToken   = null;
-            try {
-                await fetch('/api/live/stop', { method: 'POST' });
-            } catch (e) {}
             if (liveSocket) {
                 liveSocket.close();
                 liveSocket = null;

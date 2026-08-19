@@ -27,6 +27,10 @@ class FlightMetrics:
     primary_diagnosis: str
     diagnosis_confidence: float
     timestamp: str
+    vehicle_type: str = "Unknown"
+    firmware_version: str = "Unknown"
+    source_sha256: str = ""
+    quality_status: str = "UNKNOWN"
     
     @classmethod
     def from_analysis_result(cls, result: Dict[str, Any], filename: str) -> "FlightMetrics":
@@ -37,9 +41,18 @@ class FlightMetrics:
         # Get primary diagnosis
         primary_diag = diagnoses[0] if diagnoses else {"failure_type": "unknown", "confidence": 0.0}
         
+        metadata = result.get("metadata", {}) or {}
+        hardware = result.get("hardware_report", {}) or {}
+        hardware_meta = hardware.get("metadata", {}) if isinstance(hardware, dict) else {}
+        file_info = hardware.get("file", {}) if isinstance(hardware, dict) else {}
+        log_path = metadata.get("log_file") or metadata.get("filename") or filename
+        try:
+            timestamp = datetime.fromtimestamp(Path(str(log_path)).stat().st_mtime).isoformat()
+        except (OSError, ValueError, TypeError):
+            timestamp = str(metadata.get("timestamp") or filename)
         return cls(
             filename=filename,
-            duration=result.get("metadata", {}).get("duration", 0.0),
+            duration=metadata.get("duration", metadata.get("duration_sec", 0.0)),
             vibe_x_mean=features.get("vibe_x_mean", 0.0),
             vibe_y_mean=features.get("vibe_y_mean", 0.0),
             vibe_z_mean=features.get("vibe_z_mean", 0.0),
@@ -53,7 +66,11 @@ class FlightMetrics:
             gps_hdop_max=features.get("gps_hdop_max", 0.0),
             primary_diagnosis=primary_diag.get("failure_type", "unknown"),
             diagnosis_confidence=primary_diag.get("confidence", 0.0),
-            timestamp=datetime.now().isoformat()
+            timestamp=timestamp,
+            vehicle_type=metadata.get("vehicle_type", metadata.get("vehicle", hardware_meta.get("vehicle_type", "Unknown"))),
+            firmware_version=metadata.get("firmware", hardware_meta.get("firmware_version", "Unknown")),
+            source_sha256=file_info.get("sha256", ""),
+            quality_status=(metadata.get("quality_report", {}) or {}).get("overall_status", "UNKNOWN"),
         )
 
 
@@ -77,7 +94,9 @@ class TrendAnalyzer:
         "vibe_z_mean": {"warning": 30.0, "critical": 60.0},
         "ekf_vel_var_max": {"warning": 25.0, "critical": 50.0},
         "ekf_pos_var_max": {"warning": 25.0, "critical": 50.0},
-        "bat_volt_min": {"warning": -10.0, "critical": -20.0},  # Negative = voltage drop
+        # Thresholds are positive magnitudes.  Direction is handled explicitly
+        # below because only a *drop* in minimum voltage is degradation.
+        "bat_volt_min": {"warning": 10.0, "critical": 20.0},
         "motor_spread_max": {"warning": 15.0, "critical": 30.0},
     }
     
@@ -172,12 +191,23 @@ class TrendAnalyzer:
         
         # Calculate trends
         trends = self._calculate_trends(metrics_list)
-        insights = self._generate_insights(trends)
+        insights = self._generate_insights(trends, flight_count=len(metrics_list))
         
+        configurations = sorted({(m.vehicle_type, m.firmware_version) for m in metrics_list})
+        comparable = len(configurations) <= 1
         return {
+            "schema_version": "trend-report.v2",
             "flights_analyzed": len(metrics_list),
             "flight_order": [m.filename for m in metrics_list],
             "metrics_timeline": [asdict(m) for m in metrics_list],
+            "comparison_quality": {
+                "comparable": comparable,
+                "configurations": [
+                    {"vehicle_type": vehicle, "firmware_version": firmware}
+                    for vehicle, firmware in configurations
+                ],
+                "warning": None if comparable else "Flights use different vehicle or firmware identities; interpret trends as provisional.",
+            },
             "trends": trends,
             "insights": [asdict(i) for i in insights],
             "summary": self._generate_summary(insights, metrics_list)
@@ -222,7 +252,7 @@ class TrendAnalyzer:
         
         return trends
     
-    def _generate_insights(self, trends: Dict[str, Any]) -> List[TrendInsight]:
+    def _generate_insights(self, trends: Dict[str, Any], flight_count: int | None = None) -> List[TrendInsight]:
         """Generate actionable insights from trends."""
         insights = []
         
@@ -233,11 +263,14 @@ class TrendAnalyzer:
             change_pct = trend_data.get("change_percent", 0)
             thresholds = self.DEGRADATION_THRESHOLDS.get(metric, {})
             
-            # Determine severity
+            # Determine severity only in the direction that represents
+            # degradation.  A large improvement must never generate a
+            # CRITICAL alert merely because its percentage is large.
+            harmful_change = -change_pct if metric == "bat_volt_min" else change_pct
             severity = "info"
-            if abs(change_pct) >= thresholds.get("critical", 100):
+            if harmful_change >= thresholds.get("critical", 100):
                 severity = "critical"
-            elif abs(change_pct) >= thresholds.get("warning", 100):
+            elif harmful_change >= thresholds.get("warning", 100):
                 severity = "warning"
             
             if severity == "info" and abs(change_pct) < 10:
@@ -247,7 +280,7 @@ class TrendAnalyzer:
             direction = "increased" if change_pct > 0 else "decreased"
             metric_name = metric.replace("_", " ").upper()
             
-            message = f"{metric_name} {direction} by {abs(change_pct):.1f}% over {len(trends)} flights"
+            message = f"{metric_name} {direction} by {abs(change_pct):.1f}% over {flight_count or len(trends)} flights"
             
             # Generate recommendation
             recommendation = self._get_recommendation(metric, change_pct, severity)

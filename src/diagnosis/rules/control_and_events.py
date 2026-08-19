@@ -123,12 +123,23 @@ def check_pid_tuning(features: FeatureDict, thresholds: dict) -> DiagnosisDict |
     alt_err_std = features.get("ctrl_alt_error_std", 0.0)
     thr_sat_pct = features.get("ctrl_thr_saturated_pct", 0.0)
     motor_sat = features.get("motor_saturation_pct", 0.0)
+    rate_err_mean = features.get("pid_rate_err_mean", 0.0)
+    rate_err_max = features.get("pid_rate_err_max", 0.0)
+    oscillation_pct = features.get("pid_oscillation_pct", 0.0)
+    metadata = features.get("_metadata", {})
+    detailed_pid_logging = bool(
+        metadata.get("detailed_pid_logging", False)
+        if isinstance(metadata, dict)
+        else False
+    )
 
     vibe_warn = thresholds.get("vibe_max_warn", 30.0)
 
     if not (roll_std > 5.0 or pitch_std > 5.0):
         return None
-    if vibe_z > vibe_warn:
+    # High vibration normally makes a rate-loop diagnosis unsafe, but PTUN/
+    # PID* telemetry is direct controller evidence and should take precedence.
+    if vibe_z > vibe_warn and not detailed_pid_logging:
         return None
     if thr_sat_pct > 0.2 or motor_sat > 0.2:
         return None
@@ -181,6 +192,28 @@ def check_pid_tuning(features: FeatureDict, thresholds: dict) -> DiagnosisDict |
                 "value": alt_err_std,
                 "threshold": 2.0,
                 "direction": "above",
+            }
+        )
+
+    if rate_err_mean > 3.0:
+        conf += 0.20
+        evidence.append(
+            {
+                "feature": "pid_rate_err_mean",
+                "value": rate_err_mean,
+                "threshold": 3.0,
+                "direction": "above",
+            }
+        )
+    if rate_err_max > 8.0 and oscillation_pct > 0.10:
+        conf += 0.25
+        evidence.append(
+            {
+                "feature": "pid_oscillation_pct",
+                "value": oscillation_pct,
+                "threshold": 0.10,
+                "direction": "above",
+                "context": "repeated desired-versus-actual rate reversals indicate control-loop oscillation",
             }
         )
 

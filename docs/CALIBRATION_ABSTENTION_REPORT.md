@@ -7,7 +7,7 @@
 ## 1. Overview
 
 This document records the calibration quality and abstention behaviour of the
-ArduPilot AI Log Diagnosis hybrid engine as of the final production release.
+ArduPilot AI Log Diagnosis hybrid engine as of the current candidate evaluation.
 It satisfies the requirement in `AGENTS.md` Gate E:
 
 > *"Calibration and abstention report included."*
@@ -25,18 +25,39 @@ that quantifies how well predicted confidence scores match empirical accuracy.
   65–75% of the time" — well-calibrated.
 - An ECE above 0.15 means confidence outputs cannot be operationally trusted.
 
-The `training/measure_ece.py` script computes ECE from the trained
-XGBoost+Isotonic calibration model over the holdout feature/label CSV files.
+The `training/measure_ece.py` script computes ECE from a candidate model over
+the grouped holdout feature/label CSV files. ECE passing does not by itself
+authorize promotion; the grouped F1, holdout-size, provenance, and label
+coverage gates must also pass.
 
 **Production target**: ECE ≤ 0.08
 
+### 2.4 Latest candidate result
+
+For the safe quarantined `v3_unambiguous` artifact (2026-08-05), calibration is
+measured after applying the deployed max-window probability aggregation once
+per source incident. This avoids overweighting long flights and correlated
+windows. The authoritative report is
+`training/candidates/v3_unambiguous/ece_report.json`:
+
+- Incident-level ECE: **0.1530** (target ≤ 0.08) — **FAIL**
+- Per-class ECE warnings: compass 0.1659, EKF 0.1772, GPS 0.2097,
+  healthy 0.2074, RC failsafe 0.2670, vibration 0.1658
+- The candidate remains quarantined; no model is promoted on this result.
+
+The intermediate `v3_grouped` report (ECE 0.1577) is not valid release
+evidence because two source-URL groups contain contradictory labels. Four
+files from those groups were excluded before the `v3_unambiguous` rerun.
+
 ### 2.2 Calibration pipeline
 
-The classifier is trained with isotonic-regression post-hoc calibration
-(`CalibratedClassifierCV(method="isotonic")`). This step fits a monotone
-mapping from raw model scores to true posterior probabilities using the
-held-out validation fold, which is separate from both training and the
-locked unseen holdout.
+Training evaluates an uncalibrated RandomForest, an uncalibrated XGBoost
+candidate, and an isotonic-calibrated XGBoost candidate
+(`CalibratedClassifierCV(method="isotonic")`). Isotonic calibration fits a
+monotone mapping from raw model scores to posterior probabilities using the
+training split only. The current `v3_unambiguous` winner is RandomForest, so it has
+no calibrated probability layer; its incident-level ECE therefore fails and
+must not be presented as production confidence.
 
 ```
 Raw XGBoost score  →  Isotonic calibration  →  calibrated probability
@@ -149,7 +170,7 @@ flights:
 
 | Metric | Target | Status |
 |---|---|---|
-| ECE | ≤ 0.08 | Isotonic calibration applied; ECE measured via `measure_ece.py` |
+| ECE | ≤ 0.08 | Incident-level ECE 0.1577; gate fails and retraining is required |
 | FCR | ≤ 10% | Mitigation guards in place; audited via `measure_fcr.py` |
 | Abstention coverage | 100% of uncertain cases flagged | `evaluate_decision` policy enforced in all CLI and benchmark paths |
 | Report availability | Gate E requirement | ✅ This document |

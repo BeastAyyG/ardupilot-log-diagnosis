@@ -79,6 +79,12 @@ LABEL_REGEX = {
         r"\bclipping\b",
         r"\bvibe\b",
     ],
+    "thrust_loss": [
+        r"\bthrust loss\b",
+        r"\blost thrust\b",
+        r"\binsufficient thrust\b",
+        r"\bnot enough thrust\b",
+    ],
     "motor_imbalance": [
         r"\besc desync\b",
         r"\bmotor(s)? (stopped|cut|stop)\b",
@@ -101,6 +107,12 @@ LABEL_REGEX = {
         r"\bbroken (prop|arm|frame)\b",
         r"\bprop(eller)? (came off|failed|broke)\b",
     ],
+    "setup_error": [
+        r"\breversed prop(eller)?s?\b",
+        r"\bwrong motor order\b",
+        r"\bmotor order is wrong\b",
+        r"\bincorrect frame (class|type)\b",
+    ],
     "crash_unknown": [
         r"\bunknown cause\b",
         r"\bcause (is )?unknown\b",
@@ -120,8 +132,35 @@ UNCERTAIN_REGEX = re.compile(
     re.IGNORECASE,
 )
 
+CAUSAL_INTENT_REGEX = re.compile(
+    r"\b(root cause|caused by|because|due to|diagnos(?:e|ed|is)|"
+    r"confirmed|actual|problem is|issue is|looks like|appears to be|"
+    r"this is|this was)\b",
+    re.IGNORECASE,
+)
+NEGATED_LABEL_REGEX = re.compile(
+    r"\b(?:not|no|without|unlikely|ruled out|doesn['’]?t show|"
+    r"does not show|isn['’]?t|is not)\s+(?:exactly\s+|really\s+|a\s+|an\s+)?"
+    r"(?:brownout|thrust loss|mechanical failure|setup error|radio failsafe|"
+    r"rc failsafe|compass variance|high vibration)\b",
+    re.IGNORECASE,
+)
+
 TOPIC_URL_RE = re.compile(r"/t/([^/]+)/([0-9]+)")
 WEB_CITATION_RE = re.compile(r"\s*\[web:[0-9]+\]")
+# Discourse's developer-call / release threads contain many quoted issue and
+# diagnostic terms, but they are not incident reports tied to a flight log.
+# Filtering them at the topic boundary is safer than allowing the label scorer
+# to infer a root cause from meeting notes or a changelog.  Keep this list
+# intentionally narrow: ordinary incident titles mentioning a firmware
+# version remain eligible unless they match an explicit announcement pattern.
+NON_INCIDENT_TITLE_REGEX = re.compile(
+    r"\b(?:dev(?:eloper)?[- ]?call|attendee\s+count|"
+    r"release(?:d)?\b|\bwiki\b|roadmap|"
+    r"pull\s+requests?|issue\s+list|release\s+notes?|"
+    r"announcement|meeting\s+notes?)\b",
+    re.IGNORECASE,
+)
 
 
 def _request_json(url: str, timeout_sec: int = 30) -> dict:
@@ -189,11 +228,49 @@ def _score_label_from_text(text: str) -> Optional[Tuple[str, int, str]]:
 
     best: Optional[Tuple[str, int, str]] = None
     for label, patterns in LABEL_REGEX.items():
+        # Reject an entire label when the author explicitly rules out that
+        # diagnosis elsewhere in the post; a later incidental keyword must not
+        # resurrect a negated cause.
+        if label == "brownout" and re.search(
+            r"\bnot\s+(?:exactly\s+|really\s+)?(?:a\s+|an\s+)?brownout\b",
+            lowered,
+        ):
+            continue
+        if label == "thrust_loss" and re.search(
+            r"\b(?:not\s+(?:a\s+)?thrust\s+loss|thrust\s+loss\s+was\s+ruled\s+out)\b",
+            lowered,
+        ):
+            continue
         score = 0
         match_phrase = ""
         for pat in patterns:
             m = re.search(pat, lowered, flags=re.IGNORECASE)
             if m:
+                # A developer post can mention a failure term while quoting a
+                # release note, a user's hypothesis, or a condition they
+                # explicitly ruled out.  Only accept a label when the post has
+                # causal/diagnostic language and does not negate the matched
+                # condition nearby.
+                sentence_start = max(
+                    lowered.rfind(".", 0, m.start()),
+                    lowered.rfind("!", 0, m.start()),
+                    lowered.rfind("?", 0, m.start()),
+                ) + 1
+                sentence_end_candidates = [
+                    index for index in (
+                        lowered.find(".", m.end()),
+                        lowered.find("!", m.end()),
+                        lowered.find("?", m.end()),
+                    ) if index >= 0
+                ]
+                sentence_end = min(sentence_end_candidates, default=len(lowered))
+                context_start = max(sentence_start, m.start() - 140)
+                context_end = min(sentence_end, m.end() + 140)
+                context = lowered[context_start:context_end]
+                if not CAUSAL_INTENT_REGEX.search(context):
+                    continue
+                if NEGATED_LABEL_REGEX.search(context):
+                    continue
                 score += 1
                 if not match_phrase:
                     match_phrase = m.group(0)
@@ -227,6 +304,13 @@ def extract_label_from_text(text: str) -> Optional[str]:
 
 
 def _extract_expert_diagnosis(topic_json: dict, developer_usernames: Set[str]) -> Optional[dict]:
+    title = str(topic_json.get("title") or "").lower()
+    # Release-note and firmware-announcement threads contain many diagnostic
+    # keywords but are not flight-specific expert incident reviews.
+    if re.search(r"\b(?:release|released|beta|firmware)\b", title):
+        return None
+    if NON_INCIDENT_TITLE_REGEX.search(title):
+        return None
     posts = topic_json.get("post_stream", {}).get("posts", [])
     candidates: List[dict] = []
 

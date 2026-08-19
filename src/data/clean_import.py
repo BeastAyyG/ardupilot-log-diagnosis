@@ -136,6 +136,18 @@ def _load_provenance(source_root: Path) -> Dict[str, List[dict]]:
                 .strip()
                 .upper()
             )
+            normalized_label = (row.get("normalized_label") or "").strip().upper()
+            label_source = (row.get("label_source") or "").strip().lower()
+            expert_username = (row.get("expert_username") or "").strip()
+            expert_quote = (row.get("expert_quote") or "").strip()
+            # A query label is only a search hypothesis.  It becomes a
+            # verified label when the enriched manifest records an explicit
+            # developer/staff diagnosis with provenance text.
+            verified_label = (
+                normalized_label
+                if label_source == "developer_post" and expert_username and expert_quote
+                else ""
+            )
             thread_url = (
                 row.get("thread_url")
                 or row.get("topic_url")
@@ -160,6 +172,10 @@ def _load_provenance(source_root: Path) -> Dict[str, List[dict]]:
                     "manifest": manifest_name,
                     "status": (row.get("status") or "").strip().lower(),
                     "label_raw": label,
+                    "verified_label": verified_label,
+                    "provisional_label": label if not verified_label else "",
+                    "label_source": label_source,
+                    "expert_username": expert_username,
                     "source_type": source_type,
                     "thread_url": thread_url,
                     "resolved_url": resolved_url,
@@ -222,11 +238,17 @@ def _choose_provenance(records: List[dict]) -> Optional[dict]:
     if not downloaded:
         return None
 
-    def rank(rec: dict) -> Tuple[int, int, int]:
+    def rank(rec: dict) -> Tuple[int, int, int, int]:
+        # Provenance strength must dominate manifest recency.  A lower-priority
+        # manifest may carry an expert/developer diagnosis while a crawler
+        # manifest only carries the search-query label; selecting by manifest
+        # priority first would silently downgrade a verified label to
+        # provisional (or, worse, choose the wrong class).
+        has_verified = 0 if rec.get("verified_label") else 1
         manifest_rank = MANIFEST_PRIORITY.get(rec.get("manifest", ""), 99)
         has_discuss_thread = 0 if "discuss.ardupilot.org" in rec.get("thread_url", "") else 1
         has_label = 0 if rec.get("label_raw") else 1
-        return manifest_rank, has_discuss_thread, has_label
+        return has_verified, manifest_rank, has_discuss_thread, has_label
 
     downloaded.sort(key=rank)
     return downloaded[0]
@@ -385,7 +407,9 @@ def run_clean_import(
         selected = _choose_provenance(prov_records)
 
         raw_label = (selected or {}).get("label_raw", "")
-        mapped_label = _map_label(raw_label)
+        verified_label = (selected or {}).get("verified_label", "")
+        provisional_label = (selected or {}).get("provisional_label", "")
+        mapped_label = _map_label(verified_label)
         source_type = (selected or {}).get("source_type", "unknown")
         thread_url = (selected or {}).get("thread_url", "")
         resolved_url = (selected or {}).get("resolved_url", "")
@@ -397,7 +421,7 @@ def run_clean_import(
         elif mapped_label:
             category = "verified_labeled"
             trainable = True
-        elif raw_label in PROVISIONAL_LABELS:
+        elif provisional_label or raw_label:
             category = "provisional_labeled"
             trainable = False
         else:
@@ -449,7 +473,7 @@ def run_clean_import(
             "source_url": thread_url,
             "source_type": source_type or "unknown",
             "expert_quote": expert_quote,
-            "confidence": "medium" if mapped_label else "low",
+            "confidence": "high" if mapped_label else "low",
             "raw_label": raw_label,
             "trainable": trainable,
             "category": category,

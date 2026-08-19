@@ -43,6 +43,13 @@ class ParsedStatusMessage(TypedDict, total=False):
     message: str
 
 
+class ParsedParameterChange(TypedDict, total=False):
+    time_us: int | None
+    name: str
+    old_value: Any
+    new_value: Any
+
+
 class ParsedLog(TypedDict):
     metadata: ParsedMetadata
     messages: dict[str, list[dict[str, Any]]]
@@ -51,6 +58,7 @@ class ParsedLog(TypedDict):
     events: list[ParsedEvent]
     mode_changes: list[ParsedModeChange]
     status_messages: list[ParsedStatusMessage]
+    parameter_changes: list[ParsedParameterChange]
 
 
 class FeatureMetadata(TypedDict, total=False):

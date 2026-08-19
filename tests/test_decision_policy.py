@@ -25,3 +25,20 @@ def test_decision_confirmed_for_high_confidence_gap():
     decision = evaluate_decision(diagnoses)
     assert decision["status"] == "confirmed"
     assert decision["requires_human_review"] is False
+
+
+def test_degraded_empty_result_is_not_reported_healthy():
+    decision = evaluate_decision([], quality_report={"overall_status": "UNSUPPORTED"})
+    assert decision["status"] == "uncertain"
+    assert decision["requires_human_review"] is True
+    assert decision["top_guess"] is None
+    assert "cannot be treated as healthy" in " ".join(decision["rationale"])
+
+
+def test_degraded_quality_requires_review_even_with_rule_diagnosis():
+    decision = evaluate_decision(
+        [{"failure_type": "vibration_high", "confidence": 0.95, "detection_method": "rule"}],
+        quality_report={"overall_status": "DEGRADED"},
+    )
+    assert decision["status"] == "uncertain"
+    assert decision["requires_human_review"] is True

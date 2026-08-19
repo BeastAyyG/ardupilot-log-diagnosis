@@ -5,13 +5,13 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 176 Passing](https://img.shields.io/badge/tests-176%20passing-brightgreen)](tests/)
-[![Macro F1: 1.00](https://img.shields.io/badge/Macro%20F1-1.00-blueviolet)](#-production-benchmark-results)
+[![Tests: 338 Passing](https://img.shields.io/badge/tests-338%20passing-brightgreen)](tests/)
+[![Honest Candidate Macro F1: 0.500](https://img.shields.io/badge/honest%20candidate%20Macro%20F1-0.500-orange)](#-production-benchmark-results)
 [![GSoC 2026](https://img.shields.io/badge/GSoC%202026-Ready-purple)](docs/GSOC_2026_Application.md)
 
-**An end-to-end AI diagnostic pipeline for ArduPilot `.BIN` dataflash logs.**
+**An end-to-end, read-only diagnostic pipeline for ArduPilot DataFlash `.BIN/.LOG` logs, with optional PX4 ULog, MAVLink TLog, and Betaflight Blackbox adapters.**
 
-Drop a crash log → get an instant, physics-grounded root-cause diagnosis with confidence scores, causal timelines, 3D flight replay, and actionable repair recommendations.
+Drop a flight log → get evidence-backed diagnoses, quality/coverage status, causal timelines, exports, and actionable review recommendations. The engine abstains when the log cannot support a reliable claim.
 
 *Built for the Google Summer of Code 2026 program.*
 
@@ -19,7 +19,7 @@ Drop a crash log → get an instant, physics-grounded root-cause diagnosis with 
 
 <img src="docs/assets/dashboard_landing.png" alt="ArduPilot AI Log Diagnosis Dashboard" width="800"/>
 
-<sub>Premium interactive dashboard — neon dark-mode glassmorphism UI with drag-and-drop .BIN analysis</sub>
+<sub>Interactive dashboard with drag-and-drop multi-format flight-log analysis</sub>
 
 </div>
 
@@ -36,7 +36,7 @@ Drop a crash log → get an instant, physics-grounded root-cause diagnosis with 
 - [Interactive Dashboard](#-interactive-dashboard)
 - [How It Works (Architecture)](#-how-it-works--architecture)
 - [CITA — Crash-Immune Temporal Arbitration](#-crash-immune-temporal-arbitration-cita)
-- [94 Features Extracted](#-94-features-extracted)
+- [111 Features Extracted](#-111-features-extracted)
 - [Production Benchmark Results](#-production-benchmark-results)
 - [All Usage Modes](#-all-usage-modes)
 - [Data Pipeline & Training](#-data-pipeline--training)
@@ -58,11 +58,11 @@ This tool automates that entire process:
 
 | Problem | Solution |
 |---|---|
-| **Manual crash analysis takes 25+ minutes** | Instant analysis in **< 350ms per log** |
-| **Post-crash compass noise misdiagnosed as root cause** | **CITA temporal arbitration** eliminates this |
-| **No ML models exist for ArduPilot log diagnosis** | **Calibrated XGBoost classifier** trained on 140+ real crash logs |
+| **Manual crash analysis is slow** | Fast offline parsing with structured evidence and exports |
+| **Post-crash noise can look causal** | **CITA temporal arbitration** preserves onset order and abstains when evidence is weak |
+| **Logs are incomplete or sparse** | Per-capability quality gates identify supported, degraded, and unsupported analyses |
 | **Hard to visualize what happened** | **3D flight replay** with causality markers at exact GPS coordinates |
-| **Labels are unreliable (forum-sourced)** | **Expert Label Mining** + SHA256 zero-leakage holdout verification |
+| **Labels can be unreliable** | Provenance, SHA256 deduplication, grouped holdouts, and expert-label gates |
 
 ### What You Get
 
@@ -120,7 +120,7 @@ pip install -e ".[dev]"
 ### Analyze Your First Log
 
 ```bash
-# Analyze any ArduPilot .BIN file
+# Analyze an ArduPilot .BIN/.LOG file (or a supported generic ULog/TLog)
 python -m src.cli.main analyze path/to/your/flight.BIN
 
 # Try the built-in sample log (no BIN file needed)
@@ -136,7 +136,7 @@ python -m src.cli.main analyze flight.BIN --format html -o report.html
 ./bootstrap.sh setup     # Create venv + install everything
 ./bootstrap.sh demo      # Try an instant demo
 ./bootstrap.sh analyze flight.BIN   # Analyze a real log
-./bootstrap.sh test      # Run all 176 tests
+./bootstrap.sh test      # Run the full regression suite
 ```
 
 ### On Windows (PowerShell)
@@ -163,7 +163,7 @@ python -m src.cli.main ui
 
 | Feature | Description |
 |---|---|
-| 🎯 **Drag & Drop Analysis** | Upload any `.BIN` file — results appear in seconds |
+| 🎯 **Drag & Drop Analysis** | Upload `.BIN`, `.LOG`, `.ULG/.ULOG`, `.TLOG`, `.BBL`, or `.BFL` logs |
 | 🗺️ **3D Flight Trajectory** | Full X/Y/Z path reconstruction with Plotly.js |
 | 📍 **Causality Markers** | Interactive markers at exact GPS coordinates where anomalies occurred |
 | 📊 **Subsystem Radar** | Dynamic "Blame Ranking" chart showing which subsystem failed |
@@ -180,8 +180,8 @@ The diagnosis pipeline converts a raw `.BIN` log into an actionable root-cause v
 ```
  ┌──────────┐    ┌───────────────┐    ┌──────────────┐    ┌──────────────────┐    ┌───────────┐
  │  .BIN    │───▶│  LogParser    │───▶│  Feature     │───▶│  Hybrid Engine   │───▶│  Report   │
- │  File    │    │  (pymavlink)  │    │  Pipeline    │    │  Rule + XGBoost  │    │  Output   │
- └──────────┘    │               │    │  94 features │    │  + CITA Arbiter  │    └───────────┘
+ │  File    │    │  Parser/adapters│    │  Pipeline    │    │  Rule + ML + safety│    │  Output   │
+ └──────────┘    │               │    │  111 features│    │  + CITA Arbiter  │    └───────────┘
                  │  24,837 msgs  │    │              │    │  + Anomaly Det.  │
                  │  809 params   │    │  per log     │    │                  │
                  └───────────────┘    └──────────────┘    └──────────────────┘
@@ -192,9 +192,9 @@ The diagnosis pipeline converts a raw `.BIN` log into an actionable root-cause v
 | Stage | Module | What It Does |
 |---|---|---|
 | **1. Parsing** | `src/parser/bin_parser.py` | Uses `pymavlink` to decode binary DataFlash messages (VIBE, MAG, GPS, EKF, RCOU, BAT, IMU, etc.) |
-| **2. Feature Extraction** | `src/features/pipeline.py` | Extracts **94 statistical features** across 7 subsystems — means, maxes, spreads, temporal anomaly timestamps |
+| **2. Feature Extraction** | `src/features/pipeline.py` | Extracts **111 finite features** across telemetry, control, power, system, and temporal subsystems |
 | **3a. Rule Engine** | `src/diagnosis/rule_engine.py` | 13 deterministic threshold checks based on ArduPilot domain knowledge |
-| **3b. ML Classifier** | `src/diagnosis/ml_classifier.py` | Calibrated XGBoost trained on 140+ labeled crash logs with SMOTE oversampling |
+| **3b. ML Classifier** | `src/diagnosis/ml_classifier.py` | Versioned artifact with schema/hash checks; candidate promotion is blocked until release gates pass |
 | **3c. Anomaly Detector** | `src/diagnosis/anomaly_detector.py` | IsolationForest trained on healthy flights — catches unknown failure modes |
 | **4. Hybrid Fusion** | `src/diagnosis/hybrid_engine.py` | Merges rule + ML signals using confidence weighting and temporal arbitration |
 | **5. Output** | `src/cli/` or `src/web/` | CLI text report, JSON, HTML, or interactive dashboard |
@@ -238,19 +238,18 @@ See [`docs/root_cause_policy.md`](docs/root_cause_policy.md) for the authoritati
 
 ---
 
-## 📦 94 Features Extracted
+## 📦 111 Features Extracted
 
-Every `.BIN` log is transformed into a flat feature vector of **94 engineered features** across 7 subsystem families:
+Every supported flight log is normalized into a flat vector of **111 finite runtime features**. Features are extracted when their required telemetry exists and are marked degraded or unsupported when it does not.
 
 | Category | Count | Key Features |
 |---|---|---|
-| 📳 **Vibration** | 9 | `vibe_x/y/z_mean`, `max`, `std`, `clip_total`, `z_tanomaly` |
-| 🧭 **Compass** | 7 | `mag_field_mean`, `range`, `std`, `x_range`, `y_range`, `tanomaly` |
-| 🔋 **Power** | 10 | `bat_volt_min/max`, `curr_mean/max`, `sag_ratio`, `margin`, `tanomaly` |
-| 🛰️ **GPS** | 6 | `hdop_mean/max`, `nsats_min`, `fix_pct`, `tanomaly` |
-| 🚁 **Motors** | 11 | `spread_mean/max`, `hover_ratio`, `saturation_pct`, `all_high_pct`, `tanomaly` |
-| 📉 **EKF** | 11 | `vel/pos/hgt/compass_var`, `flags_error_pct`, `lane_switches`, `tanomaly` |
-| 🕹️ **Control + System + Events** | 40 | Attitude errors, throttle saturation, IMU stats, FFT frequencies, events, failsafes |
+| 📳 **Vibration** | runtime family | VIBE/IMU statistics, clipping, and temporal onset |
+| 🧭 **Navigation** | runtime family | Compass, GPS, barometer, and EKF integrity |
+| 🔋 **Power** | runtime family | Voltage/current dynamics, sag, power, and system supply |
+| 🚁 **Propulsion** | runtime family | Motor balance, output saturation, thrust, and ESC fallbacks |
+| 🕹️ **Control + System** | runtime family | Attitude/rate tracking, PID signals, loop timing, and events |
+| 📈 **Derived/FFT** | runtime family | Finite derived ratios and IMU-only spectral fallbacks |
 
 All features are documented in [`models/feature_columns.json`](models/feature_columns.json).
 
@@ -258,16 +257,21 @@ All features are documented in [`models/feature_columns.json`](models/feature_co
 
 ## 📊 Production Benchmark Results
 
-Validated against **140+ real crash logs** from the BASiC Zenodo dataset and ArduPilot expert forums, using a **SHA256-deduplicated, zero-leakage** holdout set.
+The benchmark below uses source-log-disjoint evaluation. Windowed samples from one flight never appear in both training and test partitions. Performance is intentionally lower than the old row-split estimate and should be treated as the current honest baseline.
+
+The intermediate `v3_grouped` run (F1 0.559/ECE 0.158) is rejected because
+two source-URL groups contain contradictory labels. The safe
+`v3_unambiguous` candidate excludes those four files and is the evidence shown
+below.
 
 | Metric | Result | Target | Status |
 |---|---|---|---|
-| **Macro F1 Score** | **1.00** | ≥ 0.80 | 🚀 EXCEEDED |
-| **Calibration (ECE)** | **0.0001** | ≤ 0.08 | 🛡️ PASS |
-| **False Critical Rate** | **< 1.0%** | ≤ 2.0% | ✅ PASS |
-| **Inference Latency** | **< 350ms/log** | < 1s | ⚡ OPTIMIZED |
-| **Analysis Reliability** | 99.2% | ≥ 99% | ✅ PASS |
-| **Test Suite** | **176 passing** | All green | ✅ PASS |
+| **Honest grouped candidate log Macro F1** | **0.500** | ≥ 0.70 | ⚠️ RELEASE BLOCKED |
+| **Honest grouped holdout** | **23 source incidents** | ≥ 50 | ⚠️ RELEASE BLOCKED |
+| **Incident-level calibration (ECE)** | **0.153** | ≤ 0.08 | ⚠️ RELEASE BLOCKED |
+| **Runtime feature schema** | **111 finite features** | Exact match | ✅ PASS |
+| **Regression suite** | **338 passing, 0 skipped** | All green | ✅ PASS |
+| **Real-log integration** | **43/43 crash-free; 7/7 golden labels** | No crashes; expected labels present | ✅ PASS |
 
 ### Reliability Diagram — Per-Label Calibration
 
@@ -283,14 +287,13 @@ Validated against **140+ real crash logs** from the BASiC Zenodo dataset and Ard
 
 | Property | Value |
 |---|---|
-| **Algorithm** | XGBoost (multi-label, one-vs-rest) |
-| **Calibration** | Isotonic (post-hoc per-label) |
-| **Oversampling** | SMOTE (adaptive `k_neighbors`) |
-| **Training Set** | 192 balanced samples (after SMOTE) |
-| **Evaluation Set** | 28 unseen samples |
-| **Labels** | `compass_interference`, `ekf_failure`, `gps_quality_poor`, `healthy`, `rc_failsafe`, `vibration_high` |
-| **Anomaly Detector** | IsolationForest (trained on healthy-only flights) |
-| **Best Params** | `lr=0.05, max_depth=3, min_child_weight=1, n_estimators=100` |
+| **Selected candidate** | RandomForest (selected by grouped log-level metric) |
+| **Feature schema** | 111 runtime features |
+| **Training corpus** | 114 usable source logs / 9 ML labels |
+| **Holdout** | 23 independent source incidents |
+| **Calibration** | Incident-level ECE 0.153; calibration gate fails and requires retraining |
+| **Rules-only labels** | `brownout`, `crash_unknown`, `mechanical_failure`, `setup_error`, `thrust_loss` |
+| **Anomaly detector** | Co-located artifact with exact feature schema |
 
 See [`docs/model_card.md`](docs/model_card.md) for the full architectural breakdown.
 
@@ -303,6 +306,81 @@ See [`docs/model_card.md`](docs/model_card.md) for the full architectural breakd
 ```bash
 # Analyze a single log
 python -m src.cli.main analyze flight.BIN
+
+# Optional Betaflight/Cleanflight Blackbox support (.bbl/.bfl)
+pip install -e ".[blackbox]"
+python -m src.cli.main analyze flight.bbl --format json
+
+# Inspect hardware, sensors, parameters, and log quality (read-only)
+python -m src.cli.main hardware flight.BIN --format terminal
+
+# Compare two .param files or two ArduPilot .BIN parameter snapshots
+python -m src.cli.main param-diff before.param after.param --format terminal
+
+# Validate safety-sensitive parameter ranges without writing anything
+python -m src.cli.main param-validate aircraft.param --format terminal
+
+# Export one canonical report as JSON, HTML, or PDF
+python -m src.cli.main report flight.BIN --format pdf -o flight-report.pdf
+
+# Export an offline GPS track for QGIS/Google Earth (exact coordinates; scrub before sharing)
+python -m src.cli.main export flight.BIN --format gpx -o flight.gpx
+python -m src.cli.main export flight.BIN --format kml -o flight.kml
+
+# Export raw messages or a safe derived series for external analysis
+python -m src.cli.main export flight.BIN --format csv --messages GPS,BARO -o flight.csv
+python -m src.cli.main export flight.BIN --format parquet -o flight.parquet
+python -m src.cli.main export flight.BIN --format derived-json --derived GPS.Alt-BARO.Alt -o altitude-residual.json
+python -m src.cli.main export flight.BIN --format graph-pack -o flight-graphs.html
+python -m src.cli.main export flight.BIN --format artifacts -o flight-artifacts
+
+# Export manual log/video synchronization as a JSON, WebVTT, or SRT sidecar
+python -m src.cli.main video-overlay flight.BIN --sync-points sync.json --format vtt -o flight.vtt
+
+# Inspect the read-only ArduPilot parameter catalog
+python -m src.cli.main params search notch
+python -m src.cli.main params validate ATC_RAT_RLL_P 0.135 --format json
+
+# Validate a QGC WPL/JSON mission, or compare it with a flown track
+python -m src.cli.main mission mission.json
+python -m src.cli.main mission mission.json flight.BIN --tolerance-m 30
+
+# Review repeated coarse-location findings from local fleet reports
+python -m src.cli.main fleet location --aircraft-id uav-01 --db fleet.sqlite3
+
+# Review a Methodic Configurator step from a canonical report (read-only gate)
+python -m src.cli.main methodic flight-report.json --step 8.1
+
+# Create a privacy-scrubbed expert hand-off bundle
+python -m src.cli.main report flight.BIN --format bundle -o flight-review.zip --include-log
+
+# See which deterministic capabilities are available for each input format
+python -m src.cli.main capabilities
+
+# Show coverage and scope boundaries for every named catalogue tool
+python -m src.cli.main catalogue --format json -o catalogue-coverage.json
+
+# Find, parse, group, and compare logs in a directory without uploading them
+python -m src.cli.main log-finder ./logs --format json --hash -o log-index.json
+
+# Inspect persistence/transient evidence without changing the diagnosis
+python -m src.cli.main temporal flight.BIN --no-ml -o temporal.json
+
+# Run the transparent 44-card community checklist
+python -m src.cli.main checks flight.BIN -o community-checks.json
+
+# Run a read-only flight-test acceptance checklist
+python -m src.cli.main acceptance flight.BIN --require gps_metrics --require control_metrics
+
+# Build a known-good baseline from canonical JSON reports
+python -m src.cli.main baseline reports/healthy-1.json reports/healthy-2.json -o baseline.json
+
+# Compare canonical reports before/after maintenance
+python -m src.cli.main maintenance before.json after.json
+
+# Persist canonical reports in an operator-owned local SQLite store
+python -m src.cli.main fleet add report.json --aircraft-id uav-01 --db fleet.sqlite3
+python -m src.cli.main fleet trend --aircraft-id uav-01 --db fleet.sqlite3
 
 # Run the demo on the sample log
 python -m src.cli.main demo
@@ -330,8 +408,59 @@ python -m src.cli.main mine-expert-labels \
 # Start the server
 python -m src.cli.main ui
 
-# POST a .BIN file for analysis
+# POST a .BIN/.LOG, .ULG/.ULOG, .TLOG, or (with the blackbox extra) .BBL/.BFL file for analysis
 curl -X POST -F "file=@flight.BIN" http://localhost:8000/api/analyze
+
+# Read-only hardware report and parameter comparison endpoints
+curl -X POST -F "file=@flight.BIN" http://localhost:8000/api/hardware
+curl -X POST -F "before=@before.param" -F "after=@after.param" \
+  http://localhost:8000/api/param-diff
+curl -X POST -F "file=@aircraft.param" http://localhost:8000/api/param-validate
+
+# Offline GPX/KML track and Methodic step review from JSON payloads
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{"messages":{"GPS":[]}},"format":"gpx"}' http://localhost:8000/api/track
+curl -X POST -H "Content-Type: application/json" -d '{"report":{...},"step":"8.1"}' http://localhost:8000/api/methodic
+
+# Mission validation/compliance, plots, derived series, and parameter catalog
+curl -X POST -H "Content-Type: application/json" -d '{"mission":[{"seq":0,"lat":37.422,"lng":-122.084,"alt":20}]}' http://localhost:8000/api/mission/validate
+curl -X POST -H "Content-Type: application/json" -d '{"report":{...},"kind":"diagnoses"}' http://localhost:8000/api/plot
+curl -X POST -H "Content-Type: application/json" -d '{"report":{...},"parsed":{"messages":{"GPS":[]}}}' http://localhost:8000/api/graph-pack
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{"errors":[]},"sync":{"status":"review_only","offset_sec":2}}' http://localhost:8000/api/context/video-overlay
+# Add "format":"vtt" or "format":"srt" for editor-ready subtitle content
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{},"diagnoses":[]}' http://localhost:8000/api/context/temporal
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{}}' http://localhost:8000/api/checks/community
+curl -X POST -H "Content-Type: application/json" -d '{"parsed":{"messages":{"CMD":[]}}}' http://localhost:8000/api/artifacts
+curl "http://localhost:8000/api/params/search?query=notch"
+
+# Capability registry (including generic PX4 ULog and MAVLink TLog adapters)
+curl http://localhost:8000/api/capabilities
+curl http://localhost:8000/api/catalogue
+curl http://localhost:8000/api/tools
+
+# Optional local fleet persistence (configure ARDUPILOT_FLEET_DB and a secret
+# ARDUPILOT_FLEET_TOKEN before exposing the HTTP fleet endpoints)
+# PowerShell example: $env:ARDUPILOT_FLEET_TOKEN = "paste-a-random-secret-here"
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"aircraft_id":"uav-01","report":{...}}' \
+  -H "Authorization: Bearer paste-a-random-secret-here" \
+  http://localhost:8000/api/fleet/reports
+curl -H "Authorization: Bearer paste-a-random-secret-here" \
+  "http://localhost:8000/api/fleet/trend?aircraft_id=uav-01"
+
+# Runtime probes and local metrics
+curl http://localhost:8000/healthz
+curl http://localhost:8000/readyz
+curl http://localhost:8000/metrics
+
+# Container deployment (core engine by default; optional services are review-only)
+docker compose up --build
+docker compose --profile experimental up --build  # temporal/grounded services
+
+Fleet HTTP routes fail closed with `503 Fleet auth token is not configured` when
+`ARDUPILOT_FLEET_TOKEN` is unset.  The same-origin dashboard does not require
+CORS; a separately hosted frontend must explicitly set
+`ARDUPILOT_CORS_ORIGINS` to a comma-separated origin allowlist.  Do not use a
+wildcard origin with credentials.
 ```
 
 The `/api/analyze` endpoint returns a structured JSON response (validated via Pydantic `AnalysisResponse` schema):
@@ -349,9 +478,17 @@ The `/api/analyze` endpoint returns a structured JSON response (validated via Py
     }
   ],
   "timeline_events": [...],
-  "explain_data": { "decision": { "status": "confirmed", "top_guess": "vibration_high" } }
+  "explain_data": { "decision": { "status": "confirmed", "top_guess": "vibration_high" } },
+  "hardware_report": {
+    "schema_version": "hardware-report.v1",
+    "sensors": { "gps": { "present": true }, "esc": { "present": false } },
+    "safety_findings": [],
+    "log_quality": { "overall_status": "good" }
+  }
 }
 ```
+
+All hardware, safety, sensor, tuning, and control summaries are analysis-only. They never write parameters or alter the uploaded log. Every deterministic safety finding includes its check ID, onset time (when available), evidence, recommendation, and source URL.
 
 ### Python API — Programmatic Use
 
@@ -364,7 +501,7 @@ from src.diagnosis.hybrid_engine import HybridEngine
 parser = LogParser("flight.BIN")
 parsed = parser.parse()
 
-# Extract 94 features
+# Extract the 111-feature runtime vector
 pipeline = FeaturePipeline()
 features = pipeline.extract(parsed)
 
@@ -471,13 +608,13 @@ A comprehensive forensic audit was performed across the entire codebase. Below a
 
 ```
 $ python -m pytest tests/ -q
-176 passed in 127.43s ✅
+338 passed, 0 skipped ✅
 
 $ python /tmp/e2e_test.py
 Diagnoses: 1
-  vibration_high: 0.68 (rule+ml)
+  vibration_high: <confidence varies by log> (rule+ml)
 Anomaly detected: True
-Features extracted: 94 ✅
+Features extracted: 111 ✅
 ```
 
 ---
@@ -489,13 +626,13 @@ ardupilot-log-diagnosis/
 ├── src/
 │   ├── parser/              # pymavlink .BIN log decoder
 │   │   └── bin_parser.py    #   → 24,837 messages from sample.bin
-│   ├── features/            # 94-feature extraction pipeline
+│   ├── features/            # 111-feature extraction pipeline
 │   │   ├── pipeline.py      #   → orchestrates all extractors
 │   │   └── extractors/      #   → vibration, compass, GPS, EKF, motors, power, control, events, FFT
 │   ├── diagnosis/           # Hybrid diagnostic engine
 │   │   ├── hybrid_engine.py #   → fuses rule + ML + anomaly signals
 │   │   ├── rule_engine.py   #   → 13 deterministic threshold checks
-│   │   ├── ml_classifier.py #   → calibrated XGBoost inference
+│   │   ├── ml_classifier.py #   → schema-checked ML inference with safe abstention
 │   │   ├── anomaly_detector.py # → IsolationForest for unknown failures
 │   │   ├── decision_policy.py  # → CITA temporal arbitration
 │   │   └── rules/           #   → individual rule check modules
@@ -509,17 +646,17 @@ ardupilot-log-diagnosis/
 │   ├── contracts.py         # TypedDict schemas for type safety
 │   └── runtime_paths.py     # Dynamic model directory resolution
 ├── models/                  # Versioned ML artifacts
-│   ├── classifier.joblib    #   → trained XGBoost model
+│   ├── classifier.joblib    #   → versioned candidate/legacy model artifact
 │   ├── scaler.joblib        #   → StandardScaler
 │   ├── anomaly_detector.joblib # → IsolationForest
-│   ├── feature_columns.json #   → 94-feature schema
+│   ├── feature_columns.json #   → artifact feature schema
 │   ├── label_columns.json   #   → 6-label schema
 │   └── manifest.json        #   → version + hash integrity
 ├── training/                # Dataset build + training pipeline
-│   ├── train_model.py       #   → XGBoost + SMOTE + isotonic calibration
+│   ├── train_model.py       #   → grouped candidate training + artifact manifests
 │   ├── build_dataset.py     #   → feature extraction from labeled logs
 │   └── import_basic_direct.py # → BASiC Zenodo dataset importer
-├── tests/                   # 176 tests (parser, features, diagnosis, web, contracts)
+├── tests/                   # 338 tests (parser, features, diagnosis, web, exports, contracts)
 ├── docs/                    # Architecture, GSoC proposal, model card, policies
 │   └── assets/              #   → screenshots and diagrams
 ├── ops/                     # Expert label mining pipeline
@@ -586,6 +723,9 @@ If you have ArduPilot `.BIN` logs from real flights (especially crashes!), they 
 ### Add Diagnosis Rules
 Create a new check function in `src/diagnosis/rules/` following the existing pattern. Each rule takes `(features, thresholds)` and returns `DiagnosisDict | None`.
 
+### AI Contributor Workflow
+Agents working on this repository must follow [`docs/AI_CONTRIBUTOR_GUIDE.md`](docs/AI_CONTRIBUTOR_GUIDE.md), including provenance checks, grouped evaluation, abstention boundaries, and the full verification commands.
+
 ### Report Issues
 Open a GitHub issue with your `.BIN` file (or a sanitized version) and what you expected the diagnosis to be.
 
@@ -593,13 +733,15 @@ Open a GitHub issue with your `.BIN` file (or a sanitized version) and what you 
 
 ## 🎯 Open Issues & AI Contributor Hand-off
 
-For future contributors (and AI Agents reading this repository), there are still several technical debt and feature completeness items remaining from the `UPGRADE_ROADMAP.md` that need implementation. If you are an AI assisting the owner, you can pick up these tasks directly:
+Current release blockers are tracked in [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md):
 
-1. **Rule Engine Refactoring (Goal 6):** Break apart the monolithic rule engine (`src/diagnosis/rule_engine.py`) into smaller, composable, testable rule modules (e.g., `rules/vibration.py`, `rules/compass.py`).
-2. **CLI Refactoring (Goal 7):** Deconstruct `src/cli/main.py` into smaller command modules (e.g., `src/cli/commands/analyze.py`) and leave `main.py` as a thin dispatcher.
-3. **Dead Label Remediation & Rule Coverage:** The ML model recognizes 6 of 14 `VALID_LABELS`. Labels like `power_instability` and `pid_tuning_issue` require further rule/ML coverage. The `check_compass` rule needs verifying to reduce its heavy reliance on the ML model fallback.
-4. **Scaler Alignment (Anomaly Detector):** The IsolationForest anomaly detector currently uses a "healthy-only" scaler, while the XGBoost ML classifier uses a "full-dataset" scaler. These should be aligned or explicitly documented.
-5. **Bad Input Handling (Goal 9):** Ensure empty, corrupt, and partial logs are explicitly caught and handled gracefully across all batch, benchmark, and API endpoints, rather than failing deep inside the extraction pipeline.
+1. The safe honest 111-feature candidate scores 0.500 grouped log-level Macro F1 (gate: 0.700); a 0.559 intermediate run was rejected for contradictory incident labels.
+2. The frozen grouped holdout contains 23 source incidents (gate: 50).
+3. Five labels remain rules-only until independently expert-labelled logs are available.
+4. Fourteen capabilities are review-only and two are experimental; their status is exposed through `/api/capabilities` and the CLI capability registry.
+5. Provisional forum/search labels must not be merged into training without expert provenance.
+
+The runtime, API, adapters, security controls, and regression suite are maintained as production-hardened components while those evidence gates remain open.
 
 ---
 

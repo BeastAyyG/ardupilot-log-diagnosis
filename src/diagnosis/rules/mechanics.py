@@ -90,6 +90,14 @@ def check_motors(features: FeatureDict, thresholds: dict) -> DiagnosisDict | Non
     spread_mean = features.get("motor_spread_mean", 0.0)
     spread_std = features.get("motor_spread_std", 0.0)
     roll_std = features.get("att_roll_std", 0.0)
+    motor_sat = features.get("motor_saturation_pct", 0.0)
+    sag_ratio = features.get("bat_sag_ratio", 0.0)
+
+    # When the whole propulsion system is saturation-limited while the pack
+    # is sagging, unequal outputs are a symptom of lost thrust—not evidence
+    # of one bad motor. Let the thrust/power rules own that causal path.
+    if motor_sat > 0.10 and sag_ratio > 0.15:
+        return None
 
     lim_spr = thresholds.get("motor_spread_limit", 400.0)
     lim_mean = thresholds.get("spread_mean_limit", 200.0)

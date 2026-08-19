@@ -1,4 +1,3 @@
-import pytest
 from src.diagnosis.log_quality import LogQualityEngine
 
 
@@ -50,4 +49,15 @@ def test_log_quality_degraded_and_unsupported():
     assert report["capabilities"]["vibration_analysis"]["status"] == "UNSUPPORTED"
     assert "830847" in report["capabilities"]["vibration_analysis"]["recommendation"]
     assert report["capabilities"]["power_battery_dynamics"]["status"] == "UNSUPPORTED"
+
+
+def test_log_quality_derives_message_counts_when_metadata_is_minimal():
+    report = LogQualityEngine().evaluate(
+        {
+            "metadata": {"duration_sec": 1.0},
+            "messages": {"GPS": [{"TimeUS": 0}], "ATT": [{"TimeUS": 0}]},
+        }
+    )
+    assert report["total_messages"] == 2
+    assert report["capabilities"]["compass_gps_navigation"]["status"] == "DEGRADED"
     assert len(report["actionable_recommendations"]) >= 2

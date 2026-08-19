@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import sys
 from .commands import COMMAND_MODULES
 
 
@@ -21,6 +22,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    # CLI reports contain Unicode symbols; use UTF-8 even when launched from a
+    # legacy Windows console so a successful analysis cannot fail while printing.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
     parser = build_parser()
     args = parser.parse_args()
     args.func(args)

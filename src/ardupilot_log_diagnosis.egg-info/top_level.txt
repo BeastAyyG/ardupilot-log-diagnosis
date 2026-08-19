@@ -1,4 +1,5 @@
 __init__
+analysis
 benchmark
 chat
 cli
@@ -7,10 +8,16 @@ constants
 contracts
 data
 diagnosis
+error_codes
+export
 features
+fleet
+integrations
 parser
+reporting
 retrieval
 runtime_paths
+simulation
 tools
 tuning
 web

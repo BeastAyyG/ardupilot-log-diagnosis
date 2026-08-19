@@ -7,6 +7,8 @@ import yaml
 
 from src.constants import DEFAULT_THRESHOLDS
 from src.contracts import DiagnosisDict, FeatureDict
+from src.parser.capabilities import capability_supports_format, feature_input_format
+from src.runtime_paths import MODELS_DIR
 from .rules import (
     check_compass,
     check_ekf,
@@ -31,8 +33,9 @@ class RuleEngine:
     """Threshold-based failure detection orchestrator."""
 
     def __init__(self, thresholds: Optional[dict] = None, config_path: Optional[str] = None):
-        if config_path and Path(config_path).exists():
-            with open(config_path, "r") as file_obj:
+        resolved_config = Path(config_path) if config_path else MODELS_DIR / "rule_thresholds.yaml"
+        if resolved_config.exists():
+            with resolved_config.open("r", encoding="utf-8") as file_obj:
                 loaded = yaml.safe_load(file_obj)
                 self.thresholds = {}
                 for key, value in loaded.items():
@@ -74,6 +77,13 @@ class RuleEngine:
             ]
         if vehicle_type == "sub":
             return [
+                # Submersibles still have actuator outputs and thrust limits;
+                # retain propulsion/mechanical checks when RCOU telemetry is
+                # present instead of silently treating every sub log as
+                # navigation-only.
+                check_mechanical_failure,
+                check_thrust_loss,
+                check_motors,
                 check_compass,
                 check_power,
                 check_ekf,
@@ -84,6 +94,15 @@ class RuleEngine:
         return list(self.checks)
 
     def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
+        detected_format = feature_input_format(features)
+        if not capability_supports_format("diagnosis", detected_format):
+            # Generic adapters intentionally expose normalized telemetry for
+            # quality/track/export features, but the rule catalogue is
+            # ArduPilot DataFlash-specific.  Returning no root-cause finding
+            # here prevents a ULog/TLog/Blackbox vector from being labelled as
+            # an ArduPilot failure merely because field names happen to align.
+            return []
+
         def _to_float(value):
             if value is None:
                 return 0.0

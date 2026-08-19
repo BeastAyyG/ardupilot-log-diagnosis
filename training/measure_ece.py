@@ -18,12 +18,18 @@ import os
 import sys
 from pathlib import Path
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import joblib
 import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")          # headless
 import matplotlib.pyplot as plt   # noqa: E402
+from training.evaluation_split import grouped_train_test_split
+from training.data_contract import effective_group_values, primary_label_for_row
 
 ECE_PASS_THRESHOLD = 0.08
 
@@ -48,6 +54,34 @@ def compute_ece(y_true: np.ndarray, probs: np.ndarray, n_bins: int = 10) -> floa
         ece_per_class.append(bin_ece / len(y_true))
 
     return float(np.mean(ece_per_class))
+
+
+def aggregate_group_probabilities(
+    y_true: np.ndarray, probs: np.ndarray, groups: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Apply the deployed max-window contract before measuring calibration.
+
+    The runtime reports one diagnosis per source incident using the maximum
+    raw class probability across its windows (including the full-log window).
+    Measuring ECE on every correlated window would overweight long flights and
+    certify a confidence behaviour the deployed service does not expose.
+    """
+
+    y_true = np.asarray(y_true)
+    probs = np.asarray(probs, dtype=float)
+    groups = np.asarray(groups)
+    if len(y_true) != len(probs) or len(y_true) != len(groups):
+        raise ValueError("ECE arrays must have the same row count.")
+    if len(y_true) == 0:
+        return y_true, probs
+
+    grouped_true = []
+    grouped_probs = []
+    for group in np.unique(groups):
+        indices = np.flatnonzero(groups == group)
+        grouped_true.append(y_true[indices[0]])
+        grouped_probs.append(np.max(probs[indices], axis=0))
+    return np.asarray(grouped_true), np.asarray(grouped_probs)
 
 
 def reliability_diagram(y_true, probs, class_names, output_path):
@@ -89,26 +123,45 @@ def reliability_diagram(y_true, probs, class_names, output_path):
     plt.tight_layout()
     plt.savefig(output_path, dpi=120)
     plt.close()
-    print(f"Reliability diagram saved → {output_path}")
+    print(f"Reliability diagram saved to {output_path}")
 
 
-def load_model_and_predict(features_csv: str, labels_csv: str):
-    bundle = joblib.load("models/classifier.joblib")
-    scaler = joblib.load("models/scaler.joblib")
+def load_model_and_predict(
+    features_csv: str, labels_csv: str, groups_csv: str, model_dir: str = "models"
+):
+    model_root = Path(model_dir)
+    bundle = joblib.load(model_root / "classifier.joblib")
+    scaler = joblib.load(model_root / "scaler.joblib")
     model = bundle["model"]
     classes = bundle["classes"]
 
+    # The runtime dataset may contain newer rule-only features than the
+    # deployed model. Evaluate the exact ordered model columns.
+    feature_schema_path = model_root / "feature_columns.json"
+    model_feature_columns = json.loads(feature_schema_path.read_text(encoding="utf-8"))
+
     df_feat = pd.read_csv(features_csv)
     df_lab = pd.read_csv(labels_csv)
+    df_groups = pd.read_csv(groups_csv)
+    if len(df_feat) != len(df_lab) or len(df_feat) != len(df_groups):
+        raise ValueError("Features, labels, and groups CSVs must have the same row count.")
 
-    X = df_feat.values
+    missing = [name for name in model_feature_columns if name not in df_feat.columns]
+    if missing:
+        raise ValueError("Dataset is missing model feature columns: " + ", ".join(missing))
+    X = df_feat.loc[:, model_feature_columns].to_numpy()
     class_names = []
     keep = []
     for i in range(len(df_lab)):
         row = df_lab.iloc[i]
-        active = row[row == 1].index.tolist()
-        if active and active[0] in classes:
-            class_names.append(active[0])
+        preferred = (
+            df_groups.iloc[i].get("primary_label", "")
+            if "primary_label" in df_groups.columns
+            else ""
+        )
+        primary = primary_label_for_row(row, preferred=preferred, allowed=classes)
+        if primary:
+            class_names.append(primary)
             keep.append(i)
 
     if not keep:
@@ -117,8 +170,26 @@ def load_model_and_predict(features_csv: str, labels_csv: str):
 
     X = X[keep]
     y_true = np.array([classes.index(n) for n in class_names])
-    X_scaled = scaler.transform(X)
+    groups = effective_group_values(df_groups)[keep]
+    _, test_indices = grouped_train_test_split(y_true, groups)
+    X_scaled = scaler.transform(X[test_indices])
+    y_true = y_true[test_indices]
+    groups = groups[test_indices]
     probs = model.predict_proba(X_scaled)
+    cal_file = model_root / "calibration_params.json"
+    if cal_file.exists():
+        try:
+            cal_params = json.loads(cal_file.read_text(encoding="utf-8"))
+            if cal_params.get("method") == "temperature" and "temperature" in cal_params:
+                T = cal_params["temperature"]
+                logits = np.log(probs + 1e-12) / T
+                exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+                probs = exp_logits / exp_logits.sum(axis=1, keepdims=True)
+                print(f"Applied Temperature Scaling (T={T:.4f})")
+        except Exception:
+            pass
+
+    y_true, probs = aggregate_group_probabilities(y_true, probs, groups)
     return y_true, probs, classes
 
 
@@ -126,10 +197,17 @@ def main():
     parser = argparse.ArgumentParser(description="Measure ECE for the trained classifier")
     parser.add_argument("--features-csv", default="training/features.csv")
     parser.add_argument("--labels-csv", default="training/labels.csv")
+    parser.add_argument("--groups-csv", default="training/groups.csv")
+    parser.add_argument("--model-dir", default="models")
     parser.add_argument(
         "--output-diagram",
         default="docs/reliability_diagram.png",
         help="Path to save reliability diagram PNG",
+    )
+    parser.add_argument(
+        "--report-path",
+        default="training/ece_report.json",
+        help="Path for the machine-readable ECE report",
     )
     parser.add_argument(
         "--target-ece",
@@ -139,24 +217,24 @@ def main():
     )
     args = parser.parse_args()
 
-    if not Path("models/classifier.joblib").exists():
+    if not (Path(args.model_dir) / "classifier.joblib").exists():
         print("No trained model found. Run `python training/train_model.py` first.")
         sys.exit(1)
 
     print("Loading model and computing ECE...")
     y_true, probs, class_names = load_model_and_predict(
-        args.features_csv, args.labels_csv
+        args.features_csv, args.labels_csv, args.groups_csv, args.model_dir
     )
 
     ece = compute_ece(y_true, probs)
 
     print(f"\n{'='*50}")
     print(f"  Overall ECE (macro): {ece:.4f}")
-    print(f"  Target:              ≤ {args.target_ece:.2f}")
+    print(f"  Target:              <= {args.target_ece:.2f}")
     if ece <= args.target_ece:
-        print("  Result:              ✅ PASS")
+        print("  Result:              PASS")
     else:
-        print("  Result:              ❌ FAIL — retraining or recalibration needed")
+        print("  Result:              FAIL - retraining or recalibration needed")
     print(f"{'='*50}\n")
 
     # Per-class ECE breakdown
@@ -173,7 +251,7 @@ def main():
                 continue
             class_ece += mask.sum() * abs(p[mask].mean() - label[mask].mean())
         class_ece /= len(y_true)
-        flag = "✅" if class_ece <= args.target_ece else "⚠️ "
+        flag = "PASS" if class_ece <= args.target_ece else "WARN"
         print(f"  {flag} {name:<25} ECE={class_ece:.4f}")
 
     # Reliability diagram
@@ -188,10 +266,12 @@ def main():
         "n_samples": len(y_true),
         "classes": class_names,
     }
-    report_path = "training/ece_report.json"
-    with open(report_path, "w") as f:
+    report_parent = Path(args.report_path).parent
+    if str(report_parent):
+        report_parent.mkdir(parents=True, exist_ok=True)
+    with open(args.report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
-    print(f"ECE report saved → {report_path}")
+    print(f"ECE report saved to {args.report_path}")
 
     sys.exit(0 if ece <= args.target_ece else 1)
 

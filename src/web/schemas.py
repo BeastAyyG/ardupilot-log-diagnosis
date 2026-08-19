@@ -1,12 +1,14 @@
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Metadata(BaseModel):
     filename: str
     duration: float
     vehicle: str
+    file_format: dict[str, Any] | None = None
+    sha256: str | None = None
 
 
 class Diagnosis(BaseModel):
@@ -44,9 +46,13 @@ class GPSQuality(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
+    schema_version: str = "analysis-response.v1"
     metadata: Metadata
     features: dict[str, Any]
     diagnoses: list[Diagnosis]
+    # Stable machine-facing policy result.  The same object is also retained
+    # under explain_data for dashboard/backwards compatibility.
+    decision: dict[str, Any]
     parameter_warnings: list[dict]
     explain_data: ExplainData
     time_series: dict[str, list[dict[str, Any]]]
@@ -54,6 +60,8 @@ class AnalysisResponse(BaseModel):
     gps_quality: GPSQuality
     rule_output_only: str
     rule_output_diagnoses: list[dict[str, Any]]
+    hardware_report: dict[str, Any] = Field(default_factory=dict)
+    health_score: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatRequest(BaseModel):

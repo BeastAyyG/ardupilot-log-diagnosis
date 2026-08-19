@@ -17,6 +17,11 @@ class PowerExtractor(BaseExtractor):
         "bat_margin",
         "bat_sag_ratio",
         "volt_tanomaly",
+        "bat_power_mean",
+        "bat_power_max",
+        "bat_sag_per_amp",
+        "bat_low_voltage_pct",
+        "bat_current_spike_pct",
     ]
 
     def has_data(self) -> bool:
@@ -61,6 +66,31 @@ class PowerExtractor(BaseExtractor):
         if volt_stats["max"] > 0.0:
             bat_sag_ratio = volt_stats["range"] / volt_stats["max"]
 
+        power_vals = [volt * curr for volt, curr in zip(volt_vals, curr_vals)]
+        power_stats = self._safe_stats(power_vals)
+        low_voltage = float(batt_low_volt) if batt_low_volt is not None else 0.0
+        low_voltage_pct = (
+            sum(1 for value in volt_vals if low_voltage > 0 and value < low_voltage)
+            / len(volt_vals)
+            if volt_vals
+            else 0.0
+        )
+        # Flight logs are short and often contain one meaningful load pulse;
+        # a 2-sigma threshold hides that pulse in small samples. Use a
+        # one-sigma gate here and leave the magnitude in the raw evidence.
+        current_spike_threshold = curr_stats["mean"] + 1.0 * curr_stats["std"]
+        current_spike_pct = (
+            sum(1 for value in curr_vals if value > current_spike_threshold)
+            / len(curr_vals)
+            if curr_vals and curr_stats["std"] > 0
+            else 0.0
+        )
+        sag_per_amp = (
+            volt_stats["range"] / curr_stats["max"]
+            if curr_stats["max"] > 0
+            else 0.0
+        )
+
         return {
             "bat_volt_min": volt_stats["min"],
             "bat_volt_max": volt_stats["max"],
@@ -72,4 +102,9 @@ class PowerExtractor(BaseExtractor):
             "bat_margin": float(bat_margin),
             "bat_sag_ratio": float(bat_sag_ratio),
             "volt_tanomaly": volt_stats["tanomaly"],
+            "bat_power_mean": power_stats["mean"],
+            "bat_power_max": power_stats["max"],
+            "bat_sag_per_amp": float(sag_per_amp),
+            "bat_low_voltage_pct": float(low_voltage_pct),
+            "bat_current_spike_pct": float(current_spike_pct),
         }

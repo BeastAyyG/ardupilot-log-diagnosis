@@ -23,9 +23,9 @@ Our study identified that **67% of "Mechanical Failure" labels** are telemetry-v
 ## 4. Final Recommendation & Sign-Off
 Based on the transition of the codebase to the **Root-Cause Precedence** policy and the achievement of stable 85%+ recall on core safety-critical labels (Compass, EKF, Power):
 
-**I hereby sign off on the production readiness of ArduPilot AI Log Diagnosis version 1.0.0.**
+This historical study is not a production sign-off. Current release approval remains blocked until the grouped F1, holdout-size, provenance, and label-coverage gates in [`docs/PRODUCTION_READINESS.md`](PRODUCTION_READINESS.md) pass.
 
-- [x] Target release gates approved.
+- [ ] Target release gates approved.
 - [x] Root-cause labeling policy implemented.
 - [x] Unseen holdout set verified.
 - [x] Maintainer triage impact quantified (P4-02 claim).

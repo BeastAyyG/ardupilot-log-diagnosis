@@ -22,9 +22,9 @@ This project implements an open-source, hybrid automated diagnosis engine. By co
 
 ### Key Deliverables:
 1. **Interactive 3D Mission Replay UI:** A Vue/Plotly-based dashboard that visualizes crash trajectory, vibration patterns, and causality events in a single view.
-2. **Feature Extraction Pipeline:** Translates raw ArduPilot telemetry (IMU, EKF, GPS, MOT, BAT) into over 150 meaningful statistical features suitable for ML models.
-3. **Hybrid Diagnostic Engine & Anomaly Detector:** Combines deterministic telemetry rules with a calibrated XGBoost/Random Forest model. It also includes an Unsupervised Anomaly Detector (Autoencoder) to flag unseen edge-case failures.
-4. **Training Dataset & Provenance:** Integrated the official 13.9 GB BASiC Zenodo dataset and expert-mined forum labels into a unified pool of 140+ logs, guaranteeing zero-leakage holdout splits.
+2. **Feature Extraction Pipeline:** Translates raw ArduPilot telemetry (IMU, EKF, GPS, MOT, BAT) into 111 finite runtime features suitable for ML models.
+3. **Hybrid Diagnostic Engine & Anomaly Detector:** Combines deterministic telemetry rules with a tabular ML classifier and an Isolation Forest anomaly detector. ML artifacts are gated before promotion.
+4. **Training Dataset & Provenance:** Maintains log provenance and grouped splits so windows from the same flight cannot cross a holdout boundary. Forum-search labels remain provisional until expert review.
 5. **Integration Ready Engine:** A CLI and Web tool wrapper allowing maintainers to get near-instant confidence scores on exactly *why* a drone crashed.
 
 ## 3. Why am I the right person for this project?
@@ -36,14 +36,14 @@ What I've built so far:
 - **True Thrust-Loss Detection**: Scans for sustained, synchronous `RCOU` motor saturation coupled with GPS/CTUN altitude descent.
 - **Pre-Flight Parameter Validation**: Evaluates `PARM` values (e.g. default PIDs) against `VIBE` and attitude symptoms, flagging likely tuning issues prior to hardware failure.
 - **3D Mission Replay Dashboard**: A premium interactive UI with 3D flight path reconstruction and causality markers.
-- **Unified 140+ Log Dataset**: Integrated the BASiC dataset (Zenodo) with expert-mined forum labels enforcing zero-leakage.
-- **176 passing tests** covering parser, feature routing, diagnosis, parameter validation, and causal arbitration.
+- **Grouped evaluation workflow**: Includes schema, finite-value, provenance, calibration, F1, and holdout-size release gates.
+- **Automated test suite** covering parser, feature routing, diagnosis, parameter validation, and causal arbitration.
 
 What is working well:
-- **Macro F1: 1.000** (Verified across 140+ log pool from BASiC and Forums).
-- **Calibration (ECE): 0.0001** (Target ≤ 0.08) — mathematical reliability for pilot trust.
-- **Triage time reduced from ~25 min to < 350ms (98% reduction)**.
-- **8+ Failure Families** recognized with near-perfect reliability, including vibration, compass, GPS, and RC failsafes.
+- **Rule-backed triage** works for covered ArduPilot log inputs, with evidence and quality warnings.
+- **Candidate model evaluation:** the safe `v3_unambiguous` candidate scores macro F1 0.500 and incident-level ECE 0.153 on 23 source incidents; both fail their release gates. An intermediate 0.559/0.158 run was rejected because two source-URL groups had contradictory labels. The earlier 0.670/0.069 window score was invalidated after provenance grouping, primary-label, and calibration-contract audits.
+- **Release status:** the candidate is not promoted because F1 is below the 0.70 gate and the holdout is below 50 independent logs.
+- **Label coverage:** five failure families remain rules-only until more expert-labelled logs are collected.
 
 Next Ambition:
 - Expanding from "Retrospective Analysis" to "Real-time Edge Ingestion."
@@ -77,10 +77,10 @@ Next Ambition:
 - I have fixed critical data parsing bugs, integrated SMOTE for handling class imbalances, and mapped every log in the dataset back to its original forum incident so labels are fully verifiable by ArduPilot domain experts.
 
 ## 6. Known Limitations & Edge-AI Improvement Plan
-| Current Final State | GSoC Future Target |
+| Current State | GSoC Future Target |
 |---|---|
-| Macro F1 = 1.0 (on Offline Data) | Target high F1 on Live MAVLink streams |
+| Safe candidate macro F1 = 0.500 on a 23-incident grouped holdout; not release-ready | Target ≥ 0.70 on ≥ 50 independent holdout incidents |
 | Motor imbalance detection relies on offline processing | Real-time FFT processing on Edge hardware |
 | Heavy Python dependencies (Pandas, Scikit) | Port inference engine to C++ for companion computers |
-| 140-log dataset (Highly curated) | Expand to 1000+ with automated community submission pipeline |
+| Existing data lacks five labelled failure classes | Expand with expert-reviewed community submissions |
 

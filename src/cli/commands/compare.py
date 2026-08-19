@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import json
+import io
+import sys
+from contextlib import redirect_stdout
 from pathlib import Path
 from argparse import _SubParsersAction
 from typing import Any, List, Dict
 
 from src.comparison.trend_analyzer import TrendAnalyzer
-from src.cli.formatter import DiagnosisFormatter
 from src.diagnosis.hybrid_engine import HybridEngine
-from src.diagnosis.decision_policy import evaluate_decision
+from src.cli.commands.common import diagnose_with_windowed_ml
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
+from src.reporting.hardware import HardwareReportBuilder
 
 from .common import write_or_print_output
 
@@ -54,66 +57,101 @@ def register(subparsers: _SubParsersAction) -> None:
 
 def run(args) -> None:
     """Execute the compare command."""
+    json_mode = args.json or getattr(args, "format", "terminal") == "json"
+
+    def progress(message: str) -> None:
+        print(message, file=sys.stderr if json_mode else sys.stdout)
+
     if len(args.logfiles) < 2:
-        print("Error: At least 2 log files required for comparison")
+        progress("Error: At least 2 log files required for comparison")
         return
     
     # Analyze each flight
     analysis_results: List[Dict[str, Any]] = []
     
-    print(f"Analyzing {len(args.logfiles)} flights...")
+    progress(f"Analyzing {len(args.logfiles)} flights...")
     
     engine = HybridEngine()
     parser_obj = LogParser("")
     pipeline = FeaturePipeline()
+    seen_source_hashes: set[str] = set()
     
     for i, logfile in enumerate(args.logfiles, 1):
         logpath = Path(logfile)
         if not logpath.exists():
-            print(f"Warning: File not found: {logfile}, skipping...")
+            progress(f"Warning: File not found: {logfile}, skipping...")
             continue
         
-        print(f"  [{i}/{len(args.logfiles)}] Analyzing {logpath.name}...")
+        progress(f"  [{i}/{len(args.logfiles)}] Analyzing {logpath.name}...")
         
-        # Parse log
-        parser_obj.filepath = str(logpath)
-        parsed = parser_obj.parse()
+        # Pymavlink can print malformed-header diagnostics directly to stdout.
+        # Capture it so `--json` stays valid JSON and reject the malformed log
+        # cleanly instead of allowing downstream feature extraction to fail.
+        try:
+            parser_obj.filepath = str(logpath)
+            with redirect_stdout(io.StringIO()):
+                parsed = parser_obj.parse()
+        except Exception as exc:
+            progress(f"Warning: Could not parse {logpath.name}; skipping ({exc}).")
+            continue
+        parse_metadata = parsed.get("metadata", {}) or {}
+        if not parse_metadata.get("parse_complete", False):
+            detail = parse_metadata.get("parse_error") or "parser did not complete"
+            progress(f"Warning: Invalid log {logpath.name}; skipping ({detail}).")
+            continue
+        source_hash = str((parse_metadata.get("file_format", {}) or {}).get("sha256") or "")
+        if source_hash and source_hash in seen_source_hashes:
+            progress(f"Warning: Duplicate flight {logpath.name}; skipping.")
+            continue
+        if source_hash:
+            seen_source_hashes.add(source_hash)
         
         # Extract features
         features = pipeline.extract(parsed)
+        if not (features.get("_metadata", {}) or {}).get("extraction_success", True):
+            progress(f"Warning: Feature extraction failed for {logpath.name}; skipping.")
+            continue
         
         # Run diagnosis
-        diagnoses = engine.diagnose(features)
-        decision = evaluate_decision(diagnoses)
-        
+        diagnoses, _ = diagnose_with_windowed_ml(engine, parsed, features)
         # Build analysis result
-        formatter = DiagnosisFormatter()
-        metadata = features.get("_metadata", {})
+        metadata = dict(features.get("_metadata", {}) or {})
+        metadata.setdefault("filename", logpath.name)
+        metadata.setdefault("log_file", str(logpath))
         
-        result = formatter.format_json(
-            diagnoses,
-            metadata,
-            features,
-            decision=decision,
-            similar_cases=[],
-            runtime_info={"engine": "hybrid"},
-            parameter_warnings=[],
-            explain_data=None,
-        )
-        
-        analysis_results.append(result)
+        analysis_results.append({
+            "metadata": metadata,
+            "features": features,
+            "diagnoses": diagnoses,
+            "hardware_report": HardwareReportBuilder().build(parsed, parameter_mode="minimal", diagnoses=diagnoses),
+        })
     
     if len(analysis_results) < 2:
-        print("Error: Need at least 2 valid log files for comparison")
+        message = "Need at least 2 distinct valid log files for comparison"
+        progress(f"Error: {message}")
+        if json_mode:
+            write_or_print_output(
+                json.dumps(
+                    {
+                        "schema_version": "trend-report.v2",
+                        "status": "insufficient_data",
+                        "flights_analyzed": len(analysis_results),
+                        "reason": message,
+                    },
+                    indent=2,
+                ),
+                args.output,
+                "Comparison Report",
+            )
         return
     
     # Run trend analysis
-    print("\nRunning trend analysis...")
+    progress("\nRunning trend analysis...")
     analyzer = TrendAnalyzer()
     trend_report = analyzer.compare_flights(analysis_results)
     
     # Format output
-    if args.json or getattr(args, "format", "terminal") == "json":
+    if json_mode:
         output = json.dumps(trend_report, indent=2)
     elif getattr(args, "format", "terminal") == "html":
         output = _format_html_comparison(trend_report)

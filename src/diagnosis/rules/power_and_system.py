@@ -6,10 +6,14 @@ def check_power(features: FeatureDict, thresholds: dict) -> DiagnosisDict | None
     volt_rng = features.get("bat_volt_range", 0.0)
     volt_min = features.get("bat_volt_min", 20.0)
     vcc_min = features.get("sys_vcc_min", 5.0)
+    vservo_min = features.get("sys_vservo_min", 5.0)
     margin = features.get("bat_margin", 10.0)
     sag_ratio = features.get("bat_sag_ratio", 0.0)
     curr_max = features.get("bat_curr_max", 0.0)
     volt_std = features.get("bat_volt_std", 0.0)
+    low_voltage_pct = features.get("bat_low_voltage_pct", 0.0)
+    current_spike_pct = features.get("bat_current_spike_pct", 0.0)
+    sag_per_amp = features.get("bat_sag_per_amp", 0.0)
 
     lim_rng = thresholds.get("bat_volt_range_limit", 2.0)
     lim_vcc = thresholds.get("powr_vcc_min", 4.5)
@@ -46,6 +50,26 @@ def check_power(features: FeatureDict, thresholds: dict) -> DiagnosisDict | None
         failure = "brownout"
         severity = "critical"
         msg = "Board voltage low — check power supply, possible brownout risk"
+
+    # Older ArduPilot logs may show a failing servo rail while Vcc remains
+    # nominal.  Treat a measured, non-zero VServo drop as the same power
+    # integrity failure instead of silently missing the only brownout signal.
+    # Values below 1 V are commonly a missing/invalid VServo field rather
+    # than a measured rail; do not turn that sentinel into a false brownout.
+    vservo_limit = max(1.0, lim_vcc - 0.5)
+    if 1.0 <= vservo_min < vservo_limit:
+        conf += 0.8
+        evidence.append(
+            {
+                "feature": "sys_vservo_min",
+                "value": vservo_min,
+                "threshold": vservo_limit,
+                "direction": "below",
+            }
+        )
+        failure = "brownout"
+        severity = "critical"
+        msg = "Servo rail voltage low — check power distribution and BEC capacity"
 
     if margin < 0.5 and margin > 0:
         conf += 0.4
@@ -110,6 +134,34 @@ def check_power(features: FeatureDict, thresholds: dict) -> DiagnosisDict | None
                 "threshold": 0.8,
                 "direction": "above",
                 "context": "voltage noise under high-current flight",
+            }
+        )
+        if not failure:
+            failure = "power_instability"
+
+    if low_voltage_pct > 0.05:
+        conf += 0.25
+        evidence.append(
+            {
+                "feature": "bat_low_voltage_pct",
+                "value": low_voltage_pct,
+                "threshold": 0.05,
+                "direction": "above",
+                "context": "battery remained below the configured low-voltage threshold",
+            }
+        )
+        if not failure:
+            failure = "power_instability"
+
+    if current_spike_pct > 0.05 and sag_per_amp > 0.02:
+        conf += 0.25
+        evidence.append(
+            {
+                "feature": "bat_current_spike_pct",
+                "value": current_spike_pct,
+                "threshold": 0.05,
+                "direction": "above",
+                "context": "repeated current spikes coincide with voltage sag",
             }
         )
         if not failure:

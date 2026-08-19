@@ -15,30 +15,62 @@ services:
       - ./logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
+      # Set these in an external .env/secret store for a strict deployment:
+      # ARDUPILOT_FLEET_TOKEN, MAVLINK_AUTH_TOKEN, and (optionally)
+      # ARDUPILOT_REQUIRE_RELEASE_MODEL=1.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
   temporal-layer:
+    # Optional review-only service.  It refuses requests until a trained HMM
+    # artifact is mounted, so it is not part of the default production stack.
+    profiles: ["experimental"]
     build:
       context: ./temporal-layer
       dockerfile: Dockerfile
     container_name: ardupilot-temporal-layer
     ports:
-      - "8001:8001"
+      # This review-only service is internal; do not publish it on all host
+      # interfaces when the experimental profile is enabled.
+      - "127.0.0.1:8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
   llm-orchestrator:
+    # Optional grounded explanation service; it has no generative model and
+    # never writes parameters.  Enable explicitly when this boundary is wanted.
+    profiles: ["experimental"]
     build:
       context: ./llm-orchestrator
       dockerfile: Dockerfile
     container_name: ardupilot-llm-orchestrator
     ports:
-      - "8002:8002"
+      # Grounded explanations are an internal boundary, not a public API.
+      - "127.0.0.1:8002:8002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
   web-gateway:
+    # Placeholder only; do not expose it accidentally in production.
+    profiles: ["gateway"]
     image: nginx:alpine
     container_name: ardupilot-web-gateway
     ports:
       - "80:80"
-    # Placeholder for M4/M5 unified UI gateway
+    # Replace with a configured reverse-proxy before enabling this profile.
 

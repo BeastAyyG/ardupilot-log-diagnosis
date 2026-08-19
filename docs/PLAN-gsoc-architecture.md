@@ -1,9 +1,9 @@
 # Project Plan: ArduPilot AI Log Diagnosis (GSoC 2026)
 
 ## 1. Overview
-An AI-assisted log diagnosis tool for ArduPilot `.BIN` dataflash logs. Extended from a rule-based prototype into a full **hybrid rule + XGBoost** engine over the 12-week GSoC period. Parses logs, extracts 60+ numerical features, identifies the **root cause** of flight failures (not just symptoms), and outputs actionable maintainer reports.
+An AI-assisted log diagnosis tool for ArduPilot flight logs. The current runtime is a hybrid rule/ML engine over a 111-feature contract, with explicit quality gating and abstention when evidence is insufficient.
 
-**Status as of 2026-02-28**: P0, P1, P2, P3 complete. P4 in progress. Production sign-off granted.
+**Status**: Historical architecture plan. It is not a production sign-off; see [`docs/PRODUCTION_READINESS.md`](PRODUCTION_READINESS.md) for current release evidence and blockers.
 
 ## 2. Project Type
 **BACKEND** — Data Processing, CLI Tool, ML Pipeline

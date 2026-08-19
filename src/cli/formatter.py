@@ -1,4 +1,5 @@
 import json
+import html
 import os
 import sys
 from typing import Optional
@@ -23,6 +24,10 @@ def _c(text: str, *codes: str) -> str:
     if not _use_color():
         return text
     return "".join(codes) + text + _RESET
+
+
+def _html_safe(value: object) -> str:
+    return html.escape(str(value if value is not None else "-"), quote=True)
 
 
 _HTML_TEMPLATE = """\
@@ -75,6 +80,8 @@ class DiagnosisFormatter:
         runtime_info: Optional[dict] = None,
         parameter_warnings: Optional[list[dict]] = None,
         explain_data: Optional[dict] = None,
+        hardware_report: Optional[dict] = None,
+        health_score: Optional[dict] = None,
     ) -> str:
         filename = metadata.get("log_file", "unknown").split("/")[-1]
         duration = metadata.get("duration_sec", 0.0)
@@ -89,6 +96,26 @@ class DiagnosisFormatter:
             f"Vehicle: {vehicle}",
             "",
         ]
+
+        if hardware_report:
+            hardware_meta = hardware_report.get("metadata", {})
+            hardware_health = hardware_report.get("system_health", {})
+            lines.extend(
+                [
+                    "Hardware & Configuration:",
+                    f"  Errors: {hardware_health.get('error_count', 0)} | "
+                    f"Watchdog/internal: {'yes' if hardware_health.get('watchdog_or_internal_error') else 'no'} | "
+                    f"Parameters: {hardware_meta.get('total_messages', 0)} messages",
+                    "",
+                ]
+            )
+
+        if health_score:
+            lines.extend([
+                f"Health score: {health_score.get('score', '-')} / 100 ({health_score.get('label', 'review')})",
+                "  Review-priority score only; not a safe-to-fly certification.",
+                "",
+            ])
 
         quality_report = metadata.get("quality_report", {})
         if quality_report and isinstance(quality_report, dict) and quality_report.get("overall_status") != "UNKNOWN":
@@ -111,7 +138,10 @@ class DiagnosisFormatter:
             lines.append("")
 
         if not diagnoses:
-            lines.append(_c("HEALTHY - No critical failures detected.", _GREEN, _BOLD))
+            if str((decision or {}).get("status", "")).lower() == "uncertain":
+                lines.append(_c("UNABLE TO CONFIRM - Human review required.", _YELLOW, _BOLD))
+            else:
+                lines.append(_c("HEALTHY - No critical failures detected.", _GREEN, _BOLD))
         else:
             for diag in diagnoses:
                 pct = int(diag["confidence"] * 100)
@@ -201,6 +231,8 @@ class DiagnosisFormatter:
         runtime_info: Optional[dict] = None,
         parameter_warnings: Optional[list[dict]] = None,
         explain_data: Optional[dict] = None,
+        hardware_report: Optional[dict] = None,
+        health_score: Optional[dict] = None,
     ) -> str:
         return json.dumps(
             {
@@ -211,6 +243,8 @@ class DiagnosisFormatter:
                 "similar_cases": similar_cases or [],
                 "parameter_warnings": parameter_warnings or [],
                 "explain_data": explain_data or {},
+                "hardware_report": hardware_report or {},
+                "health_score": health_score or {},
                 "features_summary": {
                     k: v for k, v in features.items() if not k.startswith("_")
                 },
@@ -228,6 +262,8 @@ class DiagnosisFormatter:
         runtime_info: Optional[dict] = None,
         parameter_warnings: Optional[list[dict]] = None,
         explain_data: Optional[dict] = None,
+        hardware_report: Optional[dict] = None,
+        health_score: Optional[dict] = None,
     ) -> str:
         filename = metadata.get("log_file", "unknown").split("/")[-1]
         duration = metadata.get("duration_sec", 0.0)
@@ -236,46 +272,68 @@ class DiagnosisFormatter:
         vehicle = f"{metadata.get('vehicle_type', 'Unknown')} {metadata.get('firmware', '')}".strip()
 
         sections = []
+        if hardware_report:
+            hardware_meta = hardware_report.get("metadata", {})
+            hardware_health = hardware_report.get("system_health", {})
+            sections.append(
+                '<div class="card"><h2>Hardware & Configuration</h2>'
+                f'<div>{hardware_meta.get("vehicle_type", "Unknown")} · '
+                f'{hardware_meta.get("firmware_version", "Unknown")} · '
+                f'{_html_safe(hardware_meta.get("total_messages", 0))} messages</div>'
+                f'<div>Detected errors: {_html_safe(hardware_health.get("error_count", 0))}; '
+                f'watchdog/internal error: {"yes" if hardware_health.get("watchdog_or_internal_error") else "no"}</div>'
+                '</div>'
+            )
+        if health_score:
+            sections.append(
+                '<div class="card"><h2>Health score</h2>'
+                f'<p><strong>{_html_safe(health_score.get("score", "-"))} / 100</strong> '
+                f'({_html_safe(health_score.get("label", "review"))})</p>'
+                '<p class="meta">Review-priority score only; not a safe-to-fly certification.</p></div>'
+            )
         quality_report = metadata.get("quality_report", {})
         if quality_report and isinstance(quality_report, dict) and quality_report.get("overall_status") != "UNKNOWN":
             overall_status = quality_report.get("overall_status", "RELIABLE")
             q_class = "healthy" if overall_status == "RELIABLE" else ("warning" if overall_status == "DEGRADED" else "critical")
-            q_html = f'<h2><span class="badge {q_class}">{overall_status}</span> Log Quality & Capability Check</h2>'
+            q_html = f'<h2><span class="badge {_html_safe(q_class)}">{_html_safe(overall_status)}</span> Log Quality & Capability Check</h2>'
             for cap_name, cap_info in quality_report.get("capabilities", {}).items():
                 if isinstance(cap_info, dict) and cap_info.get("status") in ("DEGRADED", "UNSUPPORTED"):
                     c_status = cap_info.get("status", "")
                     c_class = "warning" if c_status == "DEGRADED" else "critical"
-                    q_html += f'<div class="similar-case"><span class="badge {c_class}">{c_status}</span> <strong>{cap_name}:</strong> {cap_info.get("reason")}'
+                    q_html += f'<div class="similar-case"><span class="badge {_html_safe(c_class)}">{_html_safe(c_status)}</span> <strong>{_html_safe(cap_name)}:</strong> {_html_safe(cap_info.get("reason"))}'
                     if cap_info.get("recommendation"):
-                        q_html += f'<div style="margin-top:.3rem;color:#2471a3">-> Recommendation: {cap_info["recommendation"]}</div>'
+                        q_html += f'<div style="margin-top:.3rem;color:#2471a3">-&gt; Recommendation: {_html_safe(cap_info["recommendation"])}</div>'
                     q_html += '</div>'
             sections.append(f'<div class="card">{q_html}</div>')
 
         if runtime_info:
             sections.append(
-                f'<div class="card"><strong>Runtime:</strong> {runtime_info.get("engine", "unknown")}</div>'
+                f'<div class="card"><strong>Runtime:</strong> {_html_safe(runtime_info.get("engine", "unknown"))}</div>'
             )
 
         if parameter_warnings:
             warning_html = "".join(
-                f'<div class="warning-box">{item["message"]}</div>' for item in parameter_warnings
+                f'<div class="warning-box">{_html_safe(item["message"])}</div>' for item in parameter_warnings
             )
             sections.append(f'<div class="card"><h2>Pre-Flight & Parameter Validation</h2>{warning_html}</div>')
 
         if not diagnoses:
-            sections.append('<div class="card"><span class="badge healthy">HEALTHY</span> No critical failures detected.</div>')
+            if str((decision or {}).get("status", "")).lower() == "uncertain":
+                sections.append('<div class="card"><span class="badge warning">UNABLE TO CONFIRM</span> Human review required.</div>')
+            else:
+                sections.append('<div class="card"><span class="badge healthy">HEALTHY</span> No critical failures detected.</div>')
         else:
             for diag in diagnoses:
                 severity = diag["severity"].lower()
-                badge = f'<span class="badge {severity}">{severity.upper()} {int(diag["confidence"] * 100)}%</span>'
+                badge = f'<span class="badge {_html_safe(severity)}">{_html_safe(severity.upper())} {int(diag["confidence"] * 100)}%</span>'
                 evidence = "".join(
-                    f'<div class="evidence">{ev.get("feature")} = {ev.get("value")} (limit: {ev.get("threshold")})</div>'
+                    f'<div class="evidence">{_html_safe(ev.get("feature"))} = {_html_safe(ev.get("value"))} (limit: {_html_safe(ev.get("threshold"))})</div>'
                     for ev in diag.get("evidence", [])
                 )
                 sections.append(
-                    f'<div class="card"><h2>{badge} {diag["failure_type"]}</h2>'
-                    f'{evidence}<div class="fix">Fix: {diag["recommendation"]}</div>'
-                    f'<div style="margin-top:.4rem;font-size:.8rem;color:#888">Method: {diag["detection_method"]}</div></div>'
+                    f'<div class="card"><h2>{badge} {_html_safe(diag["failure_type"])}</h2>'
+                    f'{evidence}<div class="fix">Fix: {_html_safe(diag["recommendation"])}</div>'
+                    f'<div style="margin-top:.4rem;font-size:.8rem;color:#888">Method: {_html_safe(diag["detection_method"])}</div></div>'
                 )
 
         hypotheses = (explain_data or {}).get("hypotheses", [])
@@ -291,12 +349,12 @@ class DiagnosisFormatter:
                 )
                 items.append(
                     f'<div class="hypothesis"><strong>Hypothesis {idx}:</strong> '
-                    f'{item["failure_type"]} via {item["source"]} '
+                    f'{_html_safe(item["failure_type"])} via {_html_safe(item["source"])} '
                     f'({int(item["merged_confidence"] * 100)}%) from '
-                    f'{item.get("lead_feature") or "telemetry correlation"} at {time_text}.</div>'
+                    f'{_html_safe(item.get("lead_feature") or "telemetry correlation")} at {_html_safe(time_text)}.</div>'
                 )
             if arbiter:
-                items.append(f'<div class="hypothesis"><strong>Causal Arbiter:</strong> {arbiter.get("reason", "no arbiter summary")}</div>')
+                items.append(f'<div class="hypothesis"><strong>Causal Arbiter:</strong> {_html_safe(arbiter.get("reason", "no arbiter summary"))}</div>')
             sections.append(f'<div class="card"><h2>Hypothesis Scaffolding</h2>{"".join(items)}</div>')
 
         if decision:
@@ -304,7 +362,7 @@ class DiagnosisFormatter:
             for sub in (decision.get("ranked_subsystems") or [])[:5]:
                 pct = int(sub["likelihood"] * 100)
                 subsystem_rows += (
-                    f"<tr><td>{sub['subsystem']}</td><td><span class=\"bar\" style=\"width:{pct * 2}px\"></span> {pct}%</td></tr>"
+                    f"<tr><td>{_html_safe(sub['subsystem'])}</td><td><span class=\"bar\" style=\"width:{pct * 2}px\"></span> {pct}%</td></tr>"
                 )
             if subsystem_rows:
                 sections.append(
@@ -315,14 +373,14 @@ class DiagnosisFormatter:
 
         if similar_cases:
             items = "".join(
-                f'<div class="similar-case"><strong>[{int(case["similarity"] * 100)}%]</strong> {case["failure_type"]}</div>'
+                f'<div class="similar-case"><strong>[{int(case["similarity"] * 100)}%]</strong> {_html_safe(case["failure_type"])}</div>'
                 for case in similar_cases
             )
             sections.append(f'<div class="card"><h2>Similar Historical Cases</h2>{items}</div>')
 
         return _HTML_TEMPLATE.format(
-            filename=filename,
+            filename=_html_safe(filename),
             duration=f"{mins}m {secs}s",
-            vehicle=vehicle,
+            vehicle=_html_safe(vehicle),
             body="".join(sections),
         )

@@ -25,6 +25,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.constants import VALID_LABELS
+from training.data_contract import canonical_source_group
 
 
 def _load_json(path: Path):
@@ -164,6 +165,13 @@ def _write_output(output_root: Path, selected: List[dict]) -> dict:
                 "source_url": item["source_url"],
                 "source_type": item["source_type"],
                 "expert_quote": item["expert_quote"],
+                "source_group": canonical_source_group(
+                    {
+                        "source_url": item["source_url"],
+                        "source_group": item.get("source_group", ""),
+                    },
+                    out_name,
+                ),
                 "confidence": item["confidence"],
             }
         )

@@ -1,38 +1,73 @@
-# 🧠 ArduPilot Log Diagnosis: Model Card (v1.0.0)
+# ArduPilot Log Diagnosis — Model Card
 
-This model is a **Hybrid Causal Arbiter** designed to diagnose autonomous vehicle failures from ArduPilot DataFlash logs (.BIN). It integrates a deterministic Expert Rule Engine with a high-dimensional XGBoost Gradient Boosting Classifier.
+## Current status
 
-## 📊 Performance Summary (Final GSoC Gate)
-| Metric | Baseline (Rule-Only) | **Hybrid AI (Current)** | Target | Status |
-| :--- | :---: | :---: | :---: | :---: |
-| **Macro F1 Score** | 0.62 | **1.00** | > 0.80 | 🚀 EXCEEDED |
-| **Mean ECE** (Calibration) | 0.14 | **0.0001** | < 0.08 | 🛡️ PASS |
-| **False Critical Rate** | 8.2% | **< 1.0%** | < 2.0% | ✅ PASS |
-| **Analysis Latency** | < 200ms | **< 350ms** | < 1s | ⚡ OPTIMIZED |
+This is a diagnostic aid for offline ArduPilot DataFlash logs. It combines
+deterministic rules, a tabular ML classifier, and an Isolation Forest anomaly
+detector. It is **not approved for autonomous flight decisions or unsupervised
+maintenance decisions**.
 
-## 🏗️ Architecture: Hybrid Causal Arbitration + CITA
-The system doesn't just "predict" a label; it arbitrates between two distinct logic layers using **Crash-Immune Temporal Arbitration (CITA)**:
-1.  **Deterministic Layer (Rule Engine):** Scans for hard hardware failures (e.g. `VIBE.VibeZ > 60`, `ERR.Subsys=17`).
-2.  **Statistical Layer (XGBoost):** Analyzes 90+ features (FFT peaks, motor spread variance, EKF innovation spikes) to find patterns rules miss.
-3.  **CITA Arbiter:** Resolves conflicts using per-subsystem `t_anomaly` timestamps — the exact microsecond each parameter first breached its threshold. The earliest onset wins, eliminating post-crash data contamination (the "compass hallucination" problem). Unlike fixed time-windows, CITA adapts to each log's unique failure timeline.
+The dashboard's default model is a legacy RandomForest artifact with a
+94-feature compatibility schema and nine trained labels. The runtime extracts
+111 finite features. The safe `v3_unambiguous` candidate has not passed the
+release gates and is not promoted; `v3_grouped` is rejected because two source
+URL groups contain contradictory labels.
 
-## 📚 Training Data ("The Data Buffet")
-The model was trained on a diverse composite dataset:
--   **ArduPilot Forums:** 24 high-confidence expert-labeled crash logs mined from discussion.ardupilot.org.
--   **Kaggle Pool:** 47 real-world flight logs from various multi-rotor platforms.
--   **BASiC Dataset:** 70 autonomous flight instances (Zenodo 8195068) covering GPS, Compass, IMU, and Baro failures.
--   **SITL Synthetic:** 12 simulated "rare-event" failure logs (Power Brownouts, MID-AIR Reboot).
+## Release evidence (honest candidate `v3_unambiguous`, 2026-08-05)
 
-## 🧩 Feature Engineering (90+ Dimensions)
--   **Vibration:** RMS, Max, Clipping counts, and Z-axis peak power.
--   **Power:** Voltage sag ratios, current-to-throttle correlation.
--   **Navigation:** EKF lane switching frequency, HDOP tanomaly, and position variance divergence.
--   **Control:** Motor saturation percentage, attitude error std-dev, and time-to-crash velocity vectors.
+| Gate | Result | Required | Status |
+| --- | ---: | ---: | --- |
+| Grouped log-level macro F1 | 0.500 | >= 0.700 | Fail |
+| Independent holdout source incidents | 23 | >= 50 | Fail |
+| Incident-level expected calibration error | 0.153 | <= 0.080 | Fail |
+| Runtime feature schema | 111 | exact match | Pass |
 
-## 🛡️ Trust & Explainability
--   **Isotonic Calibration:** All probabilities are calibrated using Isotonic Regression to ensure "85% confidence" actually means 85% accuracy.
--   **Feature Blame:** The UI provides a "Subsystem Blame Ranking" (Radar Chart) so pilots understand *why* the AI made its decision.
--   **Out-of-Distribution (OOD) Detection:** An Isolation Forest detector warns when a log looks "weird" compared to training data.
+Because the release gates fail, the candidate remains quarantined. The
+earlier `v2_111` score of 0.670 is not comparable: it used filename-only
+grouping and a column-order primary-label fallback that allowed incident
+cross-split leakage. The intermediate `v3_grouped` run scored F1 0.559/ECE
+0.158 but is invalid because two source URL groups contain contradictory
+labels; those four files are excluded from `v3_unambiguous`. See
+[production readiness](PRODUCTION_READINESS.md) for the
+complete promotion checklist.
 
----
-*Created for GSoC 2026 - ArduPilot Project.*
+Exploratory ExtraTrees retraining reached 0.596 Macro F1 on the fixed grouped
+holdout, but incident ECE was 0.170 (five-split mean F1 0.584 and ECE 0.167).
+Temperature scaling remained above the 0.08 calibration gate, so no exploratory
+artifact is promoted.
+
+## Label coverage
+
+The trained ML artifact currently covers nine labels. `brownout`,
+`crash_unknown`, `mechanical_failure`, `setup_error`, and `thrust_loss` are
+rules-only until there are enough independently sourced, expert-labelled logs
+to train and evaluate them.
+
+## What the system does
+
+- Extracts 111 telemetry features from supported offline logs, replacing
+  missing or non-finite measurements safely.
+- Runs deterministic failure rules with evidence and recommendations.
+- Scores a trained ML model where its artifact schema matches the runtime.
+- Flags out-of-distribution telemetry using an Isolation Forest whose feature
+  schema is checked before scoring.
+- Produces reports, plots, exports, and review-oriented analysis tools.
+
+## Important limitations
+
+- A label returned by the hybrid engine is a triage hypothesis, not a verified
+  root cause.
+- Live MAVLink mode uses rules only; it does not use the offline ML or anomaly
+  model.
+- PX4 ULog, MAVLink TLog, and Betaflight adapters are generic/optional and are
+  not validated as equivalent to ArduPilot diagnosis.
+- Review-only and experimental tools never change vehicle parameters.
+- Low-quality, partial, or corrupted logs can reduce coverage; inspect the
+  quality report alongside every diagnosis.
+
+## Data and evaluation requirements
+
+Every training log must retain provenance, a reviewable label source, and a
+group identifier so that windows from the same flight cannot cross the holdout
+split. Forum-search labels are provisional and are never automatically merged
+into training data.

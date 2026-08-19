@@ -1,5 +1,6 @@
 from typing import Any, cast
 from src.diagnosis.rule_engine import RuleEngine
+import src.diagnosis.rule_engine as rule_engine_module
 from src.diagnosis.hybrid_engine import HybridEngine
 from src.constants import FEATURE_NAMES
 
@@ -446,3 +447,44 @@ def test_power_instability_from_sag_ratio():
     results = engine.diagnose(features)
     labels = [r["failure_type"] for r in results]
     assert "power_instability" in labels, f"Expected power_instability from sag_ratio, got {labels}"
+
+
+def test_power_instability_from_load_spikes():
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update(
+        {
+            "bat_low_voltage_pct": 0.20,
+            "bat_current_spike_pct": 0.15,
+            "bat_sag_per_amp": 0.05,
+        }
+    )
+    labels = [item["failure_type"] for item in engine.diagnose(features)]
+    assert "power_instability" in labels
+
+
+def test_pid_tuning_from_rate_tracking_features():
+    engine = RuleEngine()
+    features = {k: 0.0 for k in FEATURE_NAMES}
+    features.update(
+        {
+            "att_roll_std": 6.0,
+            "vibe_z_max": 10.0,
+            "pid_rate_err_mean": 4.0,
+            "pid_rate_err_max": 12.0,
+            "pid_oscillation_pct": 0.30,
+        }
+    )
+    labels = [item["failure_type"] for item in engine.diagnose(features)]
+    assert "pid_tuning_issue" in labels
+
+
+def test_rule_engine_loads_thresholds_from_active_model_directory(tmp_path, monkeypatch):
+    (tmp_path / "rule_thresholds.yaml").write_text(
+        "system:\n  long_loops_limit: 17\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(rule_engine_module, "MODELS_DIR", tmp_path)
+
+    engine = RuleEngine()
+
+    assert engine.thresholds["long_loops_limit"] == 17

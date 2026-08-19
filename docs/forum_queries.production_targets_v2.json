@@ -1,0 +1,7 @@
+{
+  "thrust_loss": "\"Potential Thrust Loss\" .bin",
+  "brownout": "brownout crash flight log .bin",
+  "mechanical_failure": "motor failure ESC failure crash log .bin",
+  "setup_error": "wrong motor order reversed prop crash .bin",
+  "crash_unknown": "sudden crash crash log attached .bin"
+}

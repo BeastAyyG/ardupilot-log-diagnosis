@@ -7,6 +7,7 @@ queries and writes a manifest for downstream clean import.
 from __future__ import annotations
 
 import csv
+import html
 import json
 import re
 import time
@@ -58,8 +59,17 @@ def _make_absolute(url: str) -> str:
 def _normalize_download_url(url: str) -> str:
     normalized = _make_absolute(url)
 
-    if "dropbox.com" in normalized and "dl=0" in normalized:
-        normalized = normalized.replace("dl=0", "dl=1")
+    if "dropbox.com" in normalized:
+        # Dropbox often serves an HTML preview when `dl` is omitted.  Preserve
+        # any sharing parameters but force the direct-download form so a BIN
+        # attachment can be type-checked and parsed downstream.
+        parts = urllib.parse.urlsplit(normalized)
+        query = urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+        query_without_dl = [(key, value) for key, value in query if key.lower() != "dl"]
+        query_without_dl.append(("dl", "1"))
+        normalized = urllib.parse.urlunsplit(
+            (parts.scheme, parts.netloc, parts.path, urllib.parse.urlencode(query_without_dl), parts.fragment)
+        )
 
     if "drive.google.com" in normalized:
         m = DRIVE_ID_RE.search(normalized)
@@ -72,14 +82,18 @@ def _normalize_download_url(url: str) -> str:
 
 def _looks_log_url(url: str) -> bool:
     u = url.lower()
-    return ".bin" in u or ".zip" in u
+    # Forum users also share logs through Drive links whose path has no file
+    # extension.  Keep this narrow to a single-file URL form; arbitrary Drive
+    # folders are not treated as attachments.
+    return ".bin" in u or ".zip" in u or "drive.google.com/file/d/" in u
 
 
 def _detect_kind(payload: bytes, source_url: str, headers: dict) -> str:
     lower = source_url.lower()
-    if ".zip" in lower:
-        return "zip"
-
+    # Inspect payload and response headers before trusting a URL suffix.  A
+    # Dropbox/MediaFire preview frequently keeps a ``.zip``/``.bin`` suffix
+    # while returning an HTML login/preview page; treating that as a real log
+    # silently pollutes the collection.
     if payload.startswith(b"PK\x03\x04"):
         return "zip"
     if payload.startswith(b"\x89PNG"):
@@ -94,6 +108,9 @@ def _detect_kind(payload: bytes, source_url: str, headers: dict) -> str:
     content_type = str(headers.get("Content-Type", "")).lower()
     if "text/html" in content_type:
         return "html"
+
+    if "zip" in content_type or ".zip" in lower:
+        return "zip"
 
     if ".bin" in lower:
         return "bin"
@@ -110,8 +127,12 @@ def _ext_for_kind(kind: str) -> str:
 
 def _iter_attachment_urls(post_html: str) -> Iterable[str]:
     for match in HREF_RE.findall(post_html or ""):
-        if _looks_log_url(match):
-            yield match
+        # Discourse HTML-escapes query separators (``&amp;``).  Unescape
+        # before URL normalization so Dropbox/Drive direct-download links do
+        # not fail with a misleading 400 response.
+        url = html.unescape(match)
+        if _looks_log_url(url):
+            yield url
 
 
 def _topic_url(slug: str, topic_id: int) -> str:
@@ -130,9 +151,11 @@ def collect_forum_logs(
     downloads_dir = out / "downloads"
     downloads_dir.mkdir(parents=True, exist_ok=True)
 
-    queries = dict(DEFAULT_QUERIES)
-    if query_overrides:
-        queries.update(query_overrides)
+    # A query file supplied by the caller is an explicit collection plan, not
+    # an add-on to the generic defaults.  Merging it silently broadens a
+    # targeted collection and can download/log labels the operator did not ask
+    # for (which is especially unsafe before human label review).
+    queries = dict(query_overrides) if query_overrides is not None else dict(DEFAULT_QUERIES)
 
     manifest_rows: List[dict] = []
     seen_urls = set()

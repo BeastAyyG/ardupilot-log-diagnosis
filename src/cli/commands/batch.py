@@ -11,6 +11,7 @@ from tqdm import tqdm
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
 from src.diagnosis.hybrid_engine import HybridEngine
+from src.cli.commands.common import diagnose_with_windowed_ml
 from src.diagnosis.decision_policy import evaluate_decision
 
 logger = logging.getLogger(__name__)
@@ -129,10 +130,13 @@ def run(args) -> None:
                     raise ValueError("Extraction failed: empty or corrupt log")
 
                 # 4. Diagnose
-                diagnoses = engine.diagnose(features)
+                diagnoses, _ = diagnose_with_windowed_ml(engine, parsed, features)
 
                 # 5. Evaluate decision
-                decision = evaluate_decision(diagnoses)
+                decision = evaluate_decision(
+                    diagnoses,
+                    quality_report=metadata.get("quality_report", {}),
+                )
 
                 # 6. Extract fields
                 duration = float(metadata.get("duration_sec", 0.0))
@@ -143,7 +147,11 @@ def run(args) -> None:
                     diagnosis = top_diag["failure_type"]
                     confidence = float(top_diag["confidence"])
                 else:
-                    diagnosis = "healthy"
+                    # An empty diagnosis is healthy only when the quality-aware
+                    # decision gate explicitly says so.  Sparse/truncated
+                    # logs are exported as uncertain instead of a false clean
+                    # flight (legacy test doubles may omit status).
+                    diagnosis = "healthy" if decision.get("status", "healthy") == "healthy" else "uncertain"
                     confidence = 0.0
 
                 requires_review = bool(decision.get("requires_human_review", False))

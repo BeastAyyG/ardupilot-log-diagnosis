@@ -81,7 +81,7 @@ class DerivedFeaturesExtractor:
         vir = self._safe_div(bat_volt_range, bat_curr_max)
 
         # 3. Attitude Tracking Error
-        att_desroll_err = f.get("att_roll_err_max", 0.0)  # Use max error as proxy
+        att_desroll_err = f.get("att_desroll_err", 0.0)  # Mean absolute tracking error
         att_roll_std = f.get("att_roll_std", 0.0)
         ate = self._safe_div(att_desroll_err, att_roll_std)
 
@@ -101,7 +101,7 @@ class DerivedFeaturesExtractor:
         vcr = self._safe_div(vibe_z_max, vibe_clip_total + 1.0)
 
         # 7. GPS Reliability Score
-        gps_fix_pct = 1.0 - f.get("gps_flags_error_pct", 0.0)  # rough proxy for fix pct
+        gps_fix_pct = f.get("gps_fix_pct", 0.0)
         gps_nsats_min = f.get("gps_nsats_min", 0.0)
         gps_hdop_mean = f.get("gps_hdop_mean", 0.0)
         grs = self._safe_div(gps_fix_pct * gps_nsats_min, gps_hdop_mean)

@@ -95,6 +95,7 @@ class BaseExtractor(ABC):
         """Safely get field from message dictionary."""
         val = msg.get(field, default)
         try:
-            return float(val)
-        except (ValueError, TypeError):
+            numeric = float(val)
+        except (ValueError, TypeError, OverflowError):
             return float(default)
+        return numeric if np.isfinite(numeric) else float(default)

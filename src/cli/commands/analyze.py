@@ -9,9 +9,12 @@ from src.diagnosis.parameter_validation import validate_parameters
 from src.diagnosis.rule_engine import RuleEngine
 from src.retrieval.similarity import FailureRetrieval
 from src.cli.formatter import DiagnosisFormatter
+from src.reporting.hardware import HardwareReportBuilder
+from src.analysis.health_score import calculate_health_score
 
 from .common import (
     ensure_extraction_success,
+    diagnose_with_windowed_ml,
     load_parsed_and_features,
     print_explain_box,
     write_or_print_output,
@@ -20,7 +23,7 @@ from .common import (
 
 def register(subparsers: _SubParsersAction) -> None:
     parser = subparsers.add_parser("analyze", help="Analyze a single log file")
-    parser.add_argument("logfile", help="Path to .BIN file")
+    parser.add_argument("logfile", help="Path to .BIN/.LOG, .ULG/.ULOG, .TLOG, or optional .BBL/.BFL file")
     parser.add_argument("--json", action="store_true", help="Output in JSON format")
     parser.add_argument(
         "--format",
@@ -63,13 +66,18 @@ def run(args) -> None:
         return
 
     engine = RuleEngine() if args.no_ml else HybridEngine()
-    diagnoses = engine.diagnose(features)
-    decision = evaluate_decision(diagnoses)
+    diagnoses, windowing_info = diagnose_with_windowed_ml(engine, parsed, features)
+    decision = evaluate_decision(
+        diagnoses,
+        quality_report=metadata.get("quality_report", {}),
+    )
     parameter_warnings = validate_parameters(
         parsed.get("parameters", {}),
         features,
         features.get("_metadata", {}).get("vehicle_type", "Unknown"),
     )
+    hardware_report = HardwareReportBuilder().build(parsed, parameter_mode="minimal", diagnoses=diagnoses)
+    health_score = calculate_health_score(diagnoses=diagnoses, quality_report=hardware_report.get("log_quality", {}))
 
     retrieval = FailureRetrieval()
     similar_cases = retrieval.find_similar(features)
@@ -82,6 +90,8 @@ def run(args) -> None:
         "ml_reason": None if args.no_ml else getattr(getattr(engine, "ml", None), "unavailable_reason", "ml unavailable"),
     }
     explain_data = getattr(cast(object, engine), "last_explain_data", None)
+    if isinstance(explain_data, dict):
+        explain_data["inference_window"] = windowing_info
 
     if args.json or getattr(args, "format", "terminal") == "json":
         output = formatter.format_json(
@@ -93,6 +103,8 @@ def run(args) -> None:
             runtime_info=runtime_info,
             parameter_warnings=parameter_warnings,
             explain_data=explain_data,
+            hardware_report=hardware_report,
+            health_score=health_score,
         )
     elif getattr(args, "format", "terminal") == "html":
         output = formatter.format_html(
@@ -104,6 +116,8 @@ def run(args) -> None:
             runtime_info=runtime_info,
             parameter_warnings=parameter_warnings,
             explain_data=explain_data,
+            hardware_report=hardware_report,
+            health_score=health_score,
         )
     else:
         output = formatter.format_terminal(
@@ -114,6 +128,8 @@ def run(args) -> None:
             runtime_info=runtime_info,
             parameter_warnings=parameter_warnings,
             explain_data=explain_data,
+            hardware_report=hardware_report,
+            health_score=health_score,
         )
 
     write_or_print_output(output, args.output, "Report")

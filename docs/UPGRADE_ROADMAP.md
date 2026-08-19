@@ -1,17 +1,21 @@
 # ArduPilot Log Diagnosis — v2.0 Platform Roadmap
 
 **Author:** Agastya Pandey (BeastAyyG)
-**Status:** Active — v1.0 complete, v2.0 in progress
+**Status:** Development roadmap — not a production-readiness statement
 **Last Updated:** May 2026
 
 ---
 
 ## Vision
 
-The v1.0 engine (XGBoost + IsolationForest + CITA + 3D replay) is **production-ready and fully tested**
-(176 passing tests, 1.00 Macro F1). The v2.0 goal is to evolve this into the **definitive,
-open-source ArduPilot diagnostic platform** — containerized, explainable, modular, and capable
-of multi-flight trend analysis.
+The current engine provides an offline rule + ML prototype, an Isolation Forest
+anomaly detector, and a 3D replay. Its safe 111-feature candidate has not
+passed the release gates (grouped log-level macro F1 0.500 on 23 holdout
+incidents; incident-level ECE 0.153; minimum gates are F1 0.70, ECE 0.10,
+and 50 independent holdout incidents). The earlier v3_grouped candidate is
+invalid because two URL groups contain contradictory primary labels. The v2.0 goal is to
+evolve it into a containerized, explainable, modular diagnostic platform with
+honest model promotion criteria.
 
 The core design philosophy does not change:
 - **Physics and ML make the decisions.** LLMs only explain and orchestrate.
@@ -25,7 +29,7 @@ The core design philosophy does not change:
 ```
 ardupilot-diagnosis-platform/
 ├── docker-compose.yml
-├── core-engine/          ← XGBoost + IsolationForest + CITA (current engine)
+├── core-engine/          ← rule engine + tabular ML + IsolationForest
 ├── temporal-layer/       ← HMM + Kalman filter for noise filtering & sequence detection
 ├── causal-arbitrator/    ← Enhanced CITA + modular rule engine
 ├── llm-orchestrator/     ← LangGraph + local/API LLM (explanation, chat, workflow only)
@@ -49,29 +53,39 @@ ardupilot-diagnosis-platform/
 
 **Goal:** Turn the existing monorepo into a clean, containerized platform.
 
-**Status:** 🟩 Complete
+**Status:** 🟨 Core container complete; feature-store/data-pipeline/gateway remain deferred
 
 ### Tasks
 
-- [x] Write `docker-compose.yml` that starts all services.
-- [x] Create one folder per service, each with its own `Dockerfile`.
-- [x] Port the current `core-engine` into its own container.
-- [x] Create `feature-store` service that computes and caches features from `.BIN` files.
-- [x] Set up `data-pipeline` service with Parquet storage + DuckDB querying.
-- [x] Create `web-gateway` FastAPI service that routes requests to other services.
-- [x] Update `.github/workflows/ci.yml` to build and test each service independently.
+- [x] Write `docker-compose.yml` with a default core profile and explicit optional profiles.
+- [x] Harden the core engine container and add healthchecks.
+- [ ] Create a separate `feature-store` service (deferred; core extraction is in-process).
+- [ ] Set up a `data-pipeline` service with Parquet storage + DuckDB querying.
+- [ ] Create a real `web-gateway` reverse proxy (the current profile is a placeholder).
+- [x] Update `.github/workflows/ci.yml` to validate the core and optional services.
 
 ### Deliverable
 
-`docker compose up` starts the full platform. The current v1.0 `analyze` endpoint works
-through the gateway and returns the same results as before.
+`docker compose up` starts the core engine with its healthcheck. The temporal
+HMM and grounded explanation services are optional review-only containers and
+must be enabled explicitly with `docker compose --profile experimental up`.
+The nginx gateway remains a placeholder behind the `gateway` profile until a
+real reverse-proxy configuration and TLS policy are supplied.
 
 ### Done when
 
-- [x] Fresh clone + `docker compose up` works with no manual steps.
-- [x] All 176 existing tests still pass inside the `core-engine` container.
+- [x] Fresh clone + `docker compose up` starts the core engine with no manual steps.
+- [x] The full local suite passes (338 tests; container execution remains a CI check).
 
 ---
+
+## Milestone 1 — Temporal Layer
+
+**Status:** 🟨 Optional review-only service; not part of the default core path
+
+The temporal service is available behind the `experimental` Compose profile.
+It requires an explicitly trained HMM and returns `503` until a model is ready;
+it must not silently alter the core diagnosis.
 
 ### Deliverable
 
@@ -259,25 +273,26 @@ ArduPilot community recognizes this as the best open-source log diagnosis platfo
 
 ---
 
-## Current v1.0 Status (Baseline)
+## Current Prototype Status
 
-Before starting v2.0, the baseline is solid:
+Before starting v2.0, use the following as the honest baseline:
 
 | Component | Status |
 |---|---|
-| XGBoost + IsolationForest classifier | ✅ Production-ready |
-| CITA temporal arbitration | ✅ Production-ready |
+| Rule + tabular ML + IsolationForest | ⚠️ Offline prototype; candidate promotion blocked by release gates |
+| Causal temporal arbitration | ✅ Deterministic heuristic, not a trained temporal model |
 | 3D interactive flight replay | ✅ Working |
 | Pre-flight parameter validation | ✅ Working |
 | FastAPI web endpoint | ✅ Working |
 | CLI | ✅ Working |
-| Test suite | ✅ 176/176 passing |
-| Macro F1 score | ✅ 1.00 on holdout set |
-| Rule coverage | ⚠️ 6 of 14 labels |
-| Compass rule | ⚠️ Relies heavily on ML fallback |
-| Docker / containerization | ❌ Not yet |
-| LLM explanation layer | ❌ Not yet |
-| Temporal HMM layer | ❌ Not yet |
+| Test suite | ✅ Regression suite required before every release |
+| Candidate macro F1 | ⚠️ 0.500 on 23 grouped holdout incidents; release gate is 0.70 on 50+ |
+| Incident calibration (ECE) | ⚠️ 0.153; release gate is ≤0.10 |
+| Label coverage | ⚠️ Rules cover 14 types; ML is trained for 9 |
+| Compass rule | ✅ Deterministic evidence plus ML where supported |
+| Docker / containerization | ✅ Core image hardened; optional services are profile-gated |
+| LLM explanation layer | 🟨 Grounded deterministic explanation service; optional/review-only |
+| Temporal HMM layer | 🟨 Optional service; requires a trained artifact |
 | Multi-flight analysis | ❌ Not yet |
 | Tuning advisor | ❌ Not yet |
 

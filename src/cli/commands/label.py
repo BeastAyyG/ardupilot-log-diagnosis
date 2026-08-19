@@ -6,7 +6,7 @@ from argparse import _SubParsersAction
 
 from src.diagnosis.hybrid_engine import HybridEngine
 
-from .common import load_features
+from .common import diagnose_with_windowed_ml, load_parsed_and_features
 
 
 def register(subparsers: _SubParsersAction) -> None:
@@ -18,10 +18,10 @@ def register(subparsers: _SubParsersAction) -> None:
 def run(args) -> None:
     logfile = args.logfile
     filename = os.path.basename(logfile)
-    features = load_features(logfile)
+    parsed, features = load_parsed_and_features(logfile)
 
     engine = HybridEngine()
-    diagnoses = engine.diagnose(features)
+    diagnoses, _ = diagnose_with_windowed_ml(engine, parsed, features)
 
     print(f"\n--- Labeling {filename} ---")
     auto_labels = features.get("_metadata", {}).get("auto_labels", [])

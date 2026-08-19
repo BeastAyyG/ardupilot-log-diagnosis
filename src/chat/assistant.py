@@ -95,6 +95,7 @@ class ChatAssistant:
             if pattern.search(question):
                 answer = handler(question, analysis_result)
                 if answer:
+                    answer = self._ground_answer(answer, analysis_result)
                     return {
                         "question": question,
                         "answer": answer["text"],
@@ -114,9 +115,71 @@ class ChatAssistant:
                 "Ask 'What caused the crash?' for root cause analysis"
             ]
         }
+
+    @staticmethod
+    def _quality_report(analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Return the canonical quality report regardless of report shape."""
+        hardware = analysis_result.get("hardware_report", {}) or {}
+        features = analysis_result.get("features", {})
+        metadata = analysis_result.get("metadata", {})
+        candidates = [
+            hardware.get("log_quality") if isinstance(hardware, dict) else None,
+            (features.get("_metadata", {}) or {}).get("quality_report") if isinstance(features, dict) else None,
+            metadata.get("quality_report") if isinstance(metadata, dict) else None,
+            analysis_result.get("log_quality"),
+        ]
+        for quality in candidates:
+            if isinstance(quality, dict) and quality:
+                return quality
+        return {}
+
+    @classmethod
+    def _capability_status(cls, analysis_result: Dict[str, Any], name: str) -> tuple[str, dict[str, Any]]:
+        quality = cls._quality_report(analysis_result)
+        capabilities = quality.get("capabilities", {}) if isinstance(quality, dict) else {}
+        item = capabilities.get(name, {}) if isinstance(capabilities, dict) else {}
+        return str(item.get("status", "UNKNOWN")).upper(), item if isinstance(item, dict) else {}
+
+    @classmethod
+    def _ground_answer(cls, answer: Dict[str, Any], analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Cap confidence and cite only evidence present in the canonical result.
+
+        Missing telemetry is not evidence of a normal subsystem.  Keep the
+        conversational answer useful, but make parser quality and capability
+        limits explicit so chat cannot clear a flight from zero-filled fields.
+        """
+        features = analysis_result.get("features", {})
+        quality = cls._quality_report(analysis_result)
+        sources = list(answer.get("sources", []))
+        sources.append(f"canonical analysis {analysis_result.get('schema_version', 'analysis result')}")
+        quality_status = str(quality.get("overall_status", "")).upper() if isinstance(quality, dict) else ""
+        if quality_status in {"UNSUPPORTED", "INSUFFICIENT_DATA", "INVALID", "TRUNCATED", "UNKNOWN"}:
+            answer["confidence"] = min(float(answer.get("confidence", 0.0)), 0.25)
+            answer["text"] += (
+                f" Input quality is {quality_status or 'UNKNOWN'}; this is a provisional review aid, "
+                "not a clearance or a complete diagnosis."
+            )
+            sources.append("quality_report.integrity")
+        elif quality_status not in {"", "RELIABLE", "GOOD"}:
+            answer["confidence"] = min(float(answer.get("confidence", 0.0)), 0.55)
+            answer["text"] += " Data quality is degraded, so this answer is confidence-capped and needs human review."
+            sources.append("quality_report.integrity")
+        if not features:
+            answer["confidence"] = 0.1
+            answer["text"] = "The canonical result does not contain the telemetry features required to answer this question; no diagnosis is inferred."
+        answer["sources"] = sources
+        return answer
     
     def _answer_vibration_question(self, question: str, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answer vibration-related questions."""
+        status, capability = self._capability_status(result, "vibration_analysis")
+        if status in {"UNSUPPORTED", "UNKNOWN"}:
+            return {
+                "text": "Vibration cannot be assessed because VIBE/IMU telemetry is missing or unsupported in this log.",
+                "confidence": 0.1,
+                "sources": ["quality_report.capabilities.vibration_analysis"],
+                "follow_up": [capability.get("recommendation", "Capture VIBE and IMU telemetry on the next flight.")],
+            }
         features = result.get("features", {})
         vibe_z = features.get("vibe_z_mean", 0)
         vibe_clip = features.get("vibe_clip_total", 0)
@@ -144,6 +207,14 @@ class ChatAssistant:
     
     def _answer_ekf_question(self, question: str, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answer EKF-related questions."""
+        status, capability = self._capability_status(result, "ekf_state_estimation")
+        if status in {"UNSUPPORTED", "UNKNOWN"}:
+            return {
+                "text": "EKF health cannot be assessed because XKF4/NKF4 variance telemetry is missing or unsupported in this log.",
+                "confidence": 0.1,
+                "sources": ["quality_report.capabilities.ekf_state_estimation"],
+                "follow_up": [capability.get("recommendation", "Enable EKF variance logging on the next flight.")],
+            }
         features = result.get("features", {})
         ekf_vel_var = features.get("ekf_vel_var_max", 0)
         ekf_pos_var = features.get("ekf_pos_var_max", 0)
@@ -173,6 +244,14 @@ class ChatAssistant:
     
     def _answer_motor_question(self, question: str, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answer motor-related questions."""
+        status, capability = self._capability_status(result, "motor_balance_mechanics")
+        if status in {"UNSUPPORTED", "UNKNOWN"}:
+            return {
+                "text": "Motor balance cannot be assessed because RCOU/MOT or attitude telemetry is missing or unsupported in this log.",
+                "confidence": 0.1,
+                "sources": ["quality_report.capabilities.motor_balance_mechanics"],
+                "follow_up": [capability.get("recommendation", "Capture RCOU/MOT and ATT telemetry on the next flight.")],
+            }
         features = result.get("features", {})
         motor_spread = features.get("motor_spread_max", 0)
         
@@ -199,6 +278,15 @@ class ChatAssistant:
     
     def _answer_compass_question(self, question: str, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answer compass-related questions."""
+        status, capability = self._capability_status(result, "compass_gps_navigation")
+        missing = {str(item).upper() for item in capability.get("missing_messages", [])}
+        if status in {"UNSUPPORTED", "UNKNOWN"} or "MAG" in missing:
+            return {
+                "text": "Compass health cannot be assessed because MAG telemetry is missing or unsupported in this log.",
+                "confidence": 0.1,
+                "sources": ["quality_report.capabilities.compass_gps_navigation"],
+                "follow_up": [capability.get("recommendation", "Capture MAG telemetry on the next flight.")],
+            }
         features = result.get("features", {})
         mag_range = features.get("mag_field_range", 0)
         
@@ -223,6 +311,15 @@ class ChatAssistant:
     
     def _answer_gps_question(self, question: str, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answer GPS-related questions."""
+        status, capability = self._capability_status(result, "compass_gps_navigation")
+        missing = {str(item).upper() for item in capability.get("missing_messages", [])}
+        if status in {"UNSUPPORTED", "UNKNOWN"} or "GPS" in missing:
+            return {
+                "text": "GPS quality cannot be assessed because GPS telemetry is missing or unsupported in this log.",
+                "confidence": 0.1,
+                "sources": ["quality_report.capabilities.compass_gps_navigation"],
+                "follow_up": [capability.get("recommendation", "Capture GPS telemetry on the next flight.")],
+            }
         features = result.get("features", {})
         hdop_max = features.get("gps_hdop_max", 0)
         gps_fix_pct = features.get("gps_fix_pct", 100)
@@ -249,6 +346,14 @@ class ChatAssistant:
     
     def _answer_power_question(self, question: str, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Answer power/battery-related questions."""
+        status, capability = self._capability_status(result, "power_battery_dynamics")
+        if status in {"UNSUPPORTED", "UNKNOWN"}:
+            return {
+                "text": "Power health cannot be assessed because BAT/CURR/POWR telemetry is missing or unsupported in this log.",
+                "confidence": 0.1,
+                "sources": ["quality_report.capabilities.power_battery_dynamics"],
+                "follow_up": [capability.get("recommendation", "Capture battery and current telemetry on the next flight.")],
+            }
         features = result.get("features", {})
         bat_volt_min = features.get("bat_volt_min", 0)
         bat_sag = features.get("bat_sag_ratio", 0)

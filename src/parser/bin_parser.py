@@ -1,9 +1,11 @@
 import logging
+import re
 from typing import cast
 from pymavlink import DFReader
 from src.constants import ERR_SUBSYSTEM_MAP, ERR_AUTO_LABEL_MAP, MODE_NAMES, EV_NAMES
 from src.contracts import ParsedLog
 from src.diagnosis.log_quality import LogQualityEngine
+from src.parser.file_format import detect_file_format
 
 
 class LogParser:
@@ -13,9 +15,49 @@ class LogParser:
         "BAT",
         "CURR",  # pre-ArduCopter 4.0 battery messages (same fields as BAT)
         "GPS",
+        "BARO",
+        "ARSP",
+        "ESC",
+        "RPM",
+        "RCIN",
         "RCOU",
+        "MOT",
+        "SERVO",
+        "BAT2",
+        "BAT3",
+        "GPS2",
+        "GPS3",
+        "AHR2",
+        "POS",
+        "STAT",
+        "CMD",
+        "FENCE",
+        "RALLY",
+        "FILE",
+        "ORGN",
+        "HOME",
         "XKF4",
+        "XKF1",
+        "XKF2",
+        "XKF3",
+        "XKF5",
         "NKF4",
+        "NKF1",
+        "NKF2",
+        "NKF3",
+        "NKF5",
+        "IMU2",
+        "IMU3",
+        "PIDR",
+        "PIDP",
+        "PIDY",
+        "PIQR",
+        "PIQP",
+        "PIQY",
+        "PIDS",
+        "PIDA",
+        "PIDT",
+        "PTUN",  # detailed PID tuning telemetry on newer firmware
         "PARM",
         "ERR",
         "EV",
@@ -75,11 +117,16 @@ class LogParser:
         parsed_data = cast(ParsedLog, {
             "metadata": {
                 "filepath": self.filepath,
+                "file_format": None,
                 "duration_sec": 0.0,
                 "vehicle_type": "Unknown",
                 "firmware_version": "Unknown",
+                "firmware_hash": "Unknown",
+                "board": "Unknown",
                 "total_messages": 0,
                 "message_types": {},
+                "parse_complete": False,
+                "parse_error": None,
             },
             "messages": {},
             "parameters": {},
@@ -87,12 +134,40 @@ class LogParser:
             "events": [],
             "mode_changes": [],
             "status_messages": [],
+            "parameter_changes": [],
         })
+
+        try:
+            parsed_data["metadata"]["file_format"] = detect_file_format(self.filepath, hash_file=True)
+        except Exception as exc:
+            # Keep the parser's historical best-effort contract for callers
+            # that use synthetic/fake paths in tests; the quality report will
+            # expose the missing file/signature as a degraded input.
+            parsed_data["metadata"]["parse_error"] = str(exc)
+
+        detected_format = parsed_data["metadata"].get("file_format", {}) or {}
+        if detected_format.get("format") == "px4_ulog":
+            from src.parser.ulog_parser import ULogParser
+
+            return ULogParser(self.filepath).parse()
+        if detected_format.get("format") == "mavlink_tlog":
+            from src.parser.tlog_parser import TLogParser
+
+            return TLogParser(self.filepath).parse()
+        if detected_format.get("format") == "text_log":
+            from src.parser.text_parser import TextLogParser
+
+            return TextLogParser(self.filepath).parse()
+        if detected_format.get("format") == "betaflight_bbl":
+            from src.parser.bbl_parser import BBLParser
+
+            return BBLParser(self.filepath).parse()
 
         try:
             log = DFReader.DFReader_binary(self.filepath)
         except Exception as e:
             self.logger.error(f"Failed to open log file {self.filepath}: {e}")
+            parsed_data["metadata"]["parse_error"] = str(e)
             return cast(ParsedLog, parsed_data)
 
         first_time = None
@@ -144,9 +219,19 @@ class LogParser:
                     name = msg_dict.get("Name")
                     value = msg_dict.get("Value")
                     if name is not None and value is not None:
-                        parsed_data["parameters"][name] = (
+                        normalized_value = (
                             float(value) if isinstance(value, (int, float)) else value
                         )
+                        if name in parsed_data["parameters"] and parsed_data["parameters"][name] != normalized_value:
+                            parsed_data["parameter_changes"].append(
+                                {
+                                    "time_us": time_us,
+                                    "name": name,
+                                    "old_value": parsed_data["parameters"][name],
+                                    "new_value": normalized_value,
+                                }
+                            )
+                        parsed_data["parameters"][name] = normalized_value
                 elif msg_type == "ERR" and msg_dict:
                     subsys = msg_dict.get("Subsys", 0)
                     ecode = msg_dict.get("ECode", 0)
@@ -186,6 +271,9 @@ class LogParser:
             self.logger.warning(
                 f"Error or log truncated while reading messages from {self.filepath}: {e}"
             )
+            parsed_data["metadata"]["parse_error"] = str(e)
+
+        parsed_data["metadata"]["parse_complete"] = parsed_data["metadata"].get("parse_error") is None
 
         if first_time is not None and last_time is not None and last_time > first_time:
             parsed_data["metadata"]["duration_sec"] = (last_time - first_time) / 1e6
@@ -194,6 +282,19 @@ class LogParser:
             parsed_data["metadata"]["vehicle_type"] = self._vehicle_from_parameters(
                 parsed_data["parameters"]
             )
+
+        # MSG records are the authoritative offline source for firmware/build
+        # and board identity when a full hardware connection is unavailable.
+        for status in parsed_data["status_messages"]:
+            text = str(status.get("message", ""))
+            firmware_match = re.search(r"\b(?:ArduCopter|ArduPlane|ArduRover|ArduSub)\s+(V?\d+(?:\.\d+)+)(?:\s+\(([0-9A-Fa-f]+)\))?", text)
+            if firmware_match:
+                parsed_data["metadata"]["firmware_version"] = firmware_match.group(1)
+                if firmware_match.group(2):
+                    parsed_data["metadata"]["firmware_hash"] = firmware_match.group(2)
+            board_match = re.search(r"\b(fmuv\d+|Cube\w*|Pixhawk\w*|Durandal\w*|Kakute\w*|Matek\w*)\b", text, re.IGNORECASE)
+            if board_match:
+                parsed_data["metadata"]["board"] = board_match.group(1)
 
         try:
             parsed_data["metadata"]["quality_report"] = LogQualityEngine().evaluate(parsed_data)

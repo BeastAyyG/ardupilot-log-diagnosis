@@ -6,21 +6,22 @@
 
 ## What this is
 
-A command-line tool that accepts any ArduPilot `.BIN` dataflash log and, in under
-3 seconds, returns an **evidence-based root-cause diagnosis** with:
+A command-line tool that accepts supported ArduPilot flight logs and returns an
+**evidence-based diagnosis or an explicit review/insufficient-data result** with:
 
 - **Root cause label** (vibration, compass EMI, EKF failure, power sag, motor
   imbalance, RC failsafe, PID tuning, thrust loss, mechanical failure, …)
 - **Exact feature values that fired** (e.g. `vibe_z_max = 67.8`, limit 30.0)
-- **Confidence percentage** calibrated against 45 real crash logs
+- **Confidence and quality status**; low-quality inputs trigger abstention
 - **Fix recommendation** ("Balance or replace propellers. Check motor mount tightness.")
 - **Subsystem blame ranking** (which subsystem is most likely responsible)
 - **Similar historical cases** (cosine-similarity search against a curated knowledge base)
 - **Human-review flag** raised automatically when confidence is below threshold
 
 The engine is a hybrid of an **evidence-driven rule engine** (threshold-matched
-against ArduPilot internals) and a trained **XGBoost classifier** (60+ features
-extracted per log).
+against ArduPilot internals) and a schema-checked ML candidate (111 finite
+features extracted per log). The candidate is not promoted until the release
+gates in `docs/PRODUCTION_READINESS.md` pass.
 
 ---
 

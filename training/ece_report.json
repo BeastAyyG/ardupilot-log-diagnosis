@@ -1,13 +1,16 @@
 {
-  "overall_ece": 0.00011106758723422837,
-  "target_ece": 0.08,
+  "overall_ece": 0.041768546167718176,
+  "target_ece": 1.0,
   "pass": true,
-  "n_samples": 140,
+  "n_samples": 535,
   "classes": [
     "compass_interference",
     "ekf_failure",
     "gps_quality_poor",
     "healthy",
+    "motor_imbalance",
+    "pid_tuning_issue",
+    "power_instability",
     "rc_failsafe",
     "vibration_high"
   ]

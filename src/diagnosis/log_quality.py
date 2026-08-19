@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, TypedDict, cast
 
+from src.analysis.telemetry_quality import timestamp_health
+
 
 class CapabilityCheckResult(TypedDict):
     status: str  # "RELIABLE", "DEGRADED", or "UNSUPPORTED"
@@ -18,13 +20,15 @@ class QualityReportDict(TypedDict):
     total_messages: int
     capabilities: dict[str, CapabilityCheckResult]
     actionable_recommendations: list[str]
+    input_format: dict[str, Any]
+    integrity: dict[str, Any]
 
 
 class LogQualityEngine:
     """
     Log Quality & Capability Gating Engine.
     Evaluates what diagnostic analyses can be performed reliably based on
-    MAVLink message presence and sampling rates inside an ArduPilot .BIN log.
+    MAVLink message presence and sampling rates inside supported flight logs.
     """
 
     CAPABILITIES = [
@@ -47,6 +51,19 @@ class LogQualityEngine:
         message_types = metadata.get("message_types", {})
         if not isinstance(message_types, dict):
             message_types = {}
+        # Canonical parser adapters persist these counts in metadata, but
+        # report-only callers and MCP integrations often supply only the
+        # normalized ``messages`` mapping.  Derive counts once here so valid
+        # adapter payloads are not mislabeled UNSUPPORTED merely because a
+        # redundant metadata field was omitted.
+        if not message_types:
+            message_types = {
+                str(name): len(values)
+                for name, values in (parsed_log.get("messages", {}) or {}).items()
+                if isinstance(values, list) and values
+            }
+        if total_messages <= 0 and message_types:
+            total_messages = sum(int(value or 0) for value in message_types.values())
 
         # If duration is 0 but we have messages, estimate duration from message counts or timestamps
         if duration <= 0.0 and total_messages > 0:
@@ -68,6 +85,69 @@ class LogQualityEngine:
 
         capabilities: dict[str, CapabilityCheckResult] = {}
         actionable_recommendations: list[str] = []
+
+        file_format = metadata.get("file_format") or {}
+        parse_error = metadata.get("parse_error")
+        parse_complete = metadata.get("parse_complete")
+        integrity_status = "RELIABLE"
+        integrity_reasons: list[str] = []
+        if parse_error:
+            integrity_status = "DEGRADED"
+            integrity_reasons.append("Parser reported an error; the log may be truncated or corrupt.")
+        if file_format and not file_format.get("supported", False):
+            integrity_status = "UNSUPPORTED"
+            integrity_reasons.append(
+                f"Detected {file_format.get('format_name', 'unsupported format')}; no compatible parser is available for this input."
+            )
+        if total_messages == 0:
+            integrity_status = "UNSUPPORTED"
+            integrity_reasons.append("No DataFlash messages were parsed.")
+        integrity = {
+            "status": integrity_status,
+            "parse_complete": parse_complete,
+            "parse_error": parse_error,
+            "reasons": integrity_reasons,
+        }
+        timestamps = timestamp_health(parsed_log)
+        integrity["timestamp_health"] = timestamps
+        if timestamps["status"] == "degraded":
+            integrity["reasons"].append(
+                "Telemetry timestamps contain reversals or extended gaps; onset and rate-based findings are confidence-capped."
+            )
+            if integrity_status == "RELIABLE":
+                integrity_status = "DEGRADED"
+                integrity["status"] = integrity_status
+        if total_messages == 0:
+            integrity["classification"] = "insufficient_data"
+        elif parse_error or parse_complete is False:
+            integrity["classification"] = "truncated"
+        elif timestamps["status"] == "degraded":
+            integrity["classification"] = "partial"
+        else:
+            integrity["classification"] = "valid"
+        if integrity_reasons:
+            actionable_recommendations.extend(integrity_reasons)
+
+        def add_presence_capability(
+            name: str,
+            required: tuple[str, ...],
+            recommendation: str,
+        ) -> None:
+            present = [message for message in required if message_types.get(message, 0) > 0]
+            missing = [message for message in required if message not in present]
+            status = "RELIABLE" if not missing else "DEGRADED" if present else "UNSUPPORTED"
+            capabilities[name] = {
+                "status": status,
+                "reason": f"Present: {', '.join(present) if present else 'none'}; missing: {', '.join(missing) if missing else 'none'}.",
+                "missing_messages": missing,
+                "current_rate_hz": max((get_rate(message) for message in present), default=0.0),
+                "required_rate_hz": 0.0,
+                "recommendation": recommendation if missing else "Required telemetry present.",
+            }
+            # Optional capability gaps are surfaced on their own card. They
+            # do not downgrade the core diagnosis status or make a healthy
+            # log appear globally broken merely because it lacks an airspeed,
+            # ESC, or detailed PID stream.
 
         # 1. Vibration Analysis
         vibe_rate = get_rate("VIBE")
@@ -105,6 +185,35 @@ class LogQualityEngine:
             }
             if rec not in actionable_recommendations:
                 actionable_recommendations.append(rec)
+
+        # Additional capability cards consumed by the hardware report, UI,
+        # and future focused analyzers. They are deliberately presence-gated:
+        # an absent stream becomes insufficient_data, never a fabricated pass.
+        add_presence_capability(
+            "hardware_configuration_report",
+            ("MSG", "PARM"),
+            "Enable MSG and PARM logging to produce a complete firmware and configuration report.",
+        )
+        add_presence_capability(
+            "pid_detailed_analysis",
+            ("PIDR", "PIDP", "PIDY"),
+            "Enable PID logging (LOG_BITMASK PID bit) before a tuning flight; RATE fallback is lower detail.",
+        )
+        add_presence_capability(
+            "magfit_calibration",
+            ("MAG", "ATT", "GPS"),
+            "Log MAG, ATT, and GPS while performing broad attitude coverage for an offline compass fit.",
+        )
+        add_presence_capability(
+            "airspeed_fit",
+            ("ARSP", "BARO", "GPS"),
+            "Log ARSP, BARO, and GPS/EKF velocity across turns before estimating ARSPD_RATIO.",
+        )
+        add_presence_capability(
+            "esc_motor_diagnostics",
+            ("ESC", "RCOU"),
+            "Enable ESC telemetry and RCOU logging to attribute per-motor RPM, current, and temperature faults.",
+        )
 
         # 2. Compass & GPS Navigation
         gps_rate = get_rate("GPS")
@@ -281,7 +390,16 @@ class LogQualityEngine:
             }
 
         # Overall Status determination
-        statuses = [cap["status"] for cap in capabilities.values()]
+        core_names = {
+            "vibration_analysis",
+            "compass_gps_navigation",
+            "power_battery_dynamics",
+            "ekf_state_estimation",
+            "motor_balance_mechanics",
+            "pid_rate_control",
+            "event_failsafe_tracking",
+        }
+        statuses = [capabilities[name]["status"] for name in core_names if name in capabilities]
         unsupported_count = statuses.count("UNSUPPORTED")
         degraded_count = statuses.count("DEGRADED")
 
@@ -292,10 +410,59 @@ class LogQualityEngine:
         else:
             overall_status = "RELIABLE"
 
+        # The normalized ULog/TLog/Blackbox adapters deliberately share a few
+        # field names with DataFlash so generic telemetry can be plotted and
+        # exported.  The checks above, however, are ArduPilot-specific (their
+        # recommendations refer to LOG_BITMASK and DataFlash message
+        # semantics).  Do not present those checks as actionable for a
+        # different flight-stack format, even when an aligned stream happens
+        # to be present.  Keep the overall status as an integrity summary for
+        # the generic adapter; the per-capability cards make the unsupported
+        # scope explicit and the decision policy applies the root-cause gate.
+        format_name = str(file_format.get("format", "")).strip().lower() if isinstance(file_format, dict) else ""
+        if format_name and format_name not in {"ardupilot_bin", "text_log"}:
+            generic_reason = (
+                f"ArduPilot-specific capability is not supported for input format '{format_name}'. "
+                "Use format-native telemetry checks; ArduPilot logging flags do not apply."
+            )
+            format_scoped_names = set(core_names) | {
+                "hardware_configuration_report",
+                "pid_detailed_analysis",
+                "magfit_calibration",
+                "airspeed_fit",
+                "esc_motor_diagnostics",
+            }
+            for name in format_scoped_names:
+                capabilities[name] = {
+                    "status": "UNSUPPORTED",
+                    "reason": generic_reason,
+                    "missing_messages": [],
+                    "current_rate_hz": 0.0,
+                    "required_rate_hz": 0.0,
+                    "recommendation": "Use a supported ArduPilot .BIN/.LOG when this ArduPilot-specific capability is required.",
+                }
+            actionable_recommendations = [
+                generic_reason,
+                *(
+                    recommendation
+                    for recommendation in actionable_recommendations
+                    if "LOG_BITMASK" not in str(recommendation)
+                    and "BATT_MONITOR" not in str(recommendation)
+                ),
+            ]
+            if integrity_status == "UNSUPPORTED" or total_messages < 10:
+                overall_status = "UNSUPPORTED"
+            elif integrity_status != "RELIABLE" or timestamps["status"] == "degraded":
+                overall_status = "DEGRADED"
+            else:
+                overall_status = "RELIABLE"
+
         return cast(QualityReportDict, {
             "overall_status": overall_status,
             "duration_sec": duration,
             "total_messages": total_messages,
             "capabilities": capabilities,
             "actionable_recommendations": actionable_recommendations,
+            "input_format": file_format,
+            "integrity": integrity,
         })

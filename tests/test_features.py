@@ -1,3 +1,5 @@
+import math
+
 from src.features.pipeline import FeaturePipeline
 from src.constants import FEATURE_NAMES
 
@@ -10,6 +12,21 @@ def test_all_features_numerical():
     for k, v in features.items():
         if not k.startswith("_"):
             assert isinstance(v, (int, float))
+            assert math.isfinite(v)
+
+
+def test_pipeline_sanitizes_non_finite_parser_values():
+    pipeline = FeaturePipeline()
+    features = pipeline.extract(
+        {
+            "messages": {
+                "BAT": [{"Volt": float("nan"), "Curr": float("inf")}],
+                "POWR": [{"Vcc": float("nan"), "VServo": float("inf")}],
+            }
+        }
+    )
+
+    assert all(math.isfinite(value) for key, value in features.items() if not key.startswith("_"))
             
 def test_feature_names_consistent():
     pipeline = FeaturePipeline()
@@ -53,6 +70,42 @@ def test_feature_count():
     pipeline = FeaturePipeline()
     assert len(pipeline.get_feature_names()) == len(FEATURE_NAMES)
     assert set(pipeline.get_feature_names()) == set(FEATURE_NAMES)
+
+
+def test_power_load_features_capture_sag_and_spikes():
+    pipeline = FeaturePipeline()
+    parsed = {
+        "messages": {
+            "BAT": [
+                {"TimeUS": 0, "Volt": 16.8, "Curr": 10.0},
+                {"TimeUS": 1_000_000, "Volt": 15.0, "Curr": 40.0},
+                {"TimeUS": 2_000_000, "Volt": 16.5, "Curr": 11.0},
+            ]
+        },
+        "parameters": {"BATT_LOW_VOLT": 15.5},
+    }
+    features = pipeline.extract(parsed)
+    assert features["bat_power_max"] == 600.0
+    assert features["bat_sag_per_amp"] > 0.0
+    assert features["bat_low_voltage_pct"] > 0.0
+    assert features["bat_current_spike_pct"] > 0.0
+
+
+def test_pid_rate_features_capture_tracking_error_and_oscillation():
+    pipeline = FeaturePipeline()
+    parsed = {
+        "messages": {
+            "RATE": [
+                {"RDes": 10.0, "R": 0.0},
+                {"RDes": 0.0, "R": 10.0},
+                {"RDes": 10.0, "R": 0.0},
+            ]
+        }
+    }
+    features = pipeline.extract(parsed)
+    assert features["pid_rate_err_max"] == 10.0
+    assert features["pid_rate_err_mean"] > 0.0
+    assert features["pid_oscillation_pct"] > 0.0
 
 
 def test_motor_extractor_records_thrust_loss_tanomaly():

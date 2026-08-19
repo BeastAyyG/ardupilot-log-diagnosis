@@ -1,15 +1,20 @@
+from pathlib import Path
 from typing import Optional, cast
 
 from .anomaly_detector import AnomalyDetector
 from .ml_classifier import MLClassifier
 from .rule_engine import RuleEngine
 from src.contracts import DiagnosisDict, FeatureDict
+from src.parser.capabilities import capability_supports_format, feature_input_format
 
 
 MIN_MERGED_CONFIDENCE = 0.45
 SECONDARY_MIN_CONFIDENCE = 0.70
 SECONDARY_MAX_GAP = 0.10
 MAX_HYBRID_DIAGNOSES = 2
+RELATED_DIAGNOSES = {
+    frozenset({"power_instability", "thrust_loss"}),
+}
 
 METHOD_PRIORITY = {"rule+ml": 2, "ml": 1, "rule": 0}
 LABEL_PRIORITY = {
@@ -27,6 +32,21 @@ LABEL_PRIORITY = {
     "crash_unknown": 1,
 }
 
+RULE_SOURCE_URLS = {
+    "vibration_high": "https://ardupilot.org/copter/docs/common-vibration-damping.html",
+    "compass_interference": "https://ardupilot.org/copter/docs/common-compass-setup-advanced.html",
+    "motor_imbalance": "https://ardupilot.org/copter/docs/troubleshooting.html",
+    "mechanical_failure": "https://ardupilot.org/copter/docs/troubleshooting.html",
+    "thrust_loss": "https://ardupilot.org/copter/docs/thrust-loss-alert.html",
+    "gps_quality_poor": "https://ardupilot.org/copter/docs/common-gps-how-to.html",
+    "power_instability": "https://ardupilot.org/copter/docs/common-power-module-configuration-in-mission-planner.html",
+    "brownout": "https://ardupilot.org/copter/docs/common-power-module-configuration-in-mission-planner.html",
+    "ekf_failure": "https://ardupilot.org/copter/docs/common-ekf-sources-of-errors.html",
+    "rc_failsafe": "https://ardupilot.org/copter/docs/radio-failsafe.html",
+    "pid_tuning_issue": "https://ardupilot.org/copter/docs/ac_rollpitchtuning.html",
+    "crash_unknown": "https://ardupilot.org/copter/docs/common-flight-mode.html",
+}
+
 
 class HybridEngine:
     """Combines RuleEngine + AnomalyDetector + MLClassifier results."""
@@ -39,11 +59,55 @@ class HybridEngine:
     ):
         self.rules = rule_engine or RuleEngine()
         self.ml = ml_classifier or MLClassifier()
-        self.anomaly_detector = anomaly_detector or AnomalyDetector()
+        if anomaly_detector is not None:
+            self.anomaly_detector = anomaly_detector
+        else:
+            classifier_path = getattr(self.ml, "model_path", None)
+            anomaly_path = (
+                Path(classifier_path).with_name("anomaly_detector.joblib")
+                if classifier_path
+                else None
+            )
+            self.anomaly_detector = AnomalyDetector(anomaly_path)
 
-    def diagnose(self, features: FeatureDict) -> list[DiagnosisDict]:
+    def diagnose(
+        self,
+        features: FeatureDict,
+        window_features: list[FeatureDict] | None = None,
+    ) -> list[DiagnosisDict]:
+        detected_format = feature_input_format(features)
+        if not capability_supports_format("diagnosis", detected_format):
+            format_name = (
+                detected_format.get("format")
+                if isinstance(detected_format, dict)
+                else detected_format
+            )
+            self.last_explain_data = {
+                "rule": [],
+                "ml": [],
+                "ml_aggregation": {"aggregation": "format_gate", "candidate_count": 0},
+                "anomaly": {"is_anomaly": False, "anomaly_score": 0.0},
+                "hypotheses": [],
+                "causal_arbiter": {
+                    "reason": (
+                        "ArduPilot root-cause diagnosis is not declared for "
+                        f"input format '{format_name}'."
+                    )
+                },
+                "format_gate": {
+                    "capability": "diagnosis",
+                    "format": format_name,
+                    "status": "unsupported",
+                },
+                "final": [],
+            }
+            return []
+
         rule_results = self.rules.diagnose(features)
-        ml_results = self.ml.predict(features) if self.ml.available else []
+        if self.ml.available and window_features and hasattr(self.ml, "predict_windows"):
+            ml_results = self.ml.predict_windows(window_features, features)
+        else:
+            ml_results = self.ml.predict(features) if self.ml.available else []
         anomaly_info = {"is_anomaly": False, "anomaly_score": 0.0}
 
         has_rule = len(rule_results) > 0
@@ -100,6 +164,8 @@ class HybridEngine:
                         ftype, "Review log mechanically."
                     ),
                     "reason_code": "confirmed" if final >= 0.7 else "uncertain",
+                    "source_url": RULE_SOURCE_URLS.get(ftype),
+                    "rule_version": "hybrid-engine.v1",
                 }
             )
 
@@ -182,6 +248,11 @@ class HybridEngine:
             self.last_explain_data = {
                 "rule": rule_results,
                 "ml": ml_results,
+                "ml_aggregation": getattr(
+                    self.ml,
+                    "last_prediction_info",
+                    {"aggregation": "rule_only", "candidate_count": 0},
+                ),
                 "anomaly": anomaly_info,
                 "hypotheses": build_hypotheses(),
                 "causal_arbiter": arbiter or {},
@@ -222,7 +293,20 @@ class HybridEngine:
                     root_cause.get("recommendation", "")
                 )
                 selected = [cast(DiagnosisDict, root_cause)]
-                for diag in merged_diagnoses:
+                # Safety events are orthogonal to the causal-arbiter label. If
+                # an explicit RC failsafe or crash rule fired, retain it as a
+                # secondary card even when a vibration/motor signal started
+                # earlier; hiding a confirmed failsafe makes the hand-off
+                # unsafe and caused real-log regressions.
+                safety_types = {"rc_failsafe", "crash_unknown", "brownout"}
+                ordered_secondary = sorted(
+                    merged_diagnoses,
+                    key=lambda item: (
+                        item.get("failure_type") not in safety_types,
+                        -float(item.get("confidence", 0.0)),
+                    ),
+                )
+                for diag in ordered_secondary:
                     if diag["failure_type"] == root_cause["failure_type"]:
                         continue
                     is_critical_rule = (
@@ -261,7 +345,19 @@ class HybridEngine:
                     and diag["confidence"] >= MIN_MERGED_CONFIDENCE
                     and (primary["confidence"] - diag["confidence"]) <= SECONDARY_MAX_GAP
                 )
+                is_related_physics_signal = (
+                    frozenset({primary["failure_type"], diag["failure_type"]})
+                    in RELATED_DIAGNOSES
+                    and diag["detection_method"] == "rule"
+                    and diag["confidence"] >= MIN_MERGED_CONFIDENCE
+                )
                 if is_critical_rule or is_nearby_rule_signal:
+                    filtered_diagnoses.append(diag)
+                elif is_related_physics_signal:
+                    # A power sag and thrust limitation are coupled physical
+                    # hypotheses. Preserve the uncertain secondary so a
+                    # maintainer can inspect the evidence instead of hiding it
+                    # behind a single top-ranked card.
                     filtered_diagnoses.append(diag)
                 elif (
                     diag["confidence"] >= SECONDARY_MIN_CONFIDENCE

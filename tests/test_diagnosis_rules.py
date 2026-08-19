@@ -32,6 +32,35 @@ def test_rule_module_power_detects_brownout():
     assert result["failure_type"] == "brownout"
 
 
+def test_rule_module_power_detects_servo_rail_brownout():
+    features = _base_features()
+    features.update({"sys_vcc_min": 5.1, "sys_vservo_min": 3.8})
+    result = check_power(features, {"powr_vcc_min": 4.5})
+    assert result is not None
+    assert result["failure_type"] == "brownout"
+    assert any(item["feature"] == "sys_vservo_min" for item in result["evidence"])
+
+
+def test_rule_module_pid_uses_detailed_telemetry_when_vibration_is_high():
+    features = _base_features()
+    features.update(
+        {
+            "att_roll_std": 18.0,
+            "att_pitch_std": 7.0,
+            "vibe_z_max": 36.0,
+            "pid_rate_err_mean": 9.0,
+            "pid_rate_err_max": 100.0,
+            "pid_oscillation_pct": 0.5,
+            "_metadata": {"detailed_pid_logging": True},
+        }
+    )
+    from src.diagnosis.rules.control_and_events import check_pid_tuning
+
+    result = check_pid_tuning(features, {"vibe_max_warn": 30.0})
+    assert result is not None
+    assert result["failure_type"] == "pid_tuning_issue"
+
+
 def test_rule_module_thrust_loss_detection():
     features = _base_features()
     features.update({
@@ -45,6 +74,21 @@ def test_rule_module_thrust_loss_detection():
     result = check_thrust_loss(features, {})
     assert result is not None
     assert result["failure_type"] == "thrust_loss"
+
+
+def test_rule_module_motor_imbalance_is_suppressed_during_power_limited_thrust():
+    from src.diagnosis.rules.mechanics import check_motors
+
+    features = _base_features()
+    features.update(
+        {
+            "motor_spread_max": 850.0,
+            "motor_spread_mean": 120.0,
+            "motor_saturation_pct": 0.20,
+            "bat_sag_ratio": 0.19,
+        }
+    )
+    assert check_motors(features, {}) is None
 
 
 def test_rule_module_setup_error_detection():

@@ -1,0 +1,7 @@
+{
+  "brownout": "brownout flight controller reboot crash .bin",
+  "mechanical_failure": "broken prop arm mechanical failure crash .bin",
+  "thrust_loss": "thrust loss motor stopped crash .bin",
+  "setup_error": "reversed props wrong motor order crash .bin",
+  "crash_unknown": "unknown cause sudden crash .bin"
+}
