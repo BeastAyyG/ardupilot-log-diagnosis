@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/confirmation-cohort-manifest-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "frozen",
+    "cohort_role",
+    "blinded",
+    "candidates_evaluated",
+    "use_count",
+    "candidate_frozen_before_open",
+    "classes_frozen_before_open",
+    "precision_plan_frozen_before_open",
+    "precision_plan_sha256",
+    "candidate_manifest_sha256",
+    "baseline_manifest_sha256",
+    "development_split_ledger_sha256",
+    "declared_classes",
+    "records"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.confirmation-cohort-manifest/v1"},
+    "frozen": {"const": true},
+    "cohort_role": {"const": "independent_blinded_physical_confirmation"},
+    "blinded": {"const": true},
+    "candidates_evaluated": {"const": 1},
+    "use_count": {"const": 1},
+    "candidate_frozen_before_open": {"const": true},
+    "classes_frozen_before_open": {"const": true},
+    "precision_plan_frozen_before_open": {"const": true},
+    "precision_plan_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "baseline_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "development_split_ledger_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "declared_classes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lineage_root_id",
+          "target_class",
+          "target_class_id",
+          "source_type",
+          "collection_domain",
+          "physical_flight_verified",
+          "source_artifact_sha256",
+          "near_duplicate_cluster_id"
+        ],
+        "properties": {
+          "lineage_root_id": {"type": "string", "minLength": 1},
+          "target_class": {"type": "string", "minLength": 1},
+          "target_class_id": {"type": "integer", "minimum": 0},
+          "source_type": {"const": "real"},
+          "collection_domain": {"const": "physical_flight"},
+          "physical_flight_verified": {"const": true},
+          "source_artifact_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "near_duplicate_cluster_id": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

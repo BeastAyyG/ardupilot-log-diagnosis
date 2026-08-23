@@ -1,0 +1,74 @@
+{
+  "schema": "logdiagnosis.temporal-fidelity-design/v1",
+  "candidate_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "feature_fidelity_design_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "required_strata": [
+    {
+      "primary_label": "thrust_loss",
+      "flight_phase": "hover",
+      "vehicle_frame": "quad",
+      "firmware_commit": "REPLACE_WITH_PINNED_COMMIT",
+      "simulation_family": "thrust_loss"
+    }
+  ],
+  "required_channels": [
+    "imu_acc_x",
+    "imu_gyr_x",
+    "rate_des_roll",
+    "rate_roll"
+  ],
+  "channel_sources": {
+    "imu_acc_x": {
+      "message_type": "IMU",
+      "value_field": "AccX",
+      "time_field": "TimeUS",
+      "time_scale_to_sec": 0.000001,
+      "value_scale": 1.0,
+      "value_offset": 0.0,
+      "selector": {"I": 0}
+    },
+    "imu_gyr_x": {
+      "message_type": "IMU",
+      "value_field": "GyrX",
+      "time_field": "TimeUS",
+      "time_scale_to_sec": 0.000001,
+      "value_scale": 1.0,
+      "value_offset": 0.0,
+      "selector": {"I": 0}
+    },
+    "rate_des_roll": {
+      "message_type": "RATE",
+      "value_field": "RDes",
+      "time_field": "TimeUS",
+      "time_scale_to_sec": 0.000001,
+      "value_scale": 1.0,
+      "value_offset": 0.0,
+      "selector": {}
+    },
+    "rate_roll": {
+      "message_type": "RATE",
+      "value_field": "R",
+      "time_field": "TimeUS",
+      "time_scale_to_sec": 0.000001,
+      "value_scale": 1.0,
+      "value_offset": 0.0,
+      "selector": {}
+    }
+  },
+  "channel_pairs": [
+    {"one": "imu_acc_x", "two": "imu_gyr_x"},
+    {"one": "rate_des_roll", "two": "rate_roll"}
+  ],
+  "acf_lags_sec": [0.05, 0.2, 1.0],
+  "psd_bands_hz": [
+    {"name": "low_motion", "low_hz": 0.1, "high_hz": 2.0},
+    {"name": "control", "low_hz": 2.0, "high_hz": 10.0},
+    {"name": "vibration", "low_hz": 10.0, "high_hz": 40.0}
+  ],
+  "minimum_lineages_per_domain_per_stratum": 10,
+  "bootstrap_draws": 2000,
+  "seed": 20260823,
+  "frozen_before_evaluation": true,
+  "require_transition_timing": true,
+  "maximum_cross_channel_lag_sec": 0.5
+}

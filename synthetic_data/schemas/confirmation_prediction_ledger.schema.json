@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/confirmation-prediction-ledger-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "evaluation_role",
+    "aggregation",
+    "candidate_manifest_sha256",
+    "baseline_manifest_sha256",
+    "confirmation_cohort_sha256",
+    "development_split_ledger_sha256",
+    "declared_classes",
+    "records",
+    "non_promoting",
+    "release_authorized",
+    "accuracy_claim"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.confirmation-predictions/v1"},
+    "evaluation_role": {"const": "one_time_blinded_physical_confirmation"},
+    "aggregation": {
+      "const": "maximum raw class probability by lineage_root_id"
+    },
+    "candidate_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "baseline_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "confirmation_cohort_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "development_split_ledger_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "declared_classes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lineage_root_id",
+          "target_class",
+          "target_class_id",
+          "source_artifact_sha256",
+          "near_duplicate_cluster_id",
+          "candidate_probabilities_by_class",
+          "baseline_probabilities_by_class"
+        ],
+        "properties": {
+          "lineage_root_id": {"type": "string", "minLength": 1},
+          "target_class": {"type": "string", "minLength": 1},
+          "target_class_id": {"type": "integer", "minimum": 0},
+          "source_artifact_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "near_duplicate_cluster_id": {"type": "string", "minLength": 1},
+          "candidate_probabilities_by_class": {
+            "type": "object",
+            "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "baseline_probabilities_by_class": {
+            "type": "object",
+            "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      }
+    },
+    "non_promoting": {"const": true},
+    "release_authorized": {"const": false},
+    "accuracy_claim": {"const": "not_demonstrated_without_gate_and_authority"}
+  }
+}

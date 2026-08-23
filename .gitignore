@@ -34,6 +34,15 @@ dist/
 
 *.tmp
 
+# Generated synthetic-flight payloads may be large and contain trajectories.
+synthetic_data/outputs/
+synthetic_data/reports/generated/
+
+# Local fleet reports may contain aircraft identifiers, coordinates, and
+# maintenance notes; keep operator databases out of source control.
+*.sqlite3
+
+fleet_data/
 
 
 
@@ -66,3 +75,21 @@ dist/
 
 Thumbs.db
 
+
+# Ruflo local secrets and runtime data
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+
+# Mutable local agent/coordination state is not product source and changes in
+# background daemon processes. Stable harness policy/config files remain bound.
+.claude-flow/daemon-state.json
+.claude-flow/daemon.pid
+.claude-flow/metrics/
+.claude-flow/policy/state.json
+.claude-flow/tasks/store.json
+.claude-flow/agents/store.json
+.claude-flow/swarm/swarm-state.json
+.swarm/
+.claude/

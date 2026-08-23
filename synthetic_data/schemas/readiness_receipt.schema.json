@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/code-readiness-receipt-v1.json",
+  "title": "Exact dirty-source code-readiness receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "release_authorized",
+    "accuracy_gain",
+    "generated_at",
+    "source",
+    "environment",
+    "verification",
+    "limitations",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.code-readiness-receipt/v1"},
+    "status": {"const": "non_promoting_code_readiness"},
+    "release_authorized": {"const": false},
+    "accuracy_gain": {"const": "not_demonstrated"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "head_revision",
+        "branch",
+        "excluded_paths",
+        "entries",
+        "status_records",
+        "status_records_sha256",
+        "dirty",
+        "snapshot_sha256"
+      ],
+      "properties": {
+        "schema": {"const": "logdiagnosis.git-dirty-snapshot/v1"},
+        "head_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "branch": {"type": "string"},
+        "excluded_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "tracked", "index", "working"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1},
+              "tracked": {"type": "boolean"},
+              "index": {"type": "array"},
+              "working": {"type": "object"}
+            }
+          }
+        },
+        "status_records": {"type": "array"},
+        "status_records_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "dirty": {"type": "boolean"},
+        "snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python_version",
+        "python_implementation",
+        "platform",
+        "executable_sha256",
+        "package_versions"
+      ],
+      "properties": {
+        "python_version": {"type": "string", "minLength": 1},
+        "python_implementation": {"type": "string", "minLength": 1},
+        "platform": {"type": "string", "minLength": 1},
+        "executable_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "package_versions": {
+          "type": "object",
+          "additionalProperties": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all_passed", "commands", "json_syntax"],
+      "properties": {
+        "all_passed": {"type": "boolean"},
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "argv",
+              "exit_code",
+              "duration_seconds",
+              "stdout_sha256",
+              "stderr_sha256",
+              "stdout_tail",
+              "stderr_tail"
+            ],
+            "properties": {
+              "argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "minLength": 1}
+              },
+              "exit_code": {"type": "integer"},
+              "duration_seconds": {"type": "number", "minimum": 0},
+              "stdout_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "stderr_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "stdout_tail": {"type": "string"},
+              "stderr_tail": {"type": "string"}
+            }
+          }
+        },
+        "json_syntax": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pass", "file_count", "files", "errors"],
+          "properties": {
+            "pass": {"type": "boolean"},
+            "file_count": {"type": "integer", "minimum": 0},
+            "files": {"type": "array"},
+            "errors": {"type": "array"}
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

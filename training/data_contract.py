@@ -16,6 +16,128 @@ import numpy as np
 import pandas as pd
 
 
+REAL_SOURCE_TYPES = frozenset({"real"})
+SYNTHETIC_SOURCE_TYPES = frozenset(
+    {"sitl", "hil", "feature_synthetic", "simulation"}
+)
+KNOWN_SOURCE_TYPES = REAL_SOURCE_TYPES | SYNTHETIC_SOURCE_TYPES | {"unknown"}
+_REAL_ALIASES = frozenset(
+    {
+        "real",
+        "hardware",
+        "real_flight",
+        "release_benchmark",
+        "flight_log",
+        "expert_verified",
+        "expert_curated",
+        "ardupilot_discuss",
+        "ardupilot_forum",
+        "community_log",
+        "forum_linked",
+        "github",
+        "github_real_log",
+        "human_verified_rule_candidate",
+        "local_real_log",
+    }
+)
+_BASIC_SIMULATION_ALIASES = frozenset(
+    {"basic", "basic_dataset", "basic_sitl_dataset", "basic_simulation_dataset"}
+)
+
+
+def canonical_source_type(
+    value: object,
+    *,
+    source_group: object = "",
+    source_log: object = "",
+) -> str:
+    """Normalize provenance into a small set used by evaluation policy.
+
+    Older datasets did not carry a ``source_type`` column.  They remain
+    readable, but synthetic/SITL prefixes are still detected so those rows
+    cannot silently enter a real-world holdout.
+    """
+
+    try:
+        missing = value is None or bool(pd.isna(value))
+    except (TypeError, ValueError):
+        missing = value is None
+    raw = (
+        ""
+        if missing
+        else str(value).strip().lower().replace("-", "_").replace(" ", "_")
+    )
+    marker = f"{source_group or ''} {source_log or ''}".strip().lower()
+    if raw in _REAL_ALIASES:
+        return "real"
+    if raw in _BASIC_SIMULATION_ALIASES or raw.startswith("basic_dataset"):
+        return "simulation"
+    if "feature_synthetic" in raw or raw in {"synthetic", "generated_features"}:
+        return "feature_synthetic"
+    if "sitl" in raw or "software_in_the_loop" in raw:
+        return "sitl"
+    if raw == "hil" or "hardware_in_the_loop" in raw or raw.startswith("hil_"):
+        return "hil"
+    if raw in {"simulation", "simulated"}:
+        return "simulation"
+    if marker.startswith("synthetic:") or " synthetic:" in marker:
+        return "feature_synthetic"
+    if marker.startswith("sitl:") or " sitl:" in marker:
+        return "sitl"
+    if marker.startswith("hil:") or " hil:" in marker:
+        return "hil"
+    return "unknown"
+
+
+def effective_source_types(groups: pd.DataFrame) -> np.ndarray:
+    """Return one normalized provenance type for every dataset row."""
+
+    values = groups["source_type"] if "source_type" in groups.columns else [""] * len(groups)
+    source_groups = (
+        groups["source_group"] if "source_group" in groups.columns else [""] * len(groups)
+    )
+    source_logs = groups["source_log"] if "source_log" in groups.columns else [""] * len(groups)
+    return np.asarray(
+        [
+            canonical_source_type(value, source_group=group, source_log=log)
+            for value, group, log in zip(values, source_groups, source_logs)
+        ]
+    )
+
+
+def synthetic_source_mask(groups: pd.DataFrame) -> np.ndarray:
+    """Identify rows that may train a model but may never score release metrics."""
+
+    return np.isin(effective_source_types(groups), tuple(SYNTHETIC_SOURCE_TYPES))
+
+
+def real_source_mask(groups: pd.DataFrame) -> np.ndarray:
+    """Identify only explicitly allowlisted, independently real flight rows."""
+
+    return effective_source_types(groups) == "real"
+
+
+def unknown_source_mask(groups: pd.DataFrame) -> np.ndarray:
+    """Identify provenance that must be resolved before evaluation or release."""
+
+    return effective_source_types(groups) == "unknown"
+
+
+def require_known_source_types(groups: pd.DataFrame) -> np.ndarray:
+    """Return normalized types or reject provenance that is not explicit."""
+
+    effective = effective_source_types(groups)
+    unknown_positions = np.flatnonzero(effective == "unknown")
+    if len(unknown_positions):
+        preview = ", ".join(str(int(index)) for index in unknown_positions[:10])
+        raise ValueError(
+            "Unknown source provenance at row positions "
+            + preview
+            + "; explicitly classify each row as real, SITL, HIL, or simulation."
+        )
+    return effective
+
+
 def canonical_source_group(log_entry: Mapping[str, object], filename: str = "") -> str:
     """Return a stable incident group key for a ground-truth entry.
 

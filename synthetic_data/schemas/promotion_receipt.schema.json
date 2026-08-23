@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/model-promotion-authorization-v1.json",
+  "title": "Independent model-promotion authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "receipt_id",
+    "candidate_manifest_sha256",
+    "acceptance_gate_report_sha256",
+    "authorization_decision_sha256",
+    "authorized_by",
+    "authorized_at"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.model-promotion-authorization/v1"},
+    "status": {"const": "authorized"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "acceptance_gate_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "authorization_decision_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "authorized_by": {"type": "string", "minLength": 1},
+    "authorized_at": {"type": "string", "minLength": 1}
+  }
+}

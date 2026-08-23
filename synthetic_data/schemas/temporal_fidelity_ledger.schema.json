@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "logdiagnosis.temporal-fidelity-ledger/v1",
+  "type": "object",
+  "required": ["schema", "candidate_manifest_sha256", "temporal_design_sha256", "dataset", "records"],
+  "properties": {
+    "schema": {"const": "logdiagnosis.temporal-fidelity-ledger/v1"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "temporal_design_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "dataset": {
+      "type": "object",
+      "required": ["features_sha256", "labels_sha256", "groups_sha256", "split_ledger_sha256"]
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": ["domain", "lineage_root_id", "near_duplicate_cluster_id", "source_artifact_sha256", "stratum", "transition_time_sec", "channels"],
+        "properties": {
+          "domain": {"enum": ["real", "synthetic"]},
+          "lineage_root_id": {"type": "string", "minLength": 1},
+          "near_duplicate_cluster_id": {"type": "string", "minLength": 1},
+          "source_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "stratum": {
+            "type": "object",
+            "required": ["primary_label", "flight_phase", "vehicle_frame", "firmware_commit", "simulation_family"]
+          },
+          "transition_time_sec": {"type": ["number", "null"]},
+          "channels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["time_sec", "values"],
+              "properties": {
+                "time_sec": {"type": "array", "minItems": 16, "maxItems": 1000000, "items": {"type": "number"}},
+                "values": {"type": "array", "minItems": 16, "maxItems": 1000000, "items": {"type": ["number", "null"]}}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

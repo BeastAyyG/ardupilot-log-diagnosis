@@ -1,0 +1,72 @@
+# Multi-arch ArduPilot SITL runtime for the verified synthetic-data laboratory.
+#
+# Build for ARM64 (DGX) or x86_64 (laptop/WSL) with buildx:
+#
+#   docker buildx build \
+#     --platform linux/arm64 \
+#     --build-arg ARDUPILOT_COMMIT=<40-char-commit> \
+#     --build-arg ARDUPILOT_TREE_SHA1=<40-char-tree-sha> \
+#     -f synthetic_data/cluster/containers/Dockerfile.ardupilot-sitl .
+#
+# The resulting binary hash, commit, and clean-tree attestation are emitted at
+# /attestation.json and MUST match the parameter schema bound into every run
+# plan; collection rejects any mismatch.
+#
+# SECURITY: replace the base-image digest pin below with the digest you
+# verified for your registry mirror. Building from a moving tag silently
+# invalidates the provenance chain.
+
+ARG BASE_IMAGE=python:3.12-slim-bookworm
+ARG BASE_DIGEST=sha256:REPLACE_WITH_VERIFIED_DIGEST
+
+FROM ${BASE_IMAGE}@${BASE_DIGEST} AS base
+# Fail the build immediately when the digest pin was never filled in:
+# provenance from a moving tag silently invalidates the whole chain.
+RUN /bin/sh -c 'case "$BASE_DIGEST" in \
+      *REPLACE_WITH_VERIFIED_DIGEST*) \
+        echo "FATAL: BASE_DIGEST is not pinned to a verified digest." >&2; \
+        exit 1;; \
+    esac'
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        g++ gcc git make python3-dev ccache ethtool util-linux \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- ArduPilot pinned source -------------------------------------------------
+FROM base AS ardupilot
+ARG ARDUPILOT_COMMIT
+ARG ARDUPILOT_REPO=https://github.com/ArduPilot/ardupilot.git
+# A shallow branch clone cannot resolve an arbitrary commit SHA; fetch the
+# exact object instead and detach onto it. The 40-hex guard fails the build
+# before any network access when the pin is malformed.
+RUN echo "${ARDUPILOT_COMMIT}" | grep -qE '^[0-9a-f]{40}$' || \
+      (echo "FATAL: ARDUPILOT_COMMIT must be a full 40-character SHA" >&2; exit 1)
+RUN git init /src/ardupilot \
+    && git -C /src/ardupilot remote add origin "${ARDUPILOT_REPO}" \
+    && git -C /src/ardupilot fetch --depth 1 origin "${ARDUPILOT_COMMIT}" \
+    && git -C /src/ardupilot checkout --detach FETCH_HEAD \
+    && git -C /src/ardupilot submodule update --init --recursive --depth 1
+WORKDIR /src/ardupilot
+RUN git rev-parse HEAD && git status --porcelain=v1 --untracked-files=no
+# ARM64 hosts build natively; no cross-compilation flags required.
+RUN ./waf configure --board sitl && ./waf copter
+RUN printf '{\n "commit": "%s",\n "binary_sha256": "%s"\n}\n' \
+      "$(git rev-parse HEAD)" \
+      "$(sha256sum build/sitl/bin/arducopter | cut -d' ' -f1)" \
+      > /attestation.json
+
+# --- Runtime -----------------------------------------------------------------
+FROM base AS runtime
+COPY synthetic_data/cluster/containers/constraints.lock /opt/lab/constraints.lock
+RUN python -m pip install --no-cache-dir -c /opt/lab/constraints.lock pip \
+    && python -m pip install --no-cache-dir \
+        pymavlink==2.4.49 numpy pandas scipy scikit-learn joblib xgboost \
+        -c /opt/lab/constraints.lock
+COPY --from=ardupilot /src/ardupilot/build/sitl/bin/arducopter /opt/ardupilot/arducopter
+COPY --from=ardupilot /attestation.json /opt/ardupilot/attestation.json
+ENV ARDUPILOT_SITL_BINARY=/opt/ardupilot/arducopter \
+    ARDUPILOT_ATTESTATION=/opt/ardupilot/attestation.json \
+    PYTHONUNBUFFERED=1
+WORKDIR /workspace
+CMD ["python", "-m", "synthetic_data", "--help"]

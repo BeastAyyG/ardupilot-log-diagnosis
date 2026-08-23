@@ -1,0 +1,115 @@
+{
+  "schema": "logdiagnosis.synthetic-acceptance-gates/v3",
+  "status": "proposed_project_policy",
+  "confidence_level": 0.95,
+  "integrity": {
+    "provenance_completeness": 1.0,
+    "maximum_unknown_source_rows": 0,
+    "maximum_duplicate_or_near_duplicate_clusters": 0,
+    "minimum_parameter_readback_runs": 30,
+    "parameter_readback_requires_zero_failures": true,
+    "parser_success": {
+      "minimum_eligible_runs": 299,
+      "minimum_one_sided_95_lower_rate": 0.99
+    },
+    "fault_manifestation": {
+      "minimum_eligible_runs_per_scenario": 59,
+      "minimum_one_sided_95_lower_rate": 0.95
+    },
+    "sham_false_manifestation": {
+      "minimum_eligible_runs_per_scenario": 299,
+      "maximum_one_sided_95_upper_rate": 0.01
+    }
+  },
+  "evaluation_protocol": {
+    "declared_classes": [
+      "healthy",
+      "vibration_high",
+      "motor_imbalance",
+      "thrust_loss",
+      "gps_quality_poor",
+      "compass_interference",
+      "power_instability",
+      "rc_failsafe"
+    ],
+    "required_scenarios": [
+      "vibration_high",
+      "motor_imbalance",
+      "thrust_loss",
+      "gps_quality_poor",
+      "compass_interference",
+      "power_instability",
+      "rc_failsafe"
+    ],
+    "authorized_confirmation_receipt_sha256": [],
+    "confirmation_must_be_blinded": true,
+    "maximum_candidates_evaluated": 1,
+    "maximum_confirmation_uses": 1,
+    "candidate_frozen_before_confirmation": true,
+    "declared_classes_frozen_before_confirmation": true,
+    "minimum_confirmation_lineages_per_class": 20
+  },
+  "utility": {
+    "paired_bootstrap_draws": 10000,
+    "bootstrap_unit": "lineage_root_id",
+    "bootstrap_stratified_by_class": true,
+    "minimum_macro_f1_lower_95": 0.7,
+    "minimum_lower_95_macro_f1_delta": 0.0,
+    "minimum_per_class_recall_delta_lower_95": -0.05,
+    "recall_interval_method": "simultaneous_class_stratified_lineage_bootstrap"
+  },
+  "calibration": {
+    "maximum_top_label_incident_ece": 0.08,
+    "maximum_classwise_incident_ece": 0.1,
+    "brier_upper_95_delta_must_not_exceed": 0.0,
+    "nll_upper_95_delta_must_not_exceed": 0.0,
+    "require_every_declared_class_calibrated": true,
+    "minimum_real_lineages_per_class": 20
+  },
+  "safety": {
+    "maximum_one_sided_95_false_critical_rate": 0.05,
+    "maximum_upper_95_false_critical_increase": 0.01,
+    "maximum_one_sided_95_healthy_false_alarm_rate": 0.05,
+    "requires_severity_aware_end_to_end_diagnoses": true
+  },
+  "fidelity": {
+    "maximum_source_distinguishability_auc": 0.65,
+    "minimum_source_classifier_permutation_draws": 1000,
+    "minimum_source_classifier_permutation_p_value": 0.05,
+    "minimum_conditional_strata_coverage": 1.0,
+    "minimum_units_per_domain_per_stratum": 10,
+    "maximum_features_outside_real_real_95_envelope": 0.1,
+    "require_raw_temporal_checks": true,
+    "required_stratifiers": [
+      "primary_label",
+      "flight_phase",
+      "vehicle_frame",
+      "firmware_commit",
+      "simulation_family"
+    ]
+  },
+  "ood": {
+    "minimum_auroc": 0.85,
+    "minimum_detection_at_5pct_id_fpr": 0.8,
+    "minimum_lineages_per_domain": 20,
+    "required_domains": [
+      "held_out_firmware",
+      "held_out_frame",
+      "real_sensor_corruption",
+      "unknown_fault_family"
+    ],
+    "action": "abstain_or_route_to_rules_and_review"
+  },
+  "privacy": {
+    "maximum_direct_identifier_findings": 0,
+    "maximum_unapproved_absolute_gps_findings": 0,
+    "formal_privacy_guarantee_required_if_claimed": true
+  },
+  "reproducibility": {
+    "require_immutable_source_snapshot": true,
+    "require_dependency_lock_hash": true,
+    "require_command_and_rng_receipt": true,
+    "require_independent_repeat": true
+  },
+  "release_policy": "non_promoting_until_independent_authorization"
+}

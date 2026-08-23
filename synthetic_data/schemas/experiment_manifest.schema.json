@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/sitl-experiment-v3.json",
+  "title": "logdiagnosis SITL experiment",
+  "type": "object",
+  "required": [
+    "schema",
+    "generator_version",
+    "seed",
+    "ardupilot_revision",
+    "parameter_schema_sha256",
+    "binary_sha256",
+    "capability_status",
+    "runs"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.sitl-experiment/v3"},
+    "generator_version": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer"},
+    "ardupilot_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "parameter_schema_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "capability_status": {"const": "verified"},
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "run_id",
+          "run_fingerprint",
+          "scenario",
+          "scenario_index",
+          "label",
+          "maturity",
+          "role",
+          "paired_with",
+          "lineage_root_id",
+          "source_type",
+          "source_group",
+          "label_origin",
+          "generator_version",
+          "scenario_sampling_seed",
+          "bit_exact_replay_claim",
+          "root_seed",
+          "ardupilot_revision",
+          "parameter_schema_sha256",
+          "binary_sha256",
+          "capability_status",
+          "vehicle",
+          "frame",
+          "mission_profile",
+          "fixed_home",
+          "simulation_start_unix_sec",
+          "duration_sec",
+          "planned_fault_onset_sec",
+          "minimum_post_fault_sec",
+          "temporal_profile",
+          "startup_parameters",
+          "environment_parameters",
+          "logging_parameters",
+          "injection_parameters",
+          "injection_baseline_parameters",
+          "allowed_automatic_parameter_changes",
+          "required_messages",
+          "expected_log_filename",
+          "expected_receipt_filename",
+          "artifact_status",
+          "trainable"
+        ],
+        "properties": {
+          "run_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"},
+          "run_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "scenario": {"type": "string", "minLength": 1},
+          "scenario_index": {"type": "integer", "minimum": 0},
+          "label": {"type": "string", "minLength": 1},
+          "maturity": {"enum": ["candidate", "experimental"]},
+          "role": {"enum": ["intervention", "sham_control"]},
+          "paired_with": {"type": ["string", "null"]},
+          "lineage_root_id": {"type": "string", "minLength": 1},
+          "source_type": {"const": "sitl"},
+          "source_group": {"type": "string", "minLength": 1},
+          "label_origin": {"const": "verified_controlled_sitl_intervention"},
+          "generator_version": {"type": "string", "minLength": 1},
+          "scenario_sampling_seed": {"type": "integer", "minimum": 0},
+          "bit_exact_replay_claim": {"const": false},
+          "root_seed": {"type": "integer"},
+          "ardupilot_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "parameter_schema_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "capability_status": {"const": "verified"},
+          "vehicle": {"const": "ArduCopter"},
+          "frame": {"enum": ["quad", "hexa", "octa"]},
+          "mission_profile": {"const": "guided_takeoff_hover_land"},
+          "fixed_home": {
+            "type": "object",
+            "required": ["latitude", "longitude", "altitude_m", "heading_deg"]
+          },
+          "simulation_start_unix_sec": {
+            "type": "integer",
+            "minimum": 946684800,
+            "maximum": 2147483647
+          },
+          "duration_sec": {"type": "number", "minimum": 30},
+          "planned_fault_onset_sec": {"type": ["number", "null"], "minimum": 0},
+          "minimum_post_fault_sec": {"type": "number", "minimum": 0},
+          "temporal_profile": {"const": "step"},
+          "startup_parameters": {
+            "type": "object",
+            "additionalProperties": {"type": "number"}
+          },
+          "injection_parameters": {
+            "type": "object",
+            "additionalProperties": {"type": "number"}
+          },
+          "injection_baseline_parameters": {
+            "type": "object",
+            "additionalProperties": {"type": "number"}
+          },
+          "allowed_automatic_parameter_changes": {
+            "type": "array",
+            "maxItems": 0,
+            "items": {"type": "string"}
+          },
+          "environment_parameters": {
+            "type": "object",
+            "additionalProperties": {"type": "number"}
+          },
+          "logging_parameters": {
+            "type": "object",
+            "additionalProperties": {"type": "number"}
+          },
+          "required_messages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "expected_log_filename": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}\\.BIN$"
+          },
+          "expected_receipt_filename": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}\\.execution\\.json$"
+          },
+          "artifact_status": {"const": "planned"},
+          "trainable": {"const": false}
+        }
+      }
+    }
+  }
+}

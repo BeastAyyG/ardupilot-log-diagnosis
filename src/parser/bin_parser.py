@@ -59,6 +59,10 @@ class LogParser:
         "PIDT",
         "PTUN",  # detailed PID tuning telemetry on newer firmware
         "PARM",
+        "DSF",
+        "ARM",
+        "SIM",
+        "SIM2",
         "ERR",
         "EV",
         "MODE",
@@ -114,31 +118,36 @@ class LogParser:
         Returns a dict containing metadata, messages, parameters, errors, events,
         mode_changes, and status_messages.
         """
-        parsed_data = cast(ParsedLog, {
-            "metadata": {
-                "filepath": self.filepath,
-                "file_format": None,
-                "duration_sec": 0.0,
-                "vehicle_type": "Unknown",
-                "firmware_version": "Unknown",
-                "firmware_hash": "Unknown",
-                "board": "Unknown",
-                "total_messages": 0,
-                "message_types": {},
-                "parse_complete": False,
-                "parse_error": None,
+        parsed_data = cast(
+            ParsedLog,
+            {
+                "metadata": {
+                    "filepath": self.filepath,
+                    "file_format": None,
+                    "duration_sec": 0.0,
+                    "vehicle_type": "Unknown",
+                    "firmware_version": "Unknown",
+                    "firmware_hash": "Unknown",
+                    "board": "Unknown",
+                    "total_messages": 0,
+                    "message_types": {},
+                    "parse_complete": False,
+                    "parse_error": None,
+                },
+                "messages": {},
+                "parameters": {},
+                "errors": [],
+                "events": [],
+                "mode_changes": [],
+                "status_messages": [],
+                "parameter_changes": [],
             },
-            "messages": {},
-            "parameters": {},
-            "errors": [],
-            "events": [],
-            "mode_changes": [],
-            "status_messages": [],
-            "parameter_changes": [],
-        })
+        )
 
         try:
-            parsed_data["metadata"]["file_format"] = detect_file_format(self.filepath, hash_file=True)
+            parsed_data["metadata"]["file_format"] = detect_file_format(
+                self.filepath, hash_file=True
+            )
         except Exception as exc:
             # Keep the parser's historical best-effort contract for callers
             # that use synthetic/fake paths in tests; the quality report will
@@ -222,7 +231,10 @@ class LogParser:
                         normalized_value = (
                             float(value) if isinstance(value, (int, float)) else value
                         )
-                        if name in parsed_data["parameters"] and parsed_data["parameters"][name] != normalized_value:
+                        if (
+                            name in parsed_data["parameters"]
+                            and parsed_data["parameters"][name] != normalized_value
+                        ):
                             parsed_data["parameter_changes"].append(
                                 {
                                     "time_us": time_us,
@@ -273,7 +285,9 @@ class LogParser:
             )
             parsed_data["metadata"]["parse_error"] = str(e)
 
-        parsed_data["metadata"]["parse_complete"] = parsed_data["metadata"].get("parse_error") is None
+        parsed_data["metadata"]["parse_complete"] = (
+            parsed_data["metadata"].get("parse_error") is None
+        )
 
         if first_time is not None and last_time is not None and last_time > first_time:
             parsed_data["metadata"]["duration_sec"] = (last_time - first_time) / 1e6
@@ -287,17 +301,26 @@ class LogParser:
         # and board identity when a full hardware connection is unavailable.
         for status in parsed_data["status_messages"]:
             text = str(status.get("message", ""))
-            firmware_match = re.search(r"\b(?:ArduCopter|ArduPlane|ArduRover|ArduSub)\s+(V?\d+(?:\.\d+)+)(?:\s+\(([0-9A-Fa-f]+)\))?", text)
+            firmware_match = re.search(
+                r"\b(?:ArduCopter|ArduPlane|ArduRover|ArduSub)\s+(V?\d+(?:\.\d+)+)(?:\s+\(([0-9A-Fa-f]+)\))?",
+                text,
+            )
             if firmware_match:
                 parsed_data["metadata"]["firmware_version"] = firmware_match.group(1)
                 if firmware_match.group(2):
                     parsed_data["metadata"]["firmware_hash"] = firmware_match.group(2)
-            board_match = re.search(r"\b(fmuv\d+|Cube\w*|Pixhawk\w*|Durandal\w*|Kakute\w*|Matek\w*)\b", text, re.IGNORECASE)
+            board_match = re.search(
+                r"\b(fmuv\d+|Cube\w*|Pixhawk\w*|Durandal\w*|Kakute\w*|Matek\w*)\b",
+                text,
+                re.IGNORECASE,
+            )
             if board_match:
                 parsed_data["metadata"]["board"] = board_match.group(1)
 
         try:
-            parsed_data["metadata"]["quality_report"] = LogQualityEngine().evaluate(parsed_data)
+            parsed_data["metadata"]["quality_report"] = LogQualityEngine().evaluate(
+                parsed_data
+            )
         except Exception as exc:
             self.logger.warning(f"Error evaluating log quality: {exc}")
             parsed_data["metadata"]["quality_report"] = {

@@ -566,6 +566,30 @@ python training/train_model.py
 python validate_leakage.py
 ```
 
+### Synthetic SITL Training Data
+
+The isolated laboratory pins the ArduPilot commit, binary, and live parameter
+inventory; creates paired control/intervention plans; requires parameter ACKs,
+DataFlash onset evidence, and a manifested telemetry effect; and scores utility
+only on a frozen real lockbox:
+
+```bash
+python -m synthetic_data --help
+python -m synthetic_data plan --help
+python -m synthetic_data collect --help
+```
+
+See [`docs/SYNTHETIC_DATA_IMPLEMENTATION.md`](docs/SYNTHETIC_DATA_IMPLEMENTATION.md)
+for the workflow, or open the separate synthetic_data README for the complete
+research, generation, fidelity, and real-only ablation design. No accuracy gain
+is claimed until receipt-verified logs clear that ablation.
+
+To bind code checks to the exact tracked, staged, deleted, and non-ignored
+untracked source state, run `python -m synthetic_data.readiness_receipt build`
+and then the corresponding `verify` command documented in
+[`synthetic_data/reports/READINESS.md`](synthetic_data/reports/READINESS.md).
+This code receipt is deliberately non-promoting.
+
 ### Clean Import (Production-Safe Ingestion)
 
 Applies strict SHA256 dedup, non-log rejection, provenance proof, and benchmark-ready export:
@@ -742,6 +766,7 @@ See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITER
 | [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) | Release gates & labeling policy |
 | [`docs/MAINTAINER_TRIAGE_REDUX.md`](docs/MAINTAINER_TRIAGE_REDUX.md) | Triage impact study (98% time reduction) |
 | [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) | Full dataset lineage and provenance tracking |
+| [`docs/SYNTHETIC_DATA_IMPLEMENTATION.md`](docs/SYNTHETIC_DATA_IMPLEMENTATION.md) | Research-backed SITL generation and real-only evaluation workflow |
 | [`docs/UPGRADE_ROADMAP.md`](docs/UPGRADE_ROADMAP.md) | Technical roadmap and future improvements |
 | [`CHANGELOG.md`](CHANGELOG.md) | Complete version history |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to contribute crash logs or rules |

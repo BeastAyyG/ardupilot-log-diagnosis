@@ -31,7 +31,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from training.data_contract import effective_group_values, primary_label_for_row  # noqa: E402
+from training.data_contract import (  # noqa: E402
+    effective_group_values,
+    primary_label_for_row,
+    require_known_source_types,
+)
 from training.evaluation_split import grouped_train_test_split  # noqa: E402
 
 
@@ -65,6 +69,7 @@ def _load_dataset(
 
     labels_text: list[str] = []
     keep: list[int] = []
+    source_types = require_known_source_types(groups_frame)
     allowed = labels.columns.tolist()
     for index, row in labels.iterrows():
         preferred = (
@@ -73,7 +78,7 @@ def _load_dataset(
             else ""
         )
         primary = primary_label_for_row(row, preferred=preferred, allowed=allowed)
-        if primary:
+        if primary and source_types[index] == "real":
             labels_text.append(primary)
             keep.append(index)
     if not keep:

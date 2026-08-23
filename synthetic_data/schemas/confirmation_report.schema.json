@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/confirmation-report-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "candidate_manifest_sha256",
+    "baseline_manifest_sha256",
+    "confirmation_cohort_sha256",
+    "prediction_ledger_sha256",
+    "development_split_ledger_sha256",
+    "development_groups_sha256",
+    "declared_classes",
+    "protocol",
+    "cohort_identity_verified",
+    "physical_lineages_verified",
+    "development_overlap_count",
+    "artifact_overlap_count",
+    "near_duplicate_overlap_count",
+    "development_lineage_digest_sha256",
+    "cohort_lineage_digest_sha256",
+    "utility",
+    "utility_evidence_sha256",
+    "method_config_sha256",
+    "bootstrap_seed",
+    "complete",
+    "derived_from_prediction_ledger",
+    "independent_authority_required",
+    "non_promoting",
+    "release_authorized",
+    "accuracy_claim"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.confirmation-report/v1"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "baseline_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "confirmation_cohort_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "prediction_ledger_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "development_split_ledger_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "development_groups_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "declared_classes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blinded",
+        "candidates_evaluated",
+        "use_count",
+        "candidate_frozen_before_open",
+        "classes_frozen_before_open",
+        "precision_plan_frozen_before_open",
+        "precision_plan_sha256"
+      ],
+      "properties": {
+        "blinded": {"const": true},
+        "candidates_evaluated": {"const": 1},
+        "use_count": {"const": 1},
+        "candidate_frozen_before_open": {"const": true},
+        "classes_frozen_before_open": {"const": true},
+        "precision_plan_frozen_before_open": {"const": true},
+        "precision_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "cohort_identity_verified": {"const": true},
+    "physical_lineages_verified": {"const": true},
+    "development_overlap_count": {"const": 0},
+    "artifact_overlap_count": {"const": 0},
+    "near_duplicate_overlap_count": {"const": 0},
+    "development_lineage_digest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "cohort_lineage_digest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_macro_f1",
+        "baseline_macro_f1",
+        "macro_f1_lower_95",
+        "per_class_confirmation_lineages",
+        "paired_bootstrap",
+        "per_class_recall_delta_lower_95",
+        "recall_interval_method"
+      ],
+      "properties": {
+        "candidate_macro_f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "baseline_macro_f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "macro_f1_lower_95": {"type": "number", "minimum": 0, "maximum": 1},
+        "per_class_confirmation_lineages": {"type": "object"},
+        "paired_bootstrap": {"type": "object"},
+        "per_class_recall_delta_lower_95": {"type": "object"},
+        "recall_interval_method": {
+          "const": "simultaneous_class_stratified_lineage_bootstrap"
+        }
+      }
+    },
+    "utility_evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "method_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "bootstrap_seed": {"type": "integer"},
+    "complete": {"const": true},
+    "derived_from_prediction_ledger": {"const": true},
+    "independent_authority_required": {"const": true},
+    "non_promoting": {"const": true},
+    "release_authorized": {"const": false},
+    "accuracy_claim": {"const": "not_demonstrated_without_gate_and_authority"}
+  }
+}
