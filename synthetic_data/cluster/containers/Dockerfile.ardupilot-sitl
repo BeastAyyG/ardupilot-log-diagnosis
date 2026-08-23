@@ -65,6 +65,10 @@ RUN python -m pip install --no-cache-dir -c /opt/lab/constraints.lock pip \
         -c /opt/lab/constraints.lock
 COPY --from=ardupilot /src/ardupilot/build/sitl/bin/arducopter /opt/ardupilot/arducopter
 COPY --from=ardupilot /attestation.json /opt/ardupilot/attestation.json
+COPY synthetic_data /workspace/synthetic_data
+COPY training /workspace/training
+COPY src /workspace/src
+COPY pyproject.toml README.md /workspace/
 ENV ARDUPILOT_SITL_BINARY=/opt/ardupilot/arducopter \
     ARDUPILOT_ATTESTATION=/opt/ardupilot/attestation.json \
     PYTHONUNBUFFERED=1
