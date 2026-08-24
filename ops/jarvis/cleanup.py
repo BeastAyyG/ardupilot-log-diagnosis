@@ -3,14 +3,136 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 POLL_SECONDS = 5.0
+JARVIS_BASE_URL = {
+    "india-01": "https://backendprod.jarvislabs.net",
+    "india-chennai-01": "https://backendc.jarvislabs.net",
+    "india-noida-01": "https://backendn.jarvislabs.net",
+    "europe-01": "https://backendeu.jarvislabs.net",
+}
+
+
+def capture_jarvis_instances(
+    database_path: Path, *, project: str, fleet: str
+) -> list[dict[str, str]]:
+    """Read provider machine IDs from dstack's immutable provisioning records."""
+
+    if not database_path.is_file():
+        return []
+    query = """
+        SELECT i.job_provisioning_data, i.region
+        FROM instances AS i
+        JOIN fleets AS f ON f.id = i.fleet_id
+        JOIN projects AS p ON p.id = f.project_id
+        WHERE p.name = ? AND f.name = ?
+    """
+    try:
+        with sqlite3.connect(f"file:{database_path}?mode=ro", uri=True, timeout=5) as db:
+            rows = db.execute(query, (project, fleet)).fetchall()
+    except sqlite3.Error as exc:
+        raise RuntimeError("cannot read dstack provisioning records") from exc
+    result: list[dict[str, str]] = []
+    for raw_data, row_region in rows:
+        try:
+            data = json.loads(raw_data or "{}")
+        except (TypeError, json.JSONDecodeError):
+            continue
+        machine_id = data.get("instance_id")
+        region = data.get("region") or row_region
+        if machine_id and region:
+            result.append({"machine_id": str(machine_id), "region": str(region)})
+    return result
+
+
+def _jarvis_request(
+    api_key: str,
+    instance: Mapping[str, str],
+    method: str,
+    path: str,
+    **kwargs: Any,
+) -> dict[str, Any] | None:
+    base_url = JARVIS_BASE_URL.get(instance["region"])
+    if base_url is None:
+        raise RuntimeError(f"unsupported JarvisLabs region: {instance['region']}")
+    params = kwargs.pop("params", None)
+    body = kwargs.pop("json", None)
+    url = f"{base_url}/{path.lstrip('/')}"
+    if params:
+        url = f"{url}?{urllib.parse.urlencode(params)}"
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            raw = response.read()
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise RuntimeError(f"JarvisLabs provider request failed ({exc.code})") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError("JarvisLabs provider request failed") from exc
+    if not raw:
+        return {}
+    try:
+        payload = json.loads(raw.decode())
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("JarvisLabs returned invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise TypeError("JarvisLabs returned an unexpected response")
+    return payload
+
+
+def cleanup_jarvis_instances(
+    api_key: str,
+    instances: Sequence[Mapping[str, str]],
+    *,
+    timeout: float,
+) -> None:
+    """Destroy captured provider machines and fail closed until they disappear."""
+
+    for instance in instances:
+        response = _jarvis_request(api_key, instance, "GET", f"users/fetch/{instance['machine_id']}")
+        if response is None:
+            continue
+        payload = response
+        raw_details = payload.get("instance") if isinstance(payload, dict) else {}
+        details = raw_details if isinstance(raw_details, dict) else {}
+        template = str(details.get("template") or details.get("framework") or "").lower()
+        gpu_type = str(details.get("gpu_type") or "").upper()
+        endpoint = "templates/vm/cpu/destroy" if template == "vm" and gpu_type == "CPU" else "templates/vm/destroy"
+        _jarvis_request(
+            api_key,
+            instance,
+            "POST",
+            endpoint,
+            params={"machine_id": instance["machine_id"]},
+        )
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        remaining = []
+        for instance in instances:
+            if _jarvis_request(api_key, instance, "GET", f"users/fetch/{instance['machine_id']}") is not None:
+                remaining.append(instance)
+        if not remaining:
+            return
+        time.sleep(POLL_SECONDS)
+    raise RuntimeError("JarvisLabs provider inventory did not empty before timeout")
 
 
 def wait_fleet_gone(

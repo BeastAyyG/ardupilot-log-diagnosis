@@ -23,7 +23,12 @@ import yaml
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ops.jarvis.cleanup import wait_active_instances_gone, wait_fleet_gone
+from ops.jarvis.cleanup import (
+    capture_jarvis_instances,
+    cleanup_jarvis_instances,
+    wait_active_instances_gone,
+    wait_fleet_gone,
+)
 
 FLEET_NAME = "logdiagnosis-sitl-canary-fleet"
 PROJECT_NAME = "main"
@@ -31,17 +36,12 @@ DEFAULT_TIMEOUT_SECONDS = 15 * 60
 TEARDOWN_TIMEOUT_SECONDS = 3 * 60
 POLL_SECONDS = 5.0
 
-
 class CanaryError(RuntimeError):
     """Raised when the bounded canary cannot produce a successful run."""
-
-
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
-
-
 def _dstack_command(explicit: str | None) -> list[str]:
     if explicit:
         return [explicit]
@@ -51,12 +51,8 @@ def _dstack_command(explicit: str | None) -> list[str]:
     raise CanaryError(
         "dstack is not installed; install dstack[all] once, then rerun this launcher"
     )
-
-
 def _write_yaml(path: Path, payload: Mapping[str, Any]) -> None:
     path.write_text(yaml.safe_dump(dict(payload), sort_keys=False), encoding="utf-8")
-
-
 def _run(
     command: Sequence[str],
     *,
@@ -81,7 +77,6 @@ def _run(
             detail = detail.replace(secret, "<redacted>")
         raise CanaryError(f"command failed ({result.returncode}): {detail[-2000:]}")
     return result
-
 def _wait_server(url: str, process: subprocess.Popen[Any], timeout: float) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -94,7 +89,6 @@ def _wait_server(url: str, process: subprocess.Popen[Any], timeout: float) -> No
         except (OSError, urllib.error.URLError):
             time.sleep(0.5)
     raise CanaryError("dstack server did not become healthy before the timeout")
-
 def _json_command(
     dstack: Sequence[str],
     args: Sequence[str],
@@ -113,7 +107,6 @@ def _json_command(
     if not isinstance(payload, dict):
         raise CanaryError("dstack JSON response must be an object")
     return payload
-
 def _wait_fleet(
     dstack: Sequence[str],
     fleet: str,
@@ -149,7 +142,6 @@ def _wait_fleet(
             return payload
         time.sleep(POLL_SECONDS)
     raise CanaryError(f"fleet {fleet} did not become ready before the timeout")
-
 def _wait_run(
     dstack: Sequence[str],
     run_name: str,
@@ -195,8 +187,6 @@ def _wait_run(
             )
         time.sleep(POLL_SECONDS)
     raise CanaryError(f"canary run {run_name} did not finish before the timeout")
-
-
 def _fleet_config(region: str | None) -> dict[str, Any]:
     config: dict[str, Any] = {
         "type": "fleet",
@@ -211,8 +201,6 @@ def _fleet_config(region: str | None) -> dict[str, Any]:
     if region:
         config["regions"] = [region]
     return config
-
-
 def _task_config(source: Path, run_name: str) -> dict[str, Any]:
     payload = yaml.safe_load(source.read_text(encoding="utf-8"))
     if not isinstance(payload, dict) or payload.get("type") != "task":
@@ -220,13 +208,9 @@ def _task_config(source: Path, run_name: str) -> dict[str, Any]:
     payload["name"] = run_name
     payload["fleets"] = [FLEET_NAME]
     return payload
-
-
 def _config_digest(payload: Mapping[str, Any]) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(canonical).hexdigest()
-
-
 def _write_failure_receipt(
     path: Path,
     *,
@@ -248,8 +232,6 @@ def _write_failure_receipt(
     path.write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-
-
 def run_canary(
     *,
     api_key: str,
@@ -271,6 +253,7 @@ def run_canary(
     server_process: subprocess.Popen[Any] | None = None
     task_started = False
     fleet_created = False
+    provider_instances: list[dict[str, str]] = []
     fleet_config: dict[str, Any] = {}
     task_config: dict[str, Any] = {}
     with tempfile.TemporaryDirectory(prefix="logdiagnosis-dstack-") as temp_name:
@@ -372,6 +355,9 @@ def run_canary(
                 timeout=timeout_seconds,
                 secret=api_key,
             )
+            provider_instances = capture_jarvis_instances(
+                server_dir / "data" / "sqlite.db", project=PROJECT_NAME, fleet=FLEET_NAME
+            )
             _run(
                 [
                     *dstack,
@@ -446,6 +432,10 @@ def run_canary(
                     secret=api_key,
                 )
             if fleet_created:
+                if not provider_instances:
+                    provider_instances = capture_jarvis_instances(
+                        server_dir / "data" / "sqlite.db", project=PROJECT_NAME, fleet=FLEET_NAME
+                    )
                 _run(
                     [
                         *dstack,
@@ -471,6 +461,11 @@ def run_canary(
                         cwd=workspace,
                         timeout=min(TEARDOWN_TIMEOUT_SECONDS, timeout_seconds),
                         secret=api_key,
+                    )
+                    cleanup_jarvis_instances(
+                        api_key,
+                        provider_instances,
+                        timeout=min(TEARDOWN_TIMEOUT_SECONDS, timeout_seconds),
                     )
                     wait_active_instances_gone(
                         server_url,
