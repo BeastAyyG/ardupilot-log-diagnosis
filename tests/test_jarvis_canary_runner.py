@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from ops.jarvis import cleanup
 from ops.jarvis import run_dstack_canary as canary
 from ops.jarvis.cleanup import wait_fleet_gone
 
@@ -89,6 +90,25 @@ def test_wait_fleet_gone_waits_for_async_instance_deletion(monkeypatch) -> None:
         cwd=Path("."),
         timeout=1,
         secret="",
+    )
+
+
+def test_wait_active_instances_gone_requires_empty_inventory(monkeypatch) -> None:
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return b"[]"
+
+    monkeypatch.setattr(
+        cleanup.urllib.request, "urlopen", lambda *args, **kwargs: Response()
+    )
+    cleanup.wait_active_instances_gone(
+        "http://127.0.0.1:1", "token", project="main", timeout=1
     )
 
 

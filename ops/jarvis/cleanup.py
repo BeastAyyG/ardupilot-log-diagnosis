@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import time
+import urllib.error
+import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -52,3 +54,39 @@ def wait_fleet_gone(
                     return
         time.sleep(POLL_SECONDS)
     raise RuntimeError(f"fleet {fleet} deletion did not finish before the timeout")
+
+
+def wait_active_instances_gone(
+    server_url: str,
+    token: str,
+    *,
+    project: str,
+    timeout: float,
+) -> None:
+    """Verify dstack's active-instance inventory is empty before shutdown."""
+
+    body = json.dumps(
+        {"project_names": [project], "only_active": True, "limit": 1000}
+    ).encode()
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        request = urllib.request.Request(
+            f"{server_url}/api/instances/list",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=5) as response:
+                payload = json.loads(response.read().decode())
+        except (OSError, urllib.error.URLError, json.JSONDecodeError):
+            time.sleep(POLL_SECONDS)
+            continue
+        instances = payload.get("instances") if isinstance(payload, dict) else payload
+        if isinstance(instances, list) and not instances:
+            return
+        time.sleep(POLL_SECONDS)
+    raise RuntimeError("dstack active-instance inventory did not empty before timeout")
