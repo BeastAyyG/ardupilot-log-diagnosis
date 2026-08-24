@@ -23,7 +23,7 @@ import yaml
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ops.jarvis.cleanup import wait_fleet_gone
+from ops.jarvis.cleanup import wait_active_instances_gone, wait_fleet_gone
 
 FLEET_NAME = "logdiagnosis-sitl-canary-fleet"
 PROJECT_NAME = "main"
@@ -82,7 +82,6 @@ def _run(
         raise CanaryError(f"command failed ({result.returncode}): {detail[-2000:]}")
     return result
 
-
 def _wait_server(url: str, process: subprocess.Popen[Any], timeout: float) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -95,7 +94,6 @@ def _wait_server(url: str, process: subprocess.Popen[Any], timeout: float) -> No
         except (OSError, urllib.error.URLError):
             time.sleep(0.5)
     raise CanaryError("dstack server did not become healthy before the timeout")
-
 
 def _json_command(
     dstack: Sequence[str],
@@ -115,7 +113,6 @@ def _json_command(
     if not isinstance(payload, dict):
         raise CanaryError("dstack JSON response must be an object")
     return payload
-
 
 def _wait_fleet(
     dstack: Sequence[str],
@@ -152,7 +149,6 @@ def _wait_fleet(
             return payload
         time.sleep(POLL_SECONDS)
     raise CanaryError(f"fleet {fleet} did not become ready before the timeout")
-
 
 def _wait_run(
     dstack: Sequence[str],
@@ -264,7 +260,6 @@ def run_canary(
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     """Run one bounded canary and return a non-secret receipt summary."""
-
     if not api_key.strip():
         raise CanaryError("JL_API_KEY is empty")
     canary_source = repo_root / "ops" / "jarvis" / "sitl-canary.dstack.yml"
@@ -477,6 +472,12 @@ def run_canary(
                         timeout=min(TEARDOWN_TIMEOUT_SECONDS, timeout_seconds),
                         secret=api_key,
                     )
+                    wait_active_instances_gone(
+                        server_url,
+                        admin_token,
+                        project=PROJECT_NAME,
+                        timeout=min(TEARDOWN_TIMEOUT_SECONDS, timeout_seconds),
+                    )
                 except (CanaryError, RuntimeError) as exc:
                     _write_failure_receipt(
                         results_dir / f"{run_name}.json",
@@ -495,5 +496,4 @@ def run_canary(
 
 if __name__ == "__main__":
     from ops.jarvis.canary_cli import main
-
     raise SystemExit(main())
