@@ -14,6 +14,8 @@ def test_jarvis_publish_is_native_x86_and_digest_pinned() -> None:
     assert "BASE_DIGEST=${{ inputs.base_digest }}" in workflow
     assert "provenance: mode=max" in workflow
     assert "sbom: true" in workflow
+    assert "GHCR_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis" in workflow
+    assert "ghcr.io/${{ github.repository_owner }}" not in workflow
 
 
 def test_dstack_canary_is_privileged_cost_bounded_and_not_error_retried() -> None:
