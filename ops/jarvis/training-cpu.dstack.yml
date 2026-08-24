@@ -24,7 +24,7 @@ retry:
 max_duration: 45m
 stop_duration: 2m
 idle_duration: 2m
-max_price: 0.10
+max_price: 8.50
 
 resources:
   cpu: x86:4

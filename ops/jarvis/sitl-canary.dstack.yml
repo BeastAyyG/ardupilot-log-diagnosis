@@ -13,6 +13,28 @@ commands:
     test -d "$ARDUPILOT_ROOT/.git"
     git -C "$ARDUPILOT_ROOT" status --porcelain=v1 --untracked-files=no \
       --ignore-submodules=none | (! grep .)
+    test -f "$ARDUPILOT_ATTESTATION"
+    python - <<'PY'
+    import hashlib
+    import json
+    import os
+    import subprocess
+    from pathlib import Path
+
+    attestation = json.loads(Path(os.environ["ARDUPILOT_ATTESTATION"]).read_text())
+    revision = subprocess.check_output(
+        ["git", "-C", os.environ["ARDUPILOT_ROOT"], "rev-parse", "HEAD"],
+        text=True,
+    ).strip()
+    digest = hashlib.sha256(
+        Path(os.environ["ARDUPILOT_SITL_BINARY"]).read_bytes()
+    ).hexdigest()
+    if revision != attestation.get("commit"):
+        raise SystemExit("source revision differs from image attestation")
+    if digest != attestation.get("binary_sha256"):
+        raise SystemExit("SITL binary differs from image attestation")
+    print(json.dumps({"commit": revision, "binary_sha256": digest}, sort_keys=True))
+    PY
     python -m synthetic_data cluster preflight | tee /tmp/preflight.json
     python - <<'PY'
     import json
@@ -26,6 +48,7 @@ commands:
     PY
 
 backends: [jarvislabs]
+fleets: [logdiagnosis-sitl-canary-fleet]
 spot_policy: on-demand
 retry:
   on_events: [no-capacity, interruption]
