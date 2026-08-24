@@ -26,6 +26,7 @@ if __package__ in {None, ""}:
 from ops.jarvis.cleanup import (
     capture_jarvis_instances,
     cleanup_jarvis_instances,
+    stop_process_tree,
     wait_active_instances_gone,
     wait_fleet_gone,
 )
@@ -77,6 +78,8 @@ def _run(
             detail = detail.replace(secret, "<redacted>")
         raise CanaryError(f"command failed ({result.returncode}): {detail[-2000:]}")
     return result
+
+
 def _wait_server(url: str, process: subprocess.Popen[Any], timeout: float) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -482,12 +485,8 @@ def run_canary(
                         fleet_config=fleet_config,
                     )
                     raise
-            if server_process is not None and server_process.poll() is None:
-                server_process.terminate()
-                try:
-                    server_process.wait(timeout=15)
-                except subprocess.TimeoutExpired:
-                    server_process.kill()
+            if server_process is not None:
+                stop_process_tree(server_process)
 
 if __name__ == "__main__":
     from ops.jarvis.canary_cli import main
