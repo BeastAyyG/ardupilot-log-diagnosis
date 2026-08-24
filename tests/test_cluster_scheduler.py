@@ -137,7 +137,7 @@ class TestExecutionAndRecovery:
         lock_path = tmp_path / "r0" / "attempt-0" / ".lock"
         lock_path.parent.mkdir(parents=True)
         first = sched._RunLock(lock_path)
-        assert first.acquire() == {"acquired": True, "stolen": False}
+        assert first.acquire() == {"acquired": True, "stolen": False, "epoch": 0}
         second = sched._RunLock(lock_path)
         with pytest.raises(RuntimeError, match="single-writer"):
             second.acquire()
@@ -164,7 +164,7 @@ class TestExecutionAndRecovery:
             0
         ]
 
-        def blocked_acquire(self):
+        def blocked_acquire(self, *, epoch: int):
             raise RuntimeError("another writer holds .lock; single-writer per run")
 
         monkeypatch.setattr(sched._RunLock, "acquire", blocked_acquire)
