@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/synthetic-acceptance-evidence-v2.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "candidate",
+    "confirmation",
+    "evidence_binding_sha256",
+    "source_reports",
+    "provenance",
+    "execution",
+    "utility",
+    "calibration",
+    "safety",
+    "fidelity",
+    "ood",
+    "privacy",
+    "reproducibility"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.synthetic-acceptance-evidence/v2"},
+    "candidate": {"type": "object"},
+    "confirmation": {"type": "object"},
+    "evidence_binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_reports": {"type": "object"},
+    "provenance": {"type": "object"},
+    "execution": {"type": "object"},
+    "utility": {"type": "object"},
+    "calibration": {"type": "object"},
+    "safety": {"type": "object"},
+    "fidelity": {"type": "object"},
+    "ood": {"type": "object"},
+    "privacy": {"type": "object"},
+    "reproducibility": {"type": "object"}
+  }
+}

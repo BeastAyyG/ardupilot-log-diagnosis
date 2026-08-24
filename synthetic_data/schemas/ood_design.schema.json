@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/ood-evaluation-design-v1.json",
+  "type": "object",
+  "required": [
+    "schema", "candidate_manifest_sha256", "confirmation_cohort_sha256",
+    "required_domains", "minimum_lineages_per_domain",
+    "minimum_id_threshold_lineages", "minimum_id_evaluation_lineages",
+    "id_false_positive_rate_target", "frozen_threshold",
+    "threshold_selection_receipt_sha256", "frozen_before_evaluation",
+    "bootstrap_draws", "confidence_level", "random_seed", "runtime_action"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.ood-evaluation-design/v1"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "confirmation_cohort_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "required_domains": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "minimum_lineages_per_domain": {"type": "integer", "minimum": 1},
+    "minimum_id_threshold_lineages": {"type": "integer", "minimum": 1},
+    "minimum_id_evaluation_lineages": {"type": "integer", "minimum": 1},
+    "id_false_positive_rate_target": {"type": "number", "minimum": 0, "maximum": 1},
+    "frozen_threshold": {"type": "number"},
+    "threshold_selection_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "frozen_before_evaluation": {"const": true},
+    "bootstrap_draws": {"type": "integer", "minimum": 1000},
+    "confidence_level": {"type": "number", "minimum": 0.9, "maximum": 0.99},
+    "random_seed": {"type": "integer"},
+    "runtime_action": {"const": "abstain_or_route_to_rules_and_review"}
+  }
+}

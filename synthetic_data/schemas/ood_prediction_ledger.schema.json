@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/ood-prediction-ledger-v1.json",
+  "type": "object",
+  "required": [
+    "schema", "candidate_manifest_sha256", "confirmation_cohort_sha256",
+    "score_method_config_sha256", "runtime_route_evidence_level", "records"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.ood-prediction-ledger/v1"},
+    "candidate_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "confirmation_cohort_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "score_method_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runtime_route_evidence_level": {"const": "end_to_end_runtime"},
+    "records": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["lineage_root_id", "role", "ood_domain", "ood_score"],
+        "properties": {
+          "lineage_root_id": {"type": "string", "minLength": 1},
+          "role": {"enum": ["id_threshold_calibration", "id_evaluation", "ood_evaluation"]},
+          "ood_domain": {"type": "string", "minLength": 1},
+          "ood_score": {"type": "number"},
+          "near_duplicate_cluster_id": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://logdiagnosis.local/schemas/sitl-execution-receipt-v4.json",
+  "title": "logdiagnosis owned SITL execution receipt",
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "manifest_sha256",
+    "run_id",
+    "run_fingerprint",
+    "parameter_schema_sha256",
+    "backend",
+    "ardupilot_commit",
+    "binary_sha256",
+    "vehicle",
+    "frame",
+    "endpoint_scope",
+    "heartbeat",
+    "heartbeat_received",
+    "live_parameter_inventory_verified",
+    "preflight_ready",
+    "armed",
+    "takeoff_confirmed",
+    "landed_or_disarmed",
+    "flight_complete",
+    "takeoff_boot_ms",
+    "parameter_acknowledgements",
+    "semantic_parameter_readbacks",
+    "process_attestation",
+    "log_sha256",
+    "log_size"
+  ],
+  "properties": {
+    "schema": {"const": "logdiagnosis.sitl-execution-receipt/v4"},
+    "status": {"const": "completed"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "run_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"},
+    "run_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "parameter_schema_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "backend": {"const": "owned_ardupilot_sitl"},
+    "ardupilot_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "vehicle": {"const": "ArduCopter"},
+    "frame": {"enum": ["quad", "hexa", "octa"]},
+    "endpoint_scope": {"const": "loopback"},
+    "heartbeat": {
+      "type": "object",
+      "required": ["source_system", "source_component"],
+      "properties": {
+        "source_system": {"const": 1},
+        "source_component": {"const": 1}
+      }
+    },
+    "heartbeat_received": {"const": true},
+    "live_parameter_inventory_verified": {"const": true},
+    "preflight_ready": {"const": true},
+    "armed": {"const": true},
+    "takeoff_confirmed": {"const": true},
+    "landed_or_disarmed": {"const": true},
+    "flight_complete": {"const": true},
+    "takeoff_boot_ms": {"type": "number", "minimum": 0},
+    "scheduled_onset_boot_ms": {"type": ["number", "null"], "minimum": 0},
+    "injection_start_boot_ms": {"type": ["number", "null"], "minimum": 0},
+    "injection_end_boot_ms": {"type": ["number", "null"], "minimum": 0},
+    "parameter_acknowledgements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "requested",
+          "ack_readback",
+          "readback",
+          "acknowledged",
+          "send_boot_ms",
+          "ack_boot_ms",
+          "readback_boot_ms",
+          "attempts",
+          "target_system",
+          "target_component"
+        ],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,15}$"},
+          "requested": {"type": "number"},
+          "ack_readback": {"type": "number"},
+          "readback": {"type": "number"},
+          "acknowledged": {"const": true},
+          "send_boot_ms": {"type": "number", "minimum": 0},
+          "ack_boot_ms": {"type": "number", "minimum": 0},
+          "readback_boot_ms": {"type": "number", "minimum": 0},
+          "attempts": {"type": "integer", "minimum": 1, "maximum": 3},
+          "target_system": {"const": 1},
+          "target_component": {"const": 1}
+        }
+      }
+    },
+    "semantic_parameter_readbacks": {
+      "type": "object",
+      "required": [
+        "readbacks",
+        "frame_class",
+        "frame_type",
+        "full_inventory_value_count",
+        "full_inventory_value_sha256"
+      ],
+      "properties": {
+        "full_inventory_value_count": {"type": "integer", "minimum": 1},
+        "full_inventory_value_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "process_attestation": {
+      "type": "object",
+      "required": [
+        "owned_process",
+        "pid",
+        "process_terminated",
+        "process_tree_terminated",
+        "alive_before_shutdown",
+        "shutdown_escalated",
+        "shutdown_method",
+        "shutdown_reason",
+        "command",
+        "source_revision",
+        "source_tree_sha1",
+        "submodule_state_sha256",
+        "source_snapshot_sha256",
+        "tracked_source_clean",
+        "parameter_file_sha256",
+        "command_sha256",
+        "runtime",
+        "network_isolation",
+        "working_directory",
+        "started_at",
+        "finished_at",
+        "new_log_count",
+        "pre_shutdown_log_stable",
+        "log_stable",
+        "source_log_path",
+        "source_log_size"
+      ],
+      "properties": {
+        "owned_process": {"const": true},
+        "process_terminated": {"const": true},
+        "process_tree_terminated": {"const": true},
+        "alive_before_shutdown": {"const": true},
+        "shutdown_escalated": {"const": false},
+        "shutdown_method": {"type": "string", "minLength": 1},
+        "shutdown_reason": {"const": "controlled_after_disarm_and_logger_flush"},
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "source_tree_sha1": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "submodule_state_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_snapshot_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "tracked_source_clean": {"const": true},
+        "parameter_file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "new_log_count": {"const": 1},
+        "pre_shutdown_log_stable": {"const": true},
+        "log_stable": {"const": true},
+        "command_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "runtime": {
+          "type": "object",
+          "required": [
+            "pymavlink_version",
+            "python_version",
+            "python_implementation",
+            "platform",
+            "system",
+            "machine",
+            "executable_sha256"
+          ],
+          "properties": {
+            "pymavlink_version": {"const": "2.4.49"},
+            "python_version": {"type": "string", "minLength": 1},
+            "python_implementation": {"type": "string", "minLength": 1},
+            "platform": {"type": "string", "minLength": 1},
+            "system": {"type": "string", "minLength": 1},
+            "machine": {"type": "string", "minLength": 1},
+            "executable_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        "network_isolation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "parent_pid",
+            "parent_namespace",
+            "current_namespace",
+            "loopback_interface_up",
+            "external_interfaces_present",
+            "interfaces",
+            "unshare_binary",
+            "unshare_binary_sha256"
+          ],
+          "properties": {
+            "schema": {"const": "linux_user_network_namespace_loopback_only/v1"},
+            "parent_pid": {"type": "integer", "minimum": 1},
+            "parent_namespace": {"type": "string", "pattern": "^net:\\[[0-9]+\\]$"},
+            "current_namespace": {"type": "string", "pattern": "^net:\\[[0-9]+\\]$"},
+            "loopback_interface_up": {"const": true},
+            "external_interfaces_present": {"const": false},
+            "interfaces": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1,
+              "items": {"const": "lo"}
+            },
+            "unshare_binary": {"type": "string", "minLength": 1},
+            "unshare_binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      }
+    },
+    "log_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "log_size": {"type": "integer", "minimum": 4096}
+  }
+}

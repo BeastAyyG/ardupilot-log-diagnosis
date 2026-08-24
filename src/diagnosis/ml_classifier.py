@@ -7,6 +7,7 @@ import numpy as np
 
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.contracts import DiagnosisDict, FeatureDict
+from src.diagnosis.artifact_authorization import validate_artifact_activation
 from src.runtime_paths import MODELS_DIR, resolve_repo_path
 
 
@@ -51,7 +52,9 @@ class MLClassifier:
         model_dir: str | os.PathLike[str] | None = None,
         min_probability: float = DEFAULT_PROB_THRESHOLD,
     ):
-        resolved_model_dir = resolve_repo_path(model_dir) if model_dir is not None else MODELS_DIR
+        resolved_model_dir = (
+            resolve_repo_path(model_dir) if model_dir is not None else MODELS_DIR
+        )
         self.model_path = str(resolved_model_dir / "classifier.joblib")
         self.scaler_path = str(resolved_model_dir / "scaler.joblib")
         self.features_path = str(resolved_model_dir / "feature_columns.json")
@@ -89,18 +92,49 @@ class MLClassifier:
         ]
         if all(os.path.exists(path) for path in required_paths):
             try:
+                with open(self.features_path, "r") as f:
+                    self.feature_columns = json.load(f)
+                with open(self.labels_path, "r") as f:
+                    self.label_columns = json.load(f)
+                with open(self.manifest_path, "r") as f:
+                    self.manifest = json.load(f)
+                if int(self.manifest.get("artifact_schema_version", 0) or 0) >= 3:
+                    artifact_files = self.manifest.get("artifact_files", {})
+                    model_dir = os.path.dirname(self.model_path)
+                    required_hashes = {
+                        "classifier.joblib": self.model_path,
+                        "scaler.joblib": self.scaler_path,
+                        "feature_columns.json": self.features_path,
+                        "label_columns.json": self.labels_path,
+                        "rule_thresholds.yaml": os.path.join(
+                            model_dir, "rule_thresholds.yaml"
+                        ),
+                    }
+                    if not isinstance(artifact_files, dict) or any(
+                        not os.path.isfile(path)
+                        or artifact_files.get(name) != self._hash_file(path)
+                        for name, path in required_hashes.items()
+                    ):
+                        self.unavailable_reason = "artifact integrity hash mismatch"
+                        return
+                    activation_ok, activation_reason = validate_artifact_activation(
+                        model_dir, self.manifest
+                    )
+                    if not activation_ok:
+                        self.unavailable_reason = activation_reason
+                        return
                 loaded_model = joblib.load(self.model_path)
                 if isinstance(loaded_model, dict) and "model" in loaded_model:
                     self.model = loaded_model["model"]
+                    self.model_bundle_classes = loaded_model.get("classes")
                 else:
                     self.model = loaded_model
+                    self.model_bundle_classes = None
 
                 self.scaler = joblib.load(self.scaler_path)
                 self.unsupported_labels = sorted(
                     set(VALID_LABELS) - set(self.label_columns)
                 )
-                with open(self.manifest_path, "r") as f:
-                    self.manifest = json.load(f)
                 self.inference_window_config = self._load_inference_window_config()
                 self.available = self._manifest_matches_runtime()
                 if self.available and self.unsupported_labels:
@@ -116,7 +150,9 @@ class MLClassifier:
                 self.unavailable_reason = f"failed to load ml artifacts: {exc}"
                 self.available = False
         else:
-            self.unavailable_reason = "missing classifier, scaler, schema, or manifest artifact"
+            self.unavailable_reason = (
+                "missing classifier, scaler, schema, or manifest artifact"
+            )
 
     @staticmethod
     def _load_schema_columns(path: str) -> list[str]:
@@ -132,11 +168,24 @@ class MLClassifier:
         payload = json.dumps(values, sort_keys=True).encode()
         return hashlib.sha256(payload).hexdigest()
 
+    @staticmethod
+    def _hash_file(path: str) -> str:
+        digest = hashlib.sha256()
+        with open(path, "rb") as file_obj:
+            for chunk in iter(lambda: file_obj.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
     def _hash_threshold_config(self) -> str:
         model_dir = os.path.dirname(self.model_path)
         threshold_path = os.path.join(model_dir, "rule_thresholds.yaml")
         if not os.path.exists(threshold_path):
             return ""
+        if (
+            int(getattr(self, "manifest", {}).get("artifact_schema_version", 0) or 0)
+            >= 3
+        ):
+            return self._hash_file(threshold_path)
         with open(threshold_path, "r") as file_obj:
             return hashlib.sha256(file_obj.read().encode()).hexdigest()
 
@@ -176,19 +225,30 @@ class MLClassifier:
         model_schema_ok = (
             bool(model_features)
             and set(model_features).issubset(runtime_features)
-            and len(model_features) == int(getattr(self.scaler, "n_features_in_", len(model_features)))
-            and manifest.get("feature_schema_hash") == self._hash_json_list(model_features)
+            and len(model_features)
+            == int(getattr(self.scaler, "n_features_in_", len(model_features)))
+            and manifest.get("feature_schema_hash")
+            == self._hash_json_list(model_features)
         )
-        labels_are_known = bool(self.label_columns) and set(self.label_columns).issubset(VALID_LABELS)
+        labels_are_known = bool(self.label_columns) and set(
+            self.label_columns
+        ).issubset(VALID_LABELS)
+        bundle_classes_match = self.model_bundle_classes in (
+            None,
+            self.label_columns,
+        )
         trained_label_hash = self._hash_json_list(list(self.label_columns))
         # Artifact schema v2 records the actual trained label columns. Older
         # artifacts stored the broader runtime schema hash; accept them only
         # as explicit legacy subsets so production output remains transparent.
         manifest_label_hash = manifest.get("trained_label_schema_hash")
-        if manifest_label_hash is None and manifest.get("artifact_schema_version") is None:
-            labels_match_artifact = (
-                manifest.get("label_schema_hash") == self._hash_json_list(VALID_LABELS)
-            )
+        if (
+            manifest_label_hash is None
+            and manifest.get("artifact_schema_version") is None
+        ):
+            labels_match_artifact = manifest.get(
+                "label_schema_hash"
+            ) == self._hash_json_list(VALID_LABELS)
         else:
             labels_match_artifact = (
                 manifest_label_hash == trained_label_hash
@@ -198,8 +258,10 @@ class MLClassifier:
         return (
             model_schema_ok
             and labels_are_known
+            and bundle_classes_match
             and labels_match_artifact
-            and manifest.get("threshold_config_hash", "") == self._hash_threshold_config()
+            and manifest.get("threshold_config_hash", "")
+            == self._hash_threshold_config()
         )
 
     def _threshold_for_label(self, label: str) -> float:
@@ -309,7 +371,10 @@ class MLClassifier:
     def _feature_matrix(self, feature_sets: list[FeatureDict]) -> np.ndarray:
         return np.asarray(
             [
-                [self._safe_feature_value(features.get(name, 0.0)) for name in self.feature_columns]
+                [
+                    self._safe_feature_value(features.get(name, 0.0))
+                    for name in self.feature_columns
+                ]
                 for features in feature_sets
             ],
             dtype=float,
@@ -327,7 +392,11 @@ class MLClassifier:
             columns = []
             for probability in probabilities:
                 array = np.asarray(probability, dtype=float)
-                columns.append(array[:, 1] if array.ndim == 2 and array.shape[1] > 1 else np.zeros(len(matrix)))
+                columns.append(
+                    array[:, 1]
+                    if array.ndim == 2 and array.shape[1] > 1
+                    else np.zeros(len(matrix))
+                )
             return np.column_stack(columns)
         return np.asarray(probabilities, dtype=float)
 
@@ -426,7 +495,9 @@ class MLClassifier:
         try:
             return {
                 feature: float(score)
-                for feature, score in zip(self.feature_columns, importances, strict=False)
+                for feature, score in zip(
+                    self.feature_columns, importances, strict=False
+                )
             }
         except TypeError:
             return {

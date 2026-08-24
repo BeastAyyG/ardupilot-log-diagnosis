@@ -1,71 +1,84 @@
+"""Measure hash-bound, real-lineage calibration for a development candidate.
+
+This command is diagnostic only. It evaluates the exact real development-test
+lineages recorded by a schema-v3 artifact and cannot authorize promotion.
 """
-Measure Expected Calibration Error (ECE) of the trained classifier.
 
-ECE quantifies whether confidence scores are statistically trustworthy:
-  - ECE = 0.05 means "when the model says 70%, it's actually right ~65-75% of the time"
-  - ECE > 0.15 means confidence outputs cannot be trusted by maintainers
-
-Target: ECE ≤ 0.08 (production gate).
-
-Usage:
-    python training/measure_ece.py
-    python training/measure_ece.py --dataset-dir data/holdouts/... --ground-truth ...
-"""
+from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import os
 import sys
 from pathlib import Path
+
+import joblib
+import matplotlib
+import numpy as np
+import pandas as pd
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-import joblib
-import numpy as np
-import pandas as pd
-import matplotlib
-matplotlib.use("Agg")          # headless
-import matplotlib.pyplot as plt   # noqa: E402
-from training.evaluation_split import grouped_train_test_split
-from training.data_contract import effective_group_values, primary_label_for_row
+from src.constants import FEATURE_NAMES, VALID_LABELS
+from synthetic_data.evaluation_metrics import incident_metrics
+from training.data_contract import (
+    primary_label_for_row,
+    require_known_source_types,
+)
 
 ECE_PASS_THRESHOLD = 0.08
 
 
+def _hash_file(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _hash_value(value: object) -> str:
+    return hashlib.sha256(str(value).encode("utf-8")).hexdigest()
+
+
+def _valid_hash(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
 def compute_ece(y_true: np.ndarray, probs: np.ndarray, n_bins: int = 10) -> float:
-    """Compute scalar ECE across all classes (macro average)."""
-    n_classes = probs.shape[1]
-    ece_per_class = []
+    """Return macro one-vs-rest ECE, retained for compatibility and tests."""
 
-    for c in range(n_classes):
-        p = probs[:, c]
-        label = (y_true == c).astype(int)
-        bins = np.linspace(0, 1, n_bins + 1)
-        bin_ece = 0.0
-        for lo, hi in zip(bins[:-1], bins[1:]):
-            mask = (p >= lo) & (p < hi)
-            if mask.sum() == 0:
-                continue
-            avg_conf = p[mask].mean()
-            avg_acc = label[mask].mean()
-            bin_ece += mask.sum() * abs(avg_conf - avg_acc)
-        ece_per_class.append(bin_ece / len(y_true))
-
-    return float(np.mean(ece_per_class))
+    edges = np.linspace(0.0, 1.0, n_bins + 1)
+    errors: list[float] = []
+    for class_id in range(probs.shape[1]):
+        scores = probs[:, class_id]
+        binary = (y_true == class_id).astype(float)
+        error = 0.0
+        for index, (low, high) in enumerate(zip(edges[:-1], edges[1:])):
+            mask = (scores >= low) & (
+                scores <= high if index == n_bins - 1 else scores < high
+            )
+            if mask.any():
+                error += float(mask.mean()) * abs(
+                    float(scores[mask].mean()) - float(binary[mask].mean())
+                )
+        errors.append(error)
+    return float(np.mean(errors))
 
 
 def aggregate_group_probabilities(
     y_true: np.ndarray, probs: np.ndarray, groups: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Apply the deployed max-window contract before measuring calibration.
-
-    The runtime reports one diagnosis per source incident using the maximum
-    raw class probability across its windows (including the full-log window).
-    Measuring ECE on every correlated window would overweight long flights and
-    certify a confidence behaviour the deployed service does not expose.
-    """
+    """Apply deployed max-window aggregation to independent incident lineages."""
 
     y_true = np.asarray(y_true)
     probs = np.asarray(probs, dtype=float)
@@ -74,206 +87,233 @@ def aggregate_group_probabilities(
         raise ValueError("ECE arrays must have the same row count.")
     if len(y_true) == 0:
         return y_true, probs
-
-    grouped_true = []
-    grouped_probs = []
+    grouped_true: list[int] = []
+    grouped_probs: list[np.ndarray] = []
     for group in np.unique(groups):
         indices = np.flatnonzero(groups == group)
-        grouped_true.append(y_true[indices[0]])
+        labels = set(y_true[indices].tolist())
+        if len(labels) != 1:
+            raise ValueError("An evaluation lineage contains contradictory labels.")
+        grouped_true.append(int(y_true[indices[0]]))
         grouped_probs.append(np.max(probs[indices], axis=0))
     return np.asarray(grouped_true), np.asarray(grouped_probs)
 
 
-def reliability_diagram(y_true, probs, class_names, output_path):
-    """Save a reliability diagram for each class."""
-    n_classes = probs.shape[1]
-    n_bins = 10
-    bins = np.linspace(0, 1, n_bins + 1)
-    cols = min(4, n_classes)
-    rows = (n_classes + cols - 1) // cols
+def reliability_diagram(
+    y_true: np.ndarray,
+    probs: np.ndarray,
+    class_names: list[str],
+    output_path: str | Path,
+) -> None:
+    """Save a classwise development reliability diagram."""
 
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows))
-    axes = np.array(axes).flatten()
+    edges = np.linspace(0.0, 1.0, 11)
+    columns = min(4, len(class_names))
+    rows = (len(class_names) + columns - 1) // columns
+    figure, axes = plt.subplots(rows, columns, figsize=(4 * columns, 4 * rows))
+    flattened = np.atleast_1d(axes).flatten()
+    for class_id, axis in zip(range(len(class_names)), flattened):
+        scores = probs[:, class_id]
+        binary = (y_true == class_id).astype(float)
+        confidence: list[float] = []
+        accuracy: list[float] = []
+        for index, (low, high) in enumerate(zip(edges[:-1], edges[1:])):
+            mask = (scores >= low) & (scores <= high if index == 9 else scores < high)
+            if mask.any():
+                confidence.append(float(scores[mask].mean()))
+                accuracy.append(float(binary[mask].mean()))
+        axis.plot([0, 1], [0, 1], "k--", lw=1, label="Perfect")
+        if confidence:
+            axis.plot(confidence, accuracy, "b-o", ms=4, label="Candidate")
+        axis.set(xlim=(0, 1), ylim=(0, 1), title=class_names[class_id])
+        axis.set_xlabel("Confidence")
+        axis.set_ylabel("Observed frequency")
+        axis.legend(fontsize=7)
+    for axis in flattened[len(class_names) :]:
+        axis.set_visible(False)
+    figure.suptitle("Development reliability by real lineage")
+    figure.tight_layout()
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(destination, dpi=120)
+    plt.close(figure)
 
-    for c, ax in zip(range(n_classes), axes):
-        p = probs[:, c]
-        label = (y_true == c).astype(int)
-        conf_vals, acc_vals = [], []
-        for lo, hi in zip(bins[:-1], bins[1:]):
-            mask = (p >= lo) & (p < hi)
-            if mask.sum() == 0:
-                continue
-            conf_vals.append(p[mask].mean())
-            acc_vals.append(label[mask].mean())
 
-        ax.plot([0, 1], [0, 1], "k--", lw=1, label="Perfect")
-        if conf_vals:
-            ax.plot(conf_vals, acc_vals, "b-o", ms=4, label="Model")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.set_title(class_names[c], fontsize=9)
-        ax.set_xlabel("Confidence", fontsize=7)
-        ax.set_ylabel("Accuracy", fontsize=7)
-        ax.legend(fontsize=7)
-
-    for ax in axes[n_classes:]:
-        ax.set_visible(False)
-
-    plt.suptitle("Reliability Diagram — ArduPilot Classifier", fontsize=12)
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=120)
-    plt.close()
-    print(f"Reliability diagram saved to {output_path}")
+def _verify_artifact_files(root: Path, manifest: dict) -> None:
+    if manifest.get("artifact_schema_version") != 3:
+        raise ValueError("Calibration diagnostics require a schema-v3 artifact.")
+    hashes = manifest.get("artifact_files")
+    if not isinstance(hashes, dict):
+        raise ValueError("Artifact manifest lacks file hashes.")
+    required = (
+        "classifier.joblib",
+        "scaler.joblib",
+        "feature_columns.json",
+        "label_columns.json",
+        "rule_thresholds.yaml",
+    )
+    for name in required:
+        path = root / name
+        expected = hashes.get(name)
+        if not path.is_file() or not _valid_hash(expected):
+            raise ValueError(f"Artifact hash is missing for {name}.")
+        if _hash_file(path) != expected:
+            raise ValueError(f"Artifact file hash mismatch for {name}.")
 
 
 def load_model_and_predict(
-    features_csv: str, labels_csv: str, groups_csv: str, model_dir: str = "models"
-):
-    model_root = Path(model_dir)
-    bundle = joblib.load(model_root / "classifier.joblib")
-    scaler = joblib.load(model_root / "scaler.joblib")
-    model = bundle["model"]
-    classes = bundle["classes"]
+    features_csv: str,
+    labels_csv: str,
+    groups_csv: str,
+    model_dir: str = "models",
+) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """Evaluate exactly the manifest-bound real development-test lineages."""
 
-    # The runtime dataset may contain newer rule-only features than the
-    # deployed model. Evaluate the exact ordered model columns.
-    feature_schema_path = model_root / "feature_columns.json"
-    model_feature_columns = json.loads(feature_schema_path.read_text(encoding="utf-8"))
+    root = Path(model_dir)
+    manifest_path = root / "manifest.json"
+    if not manifest_path.is_file():
+        raise ValueError("Model manifest is required for lineage-bound calibration.")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    _verify_artifact_files(root, manifest)
+    inputs = manifest.get("training_inputs", {})
+    for field, path in (
+        ("features_sha256", features_csv),
+        ("labels_sha256", labels_csv),
+        ("groups_sha256", groups_csv),
+    ):
+        if inputs.get(field) != _hash_file(path):
+            raise ValueError(f"Calibration input does not match {field}.")
 
-    df_feat = pd.read_csv(features_csv)
-    df_lab = pd.read_csv(labels_csv)
-    df_groups = pd.read_csv(groups_csv)
-    if len(df_feat) != len(df_lab) or len(df_feat) != len(df_groups):
-        raise ValueError("Features, labels, and groups CSVs must have the same row count.")
-
-    missing = [name for name in model_feature_columns if name not in df_feat.columns]
-    if missing:
-        raise ValueError("Dataset is missing model feature columns: " + ", ".join(missing))
-    X = df_feat.loc[:, model_feature_columns].to_numpy()
-    class_names = []
-    keep = []
-    for i in range(len(df_lab)):
-        row = df_lab.iloc[i]
-        preferred = (
-            df_groups.iloc[i].get("primary_label", "")
-            if "primary_label" in df_groups.columns
-            else ""
+    feature_columns = json.loads(
+        (root / "feature_columns.json").read_text(encoding="utf-8")
+    )
+    label_columns = json.loads(
+        (root / "label_columns.json").read_text(encoding="utf-8")
+    )
+    if feature_columns != FEATURE_NAMES or not set(label_columns).issubset(
+        VALID_LABELS
+    ):
+        raise ValueError(
+            "Artifact feature or label schema is incompatible with runtime."
         )
-        primary = primary_label_for_row(row, preferred=preferred, allowed=classes)
-        if primary:
-            class_names.append(primary)
-            keep.append(i)
-
+    features = pd.read_csv(features_csv)
+    labels = pd.read_csv(labels_csv)
+    groups = pd.read_csv(groups_csv)
+    if not (len(features) == len(labels) == len(groups)):
+        raise ValueError("Features, labels, and groups must have equal row counts.")
+    if (
+        features.columns.tolist() != FEATURE_NAMES
+        or labels.columns.tolist() != VALID_LABELS
+    ):
+        raise ValueError("Calibration CSV schemas differ from the runtime contract.")
+    if "lineage_root_id" not in groups.columns:
+        raise ValueError("Calibration groups require lineage_root_id.")
+    lineages = groups["lineage_root_id"].fillna("").astype(str).str.strip().to_numpy()
+    if any(not value for value in lineages):
+        raise ValueError("Calibration groups contain blank lineage roots.")
+    source_types = require_known_source_types(groups)
+    physical = (
+        groups.get("physical_flight_verified", pd.Series(False, index=groups.index))
+        .fillna(False)
+        .astype(str)
+        .str.lower()
+        .isin({"true", "1", "yes"})
+        .to_numpy()
+    )
+    expected_hashes = manifest.get("evaluation", {}).get("test_lineage_hashes", [])
+    if not expected_hashes or not all(_valid_hash(value) for value in expected_hashes):
+        raise ValueError("Artifact manifest lacks exact real test-lineage hashes.")
+    expected = set(expected_hashes)
+    primary: list[str] = []
+    keep: list[int] = []
+    for position, (_, row) in enumerate(labels.iterrows()):
+        preferred = groups.iloc[position].get("primary_label", "")
+        label = primary_label_for_row(row, preferred=preferred, allowed=label_columns)
+        if (
+            label
+            and source_types[position] == "real"
+            and physical[position]
+            and _hash_value(lineages[position]) in expected
+        ):
+            primary.append(label)
+            keep.append(position)
     if not keep:
-        print("No labeled samples found matching known classes.")
-        sys.exit(1)
+        raise ValueError("No verified physical rows match the artifact test lineages.")
+    observed = {_hash_value(lineages[position]) for position in keep}
+    if observed != expected:
+        raise ValueError("Inputs do not contain exactly the artifact test lineages.")
 
-    X = X[keep]
-    y_true = np.array([classes.index(n) for n in class_names])
-    groups = effective_group_values(df_groups)[keep]
-    _, test_indices = grouped_train_test_split(y_true, groups)
-    X_scaled = scaler.transform(X[test_indices])
-    y_true = y_true[test_indices]
-    groups = groups[test_indices]
-    probs = model.predict_proba(X_scaled)
-    cal_file = model_root / "calibration_params.json"
-    if cal_file.exists():
-        try:
-            cal_params = json.loads(cal_file.read_text(encoding="utf-8"))
-            if cal_params.get("method") == "temperature" and "temperature" in cal_params:
-                T = cal_params["temperature"]
-                logits = np.log(probs + 1e-12) / T
-                exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-                probs = exp_logits / exp_logits.sum(axis=1, keepdims=True)
-                print(f"Applied Temperature Scaling (T={T:.4f})")
-        except Exception:
-            pass
-
-    y_true, probs = aggregate_group_probabilities(y_true, probs, groups)
-    return y_true, probs, classes
+    bundle = joblib.load(root / "classifier.joblib")
+    scaler = joblib.load(root / "scaler.joblib")
+    if not isinstance(bundle, dict) or bundle.get("classes") != label_columns:
+        raise ValueError("Classifier bundle class order differs from its schema.")
+    matrix = features.loc[keep, feature_columns].to_numpy(dtype=float)
+    probabilities = bundle["model"].predict_proba(scaler.transform(matrix))
+    target = np.asarray([label_columns.index(label) for label in primary])
+    target, probabilities = aggregate_group_probabilities(
+        target, probabilities, lineages[keep]
+    )
+    return target, probabilities, label_columns
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Measure ECE for the trained classifier")
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--features-csv", default="training/features.csv")
     parser.add_argument("--labels-csv", default="training/labels.csv")
     parser.add_argument("--groups-csv", default="training/groups.csv")
     parser.add_argument("--model-dir", default="models")
-    parser.add_argument(
-        "--output-diagram",
-        default="docs/reliability_diagram.png",
-        help="Path to save reliability diagram PNG",
-    )
-    parser.add_argument(
-        "--report-path",
-        default="training/ece_report.json",
-        help="Path for the machine-readable ECE report",
-    )
-    parser.add_argument(
-        "--target-ece",
-        type=float,
-        default=ECE_PASS_THRESHOLD,
-        help=f"ECE pass threshold (default {ECE_PASS_THRESHOLD})",
-    )
+    parser.add_argument("--output-diagram", default="docs/reliability_diagram.png")
+    parser.add_argument("--report-path", default="training/ece_report.json")
+    parser.add_argument("--target-ece", type=float, default=ECE_PASS_THRESHOLD)
     args = parser.parse_args()
 
-    if not (Path(args.model_dir) / "classifier.joblib").exists():
-        print("No trained model found. Run `python training/train_model.py` first.")
-        sys.exit(1)
-
-    print("Loading model and computing ECE...")
-    y_true, probs, class_names = load_model_and_predict(
+    target, probabilities, classes = load_model_and_predict(
         args.features_csv, args.labels_csv, args.groups_csv, args.model_dir
     )
-
-    ece = compute_ece(y_true, probs)
-
-    print(f"\n{'='*50}")
-    print(f"  Overall ECE (macro): {ece:.4f}")
-    print(f"  Target:              <= {args.target_ece:.2f}")
-    if ece <= args.target_ece:
-        print("  Result:              PASS")
-    else:
-        print("  Result:              FAIL - retraining or recalibration needed")
-    print(f"{'='*50}\n")
-
-    # Per-class ECE breakdown
-    print("Per-class ECE:")
-    n_bins = 10
-    bins = np.linspace(0, 1, n_bins + 1)
-    for c, name in enumerate(class_names):
-        p = probs[:, c]
-        label = (y_true == c).astype(int)
-        class_ece = 0.0
-        for lo, hi in zip(bins[:-1], bins[1:]):
-            mask = (p >= lo) & (p < hi)
-            if mask.sum() == 0:
-                continue
-            class_ece += mask.sum() * abs(p[mask].mean() - label[mask].mean())
-        class_ece /= len(y_true)
-        flag = "PASS" if class_ece <= args.target_ece else "WARN"
-        print(f"  {flag} {name:<25} ECE={class_ece:.4f}")
-
-    # Reliability diagram
-    os.makedirs(os.path.dirname(args.output_diagram), exist_ok=True)
-    reliability_diagram(y_true, probs, class_names, args.output_diagram)
-
-    # Write JSON report
+    metrics = incident_metrics(target, probabilities, classes)
+    reliability_diagram(target, probabilities, classes, args.output_diagram)
+    diagnostic_met = metrics["top_label_incident_ece"] <= args.target_ece
+    root = Path(args.model_dir)
+    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    evaluation = manifest.get("evaluation", {})
     report = {
-        "overall_ece": ece,
-        "target_ece": args.target_ece,
-        "pass": ece <= args.target_ece,
-        "n_samples": len(y_true),
-        "classes": class_names,
+        "schema": "logdiagnosis.calibration-development-diagnostic/v2",
+        "status": "non_promoting_development_diagnostic",
+        "release_authorized": False,
+        "diagnostic_threshold_met": diagnostic_met,
+        "target_top_label_incident_ece": args.target_ece,
+        "metrics": metrics,
+        "classes": classes,
+        "independent_real_lineages": len(target),
+        "calibration_per_class_real_lineages": evaluation.get(
+            "calibration_per_class_real_lineages"
+        ),
+        "per_class_real_lineages": evaluation.get("per_class_real_lineages"),
+        "every_declared_class_calibrated": evaluation.get(
+            "every_declared_class_calibrated"
+        ),
+        "calibration_method_config_sha256": evaluation.get(
+            "calibration_method_config_sha256"
+        ),
+        "method_config_sha256": evaluation.get("method_config_sha256"),
+        "aggregation": "maximum raw class probability by lineage_root_id",
+        "artifact_manifest_sha256": _hash_file(root / "manifest.json"),
+        "classifier_sha256": _hash_file(root / "classifier.joblib"),
+        "features_sha256": _hash_file(args.features_csv),
+        "labels_sha256": _hash_file(args.labels_csv),
+        "groups_sha256": _hash_file(args.groups_csv),
+        "dataset_report_sha256": manifest.get("training_inputs", {}).get(
+            "dataset_report_sha256"
+        ),
+        "split_ledger_sha256": manifest.get("training_inputs", {}).get(
+            "split_ledger_sha256"
+        ),
     }
-    report_parent = Path(args.report_path).parent
-    if str(report_parent):
-        report_parent.mkdir(parents=True, exist_ok=True)
-    with open(args.report_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
-    print(f"ECE report saved to {args.report_path}")
-
-    sys.exit(0 if ece <= args.target_ece else 1)
+    destination = Path(args.report_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(report, indent=2))
+    raise SystemExit(0 if diagnostic_met else 1)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+# Isolated install constraints for the owned direct-ArduPilot SITL path.
+#
+# Install the laboratory transport dependencies WITHOUT touching the shared
+# project environment or shared manifests:
+#
+#   python -m pip install --isolated -r synthetic_data/constraints.txt
+#
+# pymavlink is pinned to the exact version exercised by
+# synthetic_data.execution_integrity.SUPPORTED_PYMAVLINK_VERSION; any other
+# version fails closed at receipt validation.
+pymavlink==2.4.49

@@ -21,6 +21,15 @@ Across five grouped seeds it averaged F1 **0.584 ± 0.025** and ECE
 **0.167 ± 0.006**; out-of-fold temperature scaling only reduced test ECE to
 about **0.117**.
 
+These historical model measurements are not evidence for the new synthetic-data
+candidate path. The current code state is recorded separately by the
+non-promoting machine receipt in
+`synthetic_data/reports/readiness_receipt.json`. Regenerate it only after source
+changes are final with `python -m synthetic_data.readiness_receipt build`, then
+run the corresponding `verify` command. That receipt binds tracked, staged,
+deleted, and non-ignored untracked source state plus verification outputs; it
+does not authorize a model or demonstrate an accuracy gain.
+
 The improved candidate `v4_improved` (2026-08-06) incorporated mutual information
 feature selection (50 features), auto-label integration (+22 logs), synthetic data
 boostrapping for missing classes (156 incident groups total), soft-voting ensemble

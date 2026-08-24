@@ -1,0 +1,18 @@
+# Locked runtime dependencies for the verified synthetic-data laboratory.
+#
+# This file is generated from the validated development environment and is the
+# ONLY dependency surface for cluster/container execution. Regenerate only via
+# an explicit integration handoff (never edit casually):
+#
+#   python -m pip freeze | Select-String '^(pymavlink|numpy|scipy|scikit-learn|pandas|joblib|xgboost)=='
+#
+# pymavlink is additionally enforced at receipt-validation time by
+# synthetic_data.execution_integrity.SUPPORTED_PYMAVLINK_VERSION; any drift
+# fails closed even if this lock were bypassed.
+joblib==1.4.2
+numpy==1.26.4
+pandas==2.2.3
+pymavlink==2.4.49
+scikit-learn==1.8.0
+scipy==1.11.4
+xgboost==3.2.0

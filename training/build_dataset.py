@@ -15,8 +15,22 @@ if str(ROOT_DIR) not in sys.path:
 from src.constants import FEATURE_NAMES, VALID_LABELS
 from src.features.pipeline import FeaturePipeline
 from src.parser.bin_parser import LogParser
-from .data_contract import canonical_source_group, finite_sha256
-from .window_slicer import slice_log_into_windows
+from training.data_contract import (
+    canonical_source_group,
+    canonical_source_type,
+    finite_sha256,
+)
+from training.dataset_build_contract import (
+    GROUP_COLUMNS,
+    explicit_bool as _explicit_bool,
+    extractor_source_hash as _extractor_source_hash,
+    finite_onset as _finite_onset,
+    safe_dataset_file as _safe_dataset_file,
+    schema_hash as _schema_hash,
+    verified_synthetic_attestation as _verified_synthetic_attestation,
+    window_phase as _window_phase,
+)
+from training.window_slicer import slice_log_into_windows
 
 CONFIDENCE_ORDER = {"low": 0, "medium": 1, "high": 2}
 
@@ -40,6 +54,8 @@ def build(
     output_groups: str = "training/groups.csv",
     window_sec: float = 5.0,
     overlap: float = 0.5,
+    transition_guard_sec: float = 2.0,
+    include_unverified_synthetic: bool = False,
 ) -> dict:
     if not os.path.exists(ground_truth_path):
         print(f"File not found: {ground_truth_path}")
@@ -89,6 +105,13 @@ def build(
     skipped_ambiguous_group = 0
     failed_extraction = 0
     processed = 0
+    skipped_unsafe_path = 0
+    skipped_unknown_provenance = 0
+    skipped_unverified_synthetic = 0
+    skipped_artifact_hash_mismatch = 0
+    excluded_pre_fault_windows = 0
+    excluded_transition_windows = 0
+    excluded_mixed_full_logs = 0
 
     label_counter = Counter()
     source_type_counter = Counter()
@@ -97,7 +120,6 @@ def build(
         filename = log_entry.get("filename")
         labels = log_entry.get("labels", [])
         confidence = log_entry.get("confidence", "medium")
-        source_type = log_entry.get("source_type", "unknown")
         trainable = bool(log_entry.get("trainable", True))
 
         if trainable_only and not trainable:
@@ -113,8 +135,32 @@ def build(
             skipped_ambiguous_group += 1
             continue
 
-        filepath = os.path.join(dataset_dir, filename)
-        if not os.path.exists(filepath):
+        source_type = canonical_source_type(
+            log_entry.get("source_type", ""),
+            source_group=source_group,
+            source_log=filename,
+        )
+        if source_type == "unknown":
+            skipped_unknown_provenance += 1
+            continue
+        is_synthetic = source_type in {"sitl", "hil", "simulation", "feature_synthetic"}
+        if (
+            is_synthetic
+            and not include_unverified_synthetic
+            and str(log_entry.get("verification_status", "")) != "accepted"
+        ):
+            skipped_unverified_synthetic += 1
+            continue
+        if is_synthetic and str(log_entry.get("verification_status", "")) == "accepted":
+            if not _verified_synthetic_attestation(log_entry):
+                skipped_unverified_synthetic += 1
+                continue
+        try:
+            filepath = _safe_dataset_file(Path(dataset_dir), filename)
+        except ValueError:
+            skipped_unsafe_path += 1
+            continue
+        if not filepath.exists():
             print(f"Skipping {filename}: File not found in {dataset_dir}")
             skipped_missing_file += 1
             continue
@@ -131,20 +177,27 @@ def build(
             skipped_duplicate_sha256 += 1
             continue
         seen_sha256.add(sha256)
+        expected_artifact_hash = str(log_entry.get("artifact_sha256", "") or "").lower()
+        if is_synthetic and expected_artifact_hash != sha256:
+            skipped_artifact_hash_mismatch += 1
+            continue
 
         # Preserve the explicit label order from ground truth.  The previous
         # implementation reconstructed a primary label from VALID_LABELS
         # column order, which silently changed e.g. [ekf_failure,
         # compass_interference] into compass_interference.
         active_labels = [
-            str(label).strip()
-            for label in labels
-            if str(label).strip() in VALID_LABELS
+            str(label).strip() for label in labels if str(label).strip() in VALID_LABELS
         ]
         primary_label = active_labels[0] if active_labels else ""
         source_url = str(log_entry.get("source_url", "") or "").strip()
+        onset_sec = _finite_onset(log_entry.get("fault_onset_sec"))
+        synthetic_fault = is_synthetic and primary_label != "healthy"
+        if synthetic_fault and onset_sec is None:
+            skipped_unverified_synthetic += 1
+            continue
 
-        parser = LogParser(filepath)
+        parser = LogParser(str(filepath))
         parsed = parser.parse()
         if not parsed.get("messages"):
             print(f"Skipping {filename}: Failed to parse or empty.")
@@ -162,6 +215,21 @@ def build(
             slices.append(parsed)
 
         for log_slice in slices:
+            phase, window_start, window_end = _window_phase(
+                log_slice,
+                synthetic_fault=synthetic_fault,
+                onset_sec=onset_sec,
+                guard_sec=transition_guard_sec,
+            )
+            if phase == "pre_fault":
+                excluded_pre_fault_windows += 1
+                continue
+            if phase in {"transition", "invalid_onset"}:
+                excluded_transition_windows += 1
+                continue
+            if phase == "mixed_full_log":
+                excluded_mixed_full_logs += 1
+                continue
             features = pipeline.extract(log_slice)
 
             feat_row = [features.get(name, 0.0) for name in FEATURE_NAMES]
@@ -169,7 +237,70 @@ def build(
 
             feature_rows.append(feat_row)
             label_rows.append(label_row)
-            group_rows.append([filename, source_group, source_url, primary_label, sha256])
+            group_rows.append(
+                {
+                    "source_log": filename,
+                    "source_group": source_group,
+                    "lineage_root_id": str(
+                        log_entry.get("lineage_root_id", "") or source_group
+                    ),
+                    "source_url": source_url,
+                    "primary_label": primary_label,
+                    "sha256": sha256,
+                    "source_type": source_type,
+                    "physical_flight_verified": _explicit_bool(
+                        log_entry.get("physical_flight_verified", False)
+                    ),
+                    "label_origin": str(log_entry.get("label_origin", "") or ""),
+                    "verification_status": str(
+                        log_entry.get("verification_status", "") or ""
+                    ),
+                    "manifest_sha256": str(log_entry.get("manifest_sha256", "") or ""),
+                    "parameter_schema_sha256": str(
+                        log_entry.get("parameter_schema_sha256", "") or ""
+                    ),
+                    "artifact_sha256": expected_artifact_hash or sha256,
+                    "run_fingerprint": str(log_entry.get("run_fingerprint", "") or ""),
+                    "simulation_family": str(
+                        log_entry.get("simulation_family", "") or ""
+                    ),
+                    "scenario_sampling_seed": str(
+                        log_entry.get("scenario_sampling_seed", "") or ""
+                    ),
+                    "generator_version": str(
+                        log_entry.get("generator_version", "") or ""
+                    ),
+                    "conditioning_mode": str(
+                        log_entry.get("conditioning_mode", "") or ""
+                    ),
+                    "conditioning_real_lineage_id": str(
+                        log_entry.get("conditioning_real_lineage_id", "") or ""
+                    ),
+                    "near_duplicate_cluster_id": str(
+                        log_entry.get("near_duplicate_cluster_id", "") or ""
+                    ),
+                    "vehicle_frame": str(log_entry.get("vehicle_frame", "") or ""),
+                    "firmware_commit": str(
+                        log_entry.get("firmware_commit", "")
+                        or log_entry.get("ardupilot_revision", "")
+                        or ""
+                    ),
+                    "flight_phase": str(
+                        log_entry.get("flight_phase", "") or "mixed_flight"
+                    ),
+                    "scenario": str(log_entry.get("scenario", "") or ""),
+                    "pair_role": str(log_entry.get("pair_role", "") or ""),
+                    "run_id": str(log_entry.get("run_id", "") or ""),
+                    "paired_with": str(log_entry.get("paired_with", "") or ""),
+                    "manifestation_predicate_sha256": str(
+                        log_entry.get("manifestation_predicate_sha256", "") or ""
+                    ),
+                    "fault_onset_sec": "" if onset_sec is None else onset_sec,
+                    "window_start_sec": "" if window_start is None else window_start,
+                    "window_end_sec": "" if window_end is None else window_end,
+                    "window_phase": phase,
+                }
+            )
             processed += 1
 
         for label in labels:
@@ -201,17 +332,23 @@ def build(
         writer.writerows(label_rows)
 
     with open(output_groups, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(
-            ["source_log", "source_group", "source_url", "primary_label", "sha256"]
-        )
+        writer = csv.DictWriter(f, fieldnames=GROUP_COLUMNS)
+        writer.writeheader()
         writer.writerows(group_rows)
 
     report = {
+        "schema": "logdiagnosis.training-dataset-build/v2",
         "ground_truth_path": ground_truth_path,
+        "ground_truth_sha256": finite_sha256(ground_truth_path),
         "dataset_dir": dataset_dir,
         "window_sec": window_sec,
         "overlap": overlap,
+        "transition_guard_sec": transition_guard_sec,
+        "window_policy": "synthetic faults use post-onset windows only; mixed full logs excluded",
+        "include_full_log": "real, healthy, and onset-free records only",
+        "feature_schema_sha256": _schema_hash(FEATURE_NAMES),
+        "label_schema_sha256": _schema_hash(VALID_LABELS),
+        "extractor_source_sha256": _extractor_source_hash(),
         "total_entries": len(logs),
         "processed": processed,
         "failed_extraction": failed_extraction,
@@ -220,21 +357,32 @@ def build(
         "skipped_not_trainable": skipped_not_trainable,
         "skipped_duplicate_sha256": skipped_duplicate_sha256,
         "skipped_ambiguous_group": skipped_ambiguous_group,
+        "skipped_unsafe_path": skipped_unsafe_path,
+        "skipped_unknown_provenance": skipped_unknown_provenance,
+        "skipped_unverified_synthetic": skipped_unverified_synthetic,
+        "skipped_artifact_hash_mismatch": skipped_artifact_hash_mismatch,
+        "excluded_pre_fault_windows": excluded_pre_fault_windows,
+        "excluded_transition_windows": excluded_transition_windows,
+        "excluded_mixed_full_logs": excluded_mixed_full_logs,
         "ambiguous_source_groups": ambiguous_source_groups,
         "ambiguous_source_group_files": {
             group: sorted(source_group_entries[group])
             for group in ambiguous_source_groups
         },
         "unique_source_logs": len(seen_sha256),
-        "unique_source_groups": len({row[1] for row in group_rows}),
+        "unique_source_groups": len({row["source_group"] for row in group_rows}),
         "source_group_policy": "explicit incident/source_url, otherwise filename",
         "min_confidence": min_confidence,
         "trainable_only": trainable_only,
+        "include_unverified_synthetic": include_unverified_synthetic,
         "label_distribution": dict(sorted(label_counter.items())),
         "source_type_distribution": dict(sorted(source_type_counter.items())),
         "output_features": output_features,
         "output_labels": output_labels,
         "output_groups": output_groups,
+        "features_sha256": finite_sha256(output_features),
+        "labels_sha256": finite_sha256(output_labels),
+        "groups_sha256": finite_sha256(output_groups),
     }
 
     with open(report_path, "w") as f:
@@ -307,6 +455,17 @@ def main() -> None:
         default=0.5,
         help="Fractional overlap between augmented windows",
     )
+    parser.add_argument(
+        "--transition-guard-sec",
+        type=float,
+        default=2.0,
+        help="Exclude synthetic windows within this many seconds of the observed onset",
+    )
+    parser.add_argument(
+        "--include-unverified-synthetic",
+        action="store_true",
+        help="Research-only override; verified execution receipts are required by default",
+    )
 
     args = parser.parse_args()
     build(
@@ -320,6 +479,8 @@ def main() -> None:
         trainable_only=not args.include_non_trainable,
         window_sec=args.window_sec,
         overlap=args.overlap,
+        transition_guard_sec=args.transition_guard_sec,
+        include_unverified_synthetic=args.include_unverified_synthetic,
     )
 
 

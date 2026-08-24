@@ -42,7 +42,9 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
         run: |
-          python -m pip install ruff
+          # Keep CI on the repository's verified lint baseline. Ruff 0.16
+          # adds rules that are not part of this project's configured gate.
+          python -m pip install ruff==0.15.22
           if [ "$EVENT_NAME" = "pull_request" ]; then
             base_sha="$PR_BASE_SHA"
           else
