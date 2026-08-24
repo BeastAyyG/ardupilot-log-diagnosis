@@ -25,7 +25,10 @@ def test_dstack_canary_is_privileged_cost_bounded_and_not_error_retried() -> Non
     assert "on_events: [no-capacity, interruption]" in config
     assert "max_duration: 20m" in config
     assert "max_price: 0.10" in config
-    assert "REPLACE_WITH_64_HEX_DIGEST" in config
+    assert (
+        "ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:"
+        "4715d4cb0b0029bc668b3ced3843c155d74e33c2f29b40dfca9e09db7385678b"
+    ) in config
     assert "error" not in config.split("on_events:", 1)[1].splitlines()[0]
 
 
