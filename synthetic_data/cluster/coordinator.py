@@ -123,7 +123,7 @@ class ClusterCoordinator:
             "runs_index": {
                 str(p["run_id"]): {
                     "lineage_root_id": str(p["lineage_root_id"]),
-                    "pair_role": str(p.get("pair_role", "")),
+                    "pair_role": str(p.get("pair_role") or p.get("role", "")),
                 }
                 for p in plans
             },

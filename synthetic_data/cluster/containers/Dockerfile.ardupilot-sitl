@@ -22,6 +22,7 @@ ARG BASE_DIGEST=sha256:REPLACE_WITH_VERIFIED_DIGEST
 FROM ${BASE_IMAGE}@${BASE_DIGEST} AS base
 # Fail the build immediately when the digest pin was never filled in:
 # provenance from a moving tag silently invalidates the whole chain.
+ARG BASE_DIGEST
 RUN /bin/sh -c 'case "$BASE_DIGEST" in \
       *REPLACE_WITH_VERIFIED_DIGEST*) \
         echo "FATAL: BASE_DIGEST is not pinned to a verified digest." >&2; \
@@ -63,13 +64,18 @@ RUN python -m pip install --no-cache-dir -c /opt/lab/constraints.lock pip \
     && python -m pip install --no-cache-dir \
         pymavlink==2.4.49 numpy pandas scipy scikit-learn joblib xgboost \
         -c /opt/lab/constraints.lock
-COPY --from=ardupilot /src/ardupilot/build/sitl/bin/arducopter /opt/ardupilot/arducopter
+# Runtime validation calls git against the exact checkout; copying only the
+# binary would make every genuine run fail its clean-source attestation. Keep
+# the pinned checkout (including submodule metadata) and use its native build
+# path so the receipt can bind revision, tree, submodules, and binary together.
+COPY --from=ardupilot /src/ardupilot /opt/ardupilot
 COPY --from=ardupilot /attestation.json /opt/ardupilot/attestation.json
 COPY synthetic_data /workspace/synthetic_data
 COPY training /workspace/training
 COPY src /workspace/src
 COPY pyproject.toml README.md /workspace/
-ENV ARDUPILOT_SITL_BINARY=/opt/ardupilot/arducopter \
+ENV ARDUPILOT_ROOT=/opt/ardupilot \
+    ARDUPILOT_SITL_BINARY=/opt/ardupilot/build/sitl/bin/arducopter \
     ARDUPILOT_ATTESTATION=/opt/ardupilot/attestation.json \
     PYTHONUNBUFFERED=1
 WORKDIR /workspace
