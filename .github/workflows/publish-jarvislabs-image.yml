@@ -20,6 +20,11 @@ permissions:
   contents: read
   packages: write
 
+env:
+  # GHCR image references are case-sensitive and must be lowercase. GitHub's
+  # repository owner expression preserves account capitalization.
+  GHCR_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis
+
 concurrency:
   group: publish-jarvislabs-${{ inputs.image_tag }}
   cancel-in-progress: false
@@ -87,12 +92,12 @@ jobs:
             ARDUPILOT_COMMIT=${{ inputs.ardupilot_commit }}
             BASE_DIGEST=${{ inputs.base_digest }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/ardupilot-log-diagnosis:${{ inputs.image_tag }}
-            ghcr.io/${{ github.repository_owner }}/ardupilot-log-diagnosis:jarvis-sha-${{ github.sha }}
+            ${{ env.GHCR_IMAGE }}:${{ inputs.image_tag }}
+            ${{ env.GHCR_IMAGE }}:jarvis-sha-${{ github.sha }}
       - name: Publish digest summary
         run: |
           echo "### JarvisLabs x86_64 candidate" >> "$GITHUB_STEP_SUMMARY"
           echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          echo "ghcr.io/${{ github.repository_owner }}/ardupilot-log-diagnosis@${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "Candidate only: run the privileged namespace canary before a campaign." >> "$GITHUB_STEP_SUMMARY"
