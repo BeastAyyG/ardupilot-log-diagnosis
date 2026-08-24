@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import subprocess
 import time
 import urllib.error
 import urllib.parse
@@ -19,6 +21,28 @@ JARVIS_BASE_URL = {
     "india-noida-01": "https://backendn.jarvislabs.net",
     "europe-01": "https://backendeu.jarvislabs.net",
 }
+
+
+def stop_process_tree(process: subprocess.Popen[Any]) -> None:
+    """Stop dstack and descendants so the isolated server directory can be removed."""
+
+    if process.poll() is None:
+        process.terminate()
+        try:
+            process.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            process.kill()
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            check=False,
+        )
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        pass
+    time.sleep(0.5)
 
 
 def capture_jarvis_instances(
