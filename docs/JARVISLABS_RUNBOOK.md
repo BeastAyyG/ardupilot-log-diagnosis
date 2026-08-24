@@ -95,8 +95,10 @@ python -m pip install "dstack[all]" -U
 
 Then run the repository launcher. It creates an isolated local dstack server,
 waits for the Jarvis fleet to become `idle`, submits the digest-pinned task,
-writes the logs, and always destroys the task/fleet afterward. The API key is
-read only from the environment and is never written to the repository:
+writes the logs, and always destroys the task/fleet afterward. Teardown waits
+for asynchronous provider deletion to finish, and every failed attempt leaves
+a fail-closed JSON receipt in the results directory. The API key is read only
+from the environment and is never written to the repository:
 
 ```bash
 export JL_API_KEY='(temporary Jarvis API key)'
