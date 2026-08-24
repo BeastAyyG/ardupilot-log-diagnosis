@@ -33,7 +33,9 @@ retry:
 max_duration: 20m
 stop_duration: 2m
 idle_duration: 2m
-max_price: 0.10
+# Jarvis' live API reports this CPU offer as 8.04 (INR). dstack 0.21.2
+# compares the provider's raw numeric value, so keep a narrow 8.50 cap.
+max_price: 8.50
 
 resources:
   cpu: x86:4
