@@ -15,7 +15,9 @@ def test_fleet_config_is_bounded_and_region_scoped() -> None:
 
 def test_task_config_forces_the_ready_fleet(tmp_path: Path) -> None:
     source = tmp_path / "task.yml"
-    source.write_text("type: task\nname: old\nbackends: [jarvislabs]\n", encoding="utf-8")
+    source.write_text(
+        "type: task\nname: old\nbackends: [jarvislabs]\n", encoding="utf-8"
+    )
     payload = canary._task_config(source, "new-run")
     assert payload["name"] == "new-run"
     assert payload["fleets"] == [canary.FLEET_NAME]
@@ -28,7 +30,9 @@ def test_wait_fleet_requires_an_idle_or_busy_instance(monkeypatch) -> None:
             {"status": "active", "instances": [{"status": "idle"}]},
         ]
     )
-    monkeypatch.setattr(canary, "_json_command", lambda *args, **kwargs: next(responses))
+    monkeypatch.setattr(
+        canary, "_json_command", lambda *args, **kwargs: next(responses)
+    )
     monkeypatch.setattr(canary.time, "sleep", lambda _: None)
     result = canary._wait_fleet(
         ["dstack"],

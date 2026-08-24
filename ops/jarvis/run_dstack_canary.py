@@ -17,16 +17,15 @@ import secrets
 import shutil
 import socket
 import subprocess
-import sys
 import tempfile
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import yaml
-
 
 FLEET_NAME = "logdiagnosis-sitl-canary-fleet"
 PROJECT_NAME = "main"
@@ -100,13 +99,20 @@ def _wait_server(url: str, process: subprocess.Popen[Any], timeout: float) -> No
 
 
 def _json_command(
-    dstack: Sequence[str], args: Sequence[str], *, env: Mapping[str, str], cwd: Path, secret: str
+    dstack: Sequence[str],
+    args: Sequence[str],
+    *,
+    env: Mapping[str, str],
+    cwd: Path,
+    secret: str,
 ) -> dict[str, Any]:
     result = _run([*dstack, *args], env=env, cwd=cwd, secret=secret)
     try:
         payload = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
-        raise CanaryError(f"dstack returned invalid JSON: {result.stdout[-1000:]}") from exc
+        raise CanaryError(
+            f"dstack returned invalid JSON: {result.stdout[-1000:]}"
+        ) from exc
     if not isinstance(payload, dict):
         raise CanaryError("dstack JSON response must be an object")
     return payload
@@ -266,7 +272,10 @@ def run_canary(
                     {
                         "name": PROJECT_NAME,
                         "backends": [
-                            {"type": "jarvislabs", "creds": {"type": "api_key", "api_key": api_key}}
+                            {
+                                "type": "jarvislabs",
+                                "creds": {"type": "api_key", "api_key": api_key},
+                            }
                         ],
                     }
                 ]
@@ -321,7 +330,16 @@ def run_canary(
             task_config = _task_config(canary_source, run_name)
             _write_yaml(task_path, task_config)
             _run(
-                [*dstack, "apply", "--project", PROJECT_NAME, "-f", str(fleet_path), "-y", "-d"],
+                [
+                    *dstack,
+                    "apply",
+                    "--project",
+                    PROJECT_NAME,
+                    "-f",
+                    str(fleet_path),
+                    "-y",
+                    "-d",
+                ],
                 env=env,
                 cwd=workspace,
                 secret=api_key,
@@ -336,7 +354,16 @@ def run_canary(
                 secret=api_key,
             )
             _run(
-                [*dstack, "apply", "--project", PROJECT_NAME, "-f", str(task_path), "-y", "-d"],
+                [
+                    *dstack,
+                    "apply",
+                    "--project",
+                    PROJECT_NAME,
+                    "-f",
+                    str(task_path),
+                    "-y",
+                    "-d",
+                ],
                 env=env,
                 cwd=workspace,
                 secret=api_key,
@@ -376,7 +403,15 @@ def run_canary(
         finally:
             if task_started:
                 _run(
-                    [*dstack, "stop", "--project", PROJECT_NAME, "--abort", "-y", run_name],
+                    [
+                        *dstack,
+                        "stop",
+                        "--project",
+                        PROJECT_NAME,
+                        "--abort",
+                        "-y",
+                        run_name,
+                    ],
                     env=env,
                     cwd=workspace,
                     allow_failure=True,
@@ -384,7 +419,15 @@ def run_canary(
                 )
             if fleet_created:
                 _run(
-                    [*dstack, "fleet", "--project", PROJECT_NAME, "delete", FLEET_NAME, "-y"],
+                    [
+                        *dstack,
+                        "fleet",
+                        "--project",
+                        PROJECT_NAME,
+                        "delete",
+                        FLEET_NAME,
+                        "-y",
+                    ],
                     env=env,
                     cwd=workspace,
                     allow_failure=True,
@@ -404,7 +447,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--dstack", dest="dstack_executable")
     parser.add_argument("--region")
     parser.add_argument("--results-dir", default="artifacts/jarvis-canary")
-    parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_TIMEOUT_SECONDS)
+    parser.add_argument(
+        "--timeout-seconds", type=float, default=DEFAULT_TIMEOUT_SECONDS
+    )
     args = parser.parse_args(argv)
     api_key = os.environ.get(args.api_key_env, "")
     try:
