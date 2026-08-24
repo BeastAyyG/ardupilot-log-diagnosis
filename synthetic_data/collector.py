@@ -46,7 +46,10 @@ def _require_pair_commit(
     """
 
     lineage = str(plan.get("lineage_root_id", ""))
-    role = str(plan.get("pair_role", ""))
+    # Planner v3 writes ``role``; older cluster fixtures used ``pair_role``.
+    # Accept both names, but never let a generated paired plan silently bypass
+    # its commit pointer merely because the compatibility alias is absent.
+    role = str(plan.get("pair_role") or plan.get("role", ""))
     if not lineage or not role:
         return  # unpaired runs carry no pair contract
     safe = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in lineage)

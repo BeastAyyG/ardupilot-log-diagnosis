@@ -1,0 +1,43 @@
+type: task
+name: logdiagnosis-sitl-canary
+
+# Replace this with the immutable linux/amd64 digest printed by the
+# Publish JarvisLabs SITL candidate image GitHub Action.
+image: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:REPLACE_WITH_64_HEX_DIGEST
+privileged: true
+shell: bash
+
+commands:
+  - |
+    set -Eeuo pipefail
+    test "$(uname -m)" = x86_64
+    test -d "$ARDUPILOT_ROOT/.git"
+    git -C "$ARDUPILOT_ROOT" status --porcelain=v1 --untracked-files=no \
+      --ignore-submodules=none | (! grep .)
+    python -m synthetic_data cluster preflight | tee /tmp/preflight.json
+    python - <<'PY'
+    import json
+    from pathlib import Path
+    probe = json.loads(Path('/tmp/preflight.json').read_text(encoding='utf-8'))
+    if not probe.get('capacity_ok'):
+        raise SystemExit(probe.get('capacity_reason', 'capacity check failed'))
+    if not probe.get('user_network_namespace_ok'):
+        raise SystemExit(probe.get('reason', 'namespace check failed'))
+    print('JarvisLabs privileged namespace canary passed')
+    PY
+
+backends: [jarvislabs]
+spot_policy: on-demand
+retry:
+  on_events: [no-capacity, interruption]
+  duration: 30m
+max_duration: 20m
+stop_duration: 2m
+idle_duration: 2m
+max_price: 0.10
+
+resources:
+  cpu: x86:4
+  memory: 16GB
+  disk: 100GB
+

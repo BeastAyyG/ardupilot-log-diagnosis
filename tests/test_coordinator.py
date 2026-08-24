@@ -239,6 +239,15 @@ class TestPairCommitEnforcementInCollection:
         plan = {"run_id": "solo", "lineage_root_id": "", "pair_role": ""}
         _require_pair_commit(tmp_path, plan, commits_dir=tmp_path / "absent")
 
+    def test_planner_role_name_cannot_bypass_pair_commit(self, tmp_path) -> None:
+        plan = {
+            "run_id": "f-1",
+            "lineage_root_id": "pair:1",
+            "role": "intervention",
+        }
+        with pytest.raises(VerificationError, match="no sealed pair-commit"):
+            _require_pair_commit(tmp_path, plan, commits_dir=tmp_path / "commits")
+
 
 class TestDockerfileGuards:
     CONTAINER_DIR = (
@@ -262,3 +271,12 @@ class TestDockerfileGuards:
             encoding="utf-8"
         )
         assert "FATAL: BASE_DIGEST is not pinned" in text
+        assert "ARG BASE_DIGEST\nRUN /bin/sh" in text
+
+    def test_runtime_keeps_pinned_checkout_for_source_attestation(self) -> None:
+        text = (self.CONTAINER_DIR / "Dockerfile.ardupilot-sitl").read_text(
+            encoding="utf-8"
+        )
+        assert "COPY --from=ardupilot /src/ardupilot /opt/ardupilot" in text
+        assert "ARDUPILOT_ROOT=/opt/ardupilot" in text
+        assert "ARDUPILOT_SITL_BINARY=/opt/ardupilot/build/sitl/bin/arducopter" in text

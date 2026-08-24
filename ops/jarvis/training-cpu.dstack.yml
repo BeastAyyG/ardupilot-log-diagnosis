@@ -1,0 +1,33 @@
+type: task
+name: logdiagnosis-training-cpu-baseline
+
+# The current XGBoost training path is CPU-bound (n_jobs=1 and no CUDA device),
+# so paying for a GPU here would not accelerate it. This task is a reproducible
+# baseline/check only; write durable outputs to external storage before using
+# it for a real candidate.
+python: "3.11"
+repos:
+  - local_path: ../..
+    path: /workspace/logdiagnosis
+working_dir: /workspace/logdiagnosis
+
+commands:
+  - uv pip install -e ".[dev]" -c synthetic_data/constraints.txt
+  - python -m ruff check synthetic_data training src
+  - python -m pytest tests/test_training_contracts.py tests/test_grouped_search.py -q
+
+backends: [jarvislabs]
+spot_policy: on-demand
+retry:
+  on_events: [no-capacity, interruption]
+  duration: 30m
+max_duration: 45m
+stop_duration: 2m
+idle_duration: 2m
+max_price: 0.10
+
+resources:
+  cpu: x86:4
+  memory: 16GB
+  disk: 100GB
+
