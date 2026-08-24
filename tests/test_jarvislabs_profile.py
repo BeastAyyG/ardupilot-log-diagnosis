@@ -44,6 +44,7 @@ def test_sitl_container_pins_ardupilot_codegen_dependency() -> None:
         ROOT / "synthetic_data" / "cluster" / "containers" / "Dockerfile.ardupilot-sitl"
     ).read_text(encoding="utf-8")
     assert "empy==3.3.4" in dockerfile
+    assert "pexpect==4.9.0" in dockerfile
 
 
 def test_training_profile_does_not_waste_a_gpu() -> None:
