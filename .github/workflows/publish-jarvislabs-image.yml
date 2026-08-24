@@ -43,7 +43,11 @@ jobs:
           [[ "$BASE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
           [[ "$IMAGE_TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$ ]]
       - name: Install test dependencies
-        run: python -m pip install -e ".[dev]" -c synthetic_data/constraints.txt
+        run: |
+          python -m pip install -e ".[dev]" -c synthetic_data/constraints.txt
+          # Match the repository CI lint baseline; newer Ruff releases add
+          # rules not included in this project's configured quality gate.
+          python -m pip install ruff==0.15.22
       - name: Verify cluster and collection contracts
         run: |
           python -m ruff check synthetic_data training src
