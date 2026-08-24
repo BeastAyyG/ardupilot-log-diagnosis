@@ -1,4 +1,7 @@
+import json
+import sqlite3
 import subprocess
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -110,6 +113,63 @@ def test_wait_active_instances_gone_requires_empty_inventory(monkeypatch) -> Non
     cleanup.wait_active_instances_gone(
         "http://127.0.0.1:1", "token", project="main", timeout=1
     )
+
+
+def test_capture_jarvis_instances_reads_dstack_provisioning_data(tmp_path: Path) -> None:
+    database = tmp_path / "sqlite.db"
+    with sqlite3.connect(database) as db:
+        db.executescript(
+            """
+            CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT);
+            CREATE TABLE fleets (id TEXT PRIMARY KEY, name TEXT, project_id TEXT);
+            CREATE TABLE instances (
+                job_provisioning_data TEXT, region TEXT, fleet_id TEXT
+            );
+            """
+        )
+        db.execute("INSERT INTO projects VALUES ('p', 'main')")
+        db.execute("INSERT INTO fleets VALUES ('f', 'fleet', 'p')")
+        db.execute(
+            "INSERT INTO instances VALUES (?, ?, ?)",
+            (json.dumps({"instance_id": "machine-1", "region": "india-noida-01"}), "", "f"),
+        )
+        db.commit()
+    assert cleanup.capture_jarvis_instances(database, project="main", fleet="fleet") == [
+        {"machine_id": "machine-1", "region": "india-noida-01"}
+    ]
+
+
+def test_cleanup_jarvis_instances_destroys_and_waits(monkeypatch) -> None:
+    class Response:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps(self.payload).encode()
+
+    calls: list[tuple[str, str]] = []
+
+    def request(request, **_kwargs):
+        calls.append((request.method, request.full_url))
+        if request.method == "GET" and len([item for item in calls if item[0] == "GET"]) > 1:
+            raise urllib.error.HTTPError(request.full_url, 404, "gone", {}, None)
+        return Response({"instance": {"template": "vm", "gpu_type": "CPU"}})
+
+    monkeypatch.setattr(cleanup.urllib.request, "urlopen", request)
+    monkeypatch.setattr(cleanup.time, "sleep", lambda _: None)
+    cleanup.cleanup_jarvis_instances(
+        "secret",
+        [{"machine_id": "machine-1", "region": "india-noida-01"}],
+        timeout=1,
+    )
+    assert calls[0][0] == "GET"
+    assert calls[1][1].startswith("https://backendn.jarvislabs.net/templates/vm/cpu/destroy?")
 
 
 def test_run_canary_rejects_missing_api_key(tmp_path: Path) -> None:
