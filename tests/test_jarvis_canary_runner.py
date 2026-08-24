@@ -1,8 +1,10 @@
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from ops.jarvis import run_dstack_canary as canary
+from ops.jarvis.cleanup import wait_fleet_gone
 
 
 def test_fleet_config_is_bounded_and_region_scoped() -> None:
@@ -62,6 +64,32 @@ def test_wait_run_matches_run_name_and_accepts_done(monkeypatch) -> None:
         secret="",
     )
     assert result["status"] == "done"
+
+
+def test_wait_fleet_gone_waits_for_async_instance_deletion(monkeypatch) -> None:
+    responses = iter(
+        [
+            subprocess.CompletedProcess(
+                ["dstack"],
+                0,
+                '{"status":"active","instances":[{"status":"destroying"}]}',
+                "",
+            ),
+            subprocess.CompletedProcess(["dstack"], 1, "", "fleet not found"),
+        ]
+    )
+    monkeypatch.setattr(canary, "_run", lambda *args, **kwargs: next(responses))
+    monkeypatch.setattr(canary.time, "sleep", lambda _: None)
+    wait_fleet_gone(
+        canary._run,
+        ["dstack"],
+        canary.FLEET_NAME,
+        project=canary.PROJECT_NAME,
+        env={},
+        cwd=Path("."),
+        timeout=1,
+        secret="",
+    )
 
 
 def test_run_canary_rejects_missing_api_key(tmp_path: Path) -> None:

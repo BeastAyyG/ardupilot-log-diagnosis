@@ -1,15 +1,7 @@
-"""Run the JarvisLabs canary without a manual dstack fleet race.
-
-The launcher creates an isolated local dstack server, configures the backend
-from ``JL_API_KEY``, provisions one bounded fleet, waits until its instance is
-idle, submits the digest-pinned task, records the task output, and tears down
-the run and fleet regardless of the outcome.  Credentials never enter argv or
-the repository.
-"""
+"""Run the bounded JarvisLabs canary with automatic cleanup."""
 
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import os
@@ -17,6 +9,7 @@ import secrets
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -27,9 +20,15 @@ from typing import Any
 
 import yaml
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from ops.jarvis.cleanup import wait_fleet_gone
+
 FLEET_NAME = "logdiagnosis-sitl-canary-fleet"
 PROJECT_NAME = "main"
 DEFAULT_TIMEOUT_SECONDS = 15 * 60
+TEARDOWN_TIMEOUT_SECONDS = 3 * 60
 POLL_SECONDS = 5.0
 
 
@@ -232,6 +231,29 @@ def _config_digest(payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+def _write_failure_receipt(
+    path: Path,
+    *,
+    error: str,
+    run_name: str,
+    task_config: Mapping[str, Any],
+    fleet_config: Mapping[str, Any],
+) -> None:
+    payload = {
+        "schema": "logdiagnosis.jarvislabs-dstack-canary/v1",
+        "status": "failed",
+        "error": error,
+        "run_name": run_name,
+        "fleet_name": FLEET_NAME,
+        "image": task_config.get("image"),
+        "fleet_config_sha256": _config_digest(fleet_config) if fleet_config else None,
+        "task_config_sha256": _config_digest(task_config) if task_config else None,
+    }
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
 def run_canary(
     *,
     api_key: str,
@@ -254,6 +276,8 @@ def run_canary(
     server_process: subprocess.Popen[Any] | None = None
     task_started = False
     fleet_created = False
+    fleet_config: dict[str, Any] = {}
+    task_config: dict[str, Any] = {}
     with tempfile.TemporaryDirectory(prefix="logdiagnosis-dstack-") as temp_name:
         temp = Path(temp_name)
         home = temp / "home"
@@ -400,6 +424,15 @@ def run_canary(
                 json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
             return summary
+        except CanaryError as exc:
+            _write_failure_receipt(
+                results_dir / f"{run_name}.json",
+                error=str(exc),
+                run_name=run_name,
+                task_config=task_config,
+                fleet_config=fleet_config,
+            )
+            raise
         finally:
             if task_started:
                 _run(
@@ -433,6 +466,26 @@ def run_canary(
                     allow_failure=True,
                     secret=api_key,
                 )
+                try:
+                    wait_fleet_gone(
+                        _run,
+                        dstack,
+                        FLEET_NAME,
+                        project=PROJECT_NAME,
+                        env=env,
+                        cwd=workspace,
+                        timeout=min(TEARDOWN_TIMEOUT_SECONDS, timeout_seconds),
+                        secret=api_key,
+                    )
+                except (CanaryError, RuntimeError) as exc:
+                    _write_failure_receipt(
+                        results_dir / f"{run_name}.json",
+                        error=str(exc),
+                        run_name=run_name,
+                        task_config=task_config,
+                        fleet_config=fleet_config,
+                    )
+                    raise
             if server_process is not None and server_process.poll() is None:
                 server_process.terminate()
                 try:
@@ -440,41 +493,7 @@ def run_canary(
                 except subprocess.TimeoutExpired:
                     server_process.kill()
 
-
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--api-key-env", default="JL_API_KEY")
-    parser.add_argument("--dstack", dest="dstack_executable")
-    parser.add_argument("--region")
-    parser.add_argument("--results-dir", default="artifacts/jarvis-canary")
-    parser.add_argument(
-        "--timeout-seconds", type=float, default=DEFAULT_TIMEOUT_SECONDS
-    )
-    args = parser.parse_args(argv)
-    api_key = os.environ.get(args.api_key_env, "")
-    try:
-        summary = run_canary(
-            api_key=api_key,
-            repo_root=Path(__file__).resolve().parents[2],
-            results_dir=Path(args.results_dir).resolve(),
-            dstack_executable=args.dstack_executable,
-            region=args.region,
-            timeout_seconds=args.timeout_seconds,
-        )
-    except CanaryError as exc:
-        print(
-            json.dumps(
-                {
-                    "schema": "logdiagnosis.jarvislabs-dstack-canary/v1",
-                    "status": "failed",
-                    "error": str(exc),
-                }
-            )
-        )
-        return 1
-    print(json.dumps(summary, sort_keys=True))
-    return 0
-
-
 if __name__ == "__main__":
+    from ops.jarvis.canary_cli import main
+
     raise SystemExit(main())
