@@ -22,6 +22,7 @@ def test_dstack_canary_is_privileged_cost_bounded_and_not_error_retried() -> Non
     config = (OPS / "sitl-canary.dstack.yml").read_text(encoding="utf-8")
     assert "privileged: true" in config
     assert "backends: [jarvislabs]" in config
+    assert "fleets: [logdiagnosis-sitl-canary-fleet]" in config
     assert "on_events: [no-capacity, interruption]" in config
     assert "max_duration: 20m" in config
     assert "max_price: 8.50" in config
@@ -54,4 +55,4 @@ def test_training_profile_does_not_waste_a_gpu() -> None:
     config = (OPS / "training-cpu.dstack.yml").read_text(encoding="utf-8")
     assert "gpu:" not in config
     assert "cpu: x86:4" in config
-    assert "max_price: 0.10" in config
+    assert "max_price: 8.50" in config

@@ -87,20 +87,37 @@ dstack is useful for an ephemeral compatibility test because JarvisLabs is a
 native VM backend and dstack supports custom images, privileged mode,
 `max_price`, `max_duration`, limited retries, and automatic teardown.
 
-```bash
-pip install "dstack[all]" -U
-dstack server
-```
-
-Configure the JarvisLabs backend in `~/.dstack/server/config.yml` using an API
-key, restart the server, and add the local project as described by the dstack
-setup output. Then replace the digest placeholder in
-`ops/jarvis/sitl-canary.dstack.yml` and run:
+Install dstack once in the control environment:
 
 ```bash
-dstack offer -b jarvislabs
-dstack apply -f ops/jarvis/sitl-canary.dstack.yml
+python -m pip install "dstack[all]" -U
 ```
+
+Then run the repository launcher. It creates an isolated local dstack server,
+waits for the Jarvis fleet to become `idle`, submits the digest-pinned task,
+writes the logs, and always destroys the task/fleet afterward. The API key is
+read only from the environment and is never written to the repository:
+
+```bash
+export JL_API_KEY='(temporary Jarvis API key)'
+python ops/jarvis/run_dstack_canary.py \
+  --region india-chennai-01 \
+  --results-dir artifacts/jarvis-canary
+unset JL_API_KEY
+```
+
+PowerShell equivalent:
+
+```powershell
+$env:JL_API_KEY = Read-Host "Jarvis API key"
+python ops/jarvis/run_dstack_canary.py --region india-chennai-01
+Remove-Item Env:JL_API_KEY
+```
+
+The launcher fails closed on a missing/failed fleet, a task error, or a
+timeout. It does not claim a scientific pair until the task itself emits the
+required receipts; this canary currently verifies image, architecture,
+namespace, and pinned-source readiness first.
 
 The task refuses a non-x86 image, a dirty/missing ArduPilot checkout, missing
 namespace privileges, inadequate capacity, or a price above the pinned live
