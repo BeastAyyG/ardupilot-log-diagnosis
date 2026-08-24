@@ -29,11 +29,11 @@ The recommended progression is:
 | Cost control | Per-minute billing, pause/destroy, dstack `max_duration`/`max_price` | Prevent idle spend |
 
 The dashboard and `jl gpus --json` are authoritative for live availability and
-pricing. Public prices observed on 2026-08-25 were $0.05/hour for 2-vCPU CPU
-VMs, $0.10 for 4 vCPUs, $0.40 for 16 vCPUs, $0.41 for A30, $0.44 for L4,
-$0.89 for A100 40GB, $1.49 for A100 80GB, and $2.69 for H100. Shared
-filesystems are documented at $0.00014/GB/hour; 100 GB retained for 30 days is
-about $10.08. Recheck prices before every campaign.
+pricing. The Jarvis account reports INR billing; the live dstack offer endpoint
+returned `8.04` for a 4-vCPU/16-GB CPU VM on 2026-08-25. dstack 0.21.2 compares
+that raw provider number for `max_price`, so the canary profile uses an 8.50
+cap and a 20-minute maximum (roughly ₹3 at the observed rate). Recheck both
+the offer and currency before every campaign.
 
 ## Important current limits
 
@@ -103,7 +103,8 @@ dstack apply -f ops/jarvis/sitl-canary.dstack.yml
 ```
 
 The task refuses a non-x86 image, a dirty/missing ArduPilot checkout, missing
-namespace privileges, inadequate capacity, or a price above $0.10/hour. It
+namespace privileges, inadequate capacity, or a price above the pinned live
+offer cap. It
 retries capacity/interruption events only; scientific or code errors are not
 retried.
 
