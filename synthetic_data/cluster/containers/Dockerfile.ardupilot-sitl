@@ -33,6 +33,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         g++ gcc git make python3-dev ccache ethtool util-linux \
     && rm -rf /var/lib/apt/lists/*
+# ArduPilot's SITL code generator imports empy while waf is building Copter.
+# Pin the upstream-required release so a future PyPI update cannot silently
+# change the firmware source-to-binary path.
+RUN python -m pip install --no-cache-dir empy==3.3.4
 
 # --- ArduPilot pinned source -------------------------------------------------
 FROM base AS ardupilot

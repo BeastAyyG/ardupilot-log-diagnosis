@@ -39,6 +39,13 @@ def test_vm_bootstrap_requires_immutable_image_and_checks_architecture() -> None
     assert "--password-stdin" in script
 
 
+def test_sitl_container_pins_ardupilot_codegen_dependency() -> None:
+    dockerfile = (
+        ROOT / "synthetic_data" / "cluster" / "containers" / "Dockerfile.ardupilot-sitl"
+    ).read_text(encoding="utf-8")
+    assert "empy==3.3.4" in dockerfile
+
+
 def test_training_profile_does_not_waste_a_gpu() -> None:
     config = (OPS / "training-cpu.dstack.yml").read_text(encoding="utf-8")
     assert "gpu:" not in config
