@@ -1,9 +1,8 @@
 type: task
 name: logdiagnosis-sitl-canary
 
-# Replace this with the immutable linux/amd64 digest printed by the
-# Publish JarvisLabs SITL candidate image GitHub Action.
-image: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:REPLACE_WITH_64_HEX_DIGEST
+# Immutable linux/amd64 digest emitted by the verified GitHub build.
+image: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:4715d4cb0b0029bc668b3ced3843c155d74e33c2f29b40dfca9e09db7385678b
 privileged: true
 shell: bash
 
