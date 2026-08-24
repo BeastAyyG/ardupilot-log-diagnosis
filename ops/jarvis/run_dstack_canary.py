@@ -259,7 +259,9 @@ def run_canary(
     provider_instances: list[dict[str, str]] = []
     fleet_config: dict[str, Any] = {}
     task_config: dict[str, Any] = {}
-    with tempfile.TemporaryDirectory(prefix="logdiagnosis-dstack-") as temp_name:
+    with tempfile.TemporaryDirectory(
+        prefix="logdiagnosis-dstack-", ignore_cleanup_errors=True
+    ) as temp_name:
         temp = Path(temp_name)
         home = temp / "home"
         server_dir = temp / "server"
@@ -487,6 +489,7 @@ def run_canary(
                     raise
             if server_process is not None:
                 stop_process_tree(server_process)
+            shutil.rmtree(temp, ignore_errors=True)
 
 if __name__ == "__main__":
     from ops.jarvis.canary_cli import main
