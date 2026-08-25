@@ -442,8 +442,14 @@ def test_arm_and_takeoff_retries_quiet_estimator_timeout(
             return 1
 
     class Mav:
+        def __init__(self):
+            self.stream_requests = []
+
         def command_long_send(self, *_args):
             return None
+
+        def request_data_stream_send(self, *args):
+            self.stream_requests.append(args)
 
     class Master:
         target_system = 1
@@ -494,3 +500,8 @@ def test_arm_and_takeoff_retries_quiet_estimator_timeout(
 
     assert session.arm_and_takeoff(10.0, 1.0) == 12_345.0
     assert session.master.arm_attempts == 2
+    assert any(
+        request[2] == mavutil.mavlink.MAV_DATA_STREAM_POSITION
+        and request[3:] == (5, 1)
+        for request in session.master.mav.stream_requests
+    )
