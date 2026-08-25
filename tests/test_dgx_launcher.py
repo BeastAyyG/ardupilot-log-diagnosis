@@ -7,7 +7,7 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     script = (ROOT / "ops" / "dgx" / "run_first_pair.sh").read_text(
         encoding="utf-8"
     )
-    assert "sha256:c639fd24e7deb74be20a6891ee6b631a57a1ea5bce2ecb1be0b1114080a894d4" in script
+    assert "sha256:289674a4964aec99d60653701f9399e4c67576c9f7d04e1824ff9eec6b5d4ac3" in script
     assert "--privileged --network host" in script
     assert "--user 0:0" in script
     assert 'chmod 0777 "$OUTPUT_DIR"' in script
