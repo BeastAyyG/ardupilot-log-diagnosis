@@ -513,7 +513,23 @@ class PymavlinkSITLSession:
         return self._heartbeat_armed(message)
 
     def force_disarm(self, timeout: float) -> None:
-        self.master.arducopter_disarm()
+        # ArduPilot accepts param2=21196 as the explicit force-disarm value.
+        # The pymavlink convenience method sends param2=0, which can be
+        # rejected after a simulated motor-failure state even when the craft
+        # is already on the ground.
+        self.master.mav.command_long_send(
+            self.master.target_system,
+            self.master.target_component,
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            0,
+            0,
+            21196,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
         self._wait_for_armed_state(False, timeout)
 
     def close(self) -> None:

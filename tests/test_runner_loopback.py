@@ -433,6 +433,45 @@ def test_disarm_wait_accepts_explicit_motor_disarm_status() -> None:
     session._wait_for_armed_state(False, 0.1)
 
 
+def test_force_disarm_sends_ardupilot_force_magic_value() -> None:
+    class DisarmingStatus:
+        text = "Disarming motors"
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "STATUSTEXT"
+
+    calls = []
+
+    class Mav:
+        def command_long_send(self, *args):
+            calls.append(args)
+
+    class Master:
+        target_system = 1
+        target_component = 1
+        mav = Mav()
+
+        def recv_match(self, **_kwargs):
+            return DisarmingStatus()
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master()
+
+    session.force_disarm(0.1)
+
+    assert calls[0][2] == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+    assert calls[0][4] == 0
+    assert calls[0][5] == 21196
+
+
 @pytest.mark.parametrize(
     "first_error",
     [
