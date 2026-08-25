@@ -290,8 +290,27 @@ class PymavlinkSITLSession:
                 break
         if not calibration_acknowledged:
             raise TimeoutError("SITL accelerometer calibration did not complete")
-        self.master.arducopter_arm()
-        self._wait_for_armed_state(True, timeout)
+        # Calibration resets the estimator.  Require the post-calibration
+        # sensor-health gate again before attempting to arm.
+        self.wait_preflight_ready(timeout)
+        arm_deadline = time.monotonic() + timeout
+        last_arm_error: TimeoutError | None = None
+        while time.monotonic() < arm_deadline:
+            self.master.arducopter_arm()
+            try:
+                self._wait_for_armed_state(
+                    True,
+                    min(5.0, max(0.1, arm_deadline - time.monotonic())),
+                )
+                break
+            except TimeoutError as exc:
+                last_arm_error = exc
+                if "EKF3 IMU1 is using GPS" not in str(exc):
+                    raise
+        else:
+            if last_arm_error is not None:
+                raise last_arm_error
+            raise TimeoutError("SITL did not become armed")
         self.master.mav.command_long_send(
             self.master.target_system,
             self.master.target_component,
