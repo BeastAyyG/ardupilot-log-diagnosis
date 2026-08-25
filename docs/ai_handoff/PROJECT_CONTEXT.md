@@ -99,17 +99,17 @@ from the closed schema. PR #152 merged as
 `c303e7050431b3164155a5e76b6cc1300484c9dc`; the schema now requires the
 real `verified` or `permission_limited` observation.
 
-The latest retry with the `d01f80c` forced-disarm overlay was
-`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32901335151`.
-Its fault DataFlash proves the fix works: ground contact at 222.8 s at
-0.49 m/s followed by a successful `Disarming motors` event at 352.0 s. The
-pair still failed because ArduPilot's landing detector never completed (no
-`Land complete` under the residual thrust bias), so the passive post-LAND
-wait consumed its entire budget before the cleanup forced disarm fired.
-Commit `beeddc7c5bffa7d180dc59219f12a347f182788a` therefore escalates inside
-`land_and_disarm`: a bounded descent grace window, then the documented
-forced-disarm command while budget remains, with per-phase failure logging.
-No genuine two-log completed pair has yet been proven.
+The genuine paired canary finally succeeded on run
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32908475774`
+using overlay
+`sha256:ced6a0b642a24203a2212208b0f0c3883da5e555af8010a53fb939b1d99add83`.
+Both members completed with sealed pair-commit `b6ffb1ca1608bbb7...`
+(lineage `sitl-pair:ca79bd167b110398da25`), collection accepted both
+(`trainable=true`, accuracy still `not_evaluated`), and both DataFlash logs
+contain explicit `Disarming motors` events. This proves one quad
+motor-imbalance sham/intervention pair end to end; it does not prove model
+accuracy, broad coverage, or physical realism. Repeat runs toward the
+Goal-1 exit criterion (20 consecutive completed pairs) are the next step.
 
 ## Honest completion boundaries
 

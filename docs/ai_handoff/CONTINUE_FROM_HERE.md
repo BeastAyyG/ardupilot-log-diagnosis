@@ -9,26 +9,33 @@ This file is an execution handoff for another AI. Read
 
 ### Latest evidence (authoritative)
 
-- Latest ARM64 pair run:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32901335151`
+- Latest ARM64 pair run (SUCCESSFUL):
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32908475774`
 - Immutable image:
-  `sha256:85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd`
-- The earlier sham run proved heartbeat, inventory, preflight, arming,
-  takeoff, flight completion, exact DataFlash selection, logger stabilization,
-  and receipt-schema validation.
-- Run `32901335151` used the `d01f80c` forced-disarm overlay. Its fault
-  DataFlash proves ground contact at 222.8 s at 0.49 m/s and a successful
-  forced disarm (`Disarming motors`) at 352.0 s — but no `Land complete`
-  event: with `SIM_ENGINE_FAIL=1, SIM_ENGINE_MUL=0.9` the craft rests tilted
-  with residual thrust bias, ArduPilot's landing detector never completes,
-  and the passive post-LAND wait consumed its whole budget before the cleanup
-  forced disarm fired.
-- Commit `beeddc7c5bffa7d180dc59219f12a347f182788a` ("Escalate motor-failure
-  landing to forced disarm") makes `land_and_disarm` allow a bounded descent
-  grace window (half the budget, capped at 60 s), then send the documented
-  `param2=21196` forced disarm while budget remains, and log the failure mode
-  per phase. Regression tests cover both escalation and natural-disarm paths.
-  Do not weaken the completion gate or claim a successful pair yet.
+  `sha256:ced6a0b642a24203a2212208b0f0c3883da5e555af8010a53fb939b1d99add83`
+  (tag `overlay-parm-echo-fix`, build run `32908296279`)
+- Verified on the downloaded artifact:
+  - Collection accepted BOTH members (`accepted=2`, `trainable=true`,
+    `rejected=[]`); accuracy claim stays `not_evaluated`.
+  - Sealed `logdiagnosis.pair-commit/v1` (`b6ffb1ca1608bbb7...`, lineage
+    `sitl-pair:ca79bd167b110398da25`) binds both receipt SHA256 hashes;
+    independent re-hashing matches.
+  - Both receipts: `status=completed`, exit code 0, stable log, log hash and
+    size match the promoted `.BIN` files, loopback-only network namespace,
+    ArduPilot commit `1511f27194f1dcc3728270883047bdf022b3fd53`.
+  - Fault member acknowledges `SIM_ENGINE_FAIL=1.0`; sham has none.
+  - DataFlash: sham disarmed naturally at 225.2 s (2 s after touchdown);
+    fault arm landed tilted at 223.5 s and disarmed at 262.7 s via the
+    landing-grace forced disarm (`param2=21196`). Both logs contain
+    `Disarming motors`.
+- The fix chain that produced this: `d01f80c` (forced-disarm command),
+  `beeddc7` (landing-grace escalation inside `land_and_disarm`),
+  `7ae12ba` (firmware-managed parameter allowlist + promoted-log counting),
+  `ca86840` (collapse firmware PARM echoes in the attempts bound).
+- Do not weaken any gate; do not claim accuracy improvement yet.
+- Next: repeat paired runs toward the Goal-1 exit criterion of 20
+  consecutive completed pairs; investigate any new flake from its exact
+  receipt before touching code.
 
 ### Local-first policy from this point
 
