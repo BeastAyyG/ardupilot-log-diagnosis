@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pymavlink import mavutil
 
 from synthetic_data import executor
 from synthetic_data.execution_integrity import (
@@ -289,6 +290,22 @@ def test_pymavlink_arm_wait_uses_a_bounded_heartbeat_loop() -> None:
         def get_srcComponent(self):
             return 1
 
+        def get_type(self):
+            return "HEARTBEAT"
+
+    class CalibrationAck:
+        command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "COMMAND_ACK"
+
     class Mav:
         def command_long_send(self, *args):
             return None
@@ -297,6 +314,9 @@ def test_pymavlink_arm_wait_uses_a_bounded_heartbeat_loop() -> None:
         target_system = 1
         target_component = 1
         mav = Mav()
+
+        def __init__(self):
+            self._calibration_ack_pending = True
 
         def mode_mapping(self):
             return {"GUIDED": 4}
@@ -308,6 +328,9 @@ def test_pymavlink_arm_wait_uses_a_bounded_heartbeat_loop() -> None:
             return None
 
         def recv_match(self, *, type, blocking, timeout):
+            if isinstance(type, list) and self._calibration_ack_pending:
+                self._calibration_ack_pending = False
+                return CalibrationAck()
             return Message()
 
     session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)

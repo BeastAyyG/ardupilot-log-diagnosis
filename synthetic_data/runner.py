@@ -238,8 +238,9 @@ class PymavlinkSITLSession:
             raise RuntimeError("SITL does not expose GUIDED mode")
         self.master.set_mode(mode_id)
         # A fresh SITL EEPROM may require accelerometer calibration before it
-        # will accept arming.  Calibrate while the vehicle is stationary and
-        # require an accepted command when ArduPilot reports an ACK.
+        # will accept arming.  The simple (stationary) calibration is the
+        # supported path for SITL; the six-position command would wait for
+        # physical pose changes that a headless worker cannot provide.
         self.master.mav.command_long_send(
             self.master.target_system,
             self.master.target_component,
@@ -249,11 +250,12 @@ class PymavlinkSITLSession:
             0,
             0,
             0,
-            1,
+            4,
             0,
             0,
         )
-        calibration_deadline = time.monotonic() + min(5.0, max(0.1, timeout * 0.1))
+        calibration_acknowledged = False
+        calibration_deadline = time.monotonic() + min(15.0, max(2.0, timeout * 0.5))
         while time.monotonic() < calibration_deadline:
             message = self.master.recv_match(
                 type=["COMMAND_ACK", "STATUSTEXT"],
@@ -270,7 +272,10 @@ class PymavlinkSITLSession:
                 result = int(message.result)
                 if result != int(mavutil.mavlink.MAV_RESULT_ACCEPTED):
                     raise RuntimeError(f"SITL accelerometer calibration rejected: result={result}")
+                calibration_acknowledged = True
                 break
+        if not calibration_acknowledged:
+            raise TimeoutError("SITL accelerometer calibration did not complete")
         self.master.arducopter_arm()
         self._wait_for_armed_state(True, timeout)
         self.master.mav.command_long_send(
