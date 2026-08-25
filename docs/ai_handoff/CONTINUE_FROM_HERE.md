@@ -12,12 +12,13 @@ This file is an execution handoff for another AI. Read
 - Latest ARM64 pair run:
   `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32860850532`
 - Immutable image:
-  `sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`
+  `sha256:25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf`
 - The earlier sham run proved heartbeat, inventory, preflight, arming,
   takeoff, flight completion, exact DataFlash selection, logger stabilization,
   and receipt-schema validation.
-- The latest run reached landing but failed closed with:
-  `_ArmStateTimeout: SITL did not become disarmed`.
+- The latest run reached landing and wrote `Disarming motors` to DataFlash, but
+  the MAVLink observer failed closed with `_ArmStateTimeout: SITL did not
+  become disarmed`.
 - Therefore the immediate code task is bounded landing/disarm diagnosis and
   recovery. Do not claim a successful pair or any accuracy improvement yet.
 
@@ -48,12 +49,12 @@ image acquisition: roughly 20-60 minutes and several GB, depending on network
 and whether an image must be built. Native ARM VM/DGX final confirmation:
 roughly 5-15 minutes when the image is cached, or 10-30 minutes cold.
 
-- PR #152 is merged.
-- Main commit binding the parent-namespace observation in receipts:
-  `c303e7050431b3164155a5e76b6cc1300484c9dc`.
-- New ARM64 overlay build run `32860466857` succeeded.
+- PR #152 and PR #155 are merged.
+- Main commit containing exact DataFlash disarm-status acceptance:
+  `af46d3f655d011de0a9a6d04d7020672ca9062c1`.
+- New ARM64 overlay build run `32894374238` succeeded.
 - New immutable overlay digest:
-  `sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`.
+  `sha256:25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf`.
 - This branch updates every deployment/test/documentation pin to that digest.
 - The next required steps are: validate this branch, merge its pin PR, run the
   genuine pair from main, download the artifact, and verify the evidence.
@@ -71,7 +72,7 @@ rg -n "15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af" `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8" `
+rg -n "25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `

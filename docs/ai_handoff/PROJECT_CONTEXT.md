@@ -80,10 +80,10 @@ themselves, prove live hardware execution or an accuracy improvement.
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
 - Current runtime overlay built from main commit
-  `c303e7050431b3164155a5e76b6cc1300484c9dc`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`
+  `af46d3f655d011de0a9a6d04d7020672ca9062c1`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32860466857`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32894374238`
 
 ## Real ARM64 evidence so far
 
@@ -97,8 +97,10 @@ from the closed schema. PR #152 merged as
 `c303e7050431b3164155a5e76b6cc1300484c9dc`; the schema now requires the
 real `verified` or `permission_limited` observation.
 
-This is meaningful progress, but no genuine two-log completed pair has yet been
-proven at the time this file was written.
+The latest run reached landing and emitted the explicit DataFlash status
+`Disarming motors`, but the MAVLink observer did not accept that evidence.
+PR #155 merged exact-status acceptance; no genuine two-log completed pair has
+yet been proven at the time this file was written.
 
 ## Honest completion boundaries
 
