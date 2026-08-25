@@ -7,7 +7,7 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     script = (ROOT / "ops" / "dgx" / "run_first_pair.sh").read_text(
         encoding="utf-8"
     )
-    assert "sha256:8162531305811a56d3d85f15616ec4619ef520ca9a6dc8fd35bffcce52081628" in script
+    assert "sha256:f39804ccad757691a4ff709aab87016c3d69da7d9504c7e5169873bec130658d" in script
     assert "--privileged --network host" in script
     assert "python -m synthetic_data pair" in script
     assert "--confirm-sitl" in script
