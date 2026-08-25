@@ -8,6 +8,7 @@ import pytest
 from pymavlink import mavutil
 
 from synthetic_data import executor
+from synthetic_data import runner as runner_module
 from synthetic_data.execution_integrity import (
     command_sha256,
     direct_sitl_command,
@@ -365,6 +366,13 @@ def test_arm_wait_ignores_informational_status_text_but_keeps_prearm_reason() ->
     class PreArmStatus(InformationalStatus):
         text = "PreArm: 3D Accel calibration needed"
 
+    class FailedArmAck(InformationalStatus):
+        command = mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+        result = mavutil.mavlink.MAV_RESULT_FAILED
+
+        def get_type(self):
+            return "COMMAND_ACK"
+
     class ArmedHeartbeat:
         base_mode = mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
 
@@ -394,12 +402,21 @@ def test_arm_wait_ignores_informational_status_text_but_keeps_prearm_reason() ->
 
     session._wait_for_armed_state(True, 0.1)
 
-    session.master = Master([PreArmStatus()])
+    session.master = Master([PreArmStatus(), FailedArmAck()])
     with pytest.raises(TimeoutError, match="PreArm: 3D Accel calibration needed"):
         session._wait_for_armed_state(True, 0.01)
 
 
-def test_arm_and_takeoff_retries_quiet_estimator_timeout(monkeypatch) -> None:
+@pytest.mark.parametrize(
+    "first_error",
+    [
+        "SITL did not become armed",
+        f"SITL did not become armed: COMMAND_ACK result={mavutil.mavlink.MAV_RESULT_FAILED}",
+    ],
+)
+def test_arm_and_takeoff_retries_quiet_estimator_timeout(
+    monkeypatch, first_error
+) -> None:
     class CalibrationAck:
         command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         result = mavutil.mavlink.MAV_RESULT_ACCEPTED
@@ -454,7 +471,15 @@ def test_arm_and_takeoff_retries_quiet_estimator_timeout(monkeypatch) -> None:
     session._source_component = 1
     session.master = Master()
     monkeypatch.setattr(session, "wait_preflight_ready", lambda _timeout: None)
-    arm_waits = iter([TimeoutError("SITL did not become armed"), None])
+    first_timeout = runner_module._ArmStateTimeout(
+        first_error,
+        ack_result=(
+            mavutil.mavlink.MAV_RESULT_FAILED
+            if "COMMAND_ACK" in first_error
+            else None
+        ),
+    )
+    arm_waits = iter([first_timeout, None])
 
     def wait_for_armed(_expected, _timeout):
         failure = next(arm_waits)
