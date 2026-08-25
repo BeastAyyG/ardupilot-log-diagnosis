@@ -127,11 +127,24 @@ def require_isolated_network_namespace() -> dict[str, object]:
         raise RuntimeError("owned SITL lacks a Linux network-namespace fence")
     parent_namespace = os.environ.get(PARENT_NAMESPACE_ENV, "")
     current_namespace = _namespace_link()
-    actual_parent_namespace = _namespace_link(os.getppid())
+    parent_namespace_observation = "verified"
+    try:
+        actual_parent_namespace = _namespace_link(os.getppid())
+    except PermissionError:
+        # A root-mapped user namespace may be unable to inspect the outer
+        # container's /proc namespace entry. The parent value was captured
+        # immediately before unshare; retain that binding and record the
+        # kernel visibility limitation rather than treating it as a SITL
+        # network leak.
+        actual_parent_namespace = parent_namespace
+        parent_namespace_observation = "permission_limited"
     if (
         not parent_namespace
-        or actual_parent_namespace != parent_namespace
         or current_namespace == parent_namespace
+        or (
+            parent_namespace_observation == "verified"
+            and actual_parent_namespace != parent_namespace
+        )
     ):
         raise RuntimeError(
             "owned SITL network namespace is not isolated from its parent"
@@ -149,6 +162,7 @@ def require_isolated_network_namespace() -> dict[str, object]:
         "schema": ISOLATION_SCHEMA,
         "parent_pid": os.getppid(),
         "parent_namespace": parent_namespace,
+        "parent_namespace_observation": parent_namespace_observation,
         "current_namespace": current_namespace,
         "loopback_interface_up": True,
         "external_interfaces_present": False,

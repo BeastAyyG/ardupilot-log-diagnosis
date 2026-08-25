@@ -103,6 +103,31 @@ def test_live_child_namespace_proof_is_bound_to_actual_parent(monkeypatch) -> No
     assert proof["interfaces"] == ["lo"]
 
 
+def test_permission_limited_parent_namespace_is_recorded(monkeypatch) -> None:
+    monkeypatch.setattr(network_isolation.platform, "system", lambda: "Linux")
+    monkeypatch.setenv(network_isolation.CHILD_ENV, "1")
+    monkeypatch.setenv(network_isolation.PARENT_NAMESPACE_ENV, "net:[100]")
+    monkeypatch.setenv(network_isolation.UNSHARE_SHA256_ENV, "a" * 64)
+    monkeypatch.setattr(network_isolation.os, "getppid", lambda: 4321)
+
+    def namespace_link(pid="self"):
+        if pid == "self":
+            return "net:[101]"
+        raise PermissionError("proc namespace hidden by user namespace")
+
+    monkeypatch.setattr(network_isolation, "_namespace_link", namespace_link)
+    monkeypatch.setattr(
+        network_isolation, "_unshare_binary", lambda: "/usr/bin/unshare"
+    )
+    monkeypatch.setattr(network_isolation, "_sha256_file", lambda _path: "a" * 64)
+    monkeypatch.setattr(network_isolation, "_interface_names", lambda: ["lo"])
+    monkeypatch.setattr(network_isolation, "_loopback_is_up", lambda: True)
+
+    proof = network_isolation.require_isolated_network_namespace()
+
+    assert proof["parent_namespace_observation"] == "permission_limited"
+
+
 def test_same_or_spoofed_parent_namespace_fails_closed(monkeypatch) -> None:
     monkeypatch.setattr(network_isolation.platform, "system", lambda: "Linux")
     monkeypatch.setenv(network_isolation.CHILD_ENV, "1")
