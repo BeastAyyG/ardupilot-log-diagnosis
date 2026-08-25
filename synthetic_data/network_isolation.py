@@ -156,15 +156,19 @@ def require_isolated_network_namespace() -> dict[str, object]:
             "network-namespace launcher hash differs from its parent proof"
         )
     interfaces = _interface_names()
-    if interfaces != ["lo"] or not _loopback_is_up():
-        raise RuntimeError("isolated network namespace is not loopback-only and active")
+    loopback_up = _loopback_is_up()
+    if interfaces != ["lo"] or not loopback_up:
+        raise RuntimeError(
+            "isolated network namespace is not loopback-only and active: "
+            f"interfaces={interfaces!r}, loopback_up={loopback_up!r}"
+        )
     return {
         "schema": ISOLATION_SCHEMA,
         "parent_pid": os.getppid(),
         "parent_namespace": parent_namespace,
         "parent_namespace_observation": parent_namespace_observation,
         "current_namespace": current_namespace,
-        "loopback_interface_up": True,
+        "loopback_interface_up": loopback_up,
         "external_interfaces_present": False,
         "interfaces": interfaces,
         "unshare_binary": unshare,
