@@ -10,17 +10,20 @@ This file is an execution handoff for another AI. Read
 ### Latest evidence (authoritative)
 
 - Latest ARM64 pair run:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32896227226`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32897998370`
 - Immutable image:
-  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`
+  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`
 - The earlier sham run proved heartbeat, inventory, preflight, arming,
   takeoff, flight completion, exact DataFlash selection, logger stabilization,
   and receipt-schema validation.
-- The latest retry used the disarm-aware image, but the fault arm selected
-  `SIM_ENGINE_MUL=0.35`, hit the ground at about 8 m/s, and remained armed;
-  its DataFlash contained no `Disarming motors` event. The observer therefore
-  failed closed correctly. The canary range is now bounded to 0.7/0.8/0.9;
-  do not weaken the completion gate or claim a successful pair yet.
+- Run `32897998370` used the recoverable canary (`SIM_ENGINE_MUL=0.9`), landed
+  gently at about 0.48 m/s, but stayed armed: the runner called pymavlink's
+  ordinary disarm helper, which sends `param1=0, param2=0`. ArduPilot requires
+  `param2=21196` for a forced disarm. The fault arm was quarantined correctly.
+- Commit `d01f80cf679260298429e5c1e306e9b798588302` ("Force disarm
+  motor-failure SITL runs") now sends `MAV_CMD_COMPONENT_ARM_DISARM` with
+  `param1=0, param2=21196`; `tests/test_runner_loopback.py` verifies the exact
+  command. Do not weaken the completion gate or claim a successful pair yet.
 
 ### Local-first policy from this point
 
@@ -53,12 +56,15 @@ roughly 5-15 minutes when the image is cached, or 10-30 minutes cold.
 - Main commit containing exact DataFlash disarm-status acceptance:
   `af46d3f655d011de0a9a6d04d7020672ca9062c1`; candidate canary commit:
   `c4098e29fa64bd5d16916a01f122784b59490790`.
-- New ARM64 overlay build run `32897590440` succeeded.
+- Overlay build run `32900739715` succeeded; it layers the forced-disarm code
+  from `d01f80cf679260298429e5c1e306e9b798588302` over the qualified
+  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`
+  runtime (tag `overlay-d01f80c-force-disarm`).
 - New immutable overlay digest:
-  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`.
+  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`.
 - This branch updates every deployment/test/documentation pin to that digest.
-- The next required steps are: validate this branch, merge its pin PR, run the
-  genuine pair from main, download the artifact, and verify the evidence.
+- The next required steps are: validate this branch, run the genuine pair from
+  this branch, download the artifact, and verify the evidence.
 
 ## Validate the digest-pin branch
 
@@ -66,14 +72,14 @@ Confirm the old overlay digest is absent from deployment surfaces and the new
 digest occurs in all five surfaces:
 
 ```powershell
-rg -n "15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af" `
+rg -n "8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310" `
+rg -n "836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
@@ -105,12 +111,13 @@ check, merge, and record the merge SHA.
 
 ## Run the genuine pair
 
-Only after the pin PR is merged to main:
+Dispatch from this branch once validation passes (merging the pin PR to
+`main` first is still preferred for a final confirmation run):
 
 ```powershell
 gh workflow run run-arm64-first-pair.yml `
   --repo BeastAyyG/ardupilot-log-diagnosis `
-  --ref main `
+  --ref codex/pin-disarm-status-image `
   -f scenario=motor_imbalance `
   -f frame=quad `
   -f seed=20260840
@@ -122,7 +129,7 @@ Find and watch the new run:
 gh run list `
   --repo BeastAyyG/ardupilot-log-diagnosis `
   --workflow run-arm64-first-pair.yml `
-  --branch main --limit 1
+  --branch codex/pin-disarm-status-image --limit 1
 
 gh run watch RUN_ID `
   --repo BeastAyyG/ardupilot-log-diagnosis `
