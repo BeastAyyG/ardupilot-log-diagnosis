@@ -2,7 +2,7 @@
 # Pull and run the pinned DGX Spark image through one verified first pair.
 set -Eeuo pipefail
 
-readonly DEFAULT_IMAGE="ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:6685a2fa202e022e68e382b14c7bd9c9b7034ba0e2b58ab22774d507875622ee"
+readonly DEFAULT_IMAGE="ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:cb79292ce03af857ccb62508c50745901dae79742be5adc9dfc055e945bc0ee8"
 readonly IMAGE="${SITL_IMAGE:-$DEFAULT_IMAGE}"
 readonly OUTPUT_DIR="${PAIR_OUTPUT_DIR:-/home/cloud/logdiagnosis/first-pair}"
 readonly SCENARIO="${PAIR_SCENARIO:-motor_imbalance}"
