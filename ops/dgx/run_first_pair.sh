@@ -28,6 +28,7 @@ docker info >/dev/null 2>&1 || fail "docker daemon is unavailable"
 mkdir -p "$OUTPUT_DIR"
 docker pull "$IMAGE"
 docker run --rm --privileged --network host \
+  --user "$(id -u):$(id -g)" \
   --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
   "$IMAGE" \
   python -m synthetic_data pair \
