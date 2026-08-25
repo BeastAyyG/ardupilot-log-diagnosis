@@ -52,6 +52,30 @@ def test_execute_reexecs_inside_fresh_user_network_namespace(monkeypatch) -> Non
     assert captured["kwargs"]["shell"] is False
 
 
+def test_pair_reexecs_inside_fresh_user_network_namespace(monkeypatch) -> None:
+    captured = {}
+    monkeypatch.setattr(network_isolation.platform, "system", lambda: "Linux")
+    monkeypatch.delenv(network_isolation.CHILD_ENV, raising=False)
+    monkeypatch.setattr(
+        network_isolation, "_unshare_binary", lambda: "/usr/bin/unshare"
+    )
+    monkeypatch.setattr(
+        network_isolation, "_namespace_link", lambda _pid="self": "net:[100]"
+    )
+    monkeypatch.setattr(network_isolation, "_sha256_file", lambda _path: "a" * 64)
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(network_isolation.subprocess, "run", fake_run)
+
+    result = network_isolation.maybe_reexec_isolated(["pair", "--output-dir", "/out"])
+
+    assert result == 0
+    assert captured["command"][-3:] == ["pair", "--output-dir", "/out"]
+
+
 def test_live_child_namespace_proof_is_bound_to_actual_parent(monkeypatch) -> None:
     monkeypatch.setattr(network_isolation.platform, "system", lambda: "Linux")
     monkeypatch.setenv(network_isolation.CHILD_ENV, "1")
