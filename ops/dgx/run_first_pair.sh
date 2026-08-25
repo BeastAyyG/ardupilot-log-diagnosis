@@ -9,6 +9,8 @@ readonly SCENARIO="${PAIR_SCENARIO:-motor_imbalance}"
 readonly FRAME="${PAIR_FRAME:-quad}"
 readonly SEED="${PAIR_SEED:-20260823}"
 readonly TIMEOUT="${PAIR_TIMEOUT:-120}"
+readonly HOST_UID="$(id -u)"
+readonly HOST_GID="$(id -g)"
 
 fail() {
   printf 'first-pair launcher: %s\n' "$1" >&2
@@ -28,18 +30,29 @@ docker info >/dev/null 2>&1 || fail "docker daemon is unavailable"
 mkdir -p "$OUTPUT_DIR"
 docker pull "$IMAGE"
 docker run --rm --privileged --network host \
-  --user "$(id -u):$(id -g)" \
+  --user 0:0 \
+  --env HOST_UID="$HOST_UID" \
+  --env HOST_GID="$HOST_GID" \
+  --env PAIR_SCENARIO="$SCENARIO" \
+  --env PAIR_FRAME="$FRAME" \
+  --env PAIR_SEED="$SEED" \
+  --env PAIR_TIMEOUT="$TIMEOUT" \
   --mount "type=bind,src=$OUTPUT_DIR,dst=/output" \
   "$IMAGE" \
-  python -m synthetic_data pair \
-    --output-dir /output \
-    --binary /opt/ardupilot/build/sitl/bin/arducopter \
-    --ardupilot-root /opt/ardupilot \
-    --scenario "$SCENARIO" \
-    --frame "$FRAME" \
-    --seed "$SEED" \
-    --timeout "$TIMEOUT" \
-    --confirm-sitl
+  /bin/sh -c '
+    python -m synthetic_data pair \
+      --output-dir /output \
+      --binary /opt/ardupilot/build/sitl/bin/arducopter \
+      --ardupilot-root /opt/ardupilot \
+      --scenario "$PAIR_SCENARIO" \
+      --frame "$PAIR_FRAME" \
+      --seed "$PAIR_SEED" \
+      --timeout "$PAIR_TIMEOUT" \
+      --confirm-sitl
+    status=$?
+    chown -R "$HOST_UID:$HOST_GID" /output 2>/dev/null || true
+    exit "$status"
+  '
 
 commit_count=$(find "$OUTPUT_DIR/commits" -maxdepth 1 -type f -name '*.json' 2>/dev/null | wc -l)
 receipt_count=$(find "$OUTPUT_DIR/receipts" -type f -name '*.json' 2>/dev/null | wc -l)

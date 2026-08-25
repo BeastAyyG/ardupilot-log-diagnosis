@@ -9,7 +9,8 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     )
     assert "sha256:f39804ccad757691a4ff709aab87016c3d69da7d9504c7e5169873bec130658d" in script
     assert "--privileged --network host" in script
-    assert '--user "$(id -u):$(id -g)"' in script
+    assert "--user 0:0" in script
+    assert 'chown -R "$HOST_UID:$HOST_GID" /output' in script
     assert "python -m synthetic_data pair" in script
     assert "--confirm-sitl" in script
     assert '[[ "$commit_count" -eq 1 ]]' in script
