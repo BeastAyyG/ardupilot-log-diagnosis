@@ -20,7 +20,7 @@ permissions:
   packages: read
 
 env:
-  SITL_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:03c384128c7dc7e544f20e9ffb6e8629d53e82c213d18d22680507ee6d626669
+  SITL_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:3c017017e8875a60f1ae88c33200a6f0a67516443230473bbc3502e8daae0802
 
 jobs:
   first-pair:
