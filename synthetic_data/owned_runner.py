@@ -337,6 +337,24 @@ class OwnedSITLProcess:
             time.sleep(0.75)
         return len(set(sizes)) == 1 and sizes[0] > 0, sizes[-1]
 
+    def _wait_stable(
+        self, path: Path, *, timeout: float, require_alive: bool
+    ) -> tuple[bool, int]:
+        # One stability window is three seconds. Logger flushing after disarm
+        # can legitimately cross that first window, so retry a bounded number
+        # of complete windows while still requiring the owned process to live.
+        attempts = max(1, int(float(timeout) / 3.0))
+        size = 0
+        for _ in range(attempts):
+            stable, size = self._stable(path, require_alive=require_alive)
+            if stable:
+                return True, size
+            if require_alive and (
+                self.process is None or self.process.poll() is not None
+            ):
+                break
+        return False, size
+
     def finalize_log(self, timeout: float) -> tuple[Path, dict[str, Any]]:
         log_dir = self.run_dir / "logs"
         logs = sorted(
@@ -352,7 +370,9 @@ class OwnedSITLProcess:
             )
         # LOG_FILE_DSRMROT is serviced asynchronously. Keep SITL alive for more
         # than two logger ticks and require a stable file before fencing it.
-        stable_before_shutdown, _ = self._stable(logs[0], require_alive=True)
+        stable_before_shutdown, _ = self._wait_stable(
+            logs[0], timeout=timeout, require_alive=True
+        )
         if not stable_before_shutdown:
             raise RuntimeError("DataFlash log did not stabilize while SITL was alive")
         shutdown = self._stop(timeout)
