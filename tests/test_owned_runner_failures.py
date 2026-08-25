@@ -30,13 +30,15 @@ def _owner(tmp_path: Path, process: _Process) -> OwnedSITLProcess:
     owner.command = ["arducopter"]
     owner.source_attestation = {}
     owner.runtime_attestation = {}
+    owner.network_attestation = {}
     owner.parameter_file_sha256 = "a" * 64
     owner.started_at = "2026-08-23T00:00:00+00:00"
     return owner
 
 
 def test_early_sitl_exit_blocks_log_finalization(tmp_path) -> None:
-    log = tmp_path / "flight.BIN"
+    log = tmp_path / "logs" / "00000001.BIN"
+    log.parent.mkdir()
     log.write_bytes(b"partial-dataflash")
     owner = _owner(tmp_path, _Process(returncode=7))
 
@@ -49,7 +51,8 @@ def test_early_sitl_exit_blocks_log_finalization(tmp_path) -> None:
 def test_logger_that_keeps_changing_never_reaches_pre_shutdown_gate(
     tmp_path, monkeypatch
 ) -> None:
-    log = tmp_path / "flight.BIN"
+    log = tmp_path / "logs" / "00000001.BIN"
+    log.parent.mkdir()
     log.write_bytes(b"0")
     owner = _owner(tmp_path, _Process())
 
@@ -63,6 +66,33 @@ def test_logger_that_keeps_changing_never_reaches_pre_shutdown_gate(
         owner.finalize_log(1.0)
 
     assert log.stat().st_size > 1
+
+
+def test_finalize_ignores_owned_eeprom_bin(tmp_path, monkeypatch) -> None:
+    log = tmp_path / "logs" / "00000001.BIN"
+    log.parent.mkdir()
+    log.write_bytes(b"dataflash")
+    (tmp_path / "eeprom.bin").write_bytes(b"persistent-parameters")
+    owner = _owner(tmp_path, _Process())
+    monkeypatch.setattr(owner, "_stable", lambda _path, require_alive: (True, 9))
+    monkeypatch.setattr(
+        owner,
+        "_stop",
+        lambda _timeout: {
+            "owned_process": True,
+            "process_exit_code": 0,
+            "process_terminated": True,
+            "process_tree_terminated": True,
+            "shutdown_method": "posix_process_group_sigterm",
+            "alive_before_shutdown": True,
+            "shutdown_escalated": False,
+        },
+    )
+
+    selected, attestation = owner.finalize_log(1.0)
+
+    assert selected == log
+    assert attestation["new_log_count"] == 1
 
 
 def test_posix_stop_records_sigkill_escalation_and_cannot_look_clean(
