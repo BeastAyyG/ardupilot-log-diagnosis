@@ -361,8 +361,10 @@ class PymavlinkSITLSession:
                     int(mavutil.mavlink.MAV_RESULT_FAILED),
                 }
                 ack_result = getattr(exc, "ack_result", None)
+                prearm_reason = getattr(exc, "prearm_reason", None)
+                retryable_prearm_reasons = {"PreArm: Need Position Estimate"}
                 if (
-                    getattr(exc, "prearm_reason", None)
+                    (prearm_reason and prearm_reason not in retryable_prearm_reasons)
                     or getattr(exc, "command_in_progress", False)
                     or (ack_result is not None and ack_result not in retryable_ack_results)
                 ):
