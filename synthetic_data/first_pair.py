@@ -76,8 +76,14 @@ def capture_schema(
     with tempfile.TemporaryDirectory(prefix="synthetic-inventory-") as temp_name:
         root = Path(temp_name)
         (root / "params").mkdir()
-        (root / "params" / "inventory-capture.parm").write_text("", encoding="utf-8")
         plan = _bootstrap_plan(commit, binary_digest, frame)
+        (root / "params" / "inventory-capture.parm").write_text(
+            "".join(
+                f"{name}={float(value):.12g}\n"
+                for name, value in plan["startup_parameters"].items()
+            ),
+            encoding="utf-8",
+        )
         owner = OwnedSITLProcess(
             experiment_dir=root,
             plan=plan,
