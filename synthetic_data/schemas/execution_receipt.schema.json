@@ -190,6 +190,7 @@
             "schema",
             "parent_pid",
             "parent_namespace",
+            "parent_namespace_observation",
             "current_namespace",
             "loopback_interface_up",
             "external_interfaces_present",
@@ -201,6 +202,9 @@
             "schema": {"const": "linux_user_network_namespace_loopback_only/v1"},
             "parent_pid": {"type": "integer", "minimum": 1},
             "parent_namespace": {"type": "string", "pattern": "^net:\\[[0-9]+\\]$"},
+            "parent_namespace_observation": {
+              "enum": ["verified", "permission_limited"]
+            },
             "current_namespace": {"type": "string", "pattern": "^net:\\[[0-9]+\\]$"},
             "loopback_interface_up": {"const": true},
             "external_interfaces_present": {"const": false},
