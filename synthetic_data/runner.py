@@ -199,6 +199,17 @@ class PymavlinkSITLSession:
             int(message.base_mode) & int(mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED)
         )
 
+    @staticmethod
+    def _is_arm_rejection_status(text: str) -> bool:
+        """Return whether a status message is an actual arming denial.
+
+        ArduPilot emits normal discovery and estimator messages while an arm
+        request is pending (for example ``GPS 1: detected u-blox``).  Only its
+        explicit PreArm status is evidence that the request was rejected.
+        """
+
+        return text.lstrip().lower().startswith("prearm:")
+
     def _wait_for_armed_state(self, expected: bool, timeout: float) -> None:
         """Wait with an explicit deadline; pymavlink's convenience waits have none."""
 
@@ -217,11 +228,12 @@ class PymavlinkSITLSession:
             if message_type == "COMMAND_ACK":
                 result = int(message.result)
                 accepted = int(mavutil.mavlink.MAV_RESULT_ACCEPTED)
-                if result != accepted:
+                arm_command = int(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM)
+                if int(getattr(message, "command", -1)) == arm_command and result != accepted:
                     arm_rejection = f"COMMAND_ACK result={result}"
             elif message_type == "STATUSTEXT":
                 text = str(getattr(message, "text", "")).strip()
-                if text:
+                if self._is_arm_rejection_status(text):
                     arm_rejection = text
             elif self._heartbeat_armed(message) is expected:
                 return
@@ -305,7 +317,9 @@ class PymavlinkSITLSession:
                 break
             except TimeoutError as exc:
                 last_arm_error = exc
-                if "EKF3 IMU1 is using GPS" not in str(exc):
+                # Retry quiet estimator/GPS transitions, but fail immediately
+                # for an explicit vehicle-side refusal.
+                if "PreArm:" in str(exc) or "COMMAND_ACK result=" in str(exc):
                     raise
         else:
             if last_arm_error is not None:

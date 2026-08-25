@@ -347,3 +347,121 @@ def test_pymavlink_arm_wait_uses_a_bounded_heartbeat_loop() -> None:
     session._source_component = 1
 
     assert session.arm_and_takeoff(10.0, 1.0) == 12_345.0
+
+
+def test_arm_wait_ignores_informational_status_text_but_keeps_prearm_reason() -> None:
+    class InformationalStatus:
+        text = "GPS 1: detected u-blox"
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "STATUSTEXT"
+
+    class PreArmStatus(InformationalStatus):
+        text = "PreArm: 3D Accel calibration needed"
+
+    class ArmedHeartbeat:
+        base_mode = mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "HEARTBEAT"
+
+    class Master:
+        target_system = 1
+        target_component = 1
+
+        def __init__(self, messages):
+            self._messages = iter(messages)
+
+        def recv_match(self, **_kwargs):
+            return next(self._messages, None)
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master([InformationalStatus(), ArmedHeartbeat()])
+
+    session._wait_for_armed_state(True, 0.1)
+
+    session.master = Master([PreArmStatus()])
+    with pytest.raises(TimeoutError, match="PreArm: 3D Accel calibration needed"):
+        session._wait_for_armed_state(True, 0.01)
+
+
+def test_arm_and_takeoff_retries_quiet_estimator_timeout(monkeypatch) -> None:
+    class CalibrationAck:
+        command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
+        result = mavutil.mavlink.MAV_RESULT_ACCEPTED
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "COMMAND_ACK"
+
+    class Position:
+        relative_alt = 9_000
+        time_boot_ms = 12_345
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+    class Mav:
+        def command_long_send(self, *_args):
+            return None
+
+    class Master:
+        target_system = 1
+        target_component = 1
+        mav = Mav()
+
+        def __init__(self):
+            self.arm_attempts = 0
+
+        def mode_mapping(self):
+            return {"GUIDED": 4}
+
+        def set_mode(self, _mode):
+            return None
+
+        def arducopter_arm(self):
+            self.arm_attempts += 1
+
+        def recv_match(self, *, type, **_kwargs):
+            if isinstance(type, list):
+                return CalibrationAck()
+            return Position()
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master()
+    monkeypatch.setattr(session, "wait_preflight_ready", lambda _timeout: None)
+    arm_waits = iter([TimeoutError("SITL did not become armed"), None])
+
+    def wait_for_armed(_expected, _timeout):
+        failure = next(arm_waits)
+        if failure is not None:
+            raise failure
+
+    monkeypatch.setattr(session, "_wait_for_armed_state", wait_for_armed)
+
+    assert session.arm_and_takeoff(10.0, 1.0) == 12_345.0
+    assert session.master.arm_attempts == 2
