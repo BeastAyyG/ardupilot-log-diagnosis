@@ -8,6 +8,7 @@ import pytest
 from synthetic_data import collector
 from synthetic_data.collector import VerificationError
 from synthetic_data.collector_checks import RECEIPT_SCHEMA
+from synthetic_data.dataflash_checks import verify_parameter_contract
 from synthetic_data.execution_integrity import (
     SUPPORTED_PYMAVLINK_VERSION,
     command_sha256,
@@ -15,6 +16,7 @@ from synthetic_data.execution_integrity import (
     source_snapshot_sha256,
 )
 from synthetic_data.planner import (
+    FIRMWARE_MANAGED_PARAMETER_CHANGES,
     build_paired_run_plans,
     build_run_plans,
     write_experiment,
@@ -53,6 +55,52 @@ def _schema(*extra: str) -> ParameterSchema:
         parameters=parameters,
         source_name="parameters.parm",
     )
+
+
+def test_plans_allow_only_firmware_managed_automatic_changes() -> None:
+    plans = build_run_plans(
+        2,
+        seed=20260840,
+        ardupilot_revision=COMMIT,
+        scenarios=["healthy", "motor_imbalance"],
+    )
+
+    assert plans, "expected at least one plan"
+    for plan in plans:
+        assert plan["allowed_automatic_parameter_changes"] == list(
+            FIRMWARE_MANAGED_PARAMETER_CHANGES
+        )
+
+
+def test_parameter_contract_accepts_firmware_and_rejects_unplanned_changes() -> None:
+    plan = {
+        "frame": "quad",
+        "startup_parameters": {},
+        "motor_output_parameters": {},
+        "injection_parameters": {},
+        "allowed_automatic_parameter_changes": list(
+            FIRMWARE_MANAGED_PARAMETER_CHANGES
+        ),
+    }
+    parsed = {
+        "parameters": {"FRAME_CLASS": 1.0},
+        "parameter_changes": [
+            {"name": "MOT_THST_HOVER"},
+            {"name": "STAT_RUNTIME"},
+            {"name": "BARO1_GND_PRESS"},
+        ],
+    }
+
+    summary = verify_parameter_contract(parsed, plan)
+
+    assert summary["unexpected_sim_parameter_changes"] == []
+
+    tampered = {
+        **parsed,
+        "parameter_changes": [*parsed["parameter_changes"], {"name": "RTL_ALT"}],
+    }
+    with pytest.raises(VerificationError, match="unexpected in-flight"):
+        verify_parameter_contract(tampered, plan)
 
 
 def test_run_plans_are_deterministic_and_order_independent() -> None:

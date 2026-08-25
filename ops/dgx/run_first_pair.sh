@@ -57,7 +57,7 @@ docker run --rm --privileged --network host \
 
 commit_count=$(find "$OUTPUT_DIR/commits" -maxdepth 1 -type f -name '*.json' 2>/dev/null | wc -l)
 receipt_count=$(find "$OUTPUT_DIR/receipts" -type f -name '*.json' 2>/dev/null | wc -l)
-bin_count=$(find "$OUTPUT_DIR" -type f -iname '*.bin' 2>/dev/null | wc -l)
+bin_count=$(find "$OUTPUT_DIR/logs" -maxdepth 1 -type f -iname '*.bin' 2>/dev/null | wc -l)
 [[ "$commit_count" -eq 1 ]] || fail "expected exactly one pair commit, found $commit_count"
 [[ "$receipt_count" -ge 2 ]] || fail "expected at least two execution receipts, found $receipt_count"
 [[ "$bin_count" -eq 2 ]] || fail "expected exactly two SITL BIN logs, found $bin_count"

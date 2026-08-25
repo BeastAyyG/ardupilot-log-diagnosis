@@ -20,6 +20,23 @@ MANIFEST_SCHEMA = "logdiagnosis.sitl-experiment/v3"
 SOURCE_TYPE = "sitl"
 LABEL_ORIGIN = "verified_controlled_sitl_intervention"
 SAFE_RUN_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,95}$")
+# ArduPilot persists these parameters by itself on every genuine flight:
+# ground pressure at arming (BARO*_GND_PRESS), mission totals when the
+# mission is loaded (MIS_TOTAL), in-flight hover-thrust learning
+# (MOT_THST_HOVER, observed in run 32903900341), and flight statistics
+# saved at disarm (STAT_*). They are firmware bookkeeping rather than
+# external tampering; every other in-flight parameter change still fails
+# the collection gate.
+FIRMWARE_MANAGED_PARAMETER_CHANGES = (
+    "BARO1_GND_PRESS",
+    "BARO2_GND_PRESS",
+    "MIS_TOTAL",
+    "MOT_THST_HOVER",
+    "STAT_DISTFLWN",
+    "STAT_FLTCNT",
+    "STAT_FLTTIME",
+    "STAT_RUNTIME",
+)
 FRAME_MOTOR_MASKS: Mapping[str, tuple[int, ...]] = {
     "quad": (1, 2, 4, 8),
     "hexa": (1, 2, 4, 8, 16, 32),
@@ -287,7 +304,9 @@ def _single_plan(
         "control_startup_policy": variant.control_startup_policy,
         "injection_parameters": dict(sorted(injection.items())),
         "injection_baseline_parameters": dict(sorted(injection_baselines.items())),
-        "allowed_automatic_parameter_changes": [],
+        "allowed_automatic_parameter_changes": list(
+            FIRMWARE_MANAGED_PARAMETER_CHANGES
+        ),
         "motor_output_parameters": dict(sorted(motor_output_parameters.items())),
         "severity_quantile": severity_quantile,
         "startup_severity_quantile": startup_quantile,

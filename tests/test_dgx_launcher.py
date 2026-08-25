@@ -17,6 +17,10 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     assert '[[ "$commit_count" -eq 1 ]]' in script
     assert '[[ "$receipt_count" -ge 2 ]]' in script
     assert '[[ "$bin_count" -eq 2 ]]' in script
+    # Only the promoted pair under logs/ counts; owned_runs working mirrors
+    # and eeprom dumps must never inflate the count again.
+    assert 'find "$OUTPUT_DIR/logs" -maxdepth 1 -type f -iname' in script
+    assert '*.bin' in script
 
 
 def test_dgx_launcher_does_not_accept_a_mutable_image_tag() -> None:
