@@ -80,22 +80,22 @@ themselves, prove live hardware execution or an accuracy improvement.
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
 - Current runtime overlay built from main commit
-  `02f2d16b8440b129e7f8c54a600d19140d5f58eb`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:47f257c56959959be9a2951d85b8ecb39fb7a958cf24c7e21daa62413957be7b`
+  `6c92d01aa762f5b8a9dd4530d892e816137639de`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:dfa0468382e68806e40e9fb76ee6795cf430f96725e658e62df14f8cbb601480`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32832574649`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32850703198`
 
 ## Real ARM64 evidence so far
 
 The latest genuine run before this overlay was:
 
-`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32831540854`
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32833830111`
 
-It pulled the prior immutable overlay and reached a genuine
-`PreArm: Need Position Estimate` readiness state. PR #144 merged as
-`02f2d16b8440b129e7f8c54a600d19140d5f58eb`; it retries only that exact
-transient reason within the existing arm deadline. All other PreArm failures
-remain terminal.
+Its DataFlash log proves the sham vehicle armed and reached 10.0 m, but the
+controller timed out because the pinned inventory suppressed unsolicited
+`GLOBAL_POSITION_INT` telemetry. PR #146 merged as
+`6c92d01aa762f5b8a9dd4530d892e816137639de`; it explicitly requests the
+position stream before takeoff confirmation.
 
 This is meaningful progress, but no genuine two-log completed pair has yet been
 proven at the time this file was written.
