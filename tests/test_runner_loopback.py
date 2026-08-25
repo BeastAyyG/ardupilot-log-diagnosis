@@ -412,6 +412,7 @@ def test_arm_wait_ignores_informational_status_text_but_keeps_prearm_reason() ->
     [
         "SITL did not become armed",
         f"SITL did not become armed: COMMAND_ACK result={mavutil.mavlink.MAV_RESULT_FAILED}",
+        "SITL did not become armed: PreArm: Need Position Estimate",
     ],
 )
 def test_arm_and_takeoff_retries_quiet_estimator_timeout(
@@ -477,6 +478,9 @@ def test_arm_and_takeoff_retries_quiet_estimator_timeout(
             mavutil.mavlink.MAV_RESULT_FAILED
             if "COMMAND_ACK" in first_error
             else None
+        ),
+        prearm_reason=(
+            "PreArm: Need Position Estimate" if "Need Position Estimate" in first_error else None
         ),
     )
     arm_waits = iter([first_timeout, None])
