@@ -132,6 +132,13 @@ def _wait_fleet(
         instances = payload.get("instances")
         if status in {"failed", "terminated"}:
             raise CanaryError(f"fleet {fleet} entered terminal state: {status}")
+        if isinstance(instances, list) and instances and all(
+            isinstance(item, dict)
+            and str(item.get("status", "")).lower()
+            in {"failed", "terminated", "error"}
+            for item in instances
+        ):
+            raise CanaryError(f"fleet {fleet} has no viable instance")
         ready = (
             isinstance(instances, list)
             and bool(instances)
