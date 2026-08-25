@@ -14,6 +14,23 @@ from .execution_integrity import float32_equal, runtime_identity
 FRAME_CLASSES = {"quad": 1.0, "hexa": 2.0, "octa": 3.0}
 
 
+class _ArmStateTimeout(TimeoutError):
+    """Structured arming timeout used to preserve vehicle-side diagnostics."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        ack_result: int | None = None,
+        prearm_reason: str | None = None,
+        command_in_progress: bool = False,
+    ) -> None:
+        super().__init__(message)
+        self.ack_result = ack_result
+        self.prearm_reason = prearm_reason
+        self.command_in_progress = command_in_progress
+
+
 class SITLSession(Protocol):
     endpoint: str
 
@@ -214,7 +231,9 @@ class PymavlinkSITLSession:
         """Wait with an explicit deadline; pymavlink's convenience waits have none."""
 
         deadline = time.monotonic() + timeout
-        arm_rejection: str | None = None
+        arm_ack_result: int | None = None
+        arm_command_in_progress = False
+        prearm_rejection: str | None = None
         while time.monotonic() < deadline:
             message = self.master.recv_match(
                 type=["HEARTBEAT", "COMMAND_ACK", "STATUSTEXT"],
@@ -229,18 +248,34 @@ class PymavlinkSITLSession:
                 result = int(message.result)
                 accepted = int(mavutil.mavlink.MAV_RESULT_ACCEPTED)
                 arm_command = int(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM)
-                if int(getattr(message, "command", -1)) == arm_command and result != accepted:
-                    arm_rejection = f"COMMAND_ACK result={result}"
+                if int(getattr(message, "command", -1)) == arm_command:
+                    if result == int(mavutil.mavlink.MAV_RESULT_IN_PROGRESS):
+                        arm_command_in_progress = True
+                    elif result != accepted:
+                        arm_ack_result = result
             elif message_type == "STATUSTEXT":
                 text = str(getattr(message, "text", "")).strip()
                 if self._is_arm_rejection_status(text):
-                    arm_rejection = text
+                    prearm_rejection = text
             elif self._heartbeat_armed(message) is expected:
                 return
         state = "armed" if expected else "disarmed"
-        if expected and arm_rejection:
-            raise TimeoutError(f"SITL did not become {state}: {arm_rejection}")
-        raise TimeoutError(f"SITL did not become {state}")
+        if expected and prearm_rejection:
+            raise _ArmStateTimeout(
+                f"SITL did not become {state}: {prearm_rejection}",
+                prearm_reason=prearm_rejection,
+            )
+        if expected and arm_command_in_progress:
+            raise _ArmStateTimeout(
+                f"SITL did not become {state}: ARM command remained in progress",
+                command_in_progress=True,
+            )
+        if expected and arm_ack_result is not None:
+            raise _ArmStateTimeout(
+                f"SITL did not become {state}: COMMAND_ACK result={arm_ack_result}",
+                ack_result=arm_ack_result,
+            )
+        raise _ArmStateTimeout(f"SITL did not become {state}")
 
     def arm_and_takeoff(self, altitude_m: float, timeout: float) -> float:
         if not 2.0 <= altitude_m <= 30.0:
@@ -317,20 +352,19 @@ class PymavlinkSITLSession:
                 break
             except TimeoutError as exc:
                 last_arm_error = exc
-                # Retry quiet estimator/GPS transitions, but fail immediately
-                # for an explicit vehicle-side refusal.
-                error = str(exc)
+                # This ArduPilot command collapses failed arm checks to
+                # MAV_RESULT_FAILED, including estimator transitions. Retry it
+                # only inside the existing deadline; preserve explicit PreArm
+                # evidence and never resend an in-progress command.
                 retryable_ack_results = {
                     int(mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED),
                     int(mavutil.mavlink.MAV_RESULT_FAILED),
-                    int(mavutil.mavlink.MAV_RESULT_IN_PROGRESS),
                 }
-                retryable_ack = any(
-                    f"COMMAND_ACK result={result}" in error
-                    for result in retryable_ack_results
-                )
-                if "PreArm:" in error or (
-                    "COMMAND_ACK result=" in error and not retryable_ack
+                ack_result = getattr(exc, "ack_result", None)
+                if (
+                    getattr(exc, "prearm_reason", None)
+                    or getattr(exc, "command_in_progress", False)
+                    or (ack_result is not None and ack_result not in retryable_ack_results)
                 ):
                     raise
         else:
