@@ -2,7 +2,7 @@ type: task
 name: logdiagnosis-sitl-canary
 
 # Immutable linux/amd64 digest emitted by the verified GitHub build.
-image: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:4715d4cb0b0029bc668b3ced3843c155d74e33c2f29b40dfca9e09db7385678b
+image: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:2b4e5f0223a3ac4319f53ea9ea434b8e8124e346b85d069995e9d84e05b6768e
 privileged: true
 shell: bash
 

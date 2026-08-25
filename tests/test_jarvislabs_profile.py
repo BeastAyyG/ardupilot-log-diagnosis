@@ -27,7 +27,7 @@ def test_dstack_canary_is_privileged_cost_bounded_and_not_error_retried() -> Non
     assert "max_price: 8.50" in config
     assert (
         "ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:"
-        "4715d4cb0b0029bc668b3ced3843c155d74e33c2f29b40dfca9e09db7385678b"
+        "2b4e5f0223a3ac4319f53ea9ea434b8e8124e346b85d069995e9d84e05b6768e"
     ) in config
     assert "error" not in config.split("on_events:", 1)[1].splitlines()[0]
 

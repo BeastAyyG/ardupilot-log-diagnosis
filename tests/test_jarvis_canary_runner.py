@@ -51,6 +51,26 @@ def test_wait_fleet_requires_an_idle_or_busy_instance(monkeypatch) -> None:
     assert result["instances"][0]["status"] == "idle"
 
 
+def test_wait_fleet_fails_when_all_instances_are_terminal(monkeypatch) -> None:
+    monkeypatch.setattr(
+        canary,
+        "_json_command",
+        lambda *args, **kwargs: {
+            "status": "active",
+            "instances": [{"status": "terminated"}],
+        },
+    )
+    with pytest.raises(canary.CanaryError, match="no viable instance"):
+        canary._wait_fleet(
+            ["dstack"],
+            canary.FLEET_NAME,
+            env={},
+            cwd=Path("."),
+            timeout=1,
+            secret="",
+        )
+
+
 def test_wait_run_matches_run_name_and_accepts_done(monkeypatch) -> None:
     monkeypatch.setattr(
         canary,
