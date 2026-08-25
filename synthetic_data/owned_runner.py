@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import ipaddress
 import json
@@ -9,9 +10,10 @@ import os
 import signal
 import subprocess
 import time
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from .execution_integrity import (
     attest_clean_source,
@@ -22,6 +24,45 @@ from .execution_integrity import (
 from .network_isolation import require_isolated_network_namespace
 
 FRAME_MODELS = {"quad": "+", "hexa": "hexa", "octa": "octa"}
+
+
+def _pinned_vehicle_model(ardupilot_root: Path, frame: str) -> tuple[str, str]:
+    """Resolve a frame's SITL model from the pinned ArduPilot source.
+
+    ArduPilot's ``arducopter`` executable does not expose a stable
+    ``--list-models`` interface.  The authoritative mapping is the pinned
+    ``vehicleinfo.py`` table used by ``sim_vehicle.py``; parsing its literal
+    options keeps the check source-bound without executing arbitrary source.
+    """
+    source_path = ardupilot_root / "Tools" / "autotest" / "pysim" / "vehicleinfo.py"
+    try:
+        source_bytes = source_path.read_bytes()
+        tree = ast.parse(source_bytes.decode("utf-8"), filename=str(source_path))
+        options: object | None = None
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Assign):
+                continue
+            if any(
+                isinstance(target, ast.Attribute) and target.attr == "options"
+                for target in node.targets
+            ):
+                options = ast.literal_eval(node.value)
+                break
+        frames = options["ArduCopter"]["frames"]  # type: ignore[index]
+        frame_info = frames[frame]  # type: ignore[index]
+        model = frame_info.get("model", frame)  # type: ignore[union-attr]
+        waf_target = frame_info.get("waf_target")  # type: ignore[union-attr]
+    except (OSError, UnicodeDecodeError, SyntaxError, ValueError, KeyError, TypeError) as exc:
+        raise RuntimeError(
+            f"pinned ArduPilot vehicleinfo.py lacks a literal ArduCopter {frame!r} model"
+        ) from exc
+    if not isinstance(model, str) or not model:
+        raise RuntimeError(f"pinned ArduPilot frame {frame!r} has no SITL model")
+    if waf_target != "bin/arducopter":
+        raise RuntimeError(
+            f"pinned ArduPilot frame {frame!r} is not bound to bin/arducopter"
+        )
+    return model, hashlib.sha256(source_bytes).hexdigest()
 
 
 def _safe_under(root: Path, path: Path) -> Path:
@@ -113,29 +154,20 @@ class OwnedSITLProcess:
         self.source_attestation = attest_clean_source(
             self.ardupilot_root, str(self.plan["ardupilot_revision"])
         )
-        model_output = subprocess.run(
-            [str(self.binary_path), "--list-models"],
-            cwd=self.experiment_dir,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=False,
-            timeout=30.0,
-            check=True,
-            text=True,
-        ).stdout
-        try:
-            vehicle_info = json.loads(model_output)
-            frame_info = vehicle_info["ArduCopter"]["frames"][self.plan["frame"]]
-            listed_model = frame_info.get("model", self.plan["frame"])
-        except (KeyError, TypeError, json.JSONDecodeError) as exc:
-            raise RuntimeError(
-                "pinned SITL --list-models output lacks the planned frame"
-            ) from exc
+        listed_model, vehicleinfo_sha256 = _pinned_vehicle_model(
+            self.ardupilot_root, str(self.plan["frame"])
+        )
         if listed_model != model:
             raise RuntimeError(
-                f"pinned SITL frame maps to {listed_model!r}, expected {model!r}"
+                f"pinned SITL source frame maps to {listed_model!r}, expected {model!r}"
             )
+        self.source_attestation.update(
+            {
+                "sitl_model": listed_model,
+                "sitl_model_source": "Tools/autotest/pysim/vehicleinfo.py",
+                "sitl_model_source_sha256": vehicleinfo_sha256,
+            }
+        )
 
     def start(self) -> None:
         if self.run_dir.exists():
