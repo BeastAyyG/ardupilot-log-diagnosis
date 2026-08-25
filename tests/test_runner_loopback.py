@@ -116,6 +116,7 @@ class _FakeOwner:
                 "schema": "linux_user_network_namespace_loopback_only/v1",
                 "parent_pid": 100,
                 "parent_namespace": "net:[100]",
+                "parent_namespace_observation": "verified",
                 "current_namespace": "net:[101]",
                 "loopback_interface_up": True,
                 "external_interfaces_present": False,

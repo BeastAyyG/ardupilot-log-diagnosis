@@ -8,8 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from synthetic_data import collector
-from synthetic_data import execution_integrity
+from synthetic_data import collector, execution_integrity
 from synthetic_data.artifact_publication import (
     publish_staged_log,
     quarantine_log,
@@ -85,7 +84,7 @@ def _command_for(plan, tmp_path: Path) -> list[str]:
 
 
 def test_direct_sitl_command_is_exact_loopback_and_fenced(tmp_path) -> None:
-    plan, outputs = _plan(tmp_path)
+    plan, _outputs = _plan(tmp_path)
     command = direct_sitl_command(
         binary_path=tmp_path / "arducopter",
         parameter_file=tmp_path / "params" / f"{plan['run_id']}.parm",
@@ -229,6 +228,7 @@ def _verified_experiment(tmp_path: Path):
                 "schema": "linux_user_network_namespace_loopback_only/v1",
                 "parent_pid": 100,
                 "parent_namespace": "net:[100]",
+                "parent_namespace_observation": "verified",
                 "current_namespace": "net:[101]",
                 "loopback_interface_up": True,
                 "external_interfaces_present": False,
@@ -274,7 +274,7 @@ def _patch_inspect(monkeypatch, log_sha: str) -> None:
 
 
 def test_verified_run_is_accepted_with_fenced_command(tmp_path, monkeypatch) -> None:
-    plan, outputs, log_sha, *_rest = _verified_experiment(tmp_path)
+    _plan_payload, _outputs, log_sha, *_rest = _verified_experiment(tmp_path)
     _patch_inspect(monkeypatch, log_sha)
     receipt = collector.collect_verified_logs(tmp_path)
     assert receipt["accepted"] == 1
