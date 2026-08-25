@@ -71,7 +71,9 @@ def _loopback_is_up() -> bool:
 
 
 def _interface_names() -> list[str]:
-    return sorted(path.name for path in Path("/sys/class/net").iterdir())
+    # /sys/class/net can remain bound to the outer container's sysfs mount
+    # after unshare. The socket API is network-namespace aware.
+    return sorted(name for _index, name in socket.if_nameindex())
 
 
 def maybe_reexec_isolated(argv: Sequence[str]) -> int | None:
