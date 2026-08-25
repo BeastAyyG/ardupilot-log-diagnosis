@@ -12,7 +12,7 @@ This file is an execution handoff for another AI. Read
 - Latest ARM64 pair run:
   `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32896227226`
 - Immutable image:
-  `sha256:25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf`
+  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`
 - The earlier sham run proved heartbeat, inventory, preflight, arming,
   takeoff, flight completion, exact DataFlash selection, logger stabilization,
   and receipt-schema validation.
@@ -51,10 +51,11 @@ roughly 5-15 minutes when the image is cached, or 10-30 minutes cold.
 
 - PR #152 and PR #155 are merged.
 - Main commit containing exact DataFlash disarm-status acceptance:
-  `af46d3f655d011de0a9a6d04d7020672ca9062c1`.
-- New ARM64 overlay build run `32894374238` succeeded.
+  `af46d3f655d011de0a9a6d04d7020672ca9062c1`; candidate canary commit:
+  `c4098e29fa64bd5d16916a01f122784b59490790`.
+- New ARM64 overlay build run `32897590440` succeeded.
 - New immutable overlay digest:
-  `sha256:25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf`.
+  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`.
 - This branch updates every deployment/test/documentation pin to that digest.
 - The next required steps are: validate this branch, merge its pin PR, run the
   genuine pair from main, download the artifact, and verify the evidence.
@@ -72,7 +73,7 @@ rg -n "15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af" `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf" `
+rg -n "8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
