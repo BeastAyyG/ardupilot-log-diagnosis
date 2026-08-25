@@ -97,10 +97,13 @@ from the closed schema. PR #152 merged as
 `c303e7050431b3164155a5e76b6cc1300484c9dc`; the schema now requires the
 real `verified` or `permission_limited` observation.
 
-The latest run reached landing and emitted the explicit DataFlash status
-`Disarming motors`, but the MAVLink observer did not accept that evidence.
-PR #155 merged exact-status acceptance; no genuine two-log completed pair has
-yet been proven at the time this file was written.
+The latest retry with the disarm-aware overlay was
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32896227226`.
+The sham arm completed, but the fault arm selected `SIM_ENGINE_MUL=0.35`,
+hit the ground, and stayed armed; its DataFlash contained no `Disarming motors`
+event. This is a scenario-severity failure, not evidence that the observer
+should accept weaker signals. The canary range is now bounded to `0.7`, `0.8`,
+and `0.9`; no genuine two-log completed pair has yet been proven.
 
 ## Honest completion boundaries
 

@@ -1,6 +1,6 @@
 # Continue From Here
 
-Updated: 2026-08-25
+Updated: 2026-08-26
 
 This file is an execution handoff for another AI. Read
 `PROJECT_CONTEXT.md` first.
@@ -10,17 +10,17 @@ This file is an execution handoff for another AI. Read
 ### Latest evidence (authoritative)
 
 - Latest ARM64 pair run:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32860850532`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32896227226`
 - Immutable image:
   `sha256:25d54ca93509106396be240e5fe2f62176edc337232ade27dd2b5f1b6c83e8cf`
 - The earlier sham run proved heartbeat, inventory, preflight, arming,
   takeoff, flight completion, exact DataFlash selection, logger stabilization,
   and receipt-schema validation.
-- The latest run reached landing and wrote `Disarming motors` to DataFlash, but
-  the MAVLink observer failed closed with `_ArmStateTimeout: SITL did not
-  become disarmed`.
-- Therefore the immediate code task is bounded landing/disarm diagnosis and
-  recovery. Do not claim a successful pair or any accuracy improvement yet.
+- The latest retry used the disarm-aware image, but the fault arm selected
+  `SIM_ENGINE_MUL=0.35`, hit the ground at about 8 m/s, and remained armed;
+  its DataFlash contained no `Disarming motors` event. The observer therefore
+  failed closed correctly. The canary range is now bounded to 0.7/0.8/0.9;
+  do not weaken the completion gate or claim a successful pair yet.
 
 ### Local-first policy from this point
 
