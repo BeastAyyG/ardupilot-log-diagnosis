@@ -152,6 +152,16 @@ class PymavlinkSITLSession:
         required = int(mavutil.mavlink.MAV_SYS_STATUS_SENSOR_3D_GYRO) | int(
             mavutil.mavlink.MAV_SYS_STATUS_SENSOR_3D_ACCEL
         )
+        # The pinned inventory may deliberately leave MAVLink stream rates at
+        # zero.  Request the health stream explicitly so readiness is based on
+        # an observed SYS_STATUS frame, not on a missing-message timeout.
+        self.master.mav.request_data_stream_send(
+            self.master.target_system,
+            self.master.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_EXTENDED_STATUS,
+            2,
+            1,
+        )
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             message = self.master.recv_match(
