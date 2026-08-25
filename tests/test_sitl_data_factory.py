@@ -93,6 +93,21 @@ def test_motor_failure_uses_engine_bitmask_and_no_fake_fault_time_parameter() ->
     assert all(run["planned_fault_onset_sec"] is not None for run in plans)
 
 
+def test_motor_imbalance_canary_uses_recoverable_partial_loss_range() -> None:
+    schema = _schema("SIM_ENGINE_MUL", "SIM_ENGINE_FAIL")
+    plans = build_run_plans(
+        30,
+        seed=20260826,
+        ardupilot_revision=COMMIT,
+        scenarios=["motor_imbalance"],
+        parameter_schema=schema,
+    )
+
+    values = {plan["startup_parameters"]["SIM_ENGINE_MUL"] for plan in plans}
+    assert values <= {0.7, 0.8, 0.9}
+    assert min(values) >= 0.7
+
+
 def test_parameter_schema_fails_closed_for_unsupported_scenario() -> None:
     schema = _schema()
     with pytest.raises(ValueError, match="no complete parameter variant"):

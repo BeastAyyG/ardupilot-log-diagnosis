@@ -111,7 +111,8 @@ gh workflow run run-arm64-first-pair.yml `
   --repo BeastAyyG/ardupilot-log-diagnosis `
   --ref main `
   -f scenario=motor_imbalance `
-  -f frame=quad
+  -f frame=quad `
+  -f seed=20260840
 ```
 
 Find and watch the new run:

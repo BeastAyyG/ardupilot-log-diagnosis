@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Literal, Mapping
+from typing import Literal
 
 ParameterStage = Literal["startup", "in_flight"]
 Maturity = Literal["candidate", "experimental"]
@@ -151,7 +152,11 @@ SCENARIOS: Mapping[str, ScenarioSpec] = MappingProxyType(
             variants=(
                 _variant(
                     "engine_multiplier",
-                    startup={"SIM_ENGINE_MUL": (0.35, 0.5, 0.7)},
+                    # The canary must remain recoverable enough to land and
+                    # disarm.  More severe values belong in a separate
+                    # crash/thrust-loss campaign, not the paired completion
+                    # smoke test.
+                    startup={"SIM_ENGINE_MUL": (0.7, 0.8, 0.9)},
                     note=(
                         "Multiplier is fixed before boot; only SIM_ENGINE_FAIL is "
                         "changed at the causal onset."
