@@ -7,7 +7,7 @@ production use; complete the canary gates in `docs/RUNBOOK_CLUSTER.md` first.
 The currently published ARM64 candidate is:
 
 ```text
-ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:6e52d13408155c05f362510348a47e6a9774152cca36eae51acb6b4496b4ba8d
+ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:03c384128c7dc7e544f20e9ffb6e8629d53e82c213d18d22680507ee6d626669
 ```
 
 ## Publish
@@ -22,9 +22,9 @@ ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:6e52d13408155c05f362510348a47e6
 Never deploy by a mutable tag alone. Use the resulting digest:
 
 ```bash
-docker pull ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:6e52d13408155c05f362510348a47e6a9774152cca36eae51acb6b4496b4ba8d
+docker pull ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:03c384128c7dc7e544f20e9ffb6e8629d53e82c213d18d22680507ee6d626669
 docker run --rm --network none \
-  ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:6e52d13408155c05f362510348a47e6a9774152cca36eae51acb6b4496b4ba8d \
+  ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:03c384128c7dc7e544f20e9ffb6e8629d53e82c213d18d22680507ee6d626669 \
   python -m synthetic_data cluster preflight
 ```
 
