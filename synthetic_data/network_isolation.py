@@ -10,8 +10,8 @@ import socket
 import struct
 import subprocess
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 try:
     import fcntl
@@ -75,9 +75,9 @@ def _interface_names() -> list[str]:
 
 
 def maybe_reexec_isolated(argv: Sequence[str]) -> int | None:
-    """Re-exec an ``execute`` command inside a fresh user/network namespace."""
+    """Re-exec active SITL commands inside a fresh user/network namespace."""
 
-    if not argv or argv[0] != "execute":
+    if not argv or argv[0] not in {"execute", "pair"}:
         return None
     if platform.system() != "Linux":
         raise RuntimeError(
