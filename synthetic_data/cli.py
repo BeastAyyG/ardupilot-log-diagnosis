@@ -8,17 +8,18 @@ from pathlib import Path
 
 from .ablation import run_ablation
 from .catalog import SCENARIOS, UNSUPPORTED_SYNTHETIC_LABELS
-from .collector import collect_verified_logs
-from .confirmation import build_confirmation_report
-from .evidence_bundle import assemble_evidence_bundle, load_domain_reports
-from .fidelity import build_fidelity_report
 from .cluster import ClusterCoordinator
 from .cluster.coordinator import SSHTransport
 from .cluster.topology import probe_host
-from .gates import evaluate_files
+from .collector import collect_verified_logs
+from .confirmation import build_confirmation_report
+from .evidence_bundle import assemble_evidence_bundle, load_domain_reports
 from .executor import execute_run, preflight_run
-from .owned_runner import OwnedSITLProcess
+from .fidelity import build_fidelity_report
+from .first_pair import run_first_pair
+from .gates import evaluate_files
 from .ood import build_ood_report
+from .owned_runner import OwnedSITLProcess
 from .planner import build_paired_run_plans, build_run_plans, write_experiment
 from .runner import PymavlinkSITLSession
 from .schema import ParameterSchema, sha256_file
@@ -96,7 +97,7 @@ def _cluster_command(args: argparse.Namespace) -> dict:
 def _bundle_evidence_command(args: argparse.Namespace) -> dict:
     candidate = json.loads(Path(args.candidate_json).read_text(encoding="utf-8"))
     if not isinstance(candidate, dict):
-        raise ValueError("candidate JSON root must be an object")
+        raise TypeError("candidate JSON root must be an object")
     paths: dict[str, str] = {}
     for item in args.domain_reports:
         domain, separator, path = item.partition("=")
@@ -113,7 +114,7 @@ def _bundle_evidence_command(args: argparse.Namespace) -> dict:
         Path(args.confirmation_report).read_text(encoding="utf-8")
     )
     if not isinstance(confirmation_report, dict):
-        raise ValueError("confirmation report root must be an object")
+        raise TypeError("confirmation report root must be an object")
     bundle = assemble_evidence_bundle(
         candidate=candidate,
         confirmation_cohort_sha256=args.confirmation_cohort_sha256,
@@ -206,6 +207,8 @@ def _execute_command(args: argparse.Namespace) -> dict:
         finally:
             owner.abort(args.timeout)
         raise
+
+
     try:
         return execute_run(
             args.output_dir,
@@ -222,6 +225,21 @@ def _execute_command(args: argparse.Namespace) -> dict:
         finally:
             owner.abort(args.timeout)
         raise
+
+
+def _pair_command(args: argparse.Namespace) -> dict:
+    if not args.confirm_sitl:
+        raise ValueError("--confirm-sitl is required before launching the simulator")
+    return run_first_pair(
+        output_dir=args.output_dir,
+        binary=args.binary,
+        ardupilot_root=args.ardupilot_root,
+        scenario=args.scenario,
+        seed=args.seed,
+        endpoint=args.endpoint,
+        frame=args.frame,
+        timeout=args.timeout,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -266,6 +284,24 @@ def build_parser() -> argparse.ArgumentParser:
     execute.add_argument("--takeoff-altitude", type=float, default=10.0)
     execute.add_argument("--timeout", type=float, default=120.0)
     execute.add_argument(
+        "--confirm-sitl",
+        action="store_true",
+        help="Confirm that the loopback endpoint is an isolated software simulator",
+    )
+
+    pair = commands.add_parser(
+        "pair",
+        help="Capture parameters, execute one sham/intervention pair, seal, and collect",
+    )
+    pair.add_argument("--output-dir", required=True)
+    pair.add_argument("--binary", required=True)
+    pair.add_argument("--ardupilot-root", required=True)
+    pair.add_argument("--scenario", required=True, choices=sorted(name for name in SCENARIOS if name != "healthy"))
+    pair.add_argument("--endpoint", default="tcpin:127.0.0.1:14550")
+    pair.add_argument("--frame", choices=("quad", "hexa", "octa"), default="quad")
+    pair.add_argument("--seed", type=int, default=20260823)
+    pair.add_argument("--timeout", type=float, default=120.0)
+    pair.add_argument(
         "--confirm-sitl",
         action="store_true",
         help="Confirm that the loopback endpoint is an isolated software simulator",
@@ -457,6 +493,8 @@ def main(argv: list[str] | None = None) -> int:
         result = _plan_command(args)
     elif args.command == "execute":
         result = _execute_command(args)
+    elif args.command == "pair":
+        result = _pair_command(args)
     elif args.command == "collect":
         result = collect_verified_logs(
             args.output_dir, include_experimental=args.include_experimental

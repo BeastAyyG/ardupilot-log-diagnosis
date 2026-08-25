@@ -108,6 +108,23 @@ python -m synthetic_data schema --inventory C:\experiments\parameters.parm --ard
 Malformed names, conflicting duplicates, non-finite values, short revisions,
 and invalid digests are rejected.
 
+For a qualified Linux image, the first live pair can perform capture and all
+subsequent gates in one command. It writes the inventory and schema, executes
+the sham and intervention sequentially, seals both receipt hashes, and runs
+collection only after the pair is complete:
+
+~~~bash
+python -m synthetic_data pair \
+  --output-dir /home/cloud/logdiagnosis/first-pair \
+  --binary /opt/ardupilot/build/sitl/bin/arducopter \
+  --ardupilot-root /opt/ardupilot \
+  --scenario motor_imbalance \
+  --confirm-sitl
+~~~
+
+The command fails closed if either arm, pair commit, or collection gate fails;
+it never exposes a surviving half-pair as trainable.
+
 ### 3. Plan matched controls and interventions
 
 ~~~powershell
