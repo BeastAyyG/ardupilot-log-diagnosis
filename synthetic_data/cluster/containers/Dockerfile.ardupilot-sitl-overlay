@@ -6,6 +6,6 @@ ARG BASE_IMAGE=ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a6
 FROM ${BASE_IMAGE}
 
 ARG BASE_IMAGE
-RUN echo "${BASE_IMAGE}" | grep -qE '^ghcr\\.io/beastayyg/ardupilot-log-diagnosis@sha256:[0-9a-f]{64}$' || \
+RUN echo "${BASE_IMAGE}" | grep -qE '^ghcr\.io/beastayyg/ardupilot-log-diagnosis@sha256:[0-9a-f]{64}$' || \
       (echo "FATAL: BASE_IMAGE must be an immutable lowercase GHCR digest" >&2; exit 1)
 COPY synthetic_data /workspace/synthetic_data
