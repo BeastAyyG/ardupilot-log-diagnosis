@@ -241,22 +241,28 @@ class PymavlinkSITLSession:
         # will accept arming.  The simple (stationary) calibration is the
         # supported path for SITL; the six-position command would wait for
         # physical pose changes that a headless worker cannot provide.
-        self.master.mav.command_long_send(
-            self.master.target_system,
-            self.master.target_component,
-            mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
-            0,
-            0,
-            0,
-            0,
-            0,
-            4,
-            0,
-            0,
-        )
         calibration_acknowledged = False
-        calibration_deadline = time.monotonic() + min(15.0, max(2.0, timeout * 0.5))
+        calibration_attempts = 0
+        next_calibration_attempt = 0.0
+        calibration_deadline = time.monotonic() + min(20.0, max(8.0, timeout * 0.75))
         while time.monotonic() < calibration_deadline:
+            now = time.monotonic()
+            if calibration_attempts < 2 and now >= next_calibration_attempt:
+                self.master.mav.command_long_send(
+                    self.master.target_system,
+                    self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    4,
+                    0,
+                    0,
+                )
+                calibration_attempts += 1
+                next_calibration_attempt = float("inf")
             message = self.master.recv_match(
                 type=["COMMAND_ACK", "STATUSTEXT"],
                 blocking=True,
@@ -271,6 +277,14 @@ class PymavlinkSITLSession:
             ):
                 result = int(message.result)
                 if result != int(mavutil.mavlink.MAV_RESULT_ACCEPTED):
+                    if (
+                        result == int(mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED)
+                        and calibration_attempts < 2
+                    ):
+                        # ArduPilot rate-limits simple calibration requests;
+                        # retry once after its five-second cooldown.
+                        next_calibration_attempt = time.monotonic() + 5.0
+                        continue
                     raise RuntimeError(f"SITL accelerometer calibration rejected: result={result}")
                 calibration_acknowledged = True
                 break
