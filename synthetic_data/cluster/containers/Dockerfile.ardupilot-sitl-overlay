@@ -1,0 +1,11 @@
+# Runtime-only overlay for an already-qualified immutable ARM64 SITL image.
+# The base digest contains the pinned ArduPilot source and binary; this layer
+# replaces only the laboratory Python code so a small safety fix does not
+# trigger another native firmware compilation.
+ARG BASE_IMAGE=ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765
+FROM ${BASE_IMAGE}
+
+ARG BASE_IMAGE
+RUN echo "${BASE_IMAGE}" | grep -qE '^ghcr\\.io/beastayyg/ardupilot-log-diagnosis@sha256:[0-9a-f]{64}$' || \
+      (echo "FATAL: BASE_IMAGE must be an immutable lowercase GHCR digest" >&2; exit 1)
+COPY synthetic_data /workspace/synthetic_data
