@@ -4,6 +4,12 @@ The GitHub workflow publishes a native ARM64 **candidate** image to GitHub
 Container Registry. Publishing does not qualify the image for scientific or
 production use; complete the canary gates in `docs/RUNBOOK_CLUSTER.md` first.
 
+The currently published ARM64 candidate is:
+
+```text
+ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:81c6475588d62145e02419e9363e30b4e06c8754f1a21b9123075b55a13ae707
+```
+
 ## Publish
 
 1. Open **Actions → Publish DGX Spark candidate image → Run workflow**.
@@ -16,11 +22,25 @@ production use; complete the canary gates in `docs/RUNBOOK_CLUSTER.md` first.
 Never deploy by a mutable tag alone. Use the resulting digest:
 
 ```bash
-docker pull ghcr.io/OWNER/ardupilot-log-diagnosis@sha256:DIGEST
+docker pull ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:81c6475588d62145e02419e9363e30b4e06c8754f1a21b9123075b55a13ae707
 docker run --rm --network none \
-  ghcr.io/OWNER/ardupilot-log-diagnosis@sha256:DIGEST \
+  ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:81c6475588d62145e02419e9363e30b4e06c8754f1a21b9123075b55a13ae707 \
   python -m synthetic_data cluster preflight
 ```
+
+## One-command first pair
+
+After Docker and privileged containers are enabled on the DGX node, run:
+
+```bash
+PAIR_OUTPUT_DIR=/home/cloud/logdiagnosis/first-pair \
+  bash ops/dgx/run_first_pair.sh
+```
+
+The launcher pulls the immutable ARM64 image, captures live parameters,
+executes the sham and intervention arms, and refuses to report success unless
+exactly two BIN logs, both execution receipts, and one sealed pair commit are
+present. It preserves all failure evidence for inspection.
 
 For a private package, authenticate using a narrowly scoped read-only token:
 
