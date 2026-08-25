@@ -13,6 +13,7 @@ from .collector import collect_verified_logs
 from .execution_integrity import attest_clean_source
 from .executor import execute_run
 from .experiment_io import write_experiment
+from .frame_defaults import FRAME_CLASS_VALUES
 from .owned_runner import OwnedSITLProcess
 from .planner import build_paired_run_plans
 from .runner import PymavlinkSITLSession
@@ -39,6 +40,10 @@ def _commit(ardupilot_root: Path) -> str:
 
 
 def _bootstrap_plan(commit: str, binary_digest: str, frame: str) -> dict[str, Any]:
+    try:
+        frame_class = FRAME_CLASS_VALUES[frame]
+    except KeyError as exc:
+        raise ValueError(f"unsupported first-pair frame: {frame}") from exc
     return {
         "run_id": "inventory-capture",
         "ardupilot_revision": commit,
@@ -46,7 +51,10 @@ def _bootstrap_plan(commit: str, binary_digest: str, frame: str) -> dict[str, An
         "frame": frame,
         "fixed_home": FIXED_HOME,
         "simulation_start_unix_sec": 1_704_067_200,
-        "startup_parameters": {},
+        # The inventory probe must start in the requested frame. ArduCopter's
+        # empty-defaults value is FRAME_CLASS=0, which is intentionally not a
+        # supported quad/hexa/octa training lineage.
+        "startup_parameters": {"FRAME_CLASS": float(frame_class)},
     }
 
 
