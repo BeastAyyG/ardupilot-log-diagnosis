@@ -399,7 +399,16 @@ def test_arm_wait_ignores_informational_status_text_but_keeps_prearm_reason() ->
         session._wait_for_armed_state(True, 0.01)
 
 
-def test_arm_and_takeoff_retries_quiet_estimator_timeout(monkeypatch) -> None:
+@pytest.mark.parametrize(
+    "first_error",
+    [
+        "SITL did not become armed",
+        f"SITL did not become armed: COMMAND_ACK result={mavutil.mavlink.MAV_RESULT_FAILED}",
+    ],
+)
+def test_arm_and_takeoff_retries_quiet_estimator_timeout(
+    monkeypatch, first_error
+) -> None:
     class CalibrationAck:
         command = mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION
         result = mavutil.mavlink.MAV_RESULT_ACCEPTED
@@ -454,7 +463,7 @@ def test_arm_and_takeoff_retries_quiet_estimator_timeout(monkeypatch) -> None:
     session._source_component = 1
     session.master = Master()
     monkeypatch.setattr(session, "wait_preflight_ready", lambda _timeout: None)
-    arm_waits = iter([TimeoutError("SITL did not become armed"), None])
+    arm_waits = iter([TimeoutError(first_error), None])
 
     def wait_for_armed(_expected, _timeout):
         failure = next(arm_waits)

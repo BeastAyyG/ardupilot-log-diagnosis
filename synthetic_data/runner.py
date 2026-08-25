@@ -319,7 +319,19 @@ class PymavlinkSITLSession:
                 last_arm_error = exc
                 # Retry quiet estimator/GPS transitions, but fail immediately
                 # for an explicit vehicle-side refusal.
-                if "PreArm:" in str(exc) or "COMMAND_ACK result=" in str(exc):
+                error = str(exc)
+                retryable_ack_results = {
+                    int(mavutil.mavlink.MAV_RESULT_TEMPORARILY_REJECTED),
+                    int(mavutil.mavlink.MAV_RESULT_FAILED),
+                    int(mavutil.mavlink.MAV_RESULT_IN_PROGRESS),
+                }
+                retryable_ack = any(
+                    f"COMMAND_ACK result={result}" in error
+                    for result in retryable_ack_results
+                )
+                if "PreArm:" in error or (
+                    "COMMAND_ACK result=" in error and not retryable_ack
+                ):
                     raise
         else:
             if last_arm_error is not None:
