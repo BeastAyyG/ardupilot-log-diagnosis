@@ -408,6 +408,31 @@ def test_arm_wait_ignores_informational_status_text_but_keeps_prearm_reason() ->
         session._wait_for_armed_state(True, 0.01)
 
 
+def test_disarm_wait_accepts_explicit_motor_disarm_status() -> None:
+    class DisarmingStatus:
+        text = "Disarming motors"
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "STATUSTEXT"
+
+    class Master:
+        def recv_match(self, **_kwargs):
+            return DisarmingStatus()
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master()
+
+    session._wait_for_armed_state(False, 0.1)
+
+
 @pytest.mark.parametrize(
     "first_error",
     [
