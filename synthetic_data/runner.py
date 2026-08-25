@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import logging
 import time
 from collections.abc import Mapping
 from typing import Any, Protocol
@@ -10,6 +11,8 @@ from typing import Any, Protocol
 from pymavlink import mavutil
 
 from .execution_integrity import float32_equal, runtime_identity
+
+logger = logging.getLogger(__name__)
 
 FRAME_CLASSES = {"quad": 1.0, "hexa": 2.0, "octa": 3.0}
 
@@ -500,7 +503,36 @@ class PymavlinkSITLSession:
         if mode_id is None:
             raise RuntimeError("SITL does not expose LAND mode")
         self.master.set_mode(mode_id)
-        self._wait_for_armed_state(False, timeout)
+        deadline = time.monotonic() + timeout
+        # A motor-failure landing can leave the craft resting tilted with a
+        # residual thrust bias, so ArduPilot's landing detector may never
+        # complete and its automatic post-landing disarm never fires (observed
+        # in run 32897998370: ground contact at 0.49 m/s yet still armed).
+        # Allow a bounded descent grace window for a natural disarm, then send
+        # the documented forced-disarm command while budget remains.
+        grace_seconds = min(60.0, timeout * 0.5)
+        try:
+            self._wait_for_armed_state(False, grace_seconds)
+            return
+        except _ArmStateTimeout:
+            logger.warning(
+                "SITL stayed armed %.1fs after LAND; issuing forced disarm",
+                grace_seconds,
+            )
+        remaining = deadline - time.monotonic()
+        if remaining <= timeout * 0.2:
+            raise _ArmStateTimeout(
+                "SITL did not become disarmed: landing grace expired with no "
+                "budget left for a confirmed forced disarm"
+            )
+        self._send_forced_disarm()
+        try:
+            self._wait_for_armed_state(False, remaining)
+        except _ArmStateTimeout as exc:
+            raise _ArmStateTimeout(
+                "SITL did not become disarmed after LAND grace and a "
+                "forced-disarm command"
+            ) from exc
 
     def is_armed(self, timeout: float = 2.0) -> bool:
         message = self.master.recv_match(
@@ -512,7 +544,7 @@ class PymavlinkSITLSession:
             raise TimeoutError("SITL armed state could not be determined")
         return self._heartbeat_armed(message)
 
-    def force_disarm(self, timeout: float) -> None:
+    def _send_forced_disarm(self) -> None:
         # ArduPilot accepts param2=21196 as the explicit force-disarm value.
         # The pymavlink convenience method sends param2=0, which can be
         # rejected after a simulated motor-failure state even when the craft
@@ -530,6 +562,9 @@ class PymavlinkSITLSession:
             0,
             0,
         )
+
+    def force_disarm(self, timeout: float) -> None:
+        self._send_forced_disarm()
         self._wait_for_armed_state(False, timeout)
 
     def close(self) -> None:
