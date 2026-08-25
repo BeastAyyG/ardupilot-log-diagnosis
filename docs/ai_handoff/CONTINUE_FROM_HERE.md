@@ -7,6 +7,47 @@ This file is an execution handoff for another AI. Read
 
 ## Current state
 
+### Latest evidence (authoritative)
+
+- Latest ARM64 pair run:
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32860850532`
+- Immutable image:
+  `sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`
+- The earlier sham run proved heartbeat, inventory, preflight, arming,
+  takeoff, flight completion, exact DataFlash selection, logger stabilization,
+  and receipt-schema validation.
+- The latest run reached landing but failed closed with:
+  `_ArmStateTimeout: SITL did not become disarmed`.
+- Therefore the immediate code task is bounded landing/disarm diagnosis and
+  recovery. Do not claim a successful pair or any accuracy improvement yet.
+
+### Local-first policy from this point
+
+Do not merge every runtime experiment. Develop and test candidates before the
+final VM/DGX launch:
+
+1. Run unit and contract tests on Windows.
+2. Once a Linux Docker runtime exists, build an amd64 candidate and run the
+   complete sham/intervention pair locally.
+3. Optionally run the ARM64 image under QEMU for packaging/entry-point smoke
+   tests; do not treat emulation as ARM performance qualification.
+4. Keep fixes on one candidate branch and rebuild candidate images from that
+   branch.
+5. Merge once the complete pair passes locally.
+6. Publish one immutable ARM64 digest and run one final native ARM64/DGX
+   confirmation.
+
+Current laptop limitation: the `docker` executable is absent and WSL2 has no
+installed Linux distribution. Local container execution therefore requires
+Docker Desktop (usually with its WSL2 distribution) or an Ubuntu WSL
+installation plus a Docker-compatible engine. Installing either changes the
+host and must be explicitly authorized by the user.
+
+Estimated warm local run after setup: 5-10 minutes per pair. First setup and
+image acquisition: roughly 20-60 minutes and several GB, depending on network
+and whether an image must be built. Native ARM VM/DGX final confirmation:
+roughly 5-15 minutes when the image is cached, or 10-30 minutes cold.
+
 - PR #152 is merged.
 - Main commit binding the parent-namespace observation in receipts:
   `c303e7050431b3164155a5e76b6cc1300484c9dc`.
