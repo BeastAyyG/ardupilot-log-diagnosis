@@ -80,10 +80,10 @@ themselves, prove live hardware execution or an accuracy improvement.
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
 - Current runtime overlay built from main commit
-  `e232eb30067a1b2990a4a0f43cee9bb1acbef70b`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af`
+  `c93b4cc9f478fc22c4db15985105b563936ca925`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:92def7a269aa4188a4c927f9af9a92dcb2f2f5466ec060a2132ff173e4009cb5`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32827562822`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32829715894`
 
 ## Real ARM64 evidence so far
 
