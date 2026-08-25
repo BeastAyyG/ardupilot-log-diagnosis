@@ -1,0 +1,218 @@
+{
+  "ardupilot_revision": "1511f27194f1dcc3728270883047bdf022b3fd53",
+  "binary_sha256": "ed1627abab55d0a7fbdc8152f13741d61a9b8dcdbfca52d4c9a9a3b89976a755",
+  "capability_status": "verified",
+  "evaluation_policy": "training_only; calibration, threshold selection, and release holdout are real-only",
+  "generator_version": "ardupilot-sitl-lab-v2",
+  "parameter_schema_sha256": "93772c51a7c6da1bd35b4ea3ed91653e6cfaaaddb1c8c220380e1421643a84a2",
+  "research_basis": {
+    "alfa": "https://arxiv.org/abs/1907.06268",
+    "ardupilot_autotest": "https://ardupilot.org/dev/docs/the-ardupilot-autotest-framework.html",
+    "ardupilot_sitl": "https://ardupilot.org/dev/docs/using-sitl-for-ardupilot-testing.html",
+    "digital_twin_credibility": "https://www.nist.gov/publications/credibility-consideration-digital-twins-manufacturing",
+    "domain_randomization": "https://arxiv.org/abs/1703.06907",
+    "rflymad": "https://arxiv.org/abs/2311.11340"
+  },
+  "runs": [
+    {
+      "allowed_automatic_parameter_changes": [],
+      "ardupilot_revision": "1511f27194f1dcc3728270883047bdf022b3fd53",
+      "artifact_status": "planned",
+      "binary_sha256": "ed1627abab55d0a7fbdc8152f13741d61a9b8dcdbfca52d4c9a9a3b89976a755",
+      "bit_exact_replay_claim": false,
+      "capability_status": "verified",
+      "causal_chain": [
+        "nominal mission",
+        "nominal telemetry"
+      ],
+      "control_startup_policy": "share",
+      "duration_sec": 90,
+      "environment_parameters": {
+        "SIM_WIND_DIR": 289.0,
+        "SIM_WIND_SPD": 1.799,
+        "SIM_WIND_TURB": 3.312
+      },
+      "expected_log_filename": "sitl_healthy_0000_sham_control_4fe016acc4b6.BIN",
+      "expected_receipt_filename": "sitl_healthy_0000_sham_control_4fe016acc4b6.execution.json",
+      "fault_mode": "none",
+      "fault_startup_parameters": {},
+      "fixed_home": {
+        "altitude_m": 584.0,
+        "heading_deg": 353.0,
+        "latitude": -35.363261,
+        "longitude": 149.16523
+      },
+      "frame": "quad",
+      "generator_version": "ardupilot-sitl-lab-v2",
+      "injection_baseline_parameters": {},
+      "injection_parameters": {},
+      "label": "healthy",
+      "label_origin": "verified_controlled_sitl_intervention",
+      "lineage_root_id": "sitl-pair:49cf0abd38ebcb1645b2",
+      "logging_parameters": {
+        "LOG_BACKEND_TYPE": 1.0,
+        "LOG_BITMASK": 180222.0,
+        "LOG_DISARMED": 0.0,
+        "LOG_FILE_DSRMROT": 1.0,
+        "LOG_FILE_RATEMAX": 0.0
+      },
+      "maturity": "candidate",
+      "minimum_post_fault_sec": 0.0,
+      "mission_profile": "guided_takeoff_hover_land",
+      "motor_output_parameters": {
+        "SERVO1_FUNCTION": 33.0,
+        "SERVO2_FUNCTION": 34.0,
+        "SERVO3_FUNCTION": 35.0,
+        "SERVO4_FUNCTION": 36.0
+      },
+      "non_claims": [
+        "absence of every possible real-world fault"
+      ],
+      "paired_with": "sitl_motor_imbalance_0000_fault_0bb227fa8cad",
+      "parameter_schema_sha256": "93772c51a7c6da1bd35b4ea3ed91653e6cfaaaddb1c8c220380e1421643a84a2",
+      "parameter_variant": "nominal",
+      "parameter_variant_note": "No fault parameter is changed; domain factors are still randomized.",
+      "planned_fault_onset_sec": null,
+      "required_messages": [
+        "ATT",
+        "IMU",
+        "RCOU"
+      ],
+      "role": "sham_control",
+      "root_family": "nominal",
+      "root_seed": 20260823,
+      "run_fingerprint": "bf364a14e2aa55ded39c357edfc38bf432682e1398a9d02cacfa4d9938f95ecc",
+      "run_id": "sitl_healthy_0000_sham_control_4fe016acc4b6",
+      "scenario": "healthy",
+      "scenario_index": 0,
+      "scenario_sampling_seed": 13738703547522738595,
+      "severity_quantile": null,
+      "simulation_start_unix_sec": 1704067200,
+      "sitl_rng_seed": null,
+      "source_group": "sitl:ardupilot-sitl-lab-v2:sitl_healthy_0000_sham_control_4fe016acc4b6",
+      "source_type": "sitl",
+      "startup_parameters": {
+        "LOG_BACKEND_TYPE": 1.0,
+        "LOG_BITMASK": 180222.0,
+        "LOG_DISARMED": 0.0,
+        "LOG_FILE_DSRMROT": 1.0,
+        "LOG_FILE_RATEMAX": 0.0,
+        "SIM_ENGINE_MUL": 0.35,
+        "SIM_WIND_DIR": 289.0,
+        "SIM_WIND_SPD": 1.799,
+        "SIM_WIND_TURB": 3.312
+      },
+      "startup_severity_quantile": null,
+      "temporal_profile": "step",
+      "trainable": false,
+      "vehicle": "ArduCopter"
+    },
+    {
+      "allowed_automatic_parameter_changes": [],
+      "ardupilot_revision": "1511f27194f1dcc3728270883047bdf022b3fd53",
+      "artifact_status": "planned",
+      "binary_sha256": "ed1627abab55d0a7fbdc8152f13741d61a9b8dcdbfca52d4c9a9a3b89976a755",
+      "bit_exact_replay_claim": false,
+      "capability_status": "verified",
+      "causal_chain": [
+        "one output effectiveness falls",
+        "controller output spread rises",
+        "attitude tracking may degrade"
+      ],
+      "control_startup_policy": "share",
+      "duration_sec": 90,
+      "environment_parameters": {
+        "SIM_WIND_DIR": 289.0,
+        "SIM_WIND_SPD": 1.799,
+        "SIM_WIND_TURB": 3.312
+      },
+      "expected_log_filename": "sitl_motor_imbalance_0000_fault_0bb227fa8cad.BIN",
+      "expected_receipt_filename": "sitl_motor_imbalance_0000_fault_0bb227fa8cad.execution.json",
+      "fault_mode": "partial_effectiveness_loss",
+      "fault_startup_parameters": {
+        "SIM_ENGINE_MUL": 0.35
+      },
+      "fixed_home": {
+        "altitude_m": 584.0,
+        "heading_deg": 353.0,
+        "latitude": -35.363261,
+        "longitude": 149.16523
+      },
+      "frame": "quad",
+      "generator_version": "ardupilot-sitl-lab-v2",
+      "injection_baseline_parameters": {
+        "SIM_ENGINE_FAIL": 0.0
+      },
+      "injection_parameters": {
+        "SIM_ENGINE_FAIL": 2.0
+      },
+      "label": "motor_imbalance",
+      "label_origin": "verified_controlled_sitl_intervention",
+      "lineage_root_id": "sitl-pair:49cf0abd38ebcb1645b2",
+      "logging_parameters": {
+        "LOG_BACKEND_TYPE": 1.0,
+        "LOG_BITMASK": 180222.0,
+        "LOG_DISARMED": 0.0,
+        "LOG_FILE_DSRMROT": 1.0,
+        "LOG_FILE_RATEMAX": 0.0
+      },
+      "maturity": "candidate",
+      "minimum_post_fault_sec": 15.0,
+      "mission_profile": "guided_takeoff_hover_land",
+      "motor_output_parameters": {
+        "SERVO1_FUNCTION": 33.0,
+        "SERVO2_FUNCTION": 34.0,
+        "SERVO3_FUNCTION": 35.0,
+        "SERVO4_FUNCTION": 36.0
+      },
+      "non_claims": [
+        "specific motor hardware defect",
+        "specific ESC defect"
+      ],
+      "paired_with": "sitl_healthy_0000_sham_control_4fe016acc4b6",
+      "parameter_schema_sha256": "93772c51a7c6da1bd35b4ea3ed91653e6cfaaaddb1c8c220380e1421643a84a2",
+      "parameter_variant": "engine_multiplier",
+      "parameter_variant_note": "Multiplier is fixed before boot; only SIM_ENGINE_FAIL is changed at the causal onset.",
+      "planned_fault_onset_sec": 28.188,
+      "required_messages": [
+        "RCOU",
+        "ATT"
+      ],
+      "role": "intervention",
+      "root_family": "actuator",
+      "root_seed": 20260823,
+      "run_fingerprint": "6b1fbe5f98ca218033e3de4389827ed4910e11958243933557a5292126e1e0a2",
+      "run_id": "sitl_motor_imbalance_0000_fault_0bb227fa8cad",
+      "scenario": "motor_imbalance",
+      "scenario_index": 0,
+      "scenario_sampling_seed": 16381915963974497725,
+      "severity_quantile": null,
+      "simulation_start_unix_sec": 1704067200,
+      "sitl_rng_seed": null,
+      "source_group": "sitl:ardupilot-sitl-lab-v2:sitl_motor_imbalance_0000_fault_0bb227fa8cad",
+      "source_type": "sitl",
+      "startup_parameters": {
+        "LOG_BACKEND_TYPE": 1.0,
+        "LOG_BITMASK": 180222.0,
+        "LOG_DISARMED": 0.0,
+        "LOG_FILE_DSRMROT": 1.0,
+        "LOG_FILE_RATEMAX": 0.0,
+        "SIM_ENGINE_MUL": 0.35,
+        "SIM_WIND_DIR": 289.0,
+        "SIM_WIND_SPD": 1.799,
+        "SIM_WIND_TURB": 3.312
+      },
+      "startup_severity_quantile": 0.152412,
+      "temporal_profile": "step",
+      "trainable": false,
+      "vehicle": "ArduCopter"
+    }
+  ],
+  "schema": "logdiagnosis.sitl-experiment/v3",
+  "seed": 20260823,
+  "unsupported_claims": [
+    "real incident prevalence",
+    "specific physical component defect",
+    "real-world accuracy improvement without a new blinded confirmation cohort"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "cleanup": {
+    "control_recovered": true,
+    "force_disarm_attempted": false,
+    "land_attempted": false,
+    "process": {
+      "alive_before_shutdown": true,
+      "owned_process": true,
+      "process_exit_code": -15,
+      "process_terminated": true,
+      "process_tree_terminated": true,
+      "shutdown_escalated": false,
+      "shutdown_method": "posix_process_group_sigterm",
+      "working_directory": "/output/owned_runs/sitl_healthy_0000_sham_control_4fe016acc4b6"
+    }
+  },
+  "error": "live FRAME_CLASS does not match the planned frame",
+  "error_type": "RuntimeError",
+  "manifest_sha256": "91c5775762cd66877a23f0510d7105d57b447a65e5f6be44778f6ff64cf7e129",
+  "run_fingerprint": "bf364a14e2aa55ded39c357edfc38bf432682e1398a9d02cacfa4d9938f95ecc",
+  "run_id": "sitl_healthy_0000_sham_control_4fe016acc4b6",
+  "schema": "logdiagnosis.sitl-execution-failure/v1",
+  "state": {
+    "armed": false,
+    "flight_complete": false,
+    "heartbeat_received": true,
+    "landed_or_disarmed": false,
+    "live_parameter_inventory_verified": false,
+    "preflight_ready": false,
+    "takeoff_confirmed": false
+  },
+  "status": "failed_quarantined"
+}

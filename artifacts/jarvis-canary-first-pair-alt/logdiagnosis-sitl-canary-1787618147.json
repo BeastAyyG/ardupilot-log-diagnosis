@@ -1,0 +1,10 @@
+{
+  "error": "fleet logdiagnosis-sitl-canary-fleet has no viable instance",
+  "fleet_config_sha256": "701bba516b55f05169aeae12ed6f5027e0000f43a56fa57f08227e05d6bc9ad8",
+  "fleet_name": "logdiagnosis-sitl-canary-fleet",
+  "image": "ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:2b4e5f0223a3ac4319f53ea9ea434b8e8124e346b85d069995e9d84e05b6768e",
+  "run_name": "logdiagnosis-sitl-canary-1787618147",
+  "schema": "logdiagnosis.jarvislabs-dstack-canary/v1",
+  "status": "failed",
+  "task_config_sha256": "13c399a8dff91d0e5253c5535e59b0983608db0c9f9158ad5e5972e761670374"
+}

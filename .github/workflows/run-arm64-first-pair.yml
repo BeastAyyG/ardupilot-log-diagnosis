@@ -20,7 +20,7 @@ permissions:
   packages: read
 
 env:
-  SITL_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:b1eea00c9ed736134e4d92858598356570f8d7e3c83c71241f243e8f20564084
+  SITL_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:4400dcdc1b9b96f5b32e9776ae65133e60b1223eb97715de670a44b4076cfdb4
 
 jobs:
   first-pair:
@@ -52,3 +52,4 @@ jobs:
           path: artifacts/first-pair
           if-no-files-found: error
           retention-days: 14
+

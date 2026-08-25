@@ -1,0 +1,11 @@
+{
+  "manifest_sha256": "1fb281ad09b3ced5f2a94d4cdbbef020b9c381e85e183d35361a8dbf1fa3a19a",
+  "parameters": {
+    "SIM_ENGINE_FAIL": 2.0
+  },
+  "planned_fault_onset_sec": 28.188,
+  "run_fingerprint": "850980c7e6da41748dfa1bfea0269b1be3bd84d93a17979de68e81cb28468b1f",
+  "run_id": "sitl_motor_imbalance_0000_fault_0bb227fa8cad",
+  "schema": "logdiagnosis.sitl-injection/v2",
+  "temporal_profile": "step"
+}

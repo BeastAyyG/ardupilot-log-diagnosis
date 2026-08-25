@@ -1,0 +1,43 @@
+{
+  "logs": [
+    {
+      "ardupilot_revision": "1511f27194f1dcc3728270883047bdf022b3fd53",
+      "confidence": "unverified",
+      "filename": "sitl_healthy_0000_sham_control_4fe016acc4b6.BIN",
+      "generator_version": "ardupilot-sitl-lab-v2",
+      "label_origin": "verified_controlled_sitl_intervention",
+      "labels": [
+        "healthy"
+      ],
+      "lineage_root_id": "sitl-pair:072b0c9e50dcd76ebc41",
+      "planned_fault_onset_sec": null,
+      "run_fingerprint": "ff3795ed998194f17d338721243f3c05ce562f38a3069bffaae7ace9613e0f11",
+      "scenario_sampling_seed": 13738703547522738595,
+      "simulation_family": "healthy",
+      "source_group": "sitl:ardupilot-sitl-lab-v2:sitl_healthy_0000_sham_control_4fe016acc4b6",
+      "source_type": "sitl",
+      "trainable": false,
+      "verification_status": "planned"
+    },
+    {
+      "ardupilot_revision": "1511f27194f1dcc3728270883047bdf022b3fd53",
+      "confidence": "unverified",
+      "filename": "sitl_motor_imbalance_0000_fault_0bb227fa8cad.BIN",
+      "generator_version": "ardupilot-sitl-lab-v2",
+      "label_origin": "verified_controlled_sitl_intervention",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "lineage_root_id": "sitl-pair:072b0c9e50dcd76ebc41",
+      "planned_fault_onset_sec": 28.188,
+      "run_fingerprint": "850980c7e6da41748dfa1bfea0269b1be3bd84d93a17979de68e81cb28468b1f",
+      "scenario_sampling_seed": 16381915963974497725,
+      "simulation_family": "motor_imbalance",
+      "source_group": "sitl:ardupilot-sitl-lab-v2:sitl_motor_imbalance_0000_fault_0bb227fa8cad",
+      "source_type": "sitl",
+      "trainable": false,
+      "verification_status": "planned"
+    }
+  ],
+  "schema": "logdiagnosis.pending-ground-truth/v2"
+}

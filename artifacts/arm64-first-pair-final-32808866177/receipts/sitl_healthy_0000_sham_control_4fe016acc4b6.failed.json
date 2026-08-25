@@ -1,0 +1,33 @@
+{
+  "cleanup": {
+    "control_recovered": true,
+    "force_disarm_attempted": false,
+    "land_attempted": false,
+    "process": {
+      "alive_before_shutdown": true,
+      "owned_process": true,
+      "process_exit_code": 0,
+      "process_terminated": true,
+      "process_tree_terminated": true,
+      "shutdown_escalated": false,
+      "shutdown_method": "posix_process_group_sigterm",
+      "working_directory": "/output/owned_runs/sitl_healthy_0000_sham_control_4fe016acc4b6"
+    }
+  },
+  "error": "SITL did not report healthy gyro/accelerometer state",
+  "error_type": "TimeoutError",
+  "manifest_sha256": "1fb281ad09b3ced5f2a94d4cdbbef020b9c381e85e183d35361a8dbf1fa3a19a",
+  "run_fingerprint": "ff3795ed998194f17d338721243f3c05ce562f38a3069bffaae7ace9613e0f11",
+  "run_id": "sitl_healthy_0000_sham_control_4fe016acc4b6",
+  "schema": "logdiagnosis.sitl-execution-failure/v1",
+  "state": {
+    "armed": false,
+    "flight_complete": false,
+    "heartbeat_received": true,
+    "landed_or_disarmed": false,
+    "live_parameter_inventory_verified": true,
+    "preflight_ready": false,
+    "takeoff_confirmed": false
+  },
+  "status": "failed_quarantined"
+}

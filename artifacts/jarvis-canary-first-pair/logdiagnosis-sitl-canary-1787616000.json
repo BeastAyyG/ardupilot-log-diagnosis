@@ -1,0 +1,10 @@
+{
+  "error": "fleet instance terminated before becoming ready: Backend did not complete provisioning in time",
+  "fleet_config_sha256": "b54928ea9189b6af2c69d7c3c86d627544f30c7c98455fc7de3396db6b3f379d",
+  "fleet_name": "logdiagnosis-sitl-canary-fleet",
+  "image": "ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:2b4e5f0223a3ac4319f53ea9ea434b8e8124e346b85d069995e9d84e05b6768e",
+  "run_name": "logdiagnosis-sitl-canary-1787616000",
+  "schema": "logdiagnosis.jarvislabs-dstack-canary/v1",
+  "status": "failed",
+  "task_config_sha256": "6f87e16c6d516570d7b8e51c2834acb91a941a9fd6c2f0557cca2276ae377183"
+}

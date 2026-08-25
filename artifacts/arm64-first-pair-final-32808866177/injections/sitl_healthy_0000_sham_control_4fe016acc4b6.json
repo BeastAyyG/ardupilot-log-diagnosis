@@ -1,0 +1,9 @@
+{
+  "manifest_sha256": "1fb281ad09b3ced5f2a94d4cdbbef020b9c381e85e183d35361a8dbf1fa3a19a",
+  "parameters": {},
+  "planned_fault_onset_sec": null,
+  "run_fingerprint": "ff3795ed998194f17d338721243f3c05ce562f38a3069bffaae7ace9613e0f11",
+  "run_id": "sitl_healthy_0000_sham_control_4fe016acc4b6",
+  "schema": "logdiagnosis.sitl-injection/v2",
+  "temporal_profile": "step"
+}

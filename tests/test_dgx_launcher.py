@@ -7,7 +7,7 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     script = (ROOT / "ops" / "dgx" / "run_first_pair.sh").read_text(
         encoding="utf-8"
     )
-    assert "sha256:b1eea00c9ed736134e4d92858598356570f8d7e3c83c71241f243e8f20564084" in script
+    assert "sha256:4400dcdc1b9b96f5b32e9776ae65133e60b1223eb97715de670a44b4076cfdb4" in script
     assert "--privileged --network host" in script
     assert "--user 0:0" in script
     assert 'chmod 0777 "$OUTPUT_DIR"' in script
@@ -25,3 +25,4 @@ def test_dgx_launcher_does_not_accept_a_mutable_image_tag() -> None:
     )
     assert "@sha256:[0-9a-f]{64}" in script
     assert "docker pull \"$IMAGE\"" in script
+
