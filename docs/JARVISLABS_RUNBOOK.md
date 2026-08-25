@@ -168,15 +168,10 @@ money. Destroy only after artifacts are copied and verified.
 
 Do not scale yet. On the qualified VM:
 
-1. capture the complete live parameter inventory from the pinned build;
-2. bind it to the exact commit and binary with `synthetic_data schema`;
-3. plan one scenario with `--runs-per-scenario 1` (two matched arms);
-4. run sham and intervention sequentially inside the privileged, network-none
-   container;
-5. require both execution receipts before writing the pair-commit pointer;
-6. run collection with the `commits/` directory present; and
-7. deliberately remove/tamper one pointer in a copy and prove collection
-   rejects it.
+The complete sequence is now one fail-closed command. It captures the live
+inventory, binds the exact commit and binary, plans one matched scenario,
+executes sham then intervention sequentially, seals the pair commit, and runs
+collection only after both receipts exist:
 
 Use the paths embedded in the Jarvis image:
 
@@ -184,6 +179,19 @@ Use the paths embedded in the Jarvis image:
 ARDUPILOT_ROOT=/opt/ardupilot
 ARDUPILOT_SITL_BINARY=/opt/ardupilot/build/sitl/bin/arducopter
 ```
+
+```bash
+python -m synthetic_data pair \
+  --output-dir /home/cloud/logdiagnosis/first-pair \
+  --binary "$ARDUPILOT_SITL_BINARY" \
+  --ardupilot-root "$ARDUPILOT_ROOT" \
+  --scenario motor_imbalance \
+  --confirm-sitl
+```
+
+The command exits non-zero and preserves failure evidence if either arm fails;
+it never creates a trainable half-pair. Missing or tampered pair pointers are
+still tested separately in the collection test suite.
 
 The canary is complete only when the real BIN logs, execution receipts,
 pair-commit, collection receipt, image digest, binary hash, source snapshot,
