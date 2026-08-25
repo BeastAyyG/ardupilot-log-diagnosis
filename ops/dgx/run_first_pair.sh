@@ -28,6 +28,7 @@ docker info >/dev/null 2>&1 || fail "docker daemon is unavailable"
 [[ "$TIMEOUT" =~ ^[0-9]+([.][0-9]+)?$ ]] || fail "PAIR_TIMEOUT must be numeric"
 
 mkdir -p "$OUTPUT_DIR"
+chmod 0777 "$OUTPUT_DIR"
 docker pull "$IMAGE"
 docker run --rm --privileged --network host \
   --user 0:0 \
