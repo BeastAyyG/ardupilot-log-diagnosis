@@ -68,6 +68,23 @@ def test_logger_that_keeps_changing_never_reaches_pre_shutdown_gate(
     assert log.stat().st_size > 1
 
 
+def test_logger_may_settle_after_the_first_stability_window(
+    tmp_path, monkeypatch
+) -> None:
+    log = tmp_path / "logs" / "00000001.BIN"
+    log.parent.mkdir()
+    log.write_bytes(b"dataflash")
+    owner = _owner(tmp_path, _Process())
+    observations = iter([(False, 8), (True, 12)])
+    monkeypatch.setattr(
+        owner,
+        "_stable",
+        lambda _path, require_alive: next(observations),
+    )
+
+    assert owner._wait_stable(log, timeout=6.0, require_alive=True) == (True, 12)
+
+
 def test_finalize_ignores_owned_eeprom_bin(tmp_path, monkeypatch) -> None:
     log = tmp_path / "logs" / "00000001.BIN"
     log.parent.mkdir()
