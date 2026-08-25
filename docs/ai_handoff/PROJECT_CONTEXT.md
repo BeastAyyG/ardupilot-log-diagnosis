@@ -80,12 +80,12 @@ themselves, prove live hardware execution or an accuracy improvement.
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
 - Current runtime overlay built from branch commit
-  `d01f80cf679260298429e5c1e306e9b798588302` (forced disarm
-  `param1=0, param2=21196`), layered over
-  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`
+  `beeddc7c5bffa7d180dc59219f12a347f182788a` (landing-grace escalation to the
+  forced disarm `param1=0, param2=21196`), layered over
+  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32900739715`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32903463261`
 
 ## Real ARM64 evidence so far
 
@@ -99,15 +99,17 @@ from the closed schema. PR #152 merged as
 `c303e7050431b3164155a5e76b6cc1300484c9dc`; the schema now requires the
 real `verified` or `permission_limited` observation.
 
-The latest retry with the recoverable canary overlay was
-`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32897998370`.
-The sham arm completed. The fault arm used `SIM_ENGINE_MUL=0.9`, landed gently
-at about 0.48 m/s, but stayed armed: the runner's ordinary disarm helper sends
-`param1=0, param2=0`, which ArduPilot can reject on the ground. The fault log
-was quarantined; no genuine two-log completed pair has yet been proven.
-Commit `d01f80cf679260298429e5c1e306e9b798588302` switches cleanup to the
-documented forced-disarm command (`param2=21196`) and pins a new overlay
-digest for the next run.
+The latest retry with the `d01f80c` forced-disarm overlay was
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32901335151`.
+Its fault DataFlash proves the fix works: ground contact at 222.8 s at
+0.49 m/s followed by a successful `Disarming motors` event at 352.0 s. The
+pair still failed because ArduPilot's landing detector never completed (no
+`Land complete` under the residual thrust bias), so the passive post-LAND
+wait consumed its entire budget before the cleanup forced disarm fired.
+Commit `beeddc7c5bffa7d180dc59219f12a347f182788a` therefore escalates inside
+`land_and_disarm`: a bounded descent grace window, then the documented
+forced-disarm command while budget remains, with per-phase failure logging.
+No genuine two-log completed pair has yet been proven.
 
 ## Honest completion boundaries
 

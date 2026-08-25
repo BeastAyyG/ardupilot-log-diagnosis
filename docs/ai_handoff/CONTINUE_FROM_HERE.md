@@ -10,20 +10,25 @@ This file is an execution handoff for another AI. Read
 ### Latest evidence (authoritative)
 
 - Latest ARM64 pair run:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32897998370`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32901335151`
 - Immutable image:
-  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`
+  `sha256:85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd`
 - The earlier sham run proved heartbeat, inventory, preflight, arming,
   takeoff, flight completion, exact DataFlash selection, logger stabilization,
   and receipt-schema validation.
-- Run `32897998370` used the recoverable canary (`SIM_ENGINE_MUL=0.9`), landed
-  gently at about 0.48 m/s, but stayed armed: the runner called pymavlink's
-  ordinary disarm helper, which sends `param1=0, param2=0`. ArduPilot requires
-  `param2=21196` for a forced disarm. The fault arm was quarantined correctly.
-- Commit `d01f80cf679260298429e5c1e306e9b798588302` ("Force disarm
-  motor-failure SITL runs") now sends `MAV_CMD_COMPONENT_ARM_DISARM` with
-  `param1=0, param2=21196`; `tests/test_runner_loopback.py` verifies the exact
-  command. Do not weaken the completion gate or claim a successful pair yet.
+- Run `32901335151` used the `d01f80c` forced-disarm overlay. Its fault
+  DataFlash proves ground contact at 222.8 s at 0.49 m/s and a successful
+  forced disarm (`Disarming motors`) at 352.0 s — but no `Land complete`
+  event: with `SIM_ENGINE_FAIL=1, SIM_ENGINE_MUL=0.9` the craft rests tilted
+  with residual thrust bias, ArduPilot's landing detector never completes,
+  and the passive post-LAND wait consumed its whole budget before the cleanup
+  forced disarm fired.
+- Commit `beeddc7c5bffa7d180dc59219f12a347f182788a` ("Escalate motor-failure
+  landing to forced disarm") makes `land_and_disarm` allow a bounded descent
+  grace window (half the budget, capped at 60 s), then send the documented
+  `param2=21196` forced disarm while budget remains, and log the failure mode
+  per phase. Regression tests cover both escalation and natural-disarm paths.
+  Do not weaken the completion gate or claim a successful pair yet.
 
 ### Local-first policy from this point
 
@@ -56,12 +61,12 @@ roughly 5-15 minutes when the image is cached, or 10-30 minutes cold.
 - Main commit containing exact DataFlash disarm-status acceptance:
   `af46d3f655d011de0a9a6d04d7020672ca9062c1`; candidate canary commit:
   `c4098e29fa64bd5d16916a01f122784b59490790`.
-- Overlay build run `32900739715` succeeded; it layers the forced-disarm code
-  from `d01f80cf679260298429e5c1e306e9b798588302` over the qualified
-  `sha256:8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310`
-  runtime (tag `overlay-d01f80c-force-disarm`).
+- Overlay build run `32903463261` succeeded; it layers the landing-grace
+  escalation from `beeddc7c5bffa7d180dc59219f12a347f182788a` over the
+  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`
+  runtime (tag `overlay-beeddc7-landing-grace`).
 - New immutable overlay digest:
-  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`.
+  `sha256:85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd`.
 - This branch updates every deployment/test/documentation pin to that digest.
 - The next required steps are: validate this branch, run the genuine pair from
   this branch, download the artifact, and verify the evidence.
@@ -72,14 +77,14 @@ Confirm the old overlay digest is absent from deployment surfaces and the new
 digest occurs in all five surfaces:
 
 ```powershell
-rg -n "8617e76d2d1ac317b1d2c638ae33b6864ba126d7872838e8d8e18ab77c65f310" `
+rg -n "836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be" `
+rg -n "85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
