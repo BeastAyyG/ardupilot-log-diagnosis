@@ -373,6 +373,17 @@ class PymavlinkSITLSession:
             if last_arm_error is not None:
                 raise last_arm_error
             raise TimeoutError("SITL did not become armed")
+        # The pinned parameter inventory may set all unsolicited MAVLink stream
+        # rates to zero.  Ask explicitly for relative-position telemetry before
+        # issuing takeoff; otherwise the vehicle can climb successfully while
+        # this controller times out waiting for GLOBAL_POSITION_INT.
+        self.master.mav.request_data_stream_send(
+            self.master.target_system,
+            self.master.target_component,
+            mavutil.mavlink.MAV_DATA_STREAM_POSITION,
+            5,
+            1,
+        )
         self.master.mav.command_long_send(
             self.master.target_system,
             self.master.target_component,
