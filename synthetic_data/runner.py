@@ -227,6 +227,12 @@ class PymavlinkSITLSession:
 
         return text.lstrip().lower().startswith("prearm:")
 
+    @staticmethod
+    def _is_disarm_confirmation_status(text: str) -> bool:
+        """Recognize ArduCopter's explicit motor-disarm status evidence."""
+
+        return text.strip().casefold() == "disarming motors"
+
     def _wait_for_armed_state(self, expected: bool, timeout: float) -> None:
         """Wait with an explicit deadline; pymavlink's convenience waits have none."""
 
@@ -255,6 +261,8 @@ class PymavlinkSITLSession:
                         arm_ack_result = result
             elif message_type == "STATUSTEXT":
                 text = str(getattr(message, "text", "")).strip()
+                if not expected and self._is_disarm_confirmation_status(text):
+                    return
                 if self._is_arm_rejection_status(text):
                     prearm_rejection = text
             elif self._heartbeat_armed(message) is expected:
