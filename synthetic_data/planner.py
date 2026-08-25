@@ -12,6 +12,7 @@ from typing import Any
 
 from .catalog import SCENARIOS, ScenarioSpec
 from .execution_integrity import float32_equal
+from .frame_defaults import FRAME_CLASS_VALUES
 from .schema import ParameterSchema, canonical_json_bytes, sha256_bytes
 
 GENERATOR_VERSION = "ardupilot-sitl-lab-v2"
@@ -188,6 +189,11 @@ def _single_plan(
     fault_startup = dict(startup)
     logging_parameters = _logging_parameters(schema)
     startup = {**environment, **logging_parameters, **fault_startup}
+    if schema is not None:
+        # The captured inventory is frame-specific. Persist its frame class in
+        # the immutable startup file so ArduPilot does not boot with its
+        # unsupported empty-default value (FRAME_CLASS=0).
+        startup["FRAME_CLASS"] = float(FRAME_CLASS_VALUES[frame])
     motor_output_parameters: dict[str, float] = {}
     if spec.motor_mask:
         if available is not None and "SIM_ENGINE_FAIL" not in available:
@@ -380,6 +386,7 @@ def build_paired_run_plans(
         else:
             for name in fault["fault_startup_parameters"]:
                 control_startup[name] = float(parameter_schema.parameters[name])
+        control_startup["FRAME_CLASS"] = float(FRAME_CLASS_VALUES[fault["frame"]])
         control["startup_parameters"] = dict(sorted(control_startup.items()))
         control["environment_parameters"] = dict(fault["environment_parameters"])
         control["logging_parameters"] = dict(fault["logging_parameters"])
