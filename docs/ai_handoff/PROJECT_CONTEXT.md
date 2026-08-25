@@ -80,28 +80,22 @@ themselves, prove live hardware execution or an accuracy improvement.
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
 - Current runtime overlay built from main commit
-  `c93b4cc9f478fc22c4db15985105b563936ca925`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:92def7a269aa4188a4c927f9af9a92dcb2f2f5466ec060a2132ff173e4009cb5`
+  `02f2d16b8440b129e7f8c54a600d19140d5f58eb`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:47f257c56959959be9a2951d85b8ecb39fb7a958cf24c7e21daa62413957be7b`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32829715894`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32832574649`
 
 ## Real ARM64 evidence so far
 
-The previous genuine run was:
+The latest genuine run before this overlay was:
 
-`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32826647987`
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32831540854`
 
-It successfully pulled and started immutable ARM64 image
-`sha256:cb79292ce03af857ccb62508c50745901dae79742be5adc9dfc055e945bc0ee8`.
-It advanced through earlier source/model, calibration, and estimator problems,
-then failed because ordinary informational text, `GPS 1: detected u-blox`, was
-incorrectly stored as an arming rejection.
-
-PR #140 fixed the demonstrated defect and merged as
-`e232eb30067a1b2990a4a0f43cee9bb1acbef70b` after all CI checks passed. The
-runtime now treats only explicit `PreArm:` status and a rejected ARM/DISARM
-command acknowledgement as refusal evidence. Informational estimator/GPS
-messages are ignored while bounded quiet transitions may retry.
+It pulled the prior immutable overlay and reached a genuine
+`PreArm: Need Position Estimate` readiness state. PR #144 merged as
+`02f2d16b8440b129e7f8c54a600d19140d5f58eb`; it retries only that exact
+transient reason within the existing arm deadline. All other PreArm failures
+remain terminal.
 
 This is meaningful progress, but no genuine two-log completed pair has yet been
 proven at the time this file was written.

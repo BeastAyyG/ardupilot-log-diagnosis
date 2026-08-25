@@ -7,12 +7,12 @@ This file is an execution handoff for another AI. Read
 
 ## Current state
 
-- PR #140 is merged.
-- Main commit containing the structured ARM retry fix:
-  `c93b4cc9f478fc22c4db15985105b563936ca925`.
-- New ARM64 overlay build run `32829715894` succeeded.
+- PR #144 is merged.
+- Main commit containing the bounded position-estimate readiness retry:
+  `02f2d16b8440b129e7f8c54a600d19140d5f58eb`.
+- New ARM64 overlay build run `32832574649` succeeded.
 - New immutable overlay digest:
-  `sha256:92def7a269aa4188a4c927f9af9a92dcb2f2f5466ec060a2132ff173e4009cb5`.
+  `sha256:47f257c56959959be9a2951d85b8ecb39fb7a958cf24c7e21daa62413957be7b`.
 - This branch updates every deployment/test/documentation pin to that digest.
 - The next required steps are: validate this branch, merge its pin PR, run the
   genuine pair from main, download the artifact, and verify the evidence.
@@ -30,7 +30,7 @@ rg -n "15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af" `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "92def7a269aa4188a4c927f9af9a92dcb2f2f5466ec060a2132ff173e4009cb5" `
+rg -n "47f257c56959959be9a2951d85b8ecb39fb7a958cf24c7e21daa62413957be7b" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
