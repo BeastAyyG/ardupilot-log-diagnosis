@@ -283,6 +283,11 @@ def test_pymavlink_arm_wait_uses_a_bounded_heartbeat_loop() -> None:
         base_mode = 128
         relative_alt = 9_000
         time_boot_ms = 12_345
+        onboard_control_sensors_enabled = (
+            mavutil.mavlink.MAV_SYS_STATUS_SENSOR_3D_GYRO
+            | mavutil.mavlink.MAV_SYS_STATUS_SENSOR_3D_ACCEL
+        )
+        onboard_control_sensors_health = onboard_control_sensors_enabled
 
         def get_srcSystem(self):
             return 1
@@ -308,6 +313,9 @@ def test_pymavlink_arm_wait_uses_a_bounded_heartbeat_loop() -> None:
 
     class Mav:
         def command_long_send(self, *args):
+            return None
+
+        def request_data_stream_send(self, *args):
             return None
 
     class Master:
