@@ -386,6 +386,7 @@ def build_paired_run_plans(
         else:
             for name in fault["fault_startup_parameters"]:
                 control_startup[name] = float(parameter_schema.parameters[name])
+        control_startup["FRAME_CLASS"] = float(FRAME_CLASS_VALUES[fault["frame"]])
         control["startup_parameters"] = dict(sorted(control_startup.items()))
         control["environment_parameters"] = dict(fault["environment_parameters"])
         control["logging_parameters"] = dict(fault["logging_parameters"])
