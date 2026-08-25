@@ -338,10 +338,13 @@ class OwnedSITLProcess:
         return len(set(sizes)) == 1 and sizes[0] > 0, sizes[-1]
 
     def finalize_log(self, timeout: float) -> tuple[Path, dict[str, Any]]:
+        log_dir = self.run_dir / "logs"
         logs = sorted(
             path
-            for path in self.run_dir.rglob("*")
-            if path.is_file() and path.suffix.lower() == ".bin"
+            for path in log_dir.glob("*")
+            if path.is_file()
+            and path.suffix.lower() == ".bin"
+            and path.stem.isdigit()
         )
         if len(logs) != 1:
             raise RuntimeError(
