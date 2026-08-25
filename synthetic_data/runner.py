@@ -203,19 +203,31 @@ class PymavlinkSITLSession:
         """Wait with an explicit deadline; pymavlink's convenience waits have none."""
 
         deadline = time.monotonic() + timeout
+        arm_rejection: str | None = None
         while time.monotonic() < deadline:
             message = self.master.recv_match(
-                type="HEARTBEAT",
+                type=["HEARTBEAT", "COMMAND_ACK", "STATUSTEXT"],
                 blocking=True,
                 timeout=min(1.0, max(0.0, deadline - time.monotonic())),
             )
-            if (
-                message is not None
-                and self._from_owned_vehicle(message)
-                and self._heartbeat_armed(message) is expected
-            ):
+            if message is None or not self._from_owned_vehicle(message):
+                continue
+            get_type = getattr(message, "get_type", None)
+            message_type = str(get_type()) if callable(get_type) else "HEARTBEAT"
+            if message_type == "COMMAND_ACK":
+                result = int(message.result)
+                accepted = int(mavutil.mavlink.MAV_RESULT_ACCEPTED)
+                if result != accepted:
+                    arm_rejection = f"COMMAND_ACK result={result}"
+            elif message_type == "STATUSTEXT":
+                text = str(getattr(message, "text", "")).strip()
+                if text:
+                    arm_rejection = text
+            elif self._heartbeat_armed(message) is expected:
                 return
         state = "armed" if expected else "disarmed"
+        if expected and arm_rejection:
+            raise TimeoutError(f"SITL did not become {state}: {arm_rejection}")
         raise TimeoutError(f"SITL did not become {state}")
 
     def arm_and_takeoff(self, altitude_m: float, timeout: float) -> float:
