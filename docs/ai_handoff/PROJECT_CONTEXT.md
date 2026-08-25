@@ -80,22 +80,22 @@ themselves, prove live hardware execution or an accuracy improvement.
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
 - Current runtime overlay built from main commit
-  `6c92d01aa762f5b8a9dd4530d892e816137639de`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:dfa0468382e68806e40e9fb76ee6795cf430f96725e658e62df14f8cbb601480`
+  `1efabd114803956c2cc4e3b48372cbd45cb17d63`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:9ee5a6d98ed496f75cc664823ce29b1a3a8db6615d0eeb08248c5fa372ee7c98`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32850703198`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32855126523`
 
 ## Real ARM64 evidence so far
 
 The latest genuine run before this overlay was:
 
-`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32833830111`
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32853161920`
 
-Its DataFlash log proves the sham vehicle armed and reached 10.0 m, but the
-controller timed out because the pinned inventory suppressed unsolicited
-`GLOBAL_POSITION_INT` telemetry. PR #146 merged as
-`6c92d01aa762f5b8a9dd4530d892e816137639de`; it explicitly requests the
-position stream before takeoff confirmation.
+Its receipt proves heartbeat, inventory, preflight, arm, takeoff, landing, and
+flight completion. Finalization then rejected `eeprom.bin` as if it were a
+second flight log. PR #148 merged as
+`1efabd114803956c2cc4e3b48372cbd45cb17d63`; it selects only numeric
+DataFlash files from the owned `logs/` directory.
 
 This is meaningful progress, but no genuine two-log completed pair has yet been
 proven at the time this file was written.

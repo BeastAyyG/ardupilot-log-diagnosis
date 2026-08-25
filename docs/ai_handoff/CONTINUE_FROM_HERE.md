@@ -7,12 +7,12 @@ This file is an execution handoff for another AI. Read
 
 ## Current state
 
-- PR #146 is merged.
-- Main commit containing explicit takeoff-position stream negotiation:
-  `6c92d01aa762f5b8a9dd4530d892e816137639de`.
-- New ARM64 overlay build run `32850703198` succeeded.
+- PR #148 is merged.
+- Main commit containing exact DataFlash artifact selection:
+  `1efabd114803956c2cc4e3b48372cbd45cb17d63`.
+- New ARM64 overlay build run `32855126523` succeeded.
 - New immutable overlay digest:
-  `sha256:dfa0468382e68806e40e9fb76ee6795cf430f96725e658e62df14f8cbb601480`.
+  `sha256:9ee5a6d98ed496f75cc664823ce29b1a3a8db6615d0eeb08248c5fa372ee7c98`.
 - This branch updates every deployment/test/documentation pin to that digest.
 - The next required steps are: validate this branch, merge its pin PR, run the
   genuine pair from main, download the artifact, and verify the evidence.
@@ -30,7 +30,7 @@ rg -n "15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af" `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "dfa0468382e68806e40e9fb76ee6795cf430f96725e658e62df14f8cbb601480" `
+rg -n "9ee5a6d98ed496f75cc664823ce29b1a3a8db6615d0eeb08248c5fa372ee7c98" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
