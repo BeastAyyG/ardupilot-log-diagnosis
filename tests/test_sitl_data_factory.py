@@ -7,7 +7,7 @@ import pytest
 
 from synthetic_data import collector
 from synthetic_data.collector import VerificationError
-from synthetic_data.collector_checks import RECEIPT_SCHEMA
+from synthetic_data.collector_checks import RECEIPT_SCHEMA, _observed_injection
 from synthetic_data.dataflash_checks import verify_parameter_contract
 from synthetic_data.execution_integrity import (
     SUPPORTED_PYMAVLINK_VERSION,
@@ -101,6 +101,61 @@ def test_parameter_contract_accepts_firmware_and_rejects_unplanned_changes() -> 
     }
     with pytest.raises(VerificationError, match="unexpected in-flight"):
         verify_parameter_contract(tampered, plan)
+
+
+def test_injection_attempt_count_collapses_firmware_parm_echoes() -> None:
+    plan = {
+        "planned_fault_onset_sec": 73.648,
+        "injection_parameters": {"SIM_ENGINE_FAIL": 1.0},
+        "injection_baseline_parameters": {"SIM_ENGINE_FAIL": 0.0},
+    }
+    receipt = {
+        "takeoff_boot_ms": 52000.0,
+        "scheduled_onset_boot_ms": 125648.0,
+    }
+    acknowledgement = {
+        "name": "SIM_ENGINE_FAIL",
+        "requested": 1.0,
+        "readback": 1.0,
+        "acknowledged": True,
+        "attempts": 1,
+        "send_boot_ms": 125640.0,
+        "ack_boot_ms": 125840.0,
+        "time_boot_ms": 125840.0,
+        "readback_boot_ms": 126040.0,
+    }
+    parsed = {
+        "messages": {
+            "PARM": [
+                {"Name": "SIM_ENGINE_FAIL", "Value": 0.0, "TimeUS": 10205000.0},
+                # One PARAM_SET, logged twice by the firmware 1 ms apart.
+                {"Name": "SIM_ENGINE_FAIL", "Value": 1.0, "TimeUS": 125648000.0},
+                {"Name": "SIM_ENGINE_FAIL", "Value": 1.0, "TimeUS": 125649000.0},
+            ]
+        }
+    }
+
+    onset, _end, observed = _observed_injection(
+        parsed, plan, receipt, [acknowledgement]
+    )
+
+    assert len(observed) == 1
+    assert observed[0]["name"] == "SIM_ENGINE_FAIL"
+
+    flapping = {
+        **parsed,
+        "messages": {
+            "PARM": [
+                parsed["messages"]["PARM"][0],
+                {"Name": "SIM_ENGINE_FAIL", "Value": 1.0, "TimeUS": 125648000.0},
+                {"Name": "SIM_ENGINE_FAIL", "Value": 1.0, "TimeUS": 125649000.0},
+                # A second distinct change event beyond the single bounded attempt.
+                {"Name": "SIM_ENGINE_FAIL", "Value": 1.0, "TimeUS": 127000000.0},
+            ]
+        },
+    }
+    with pytest.raises(VerificationError, match="bounded attempts"):
+        _observed_injection(flapping, plan, receipt, [acknowledgement])
 
 
 def test_run_plans_are_deterministic_and_order_independent() -> None:

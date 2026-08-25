@@ -150,6 +150,29 @@ def _causal_evidence(
     }
 
 
+def _collapse_firmware_echoes(
+    records: list[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    """Collapse identical-value PARM records logged within 100 ms of each other.
+
+    ArduPilot can emit two PARM rows for a single PARAM_SET of a simulator
+    parameter (run 32906728148: one send, rows at t=125.648 s and t=125.649 s
+    with the same value). The rows are one firmware-side change event; only
+    genuinely repeated changes must count against the bounded attempts.
+    """
+
+    collapsed: list[Mapping[str, Any]] = []
+    for record in sorted(records, key=lambda message: float(message["TimeUS"])):
+        if collapsed:
+            previous = collapsed[-1]
+            if _close(record.get("Value"), previous.get("Value")) and (
+                float(record["TimeUS"]) - float(previous["TimeUS"])
+            ) <= 100_000.0:
+                continue
+        collapsed.append(record)
+    return collapsed
+
+
 def _observed_injection(
     parsed: Mapping[str, Any],
     plan: Mapping[str, Any],
@@ -246,6 +269,7 @@ def _observed_injection(
             raise VerificationError(
                 f"raw DataFlash PARM records do not prove injection of {name}"
             )
+        matching = _collapse_firmware_echoes(matching)
         nearest = min(
             matching,
             key=lambda message: abs(
