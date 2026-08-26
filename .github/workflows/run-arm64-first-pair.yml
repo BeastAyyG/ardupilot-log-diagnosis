@@ -24,7 +24,7 @@ on:
         required: false
         default: 'off'
         type: choice
-        options: [off, on]
+        options: ["off", "on"]
 
 permissions:
   contents: read
