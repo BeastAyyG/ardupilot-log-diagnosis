@@ -9,33 +9,34 @@ This file is an execution handoff for another AI. Read
 
 ### Latest evidence (authoritative)
 
-- Latest ARM64 pair run (SUCCESSFUL):
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32908475774`
+- **Goal-1 exit criterion MET (2026-08-26):** 20 consecutive qualified
+  paired runs, ledger rows 14*–33 in
+  `docs/ai_handoff/RELIABILITY_LEDGER.md`. First of the streak:
+  [run 32922568455](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32922568455)
+  (seed 20260853). Last of the streak:
+  [run 32939258245](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32939258245)
+  (seed 20260872).
 - Immutable image:
-  `sha256:ced6a0b642a24203a2212208b0f0c3883da5e555af8010a53fb939b1d99add83`
-  (tag `overlay-parm-echo-fix`, build run `32908296279`)
-- Verified on the downloaded artifact:
+  `sha256:1c801e2e08d744a08775d1656166d130b002ca84e964281b20f22fd97c56a5f5`
+  (tag `overlay-src-tree-fix`)
+- Verified on every downloaded artifact in the streak:
   - Collection accepted BOTH members (`accepted=2`, `trainable=true`,
     `rejected=[]`); accuracy claim stays `not_evaluated`.
-  - Sealed `logdiagnosis.pair-commit/v1` (`b6ffb1ca1608bbb7...`, lineage
-    `sitl-pair:ca79bd167b110398da25`) binds both receipt SHA256 hashes;
+  - Sealed `logdiagnosis.pair-commit/v1` binds both receipt SHA256 hashes;
     independent re-hashing matches.
-  - Both receipts: `status=completed`, exit code 0, stable log, log hash and
-    size match the promoted `.BIN` files, loopback-only network namespace,
-    ArduPilot commit `1511f27194f1dcc3728270883047bdf022b3fd53`.
-  - Fault member acknowledges `SIM_ENGINE_FAIL=1.0`; sham has none.
-  - DataFlash: sham disarmed naturally at 225.2 s (2 s after touchdown);
-    fault arm landed tilted at 223.5 s and disarmed at 262.7 s via the
-    landing-grace forced disarm (`param2=21196`). Both logs contain
-    `Disarming motors`.
+  - Both receipts: `status=completed`, exit code 0, stable log, log hash
+    bound, loopback-only network namespace.
+  - Fault member acknowledges `SIM_ENGINE_FAIL` (masks 1/2/4/8 observed);
+    sham has none; both logs contain `Disarming motors`.
 - The fix chain that produced this: `d01f80c` (forced-disarm command),
   `beeddc7` (landing-grace escalation inside `land_and_disarm`),
   `7ae12ba` (firmware-managed parameter allowlist + promoted-log counting),
-  `ca86840` (collapse firmware PARM echoes in the attempts bound).
+  `ca86840` (collapse firmware PARM echoes in the attempts bound),
+  `b9d2cd6` (`motor_mean_spread` detector + median-of-three baselines),
+  `fb6b686` (overlay ships `src/` tree), repin `2489630`.
 - Do not weaken any gate; do not claim accuracy improvement yet.
-- Next: repeat paired runs toward the Goal-1 exit criterion of 20
-  consecutive completed pairs; investigate any new flake from its exact
-  receipt before touching code.
+- Next: Goal 2 — real-data cohort definition (see `PROJECT_CONTEXT.md`);
+  investigate any new flake from its exact receipt before touching code.
 
 ### Local-first policy from this point
 

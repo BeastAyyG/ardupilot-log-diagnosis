@@ -40,6 +40,25 @@ Per-pair verification performed on each downloaded artifact:
 | 13 | 20260852 | [32918319550](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32918319550) | success | `821397ab…` (`sitl-pair:2d201c3cfe3c97e1d702`) | 2 |
 | — | 20260853 | [32919011601](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32919011601) | rejected | `657d7f34…` (`sitl-pair:213c6ee76196ff10ae63`) | 4 |
 | 14* | 20260853 | [32922568455](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32922568455) | success | `c5fff0a8…` (`sitl-pair:213c6ee76196ff10ae63`) | 4 |
+| 15 | 20260854 | [32923335678](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32923335678) | success | `bab06cbb…` (`sitl-pair:880323d29d8722eea819`) | 2 |
+| 16 | 20260855 | [32923845412](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32923845412) | success | `ee99466f…` (`sitl-pair:df9c743682d83183fe25`) | 8 |
+| 17 | 20260856 | [32924539428](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32924539428) | success | `444b408d…` (`sitl-pair:c1b1cb2a9cd5c6a5a139`) | 4 |
+| 18 | 20260857 | [32925103762](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32925103762) | success | `f1d7efa9…` (`sitl-pair:a4e8334c3b654701598c`) | 1 |
+| 19 | 20260858 | [32925723546](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32925723546) | success | `ffa8c444…` (`sitl-pair:596bf260f17845588336`) | 4 |
+| 20 | 20260859 | [32926395136](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32926395136) | success | `a0ac4c06…` (`sitl-pair:eff4db43fd1e04ff0ae1`) | 8 |
+| 21 | 20260860 | [32927001547](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32927001547) | success | `9a50f4cb…` (`sitl-pair:ceb64b4ba7125af6d83a`) | 2 |
+| 22 | 20260861 | [32927643409](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32927643409) | success | `fb1cd213…` (`sitl-pair:7e7799d0dffb47993522`) | 4 |
+| 23 | 20260862 | [32928341829](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32928341829) | success | `de31842f…` (`sitl-pair:1a81b3aac0f13150b62c`) | 8 |
+| 24 | 20260863 | [32932908315](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32932908315) | success | `2b4a9850…` (`sitl-pair:c988677406a08f33cddc`) | 8 |
+| 25 | 20260864 | [32933550207](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32933550207) | success | `eb86c33f…` (`sitl-pair:fe156cac524729c3e098`) | 1 |
+| 26 | 20260865 | [32934177901](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32934177901) | success | `5c16f442…` (`sitl-pair:e16f3d64d21fb9307be9`) | 1 |
+| 27 | 20260866 | [32934983958](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32934983958) | success | `10858470…` (`sitl-pair:c3e97e517a6aa52c6543`) | 8 |
+| 28 | 20260867 | [32935586727](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32935586727) | success | `89e93135…` (`sitl-pair:3ddab99db4fd2c056faf`) | 4 |
+| 29 | 20260868 | [32936356766](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32936356766) | success | `429338ce…` (`sitl-pair:0bcfc63bbae05eaa485d`) | 1 |
+| 30 | 20260869 | [32937065655](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32937065655) | success | `f2638625…` (`sitl-pair:0391aaf4bf2ed93745c7`) | 2 |
+| 31 | 20260870 | [32937864402](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32937864402) | success | `91982ff1…` (`sitl-pair:145100a457902d758525`) | 4 |
+| 32 | 20260871 | [32938517131](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32938517131) | success | `5519cb01…` (`sitl-pair:e40f0c570372ad1948a6`) | 1 |
+| 33 | 20260872 | [32939258245](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32939258245) | success | `d85af4ea…` (`sitl-pair:555df19a67859c17bb65`) | 1 |
 
 Row "—" is a scientific rejection: the injection was acknowledged but the
 gated detector missed the physical response under a turbulent baseline
@@ -55,11 +74,18 @@ reach the container — regression-tested now).
 
 Current pinned runtime:
 `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:1c801e2e08d744a08775d1656166d130b002ca84e964281b20f22fd97c56a5f5`
-(tag `overlay-src-tree-fix`). Consecutive streak on this image: **1 / 20**
-(row 14*).
+(tag `overlay-src-tree-fix`).
 
-Interim status: **13 consecutive qualified pairs** on
-`sha256:ced6a0b642a24203a2212208b0f0c3883da5e555af8010a53fb939b1d99add83`
-before one scientific rejection; zero manual interventions throughout.
-Motor-failure bitmask diversity observed: motors 1, 2, 4, 8. No accuracy
-claim is made or implied by this ledger.
+## Exit criterion: MET (2026-08-26)
+
+Rows 14* through 33 are **20 consecutive qualified pairs** on the pinned
+runtime above: every pair completed end to end, produced valid `.BIN`
+logs sealed with a `logdiagnosis.pair-commit/v1` commit whose member
+receipt hashes were independently re-verified, and required zero manual
+intervention. The one intervening event (row "—") was a scientific
+rejection that reset the streak before the detector fix; the count of 20
+starts at row 14*.
+
+Motor-failure bitmask diversity across the streak: motors 1, 2, 4, 8.
+No accuracy claim is made or implied by this ledger. Goal 2 (real-data
+cohort definition) is the next goal per the execution order.
