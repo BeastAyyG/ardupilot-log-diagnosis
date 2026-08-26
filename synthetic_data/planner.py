@@ -13,7 +13,7 @@ from typing import Any
 from .catalog import SCENARIOS, ScenarioSpec
 from .execution_integrity import float32_equal
 from .frame_defaults import FRAME_CLASS_VALUES
-from .randomization import draw_randomization
+from .randomization import derived_allowances_for, draw_randomization
 from .schema import ParameterSchema, canonical_json_bytes, sha256_bytes
 
 GENERATOR_VERSION = "ardupilot-sitl-lab-v2"
@@ -310,6 +310,9 @@ def _single_plan(
         "startup_parameters": dict(sorted(startup.items())),
         "environment_parameters": dict(sorted(environment.items())),
         "randomization_parameters": dict(sorted(randomization_parameters.items())),
+        "derived_parameter_allowances": derived_allowances_for(
+            randomization_parameters
+        ),
         "logging_parameters": dict(sorted(logging_parameters.items())),
         "fault_startup_parameters": dict(sorted(fault_startup.items())),
         "control_startup_policy": variant.control_startup_policy,
@@ -415,6 +418,9 @@ def build_paired_run_plans(
         # vehicle, so both members of a pair must fly the identical values.
         shared_randomization = dict(fault["randomization_parameters"])
         control["randomization_parameters"] = dict(shared_randomization)
+        control["derived_parameter_allowances"] = derived_allowances_for(
+            shared_randomization
+        )
         control_startup = {
             **fault["environment_parameters"],
             **shared_randomization,
@@ -461,6 +467,24 @@ def _safe_plan(plan: Mapping[str, Any]) -> None:
         raise ValueError(f"run {run_id} has an invalid randomization_parameters entry")
     if not all(math.isfinite(float(value)) for value in randomization.values()):
         raise ValueError(f"run {run_id} contains non-finite randomized parameters")
+    allowances = plan.get("derived_parameter_allowances", {})
+    if not isinstance(allowances, dict):
+        raise ValueError(
+            f"run {run_id} has an invalid derived_parameter_allowances entry"
+        )
+    for parameter_name, spec in allowances.items():
+        bounds = spec.get("range") if isinstance(spec, dict) else None
+        if (
+            not isinstance(bounds, list)
+            or len(bounds) != 2
+            or not isinstance(spec.get("because"), str)
+            or not math.isfinite(float(bounds[0]))
+            or not math.isfinite(float(bounds[1]))
+            or float(bounds[0]) >= float(bounds[1])
+        ):
+            raise ValueError(
+                f"run {run_id} has an invalid allowance for {parameter_name}"
+            )
     if plan.get("run_fingerprint") != _plan_fingerprint(plan):
         raise ValueError(f"run {run_id} fingerprint is invalid")
     start_time = plan.get("simulation_start_unix_sec")

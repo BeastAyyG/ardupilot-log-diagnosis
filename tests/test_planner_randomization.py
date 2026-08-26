@@ -162,3 +162,105 @@ def test_verify_tool_flags_present_and_missing_parameters(tmp_path) -> None:
     missing_entry = report["parameters"]["SIM_ACC1_RND"]
     assert missing_entry["present"] is False
     assert missing_entry["captured_baseline"] is None
+
+
+def test_derived_baro_allowances_declared_and_shared_by_pair() -> None:
+    plans = build_paired_run_plans(
+        1,
+        seed=20260900,
+        ardupilot_revision=COMMIT,
+        scenarios=["motor_imbalance"],
+        parameter_schema=_full_schema(),
+        randomization_enabled=True,
+    )
+    control, fault = plans
+    for plan in (control, fault):
+        allowances = plan["derived_parameter_allowances"]
+        assert set(allowances) == {"BARO1_GND_PRESS", "BARO2_GND_PRESS"}
+        for parameter, spec in allowances.items():
+            assert spec["because"] == "SIM_BARO_RND"
+            low, high = spec["range"]
+            assert 30000.0 <= low < high <= 120000.0
+    assert (
+        control["derived_parameter_allowances"]
+        == fault["derived_parameter_allowances"]
+    )
+
+
+def test_disabled_randomization_declares_no_allowances() -> None:
+    plans = build_paired_run_plans(
+        1,
+        seed=20260901,
+        ardupilot_revision=COMMIT,
+        scenarios=["motor_imbalance"],
+        parameter_schema=_full_schema(),
+    )
+    for plan in plans:
+        assert plan["derived_parameter_allowances"] == {}
+
+
+def test_validate_live_parameters_tolerates_only_declared_baro_drift() -> None:
+    from synthetic_data.executor import _validate_live_parameters
+
+    schema = _schema(
+        "BARO1_GND_PRESS",
+        "BARO2_GND_PRESS",
+        "SIM_ENGINE_FAIL",
+        "SIM_ENGINE_MUL",
+        "SIM_GYR1_RND",
+        "SIM_ACC1_RND",
+        "SIM_MAG_RND",
+        "SIM_GPS1_NOISE",
+        "SIM_VIB_MOT_MAX",
+        "SIM_BATT_CAP_AH",
+    )
+    plan = {
+        "frame": "quad",
+        "startup_parameters": {"FRAME_CLASS": 1.0},
+        "injection_parameters": {},
+        "injection_baseline_parameters": {},
+        "motor_output_parameters": {},
+        "derived_parameter_allowances": {
+            "BARO1_GND_PRESS": {
+                "because": "SIM_BARO_RND",
+                "range": [30000.0, 120000.0],
+            }
+        },
+    }
+    live = {name: float(value) for name, value in schema.parameters.items()}
+    live["BARO1_GND_PRESS"] = 101234.5
+    result = _validate_live_parameters(live, schema, plan)
+    assert result["readbacks"]["derived:BARO1_GND_PRESS"] == 101234.5
+
+    live["BARO1_GND_PRESS"] = 500.0
+    with pytest.raises(RuntimeError, match="BARO1_GND_PRESS"):
+        _validate_live_parameters(live, schema, plan)
+
+    unexplained_plan = dict(plan)
+    unexplained_plan["derived_parameter_allowances"] = {}
+    live["BARO1_GND_PRESS"] = 101234.5
+    with pytest.raises(RuntimeError, match="BARO1_GND_PRESS"):
+        _validate_live_parameters(live, schema, unexplained_plan)
+
+
+def test_safe_plan_rejects_invalid_allowance_payloads() -> None:
+    from synthetic_data.planner import _safe_plan
+
+    plans = build_paired_run_plans(
+        1,
+        seed=20260902,
+        ardupilot_revision=COMMIT,
+        scenarios=["motor_imbalance"],
+        parameter_schema=_full_schema(),
+        randomization_enabled=True,
+    )
+    bad_range = dict(plans[1])
+    bad_range["derived_parameter_allowances"] = {
+        "BARO1_GND_PRESS": {"because": "SIM_BARO_RND", "range": [1.0]}
+    }
+    with pytest.raises(ValueError, match="invalid allowance"):
+        _safe_plan(bad_range)
+    non_dict = dict(plans[0])
+    non_dict["derived_parameter_allowances"] = ["BARO1_GND_PRESS"]
+    with pytest.raises(ValueError, match="invalid derived_parameter_allowances"):
+        _safe_plan(non_dict)

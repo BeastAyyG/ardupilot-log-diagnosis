@@ -18,6 +18,7 @@ from __future__ import annotations
 import random
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -172,3 +173,34 @@ def draw_randomization(
             value = round(rng.uniform(spec.low, spec.high), 6)
         drawn[spec.name] = float(value)
     return dict(sorted(drawn.items()))
+
+
+DERIVED_PARAMETER_ALLOWANCES: Mapping[str, Mapping[str, tuple[float, float]]] = {
+    # Injecting barometer noise changes the ground pressure the firmware
+    # calibrates and writes to BARO*_GND_PRESS during boot. Those knock-on
+    # values are consequences of an intentional draw, so the preflight live
+    # inventory check must learn them from the plan instead of treating them
+    # as unplanned drift. The ranges are hard physical bounds on sea-level
+    # ground pressure; anything outside is still rejected.
+    "SIM_BARO_RND": {
+        "BARO1_GND_PRESS": (30000.0, 120000.0),
+        "BARO2_GND_PRESS": (30000.0, 120000.0),
+    },
+}
+
+
+def derived_allowances_for(
+    randomization_parameters: Mapping[str, float],
+) -> dict[str, dict[str, Any]]:
+    """Plan-declared firmware-derived parameters tolerated for this draw."""
+
+    allowances: dict[str, dict[str, Any]] = {}
+    for spec_name in sorted(randomization_parameters):
+        for parameter, bounds in DERIVED_PARAMETER_ALLOWANCES.get(
+            spec_name, {}
+        ).items():
+            allowances[parameter] = {
+                "because": spec_name,
+                "range": [float(bounds[0]), float(bounds[1])],
+            }
+    return dict(sorted(allowances.items()))
