@@ -9,3 +9,7 @@ ARG BASE_IMAGE
 RUN echo "${BASE_IMAGE}" | grep -qE '^ghcr\.io/beastayyg/ardupilot-log-diagnosis@sha256:[0-9a-f]{64}$' || \
       (echo "FATAL: BASE_IMAGE must be an immutable lowercase GHCR digest" >&2; exit 1)
 COPY synthetic_data /workspace/synthetic_data
+# The laboratory code also imports src.analysis/src.features at runtime, so
+# the overlay must carry both trees or fixes to src/ silently never ship
+# (observed: run 32921619410 ran a stale src/ without motor_mean_spread).
+COPY src /workspace/src

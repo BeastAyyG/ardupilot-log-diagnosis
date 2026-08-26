@@ -191,3 +191,14 @@ class TestContainerLockConsistency:
         assert "constraints.lock" in dockerfile
         assert "/attestation.json" in dockerfile
         assert "REPLACE_WITH_VERIFIED_DIGEST" in dockerfile  # explicit pin gate
+
+    def test_runtime_overlay_carries_both_code_trees(self) -> None:
+        # The overlay replaces the laboratory Python code over a pinned base.
+        # It must copy synthetic_data AND src: the collector imports
+        # src.features at runtime, and a stale src/ silently re-runs old
+        # detectors (observed in run 32921619410).
+        overlay = (
+            CONTAINERS / "Dockerfile.ardupilot-sitl-overlay"
+        ).read_text(encoding="utf-8")
+        assert "COPY synthetic_data /workspace/synthetic_data" in overlay
+        assert "COPY src /workspace/src" in overlay
