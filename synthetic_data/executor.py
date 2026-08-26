@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 from typing import Any, Mapping
@@ -182,12 +183,30 @@ def _validate_live_parameters(
         for name, expected in expected_values.items()
         if not _close_enough(live.get(name), expected)
     ]
-    if changed:
+    allowances = plan.get("derived_parameter_allowances", {})
+    tolerated: dict[str, float] = {}
+    unexplained: list[str] = []
+    for name in changed:
+        spec = allowances.get(name) if isinstance(allowances, Mapping) else None
+        bounds = spec.get("range") if isinstance(spec, Mapping) else None
+        value = float(live[name])
+        if (
+            isinstance(bounds, (list, tuple))
+            and len(bounds) == 2
+            and math.isfinite(value)
+            and float(bounds[0]) <= value <= float(bounds[1])
+        ):
+            tolerated[name] = value
+        else:
+            unexplained.append(name)
+    if unexplained:
         raise RuntimeError(
             "live parameter values differ from the pinned baseline plus planned "
-            f"overrides: {', '.join(changed[:10])}"
+            f"overrides: {', '.join(unexplained[:10])}"
         )
     readbacks: dict[str, float] = {}
+    for name, value in tolerated.items():
+        readbacks[f"derived:{name}"] = value
     for mapping_name in (
         "startup_parameters",
         "motor_output_parameters",

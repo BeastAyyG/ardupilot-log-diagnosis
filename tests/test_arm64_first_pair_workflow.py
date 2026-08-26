@@ -14,7 +14,9 @@ def test_arm64_first_pair_workflow_is_bounded_and_digest_pinned() -> None:
     job = workflow["jobs"]["first-pair"]
     assert job["runs-on"] == "ubuntu-24.04-arm"
     assert job["timeout-minutes"] == 45
-    assert "@sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8" in workflow["env"]["SITL_IMAGE"]
+    assert "@sha256:285dc9aec7e0e6a9bcea24fb35d1ab10eeba64869bd80859c1cd5ea205ffd79f" in workflow["env"]["SITL_IMAGE"]
+    triggers = workflow.get("on", workflow.get(True))
+    assert triggers["workflow_dispatch"]["inputs"]["seed"]["default"] == "20260840"
     assert any(
         step.get("run") == "bash ops/dgx/run_first_pair.sh"
         for step in job["steps"]

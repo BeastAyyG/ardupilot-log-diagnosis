@@ -433,6 +433,137 @@ def test_disarm_wait_accepts_explicit_motor_disarm_status() -> None:
     session._wait_for_armed_state(False, 0.1)
 
 
+def test_force_disarm_sends_ardupilot_force_magic_value() -> None:
+    class DisarmingStatus:
+        text = "Disarming motors"
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "STATUSTEXT"
+
+    calls = []
+
+    class Mav:
+        def command_long_send(self, *args):
+            calls.append(args)
+
+    class Master:
+        target_system = 1
+        target_component = 1
+        mav = Mav()
+
+        def recv_match(self, **_kwargs):
+            return DisarmingStatus()
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master()
+
+    session.force_disarm(0.1)
+
+    assert calls[0][2] == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+    assert calls[0][4] == 0
+    assert calls[0][5] == 21196
+
+
+def _armed_heartbeat():
+    class ArmedHeartbeat:
+        base_mode = mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "HEARTBEAT"
+
+    return ArmedHeartbeat()
+
+
+def test_land_and_disarm_escalates_to_forced_disarm_after_landing_grace() -> None:
+    calls = []
+
+    class Mav:
+        def command_long_send(self, *args):
+            calls.append(args)
+
+    class Master:
+        target_system = 1
+        target_component = 1
+        mav = Mav()
+
+        def mode_mapping(self):
+            return {"LAND": 9}
+
+        def set_mode(self, mode_id):
+            assert mode_id == 9
+
+        def recv_match(self, **_kwargs):
+            return _armed_heartbeat()
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master()
+
+    with pytest.raises(runner_module._ArmStateTimeout) as excinfo:
+        session.land_and_disarm(2.0)
+
+    assert "forced-disarm command" in str(excinfo.value)
+    assert calls[0][2] == mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+    assert calls[0][4] == 0
+    assert calls[0][5] == 21196
+
+
+def test_land_and_disarm_returns_on_natural_disarm_without_commands() -> None:
+    class DisarmingStatus:
+        text = "Disarming motors"
+
+        def get_srcSystem(self):
+            return 1
+
+        def get_srcComponent(self):
+            return 1
+
+        def get_type(self):
+            return "STATUSTEXT"
+
+    calls = []
+
+    class Mav:
+        def command_long_send(self, *args):
+            calls.append(args)
+
+    class Master:
+        mav = Mav()
+
+        def mode_mapping(self):
+            return {"LAND": 9}
+
+        def set_mode(self, mode_id):
+            assert mode_id == 9
+
+        def recv_match(self, **_kwargs):
+            return DisarmingStatus()
+
+    session = PymavlinkSITLSession.__new__(PymavlinkSITLSession)
+    session._source_system = 1
+    session._source_component = 1
+    session.master = Master()
+
+    session.land_and_disarm(2.0)
+
+    assert calls == []
+
+
 @pytest.mark.parametrize(
     "first_error",
     [

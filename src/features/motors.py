@@ -9,6 +9,7 @@ class MotorExtractor(BaseExtractor):
         "motor_spread_mean",
         "motor_spread_max",
         "motor_spread_std",
+        "motor_mean_spread",
         "motor_output_mean",
         "motor_output_std",
         "motor_max_output",
@@ -25,6 +26,8 @@ class MotorExtractor(BaseExtractor):
 
         spread_vals = []
         output_vals = []
+        channel_sums: dict = {}
+        channel_counts: dict = {}
         max_output_overall = 0.0
         t_vals = []
         saturation_count = 0  # any motor > 1900
@@ -85,6 +88,20 @@ class MotorExtractor(BaseExtractor):
                     min_ch = min(channels)
                     spread = max_ch - min_ch
 
+                    # Track per-channel means: a partial-effectiveness loss
+                    # shows up as one channel's mean output rising while the
+                    # controller compensates, which per-sample extremes miss.
+                    for key in msg.keys():
+                        is_channel_key = key.startswith("C") and (
+                            key[1:].isdigit()
+                        )
+                        if not is_channel_key:
+                            continue
+                        val = self._safe_value(msg, key)
+                        if val > 800:
+                            channel_sums[key] = channel_sums.get(key, 0.0) + val
+                            channel_counts[key] = channel_counts.get(key, 0) + 1
+
                     # Always accumulate for mean/max/std features
                     output_vals.extend(channels)
                     if max_ch > max_output_overall:
@@ -136,10 +153,20 @@ class MotorExtractor(BaseExtractor):
         motor_sat_pct = saturation_count / total_samples if total_samples > 0 else 0.0
         motor_all_high = all_high_count / total_samples if total_samples > 0 else 0.0
 
+        channel_means = [
+            channel_sums[key] / channel_counts[key]
+            for key in channel_sums
+            if channel_counts.get(key, 0) > 0
+        ]
+        motor_mean_spread = (
+            max(channel_means) - min(channel_means) if len(channel_means) >= 2 else 0.0
+        )
+
         return {
             "motor_spread_mean": spread_stats["mean"],
             "motor_spread_max": spread_stats["max"],
             "motor_spread_std": spread_stats["std"],
+            "motor_mean_spread": motor_mean_spread,
             "motor_output_mean": output_stats["mean"],
             "motor_output_std": output_stats["std"],
             "motor_max_output": max_output_overall,

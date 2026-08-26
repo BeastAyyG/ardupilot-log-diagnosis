@@ -239,6 +239,7 @@ def _pair_command(args: argparse.Namespace) -> dict:
         endpoint=args.endpoint,
         frame=args.frame,
         timeout=args.timeout,
+        randomize=args.randomize,
     )
 
 
@@ -301,6 +302,12 @@ def build_parser() -> argparse.ArgumentParser:
     pair.add_argument("--frame", choices=("quad", "hexa", "octa"), default="quad")
     pair.add_argument("--seed", type=int, default=20260823)
     pair.add_argument("--timeout", type=float, default=120.0)
+    pair.add_argument(
+        "--randomize",
+        action="store_true",
+        help="Draw capability-checked noise/vibration/battery parameters per run "
+        "(shared by both pair members) to close the audited sim-to-real gap",
+    )
     pair.add_argument(
         "--confirm-sitl",
         action="store_true",

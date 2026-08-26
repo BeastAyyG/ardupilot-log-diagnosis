@@ -1,6 +1,6 @@
 # Continue From Here
 
-Updated: 2026-08-25
+Updated: 2026-08-26
 
 This file is an execution handoff for another AI. Read
 `PROJECT_CONTEXT.md` first.
@@ -9,17 +9,53 @@ This file is an execution handoff for another AI. Read
 
 ### Latest evidence (authoritative)
 
-- Latest ARM64 pair run:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32860850532`
+- **Goal-4 pilot randomized pair GREEN (2026-08-26):** run
+  [32967269266](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32967269266)
+  (seed 20260900, `randomize=on`) — collection `accepted=2`,
+  `trainable=true`, `rejected=[]`; pair-commit `3ed271f5f4e41493`
+  (`sitl-pair:75cf6ec041cf28d10ccc`). Both members share identical 15-parameter
+  randomization draws (gyro/accel noise, baro/mag/GPS noise + sats, vibration
+  motor/frequencies, battery capacity) read back at exact planned values;
+  tolerated firmware-derived drift recorded as
+  `derived:BARO1_GND_PRESS=94502.05 Pa` inside the plan-declared range.
+- **Goal-3 feature gap audit COMPLETE (commit c6def55 on main):**
+  `docs/FEATURE_GAP_REPORT.md` — MMD²=0.6491 p=0.0020; 81/111 features
+  significant (BH q<0.05); power_bus/telemetry/spectral dominate;
+  intervention decision per pre-registered rule = verified SITL parameter
+  randomization (`docs/INTERVENTION_DECISION.md`).
+- **Goal-2 cohort manifest COMPLETE (commit 5fa56a8 on main):**
+  `data/cohorts/cohort_manifest.json` — sealed holdout 21 logs / 11 incidents,
+  adaptation pool 49 unlabeled real logs, reconciliation of 114/111/109
+  documented in `docs/DATA_PROVENANCE.md`.
+- **Goal-1 exit criterion MET (2026-08-26):** 20 consecutive qualified
+  paired runs, ledger rows 14*–33 in
+  `docs/ai_handoff/RELIABILITY_LEDGER.md`. First of the streak:
+  [run 32922568455](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32922568455)
+  (seed 20260853). Last of the streak:
+  [run 32939258245](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32939258245)
+  (seed 20260872).
 - Immutable image:
-  `sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`
-- The earlier sham run proved heartbeat, inventory, preflight, arming,
-  takeoff, flight completion, exact DataFlash selection, logger stabilization,
-  and receipt-schema validation.
-- The latest run reached landing but failed closed with:
-  `_ArmStateTimeout: SITL did not become disarmed`.
-- Therefore the immediate code task is bounded landing/disarm diagnosis and
-  recovery. Do not claim a successful pair or any accuracy improvement yet.
+  `sha256:285dc9aec7e0e6a9bcea24fb35d1ab10eeba64869bd80859c1cd5ea205ffd79f`
+  (tag `overlay-goal4-derived-allowance`; capability-checked SITL parameter
+  randomization + plan-declared derived-parameter drift allowances)
+- Verified on every downloaded artifact in the streak:
+  - Collection accepted BOTH members (`accepted=2`, `trainable=true`,
+    `rejected=[]`); accuracy claim stays `not_evaluated`.
+  - Sealed `logdiagnosis.pair-commit/v1` binds both receipt SHA256 hashes;
+    independent re-hashing matches.
+  - Both receipts: `status=completed`, exit code 0, stable log, log hash
+    bound, loopback-only network namespace.
+  - Fault member acknowledges `SIM_ENGINE_FAIL` (masks 1/2/4/8 observed);
+    sham has none; both logs contain `Disarming motors`.
+- The fix chain that produced this: `d01f80c` (forced-disarm command),
+  `beeddc7` (landing-grace escalation inside `land_and_disarm`),
+  `7ae12ba` (firmware-managed parameter allowlist + promoted-log counting),
+  `ca86840` (collapse firmware PARM echoes in the attempts bound),
+  `b9d2cd6` (`motor_mean_spread` detector + median-of-three baselines),
+  `fb6b686` (overlay ships `src/` tree), repin `2489630`.
+- Do not weaken any gate; do not claim accuracy improvement yet.
+- Next: Goal 2 — real-data cohort definition (see `PROJECT_CONTEXT.md`);
+  investigate any new flake from its exact receipt before touching code.
 
 ### Local-first policy from this point
 
@@ -48,15 +84,19 @@ image acquisition: roughly 20-60 minutes and several GB, depending on network
 and whether an image must be built. Native ARM VM/DGX final confirmation:
 roughly 5-15 minutes when the image is cached, or 10-30 minutes cold.
 
-- PR #152 is merged.
-- Main commit binding the parent-namespace observation in receipts:
-  `c303e7050431b3164155a5e76b6cc1300484c9dc`.
-- New ARM64 overlay build run `32860466857` succeeded.
+- PR #152 and PR #155 are merged.
+- Main commit containing exact DataFlash disarm-status acceptance:
+  `af46d3f655d011de0a9a6d04d7020672ca9062c1`; candidate canary commit:
+  `c4098e29fa64bd5d16916a01f122784b59490790`.
+- Overlay build run `32903463261` succeeded; it layers the landing-grace
+  escalation from `beeddc7c5bffa7d180dc59219f12a347f182788a` over the
+  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`
+  runtime (tag `overlay-beeddc7-landing-grace`).
 - New immutable overlay digest:
-  `sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`.
+  `sha256:85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd`.
 - This branch updates every deployment/test/documentation pin to that digest.
-- The next required steps are: validate this branch, merge its pin PR, run the
-  genuine pair from main, download the artifact, and verify the evidence.
+- The next required steps are: validate this branch, run the genuine pair from
+  this branch, download the artifact, and verify the evidence.
 
 ## Validate the digest-pin branch
 
@@ -64,14 +104,14 @@ Confirm the old overlay digest is absent from deployment surfaces and the new
 digest occurs in all five surfaces:
 
 ```powershell
-rg -n "15130516e46ce104c8dae1d1678fd56d3f34c36fd2f853d68da9a8995c58b4af" `
+rg -n "836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
   tests/test_dgx_launcher.py `
   tests/test_arm64_first_pair_workflow.py
 
-rg -n "51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8" `
+rg -n "85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd" `
   ops/dgx/run_first_pair.sh `
   .github/workflows/run-arm64-first-pair.yml `
   docs/DGX_GITHUB_DEPLOYMENT.md `
@@ -103,14 +143,16 @@ check, merge, and record the merge SHA.
 
 ## Run the genuine pair
 
-Only after the pin PR is merged to main:
+Dispatch from this branch once validation passes (merging the pin PR to
+`main` first is still preferred for a final confirmation run):
 
 ```powershell
 gh workflow run run-arm64-first-pair.yml `
   --repo BeastAyyG/ardupilot-log-diagnosis `
-  --ref main `
+  --ref codex/pin-disarm-status-image `
   -f scenario=motor_imbalance `
-  -f frame=quad
+  -f frame=quad `
+  -f seed=20260840
 ```
 
 Find and watch the new run:
@@ -119,7 +161,7 @@ Find and watch the new run:
 gh run list `
   --repo BeastAyyG/ardupilot-log-diagnosis `
   --workflow run-arm64-first-pair.yml `
-  --branch main --limit 1
+  --branch codex/pin-disarm-status-image --limit 1
 
 gh run watch RUN_ID `
   --repo BeastAyyG/ardupilot-log-diagnosis `

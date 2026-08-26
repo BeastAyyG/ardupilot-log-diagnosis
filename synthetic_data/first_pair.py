@@ -190,6 +190,7 @@ def run_first_pair(
     endpoint: str = DEFAULT_ENDPOINT,
     frame: str = "quad",
     timeout: float = 120.0,
+    randomize: bool = False,
 ) -> dict[str, Any]:
     """Capture, plan, execute, seal, and collect one matched pair."""
 
@@ -213,6 +214,7 @@ def run_first_pair(
         ardupilot_revision=schema.ardupilot_commit,
         scenarios=[scenario],
         parameter_schema=schema,
+        randomization_enabled=randomize,
     )
     write_experiment(
         root,

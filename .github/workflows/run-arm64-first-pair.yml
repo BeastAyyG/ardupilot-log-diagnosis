@@ -14,13 +14,24 @@ on:
         default: quad
         type: choice
         options: [quad, hexa, octa]
+      seed:
+        description: Deterministic planning seed
+        required: true
+        default: '20260840'
+        type: string
+      randomize:
+        description: Draw capability-checked noise/vibration/battery parameters
+        required: false
+        default: 'off'
+        type: choice
+        options: ["off", "on"]
 
 permissions:
   contents: read
   packages: read
 
 env:
-  SITL_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8
+  SITL_IMAGE: ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:285dc9aec7e0e6a9bcea24fb35d1ab10eeba64869bd80859c1cd5ea205ffd79f
 
 jobs:
   first-pair:
@@ -42,6 +53,8 @@ jobs:
           PAIR_OUTPUT_DIR: ${{ github.workspace }}/artifacts/first-pair
           PAIR_SCENARIO: ${{ inputs.scenario }}
           PAIR_FRAME: ${{ inputs.frame }}
+          PAIR_SEED: ${{ inputs.seed }}
+          PAIR_RANDOMIZE: ${{ inputs.randomize }}
         run: bash ops/dgx/run_first_pair.sh
 
       - name: Upload first-pair evidence

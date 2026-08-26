@@ -7,16 +7,24 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     script = (ROOT / "ops" / "dgx" / "run_first_pair.sh").read_text(
         encoding="utf-8"
     )
-    assert "sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8" in script
+    assert "sha256:285dc9aec7e0e6a9bcea24fb35d1ab10eeba64869bd80859c1cd5ea205ffd79f" in script
     assert "--privileged --network host" in script
     assert "--user 0:0" in script
     assert 'chmod 0777 "$OUTPUT_DIR"' in script
-    assert 'chown -R "$HOST_UID:$HOST_GID" /output' in script
+    assert 'chown -R \\"\\$HOST_UID:\\$HOST_GID\\" /output' in script
     assert "python -m synthetic_data pair" in script
     assert "--confirm-sitl" in script
+    # Randomization is opt-in and gated behind an on/off validation.
+    assert 'readonly RANDOMIZE_FLAG="${PAIR_RANDOMIZE:-off}"' in script
+    assert '[[ "$RANDOMIZE_FLAG" == "on" || "$RANDOMIZE_FLAG" == "off" ]]' in script
+    assert '"--randomize"' in script
     assert '[[ "$commit_count" -eq 1 ]]' in script
     assert '[[ "$receipt_count" -ge 2 ]]' in script
     assert '[[ "$bin_count" -eq 2 ]]' in script
+    # Only the promoted pair under logs/ counts; owned_runs working mirrors
+    # and eeprom dumps must never inflate the count again.
+    assert 'find "$OUTPUT_DIR/logs" -maxdepth 1 -type f -iname' in script
+    assert '*.bin' in script
 
 
 def test_dgx_launcher_does_not_accept_a_mutable_image_tag() -> None:

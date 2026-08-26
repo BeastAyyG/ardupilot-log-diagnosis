@@ -1,6 +1,6 @@
 # Project Context for a New AI
 
-Updated: 2026-08-25
+Updated: 2026-08-26
 
 ## Objective
 
@@ -79,11 +79,13 @@ themselves, prove live hardware execution or an accuracy improvement.
   `1511f27194f1dcc3728270883047bdf022b3fd53`
 - Qualified ARM64 base image:
   `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:369232ff6a1185a647a08e68a16c9d18e8e8ba5855c0d73ef9c332e398c2d765`
-- Current runtime overlay built from main commit
-  `c303e7050431b3164155a5e76b6cc1300484c9dc`:
-  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:51c9e881b5b2a6824617e552930fd6390b4cb437a613ebdfec6c3c0b21cdf3d8`
+- Current runtime overlay built from branch commit
+  `beeddc7c5bffa7d180dc59219f12a347f182788a` (landing-grace escalation to the
+  forced disarm `param1=0, param2=21196`), layered over
+  `sha256:836fc41b58cd541586b8a45b5d5d14b6ce4f31b67dde2108b0e2fb0078bb66be`:
+  `ghcr.io/beastayyg/ardupilot-log-diagnosis@sha256:85655cb80e0d1c49d72ee55c0c37c35c99a9bf51698277cf59e6e8e4022573bd`
 - Overlay build evidence:
-  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32860466857`
+  `https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32903463261`
 
 ## Real ARM64 evidence so far
 
@@ -97,8 +99,17 @@ from the closed schema. PR #152 merged as
 `c303e7050431b3164155a5e76b6cc1300484c9dc`; the schema now requires the
 real `verified` or `permission_limited` observation.
 
-This is meaningful progress, but no genuine two-log completed pair has yet been
-proven at the time this file was written.
+The genuine paired canary finally succeeded on run
+`https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32908475774`
+using overlay
+`sha256:ced6a0b642a24203a2212208b0f0c3883da5e555af8010a53fb939b1d99add83`.
+Both members completed with sealed pair-commit `b6ffb1ca1608bbb7...`
+(lineage `sitl-pair:ca79bd167b110398da25`), collection accepted both
+(`trainable=true`, accuracy still `not_evaluated`), and both DataFlash logs
+contain explicit `Disarming motors` events. This proves one quad
+motor-imbalance sham/intervention pair end to end; it does not prove model
+accuracy, broad coverage, or physical realism. Repeat runs toward the
+Goal-1 exit criterion (20 consecutive completed pairs) are the next step.
 
 ## Honest completion boundaries
 

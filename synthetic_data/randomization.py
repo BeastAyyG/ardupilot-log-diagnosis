@@ -1,78 +1,206 @@
-"""Deterministic domain randomization for paired SITL experiments.
+"""Capability-checked SITL parameter randomization for sim-to-real gap closure.
 
-Control/intervention pairs share one latent environment sample so the only
-systematic difference inside a lineage remains the injected fault. Every
-sample records the band configuration hash, making the randomization itself
-preregistrable evidence rather than an undocumented generator knob.
+The Goal-3 feature audit (docs/FEATURE_GAP_REPORT.md) attributed the residual
+sim-to-real gap to three mechanisms: degenerate simulated power telemetry,
+a broad activity/energy scale shift, and noise-starved inertial/magnetic/GNSS
+channels. This catalog names the pinned-firmware parameters that drive those
+mechanisms inside ArduPilot SITL, with ranges chosen from the physical meaning
+documented in the SITL parameter reference.
+
+Every entry is capability-checked against the live captured parameter
+inventory before use: a name absent from the inventory is skipped for that
+run rather than guessed at, so the randomization layer can never set a
+parameter that the pinned binary does not expose.
 """
 
 from __future__ import annotations
 
-import hashlib
-import json
-import math
+import random
+from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
-RANDOMIZATION_SCHEMA = "logdiagnosis.domain-randomization/v1"
 
-DEFAULT_BANDS: dict[str, tuple[float, float]] = {
-    "sim_wind_spd_mps": (0.0, 8.0),
-    "sim_wind_dir_deg": (0.0, 360.0),
-    "sim_wind_turb_pct": (0.0, 40.0),
+@dataclass(frozen=True)
+class RandomizationSpec:
+    """One randomized startup parameter with its documented envelope."""
+
+    name: str
+    low: float
+    high: float
+    physical_system: str
+    rationale: str
+
+
+RANDOMIZATION_CATALOG: tuple[RandomizationSpec, ...] = (
+    RandomizationSpec(
+        "SIM_GYR1_RND",
+        0.0,
+        0.03,
+        "inertial_noise",
+        "Gyro rate noise (rad/s); real vehicles show broadband gyro activity that "
+        "the audit found ~20x stronger on real logs (imu_gyr_*_std gap).",
+    ),
+    RandomizationSpec(
+        "SIM_GYR2_RND",
+        0.0,
+        0.03,
+        "inertial_noise",
+        "Second IMU gyro rate noise; kept identical across the redundant IMU set "
+        "so EKF weighting stays realistic.",
+    ),
+    RandomizationSpec(
+        "SIM_GYR3_RND",
+        0.0,
+        0.03,
+        "inertial_noise",
+        "Third IMU gyro rate noise.",
+    ),
+    RandomizationSpec(
+        "SIM_ACC1_RND",
+        0.0,
+        1.2,
+        "inertial_noise",
+        "Accelerometer noise (m/s^2); drives spectral and attitude-control "
+        "feature distributions toward measured flight vibration floors.",
+    ),
+    RandomizationSpec(
+        "SIM_ACC2_RND",
+        0.0,
+        1.2,
+        "inertial_noise",
+        "Second IMU accelerometer noise.",
+    ),
+    RandomizationSpec(
+        "SIM_ACC3_RND",
+        0.0,
+        1.2,
+        "inertial_noise",
+        "Third IMU accelerometer noise.",
+    ),
+    RandomizationSpec(
+        "SIM_BARO_RND",
+        0.05,
+        0.9,
+        "state_estimation",
+        "Barometer noise (Pa); widens altitude-channel variance toward the "
+        "real-log distribution flagged by the audit's state_estimation gaps.",
+    ),
+    RandomizationSpec(
+        "SIM_MAG_RND",
+        0.0,
+        0.012,
+        "magnetometer",
+        "Magnetometer noise field (G); real flights carry sensor + motor noise "
+        "absent from the default silent simulated compass.",
+    ),
+    RandomizationSpec(
+        "SIM_GPS1_NOISE",
+        0.0,
+        2.0,
+        "gnss",
+        "GPS position noise multiplier; closes part of the gnss feature gap by "
+        "randomizing reported fix quality dynamics.",
+    ),
+    RandomizationSpec(
+        "SIM_GPS1_NUMSATS",
+        7.0,
+        15.0,
+        "gnss",
+        "Reported satellite count; varies fix geometry like real sessions.",
+    ),
+    RandomizationSpec(
+        "SIM_VIB_MOT_MAX",
+        0.0,
+        4.0,
+        "vibration_isolation",
+        "Motor-induced vibration amplitude (m/s^2); injects physically modeled "
+        "airframe vibration missing from the baseline silent airframe.",
+    ),
+    RandomizationSpec(
+        "SIM_VIB_FREQ_X",
+        25.0,
+        110.0,
+        "vibration_isolation",
+        "Forced vibration frequency X axis (Hz); spans typical quad frame "
+        "resonances seen in real logs.",
+    ),
+    RandomizationSpec(
+        "SIM_VIB_FREQ_Y",
+        25.0,
+        110.0,
+        "vibration_isolation",
+        "Forced vibration frequency Y axis (Hz).",
+    ),
+    RandomizationSpec(
+        "SIM_VIB_FREQ_Z",
+        25.0,
+        110.0,
+        "vibration_isolation",
+        "Forced vibration frequency Z axis (Hz).",
+    ),
+    RandomizationSpec(
+        "SIM_BATT_CAP_AH",
+        0.8,
+        6.0,
+        "power_bus",
+        "Simulated battery capacity (Ah); enables realistic discharge dynamics. "
+        "The audit measured a fully degenerate power bus in SITL "
+        "(bat_curr_max median 0 A vs 3.28 A real).",
+    ),
+)
+
+CATALOG_BY_NAME = {spec.name: spec for spec in RANDOMIZATION_CATALOG}
+
+
+def draw_randomization(
+    rng: random.Random,
+    available: Mapping[str, float] | None,
+) -> dict[str, float]:
+    """Draw one value per catalog parameter present in ``available``.
+
+    Deterministic given the rng state: parameters absent from the captured
+    inventory are skipped, never defaulted.
+    """
+
+    drawn: dict[str, float] = {}
+    for spec in RANDOMIZATION_CATALOG:
+        if available is not None and spec.name not in available:
+            continue
+        if spec.name.endswith("NUMSATS"):
+            value = float(rng.randrange(int(spec.low), int(spec.high) + 1))
+        else:
+            value = round(rng.uniform(spec.low, spec.high), 6)
+        drawn[spec.name] = float(value)
+    return dict(sorted(drawn.items()))
+
+
+DERIVED_PARAMETER_ALLOWANCES: Mapping[str, Mapping[str, tuple[float, float]]] = {
+    # Injecting barometer noise changes the ground pressure the firmware
+    # calibrates and writes to BARO*_GND_PRESS during boot. Those knock-on
+    # values are consequences of an intentional draw, so the preflight live
+    # inventory check must learn them from the plan instead of treating them
+    # as unplanned drift. The ranges are hard physical bounds on sea-level
+    # ground pressure; anything outside is still rejected.
+    "SIM_BARO_RND": {
+        "BARO1_GND_PRESS": (30000.0, 120000.0),
+        "BARO2_GND_PRESS": (30000.0, 120000.0),
+    },
 }
 
 
-def _is_number(value: object) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(float(value))
-    )
+def derived_allowances_for(
+    randomization_parameters: Mapping[str, float],
+) -> dict[str, dict[str, Any]]:
+    """Plan-declared firmware-derived parameters tolerated for this draw."""
 
-
-def validate_bands(bands: dict[str, tuple[float, float]]) -> None:
-    if not bands:
-        raise ValueError("randomization requires at least one parameter band")
-    for name, (low, high) in sorted(bands.items()):
-        if not name or not name.replace("_", "").isalnum():
-            raise ValueError(f"invalid band parameter name: {name!r}")
-        if not (_is_number(low) and _is_number(high)):
-            raise ValueError(f"band {name} endpoints must be finite numbers")
-        if low > high:
-            raise ValueError(f"band {name} low exceeds high")
-
-
-def bands_digest(bands: dict[str, tuple[float, float]]) -> str:
-    canonical = json.dumps(
-        {k: [float(v) for v in bands[k]] for k in sorted(bands)},
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode()
-    return hashlib.sha256(canonical).hexdigest()
-
-
-def sample_pair_environment(
-    *,
-    pair_seed: int,
-    bands: dict[str, tuple[float, float]] | None = None,
-) -> dict[str, Any]:
-    """One latent environment shared verbatim by both arms of a pair."""
-
-    if isinstance(pair_seed, bool) or pair_seed < 0:
-        raise ValueError("pair_seed must be a non-negative integer")
-    resolved = dict(DEFAULT_BANDS if bands is None else bands)
-    validate_bands(resolved)
-    digest = bands_digest(resolved)
-    stream = hashlib.sha256(f"{digest}:{pair_seed}".encode()).digest()
-    sampled: dict[str, float] = {}
-    for index, name in enumerate(sorted(resolved)):
-        low, high = resolved[name]
-        # Rejection-free uniform draw from a dedicated 8-byte slice.
-        unit = int.from_bytes(stream[index * 8 : index * 8 + 8], "big") / 2**64
-        sampled[name] = round(low + (high - low) * unit, 6)
-    return {
-        "schema": RANDOMIZATION_SCHEMA,
-        "bands_sha256": digest,
-        "pair_seed": int(pair_seed),
-        "environment": sampled,
-    }
+    allowances: dict[str, dict[str, Any]] = {}
+    for spec_name in sorted(randomization_parameters):
+        for parameter, bounds in DERIVED_PARAMETER_ALLOWANCES.get(
+            spec_name, {}
+        ).items():
+            allowances[parameter] = {
+                "because": spec_name,
+                "range": [float(bounds[0]), float(bounds[1])],
+            }
+    return dict(sorted(allowances.items()))

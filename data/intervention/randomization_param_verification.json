@@ -1,0 +1,137 @@
+{
+  "catalog_size": 15,
+  "inventory_parameter_count": 1351,
+  "missing_parameters": [],
+  "parameters": {
+    "SIM_ACC1_RND": {
+      "captured_baseline": 0.0,
+      "high": 1.2,
+      "low": 0.0,
+      "physical_system": "inertial_noise",
+      "present": true,
+      "rationale": "Accelerometer noise (m/s^2); drives spectral and attitude-control feature distributions toward measured flight vibration floors."
+    },
+    "SIM_ACC2_RND": {
+      "captured_baseline": 0.0,
+      "high": 1.2,
+      "low": 0.0,
+      "physical_system": "inertial_noise",
+      "present": true,
+      "rationale": "Second IMU accelerometer noise."
+    },
+    "SIM_ACC3_RND": {
+      "captured_baseline": 0.0,
+      "high": 1.2,
+      "low": 0.0,
+      "physical_system": "inertial_noise",
+      "present": true,
+      "rationale": "Third IMU accelerometer noise."
+    },
+    "SIM_BARO_RND": {
+      "captured_baseline": 0.20000000298,
+      "high": 0.9,
+      "low": 0.05,
+      "physical_system": "state_estimation",
+      "present": true,
+      "rationale": "Barometer noise (Pa); widens altitude-channel variance toward the real-log distribution flagged by the audit's state_estimation gaps."
+    },
+    "SIM_BATT_CAP_AH": {
+      "captured_baseline": 0.0,
+      "high": 6.0,
+      "low": 0.8,
+      "physical_system": "power_bus",
+      "present": true,
+      "rationale": "Simulated battery capacity (Ah); enables realistic discharge dynamics. The audit measured a fully degenerate power bus in SITL (bat_curr_max median 0 A vs 3.28 A real)."
+    },
+    "SIM_GPS1_NOISE": {
+      "captured_baseline": 0.0,
+      "high": 2.0,
+      "low": 0.0,
+      "physical_system": "gnss",
+      "present": true,
+      "rationale": "GPS position noise multiplier; closes part of the gnss feature gap by randomizing reported fix quality dynamics."
+    },
+    "SIM_GPS1_NUMSATS": {
+      "captured_baseline": 10.0,
+      "high": 15.0,
+      "low": 7.0,
+      "physical_system": "gnss",
+      "present": true,
+      "rationale": "Reported satellite count; varies fix geometry like real sessions."
+    },
+    "SIM_GYR1_RND": {
+      "captured_baseline": 0.0,
+      "high": 0.03,
+      "low": 0.0,
+      "physical_system": "inertial_noise",
+      "present": true,
+      "rationale": "Gyro rate noise (rad/s); real vehicles show broadband gyro activity that the audit found ~20x stronger on real logs (imu_gyr_*_std gap)."
+    },
+    "SIM_GYR2_RND": {
+      "captured_baseline": 0.0,
+      "high": 0.03,
+      "low": 0.0,
+      "physical_system": "inertial_noise",
+      "present": true,
+      "rationale": "Second IMU gyro rate noise; kept identical across the redundant IMU set so EKF weighting stays realistic."
+    },
+    "SIM_GYR3_RND": {
+      "captured_baseline": 0.0,
+      "high": 0.03,
+      "low": 0.0,
+      "physical_system": "inertial_noise",
+      "present": true,
+      "rationale": "Third IMU gyro rate noise."
+    },
+    "SIM_MAG_RND": {
+      "captured_baseline": 0.0,
+      "high": 0.012,
+      "low": 0.0,
+      "physical_system": "magnetometer",
+      "present": true,
+      "rationale": "Magnetometer noise field (G); real flights carry sensor + motor noise absent from the default silent simulated compass."
+    },
+    "SIM_VIB_FREQ_X": {
+      "captured_baseline": 0.0,
+      "high": 110.0,
+      "low": 25.0,
+      "physical_system": "vibration_isolation",
+      "present": true,
+      "rationale": "Forced vibration frequency X axis (Hz); spans typical quad frame resonances seen in real logs."
+    },
+    "SIM_VIB_FREQ_Y": {
+      "captured_baseline": 0.0,
+      "high": 110.0,
+      "low": 25.0,
+      "physical_system": "vibration_isolation",
+      "present": true,
+      "rationale": "Forced vibration frequency Y axis (Hz)."
+    },
+    "SIM_VIB_FREQ_Z": {
+      "captured_baseline": 0.0,
+      "high": 110.0,
+      "low": 25.0,
+      "physical_system": "vibration_isolation",
+      "present": true,
+      "rationale": "Forced vibration frequency Z axis (Hz)."
+    },
+    "SIM_VIB_MOT_MAX": {
+      "captured_baseline": 0.0,
+      "high": 4.0,
+      "low": 0.0,
+      "physical_system": "vibration_isolation",
+      "present": true,
+      "rationale": "Motor-induced vibration amplitude (m/s^2); injects physically modeled airframe vibration missing from the baseline silent airframe."
+    }
+  },
+  "schema": "logdiagnosis.randomization-verification/v1",
+  "verified_count": 15,
+  "verified_physical_systems": {
+    "gnss": 2,
+    "inertial_noise": 6,
+    "magnetometer": 1,
+    "power_bus": 1,
+    "state_estimation": 1,
+    "vibration_isolation": 4
+  }
+}

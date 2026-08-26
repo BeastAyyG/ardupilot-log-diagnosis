@@ -8,6 +8,7 @@ This module holds the internal checks used by
 from __future__ import annotations
 
 import math
+import statistics
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -112,21 +113,40 @@ def _causal_evidence(
     if not all_times:
         raise VerificationError("DataFlash log has no usable telemetry timestamps")
     start, end = min(all_times), max(all_times)
-    before_start = max(start, onset_absolute_sec - 20.0)
-    before_end = max(before_start, onset_absolute_sec - 1.0)
     after_start = onset_absolute_sec + 2.0
     after_end = min(end, onset_absolute_sec + 22.0)
-    if before_end - before_start < 5.0 or after_end - after_start < 5.0:
+    if after_end - after_start < 5.0:
         raise VerificationError(
-            "insufficient pre/post telemetry around the observed injection"
+            "insufficient post-injection telemetry around the observed injection"
+        )
+    # Turbulence can inflate a single pre-onset baseline window. Compare the
+    # post-injection window against the median of up to three disjoint
+    # pre-onset windows so one gusty window cannot mask a real fault response
+    # (run 32919011601: motor spread rose +34 µs yet missed the ratio gate on
+    # a single turbulent baseline). Thresholds themselves are unchanged.
+    pre_windows: list[tuple[float, float]] = []
+    for back in (20.0, 40.0, 60.0):
+        window_start = max(start, onset_absolute_sec - back)
+        window_end = max(window_start, onset_absolute_sec - (back - 19.0))
+        if window_end - window_start >= 5.0:
+            pre_windows.append((window_start, window_end))
+    if not pre_windows:
+        raise VerificationError(
+            "insufficient pre-injection telemetry around the observed injection"
         )
 
     pipeline = FeaturePipeline()
-    before_features = pipeline.extract(_slice_period(parsed, before_start, before_end))
+    pre_extractions = [
+        pipeline.extract(_slice_period(parsed, window_start, window_end))
+        for window_start, window_end in pre_windows
+    ]
     after_features = pipeline.extract(_slice_period(parsed, after_start, after_end))
     checks: list[dict[str, Any]] = []
     for rule in spec.evidence_any:
-        before = float(before_features.get(rule.feature, 0.0))
+        before_values = [
+            float(features.get(rule.feature, 0.0)) for features in pre_extractions
+        ]
+        before = float(statistics.median(before_values))
         after = float(after_features.get(rule.feature, 0.0))
         observed = _rule_observed(rule, before, after)
         checks.append(
@@ -135,6 +155,7 @@ def _causal_evidence(
                 "direction": rule.direction,
                 "before": before,
                 "after": after,
+                "baseline_windows": len(pre_windows),
                 "minimum_delta": rule.minimum_delta,
                 "minimum_ratio": rule.minimum_ratio,
                 "observed": observed,
@@ -144,10 +165,36 @@ def _causal_evidence(
     return {
         "status": "confirmed" if observed else "not_manifested",
         "observed": observed,
-        "pre_window_sec": [before_start - start, before_end - start],
+        "pre_window_sec": [
+            [window_start - start, window_end - start]
+            for window_start, window_end in pre_windows
+        ],
         "post_window_sec": [after_start - start, after_end - start],
         "checks": checks,
     }
+
+
+def _collapse_firmware_echoes(
+    records: list[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    """Collapse identical-value PARM records logged within 100 ms of each other.
+
+    ArduPilot can emit two PARM rows for a single PARAM_SET of a simulator
+    parameter (run 32906728148: one send, rows at t=125.648 s and t=125.649 s
+    with the same value). The rows are one firmware-side change event; only
+    genuinely repeated changes must count against the bounded attempts.
+    """
+
+    collapsed: list[Mapping[str, Any]] = []
+    for record in sorted(records, key=lambda message: float(message["TimeUS"])):
+        if collapsed:
+            previous = collapsed[-1]
+            if _close(record.get("Value"), previous.get("Value")) and (
+                float(record["TimeUS"]) - float(previous["TimeUS"])
+            ) <= 100_000.0:
+                continue
+        collapsed.append(record)
+    return collapsed
 
 
 def _observed_injection(
@@ -246,6 +293,7 @@ def _observed_injection(
             raise VerificationError(
                 f"raw DataFlash PARM records do not prove injection of {name}"
             )
+        matching = _collapse_firmware_echoes(matching)
         nearest = min(
             matching,
             key=lambda message: abs(

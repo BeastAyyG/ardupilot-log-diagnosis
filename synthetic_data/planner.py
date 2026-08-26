@@ -13,6 +13,7 @@ from typing import Any
 from .catalog import SCENARIOS, ScenarioSpec
 from .execution_integrity import float32_equal
 from .frame_defaults import FRAME_CLASS_VALUES
+from .randomization import derived_allowances_for, draw_randomization
 from .schema import ParameterSchema, canonical_json_bytes, sha256_bytes
 
 GENERATOR_VERSION = "ardupilot-sitl-lab-v2"
@@ -20,6 +21,23 @@ MANIFEST_SCHEMA = "logdiagnosis.sitl-experiment/v3"
 SOURCE_TYPE = "sitl"
 LABEL_ORIGIN = "verified_controlled_sitl_intervention"
 SAFE_RUN_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,95}$")
+# ArduPilot persists these parameters by itself on every genuine flight:
+# ground pressure at arming (BARO*_GND_PRESS), mission totals when the
+# mission is loaded (MIS_TOTAL), in-flight hover-thrust learning
+# (MOT_THST_HOVER, observed in run 32903900341), and flight statistics
+# saved at disarm (STAT_*). They are firmware bookkeeping rather than
+# external tampering; every other in-flight parameter change still fails
+# the collection gate.
+FIRMWARE_MANAGED_PARAMETER_CHANGES = (
+    "BARO1_GND_PRESS",
+    "BARO2_GND_PRESS",
+    "MIS_TOTAL",
+    "MOT_THST_HOVER",
+    "STAT_DISTFLWN",
+    "STAT_FLTCNT",
+    "STAT_FLTTIME",
+    "STAT_RUNTIME",
+)
 FRAME_MOTOR_MASKS: Mapping[str, tuple[int, ...]] = {
     "quad": (1, 2, 4, 8),
     "hexa": (1, 2, 4, 8, 16, 32),
@@ -134,6 +152,7 @@ def _single_plan(
     role: str = "intervention",
     paired_with: str | None = None,
     identity_salt: str = "",
+    randomization_enabled: bool = False,
 ) -> dict[str, Any]:
     identity = f"{spec.name}:{identity_salt}" if identity_salt else spec.name
     run_seed = _derived_seed(root_seed, identity, index, role)
@@ -186,9 +205,17 @@ def _single_plan(
     startup, startup_quantile = _joint_choice(variant.startup, rng)
     injection, severity_quantile = _joint_choice(variant.injection, rng)
     environment = _environment(rng, available)
+    randomization_parameters = (
+        draw_randomization(rng, available) if randomization_enabled else {}
+    )
     fault_startup = dict(startup)
     logging_parameters = _logging_parameters(schema)
-    startup = {**environment, **logging_parameters, **fault_startup}
+    startup = {
+        **environment,
+        **logging_parameters,
+        **randomization_parameters,
+        **fault_startup,
+    }
     if schema is not None:
         # The captured inventory is frame-specific. Persist its frame class in
         # the immutable startup file so ArduPilot does not boot with its
@@ -282,12 +309,18 @@ def _single_plan(
         "temporal_profile": "step",
         "startup_parameters": dict(sorted(startup.items())),
         "environment_parameters": dict(sorted(environment.items())),
+        "randomization_parameters": dict(sorted(randomization_parameters.items())),
+        "derived_parameter_allowances": derived_allowances_for(
+            randomization_parameters
+        ),
         "logging_parameters": dict(sorted(logging_parameters.items())),
         "fault_startup_parameters": dict(sorted(fault_startup.items())),
         "control_startup_policy": variant.control_startup_policy,
         "injection_parameters": dict(sorted(injection.items())),
         "injection_baseline_parameters": dict(sorted(injection_baselines.items())),
-        "allowed_automatic_parameter_changes": [],
+        "allowed_automatic_parameter_changes": list(
+            FIRMWARE_MANAGED_PARAMETER_CHANGES
+        ),
         "motor_output_parameters": dict(sorted(motor_output_parameters.items())),
         "severity_quantile": severity_quantile,
         "startup_severity_quantile": startup_quantile,
@@ -308,6 +341,7 @@ def build_run_plans(
     ardupilot_revision: str,
     scenarios: Iterable[str] | None = None,
     parameter_schema: ParameterSchema | None = None,
+    randomization_enabled: bool = False,
 ) -> list[dict[str, Any]]:
     """Build independently seeded plans; order changes do not change existing runs."""
 
@@ -335,6 +369,7 @@ def build_run_plans(
             root_seed=seed,
             revision=revision,
             schema=parameter_schema,
+            randomization_enabled=randomization_enabled,
         )
         for scenario in selected
         for index in range(runs_per_scenario)
@@ -348,6 +383,7 @@ def build_paired_run_plans(
     ardupilot_revision: str,
     scenarios: Iterable[str] | None = None,
     parameter_schema: ParameterSchema,
+    randomization_enabled: bool = False,
 ) -> list[dict[str, Any]]:
     """Create matched sham and fault runs for every selected non-healthy scenario."""
 
@@ -360,6 +396,7 @@ def build_paired_run_plans(
         ardupilot_revision=ardupilot_revision,
         scenarios=selected,
         parameter_schema=parameter_schema,
+        randomization_enabled=randomization_enabled,
     )
     paired: list[dict[str, Any]] = []
     for fault in faults:
@@ -377,14 +414,24 @@ def build_paired_run_plans(
         control["frame"] = fault["frame"]
         control["duration_sec"] = fault["duration_sec"]
         control["simulation_start_unix_sec"] = fault["simulation_start_unix_sec"]
+        # Randomized noise/vibration/battery draws are part of the latent
+        # vehicle, so both members of a pair must fly the identical values.
+        shared_randomization = dict(fault["randomization_parameters"])
+        control["randomization_parameters"] = dict(shared_randomization)
+        control["derived_parameter_allowances"] = derived_allowances_for(
+            shared_randomization
+        )
         control_startup = {
             **fault["environment_parameters"],
+            **shared_randomization,
             **fault["logging_parameters"],
         }
         if fault["control_startup_policy"] == "share":
             control_startup.update(fault["fault_startup_parameters"])
         else:
             for name in fault["fault_startup_parameters"]:
+                if name in shared_randomization:
+                    continue
                 control_startup[name] = float(parameter_schema.parameters[name])
         control_startup["FRAME_CLASS"] = float(FRAME_CLASS_VALUES[fault["frame"]])
         control["startup_parameters"] = dict(sorted(control_startup.items()))
@@ -415,6 +462,29 @@ def _safe_plan(plan: Mapping[str, Any]) -> None:
     receipt = str(plan.get("expected_receipt_filename", ""))
     if expected != f"{run_id}.BIN" or receipt != f"{run_id}.execution.json":
         raise ValueError(f"run {run_id} has an unsafe or inconsistent artifact name")
+    randomization = plan.get("randomization_parameters", {})
+    if not isinstance(randomization, dict):
+        raise ValueError(f"run {run_id} has an invalid randomization_parameters entry")
+    if not all(math.isfinite(float(value)) for value in randomization.values()):
+        raise ValueError(f"run {run_id} contains non-finite randomized parameters")
+    allowances = plan.get("derived_parameter_allowances", {})
+    if not isinstance(allowances, dict):
+        raise ValueError(
+            f"run {run_id} has an invalid derived_parameter_allowances entry"
+        )
+    for parameter_name, spec in allowances.items():
+        bounds = spec.get("range") if isinstance(spec, dict) else None
+        if (
+            not isinstance(bounds, list)
+            or len(bounds) != 2
+            or not isinstance(spec.get("because"), str)
+            or not math.isfinite(float(bounds[0]))
+            or not math.isfinite(float(bounds[1]))
+            or float(bounds[0]) >= float(bounds[1])
+        ):
+            raise ValueError(
+                f"run {run_id} has an invalid allowance for {parameter_name}"
+            )
     if plan.get("run_fingerprint") != _plan_fingerprint(plan):
         raise ValueError(f"run {run_id} fingerprint is invalid")
     start_time = plan.get("simulation_start_unix_sec")
