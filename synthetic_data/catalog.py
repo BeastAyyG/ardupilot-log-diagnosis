@@ -166,6 +166,7 @@ SCENARIOS: Mapping[str, ScenarioSpec] = MappingProxyType(
             required_messages=("RCOU", "ATT"),
             evidence_any=(
                 EvidenceRule("motor_spread_max", "increase", 15.0, 1.05),
+                EvidenceRule("motor_mean_spread", "increase", 15.0, 1.05),
                 EvidenceRule("attitude_tracking_error", "increase", 1.0, 1.10),
                 EvidenceRule("ctrl_thr_saturated_pct", "increase", 0.02, 1.05),
             ),

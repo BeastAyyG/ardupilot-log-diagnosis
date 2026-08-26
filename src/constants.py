@@ -58,6 +58,7 @@ FEATURE_NAMES = [
     "motor_spread_mean",
     "motor_spread_max",
     "motor_spread_std",
+    "motor_mean_spread",
     "motor_output_mean",
     "motor_output_std",
     "motor_max_output",

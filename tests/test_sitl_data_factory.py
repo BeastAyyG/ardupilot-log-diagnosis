@@ -103,6 +103,43 @@ def test_parameter_contract_accepts_firmware_and_rejects_unplanned_changes() -> 
         verify_parameter_contract(tampered, plan)
 
 
+def test_causal_evidence_uses_median_baseline_across_pre_windows(
+    monkeypatch,
+) -> None:
+    from synthetic_data import collector_checks as cc
+
+    class StubPipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def extract(self, window):
+            start = window["metadata"]["window_start"]
+            # Two calm pre-windows, one gusty pre-window nearest the onset.
+            return {"motor_spread_max": 765.0 if start > 90.0 else 600.0}
+
+    monkeypatch.setattr(cc, "FeaturePipeline", StubPipeline)
+    parsed = {
+        "messages": {
+            "RCOU": [
+                {"TimeUS": float(t) * 1_000_000.0} for t in range(0, 200)
+            ]
+        }
+    }
+
+    result = cc._causal_evidence(
+        parsed, scenario="motor_imbalance", onset_absolute_sec=118.6
+    )
+
+    assert result["observed"] is True
+    spread_check = next(
+        check
+        for check in result["checks"]
+        if check["feature"] == "motor_spread_max"
+    )
+    assert spread_check["before"] == 600.0  # median of 600/600/765
+    assert spread_check["baseline_windows"] == 3
+
+
 def test_injection_attempt_count_collapses_firmware_parm_echoes() -> None:
     plan = {
         "planned_fault_onset_sec": 73.648,
