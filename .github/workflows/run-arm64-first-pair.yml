@@ -19,6 +19,12 @@ on:
         required: true
         default: '20260840'
         type: string
+      randomize:
+        description: Draw capability-checked noise/vibration/battery parameters
+        required: false
+        default: 'off'
+        type: choice
+        options: [off, on]
 
 permissions:
   contents: read
@@ -48,6 +54,7 @@ jobs:
           PAIR_SCENARIO: ${{ inputs.scenario }}
           PAIR_FRAME: ${{ inputs.frame }}
           PAIR_SEED: ${{ inputs.seed }}
+          PAIR_RANDOMIZE: ${{ inputs.randomize }}
         run: bash ops/dgx/run_first_pair.sh
 
       - name: Upload first-pair evidence

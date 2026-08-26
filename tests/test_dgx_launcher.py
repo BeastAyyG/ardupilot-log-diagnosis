@@ -11,9 +11,13 @@ def test_dgx_first_pair_launcher_is_digest_pinned_and_pair_atomic() -> None:
     assert "--privileged --network host" in script
     assert "--user 0:0" in script
     assert 'chmod 0777 "$OUTPUT_DIR"' in script
-    assert 'chown -R "$HOST_UID:$HOST_GID" /output' in script
+    assert 'chown -R \\"\\$HOST_UID:\\$HOST_GID\\" /output' in script
     assert "python -m synthetic_data pair" in script
     assert "--confirm-sitl" in script
+    # Randomization is opt-in and gated behind an on/off validation.
+    assert 'readonly RANDOMIZE_FLAG="${PAIR_RANDOMIZE:-off}"' in script
+    assert '[[ "$RANDOMIZE_FLAG" == "on" || "$RANDOMIZE_FLAG" == "off" ]]' in script
+    assert '"--randomize"' in script
     assert '[[ "$commit_count" -eq 1 ]]' in script
     assert '[[ "$receipt_count" -ge 2 ]]' in script
     assert '[[ "$bin_count" -eq 2 ]]' in script
