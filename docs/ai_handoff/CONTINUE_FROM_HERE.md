@@ -9,6 +9,24 @@ This file is an execution handoff for another AI. Read
 
 ### Latest evidence (authoritative)
 
+- **Goal-4 pilot randomized pair GREEN (2026-08-26):** run
+  [32967269266](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32967269266)
+  (seed 20260900, `randomize=on`) — collection `accepted=2`,
+  `trainable=true`, `rejected=[]`; pair-commit `3ed271f5f4e41493`
+  (`sitl-pair:75cf6ec041cf28d10ccc`). Both members share identical 15-parameter
+  randomization draws (gyro/accel noise, baro/mag/GPS noise + sats, vibration
+  motor/frequencies, battery capacity) read back at exact planned values;
+  tolerated firmware-derived drift recorded as
+  `derived:BARO1_GND_PRESS=94502.05 Pa` inside the plan-declared range.
+- **Goal-3 feature gap audit COMPLETE (commit c6def55 on main):**
+  `docs/FEATURE_GAP_REPORT.md` — MMD²=0.6491 p=0.0020; 81/111 features
+  significant (BH q<0.05); power_bus/telemetry/spectral dominate;
+  intervention decision per pre-registered rule = verified SITL parameter
+  randomization (`docs/INTERVENTION_DECISION.md`).
+- **Goal-2 cohort manifest COMPLETE (commit 5fa56a8 on main):**
+  `data/cohorts/cohort_manifest.json` — sealed holdout 21 logs / 11 incidents,
+  adaptation pool 49 unlabeled real logs, reconciliation of 114/111/109
+  documented in `docs/DATA_PROVENANCE.md`.
 - **Goal-1 exit criterion MET (2026-08-26):** 20 consecutive qualified
   paired runs, ledger rows 14*–33 in
   `docs/ai_handoff/RELIABILITY_LEDGER.md`. First of the streak:
@@ -17,8 +35,9 @@ This file is an execution handoff for another AI. Read
   [run 32939258245](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/runs/32939258245)
   (seed 20260872).
 - Immutable image:
-  `sha256:1c801e2e08d744a08775d1656166d130b002ca84e964281b20f22fd97c56a5f5`
-  (tag `overlay-src-tree-fix`)
+  `sha256:285dc9aec7e0e6a9bcea24fb35d1ab10eeba64869bd80859c1cd5ea205ffd79f`
+  (tag `overlay-goal4-derived-allowance`; capability-checked SITL parameter
+  randomization + plan-declared derived-parameter drift allowances)
 - Verified on every downloaded artifact in the streak:
   - Collection accepted BOTH members (`accepted=2`, `trainable=true`,
     `rejected=[]`); accuracy claim stays `not_evaluated`.
