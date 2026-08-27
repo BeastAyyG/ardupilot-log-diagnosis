@@ -1,0 +1,19 @@
+{
+  "schema": "logdiagnosis.freeze-manifest/v1",
+  "generated_utc": "2026-08-26T16:10:14.601862+00:00",
+  "source_commit": "e6baff55b3ae852f648e19367d3ca9f0b0d9e12c",
+  "feature_count": 111,
+  "feature_source": "src/constants.py:FEATURE_NAMES",
+  "model": {
+    "condition": "randomized",
+    "kind": "ExtraTrees",
+    "hyperparameters": "fixed (n_estimators=300, min_samples_leaf=2, class_weight=balanced_subsample, n_jobs=4)"
+  },
+  "holdout_source": "data/cohorts/cohort_manifest.json:evaluation_holdout (frozen, untouched)",
+  "evaluation_source": "data/ablation/ablation_report.json (canonical holdout run)",
+  "gates": {
+    "baseline_macro_f1": 0.5,
+    "target_macro_f1": 0.7,
+    "max_ece": 0.08
+  }
+}

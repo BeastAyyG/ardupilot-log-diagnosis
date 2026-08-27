@@ -1,0 +1,1046 @@
+{
+ "00afa36e545470c4379352efc54c3dffdd81381ae3bae19890a1cfa1c96dec40": {
+  "firmware_version": "ArduCopter V3.7.0-dev (f21e4d83)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "00f51c1d50": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "01803ce998a260eb56293a2e805ce3350a9b3d1fe00fb0a90bedc149849e611e": {
+  "firmware_version": "ArduCopter V4.0.3 (ffd08628)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "07124add06": {
+  "firmware_version": "ArduCopter V4.6.2 (1ebd4d99)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "0818fe7e5ce3cda47fdf3fef42cb2d02963f354b8b18750fa59edb3d0e035719": {
+  "firmware_version": "ArduCopter V3.6.8 (2f409678)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "08b8043a9e": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "0981e19b7dc74b0c6e8c55779b4a339b2c4619c632d585e2f96e29ef5931d1a1": {
+  "firmware_version": "ArduCopter V4.5.7 (2a3dc4b7)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "0a95802dec191ecfeac799dd0bc1d09e44fa317e46edad0119279a431bd93c25": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "probe-crash-or-timeout",
+  "vehicle_type": null
+ },
+ "0b59f56c0c": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "0ca17d920f": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "0cbde84301e19377e082b5e657a310faef0ad955003f40d4a968fb52851a6db2": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "1139d40b346f2087a1e6321eeca473486ba32c8b1ae089542ba8be41fe2596e4": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "114f166713": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "12ee853194f5dd8c499850d524eb385c25e34f36e5d39e41a2db716781576a9c": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "14c8441305": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "14f3d252710e50340ce0ccf873d76b405d1cc49e03ddc3826f63d81d3c1f7a3c": {
+  "firmware_version": "ArduCopter V4.1.0-beta5 (98c73a0b)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "15deab36497ed66aba1b18194547f8b39e9b40d2cab58524a3654c4cee916521": {
+  "firmware_version": "ArduPlane V4.2.0dev (c6734ad8)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "16c0fe0044cff1cc632979a2355a9869b1911f445f96766d8bb997a3df653ded": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "1796486e9ac43407765587df16a6d0fb6577cd7bee4c76b8c82ce0196075413a": {
+  "firmware_version": "ArduCopter V3.6.7 (38b8af17)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "17a8b3a915cb9e216936f65cea803528dc5ea9d272ad5e96a4ba4acdefedde4f": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "1820618f38d81507a1e95ef22f743fbc50817348046d542d9db765ccace2a9d3": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "1898339bb4": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "1997b4fd02": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "1a13cf4880": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "1a71f0d40e": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "1c18aa3c93": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "1de0bcaf777b20c7f69c2948472c1ad5e87eb34dfe40c5bbce29d77f969acdf8": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "200022930ad7a751ae5777cda44b984019978f4847616c6fd1b19ee1872b0c93": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "209cfffee66a6ba18e54a1b31c8df48d2b63c63423bf4821da0b38b4e1cfb69d": {
+  "firmware_version": "ArduCopter V4.0.5 (3f6b43e3)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "20fe2a41c6ded85bcc36efd3337de6bf53a5c0e0a8178d481f1ecc52bb38b18e": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "21b895177a": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "23941a01aa": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "255373228d": {
+  "firmware_version": "ArduRover V3.3.0 (2e0a474a)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "26cc9f99ad": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "277840edde": {
+  "firmware_version": "ArduCopter V4.0.0-rc3 (2e0323f7)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "287b489011": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "2b24dc470b": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "2c243fb6ce": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "2d7481aee9": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "2de8b38fc2": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "314c7209e2": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "335e9881ac2934b49da7a13c9d093cf2b2a909957338e66fa9566c4ca179c37d": {
+  "firmware_version": "ArduCopter V4.0.7 (0bb18a15)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "33c535f6f0edb143bb85909901be52bd73542206e3116ae9ddf22b1c42606cfb": {
+  "firmware_version": "ArduCopter V3.6.4 (6c4da9e3)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "36c9f718b1": {
+  "firmware_version": "ArduCopter V3.6-dev (738c6e2e)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "396bc7ab6056c96abab9d93d615115f58c30e36a6a373565bd26e30b34cc057e": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "405c8b855f571cfb58f800bb46723ff38732305f8c0e81a7d2d713feeade27bf": {
+  "firmware_version": "ArduPlane V4.4.0-beta2 (602f7d13)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "43795fd2f3": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "43bd1475d82ee3a0a719faf501aea0b29645dc8af299190143677735f7b8e6cb": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "4572b728cb": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "460dc2cfd5": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "476a5e4c28ef03599353736a46d832d0a14193e5ea3b28246aea6bc945c529ef": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "490df34865": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "4be9cde3ea55c3cdabf84251ec2064591d051c71b6a4c973760ca65202e1ce40": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "4dbb9b5fad2e1da945dd1969dc1632091869e3980391666a75106b47015b5e92": {
+  "firmware_version": "ArduCopter V4.0.5 (3f6b43e3)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "4e93a7cd0b": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "4f16bacab2": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "504234e854": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "529e1dbbd27130eeaaf60c12f9b92cbca4b29295e189af64510fd26a24859b4c": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "5429897d5ff19a109ff8a5ae95a09e63a21d97b976cb36d35cfd31d114ddf55d": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "5563ebf18d": {
+  "firmware_version": "ArduCopter V4.0.0-rc3 (2e0323f7)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "58f3f3b631233a6dc4c20f6d42ed47252d0c05788bd45fd57fc87074bad68778": {
+  "firmware_version": "ArduPlane V4.1.0beta8 (ea158344)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "5ae764880a5d4f14ad5adb2494d4f17520bf077621af48ef42b5c56ec69d5f50": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "5b811aef3b": {
+  "firmware_version": "ArduRover V3.3.0 (2e0a474a)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "5c454779ece1c78ef0423b23b252d00b17983b2de7c621f8f8706350002e55f1": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "5c6b067302": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "65459319cb48adfccc7b0263fcaedd9fa38f013e6a4ced57f7080ea8f72dff77": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "662cc8912d": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "66bbaf391960e4f5244e723b4aa7c4bd5cabc9b38a3957d781dd1d99192ca5b3": {
+  "firmware_version": "ArduCopter V4.3.3 (34e8e02c)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "6812222a6786acec0427b757a9a036aab23777e2fb969a4e1a3bf6e0a170baec": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "694da9f46e9da78a4bae2a418de89a4955d971ba36425d6f88c6136e3bd66f2e": {
+  "firmware_version": "ArduCopter V3.7.0-dev (24dbc67b)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "6a94090c7f": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "6b1b1de6cd": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "6c5448a716099819e2ce082a570476b1042000850fdb8633d492a453893d2727": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "6d600eaba3": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "6f4fc80344": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "6f637ab492": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "7065a3cd0fbd3c5ce178964dcbb64979fc878d0900fc5f5cb6f30d60d3d9d794": {
+  "firmware_version": "ArduCopter V4.1.5 (1002fd6e)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "7351969082": {
+  "firmware_version": "ArduCopter V4.3.0-dev (f5462df0)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "744e1d163202c8578dae7aca509430972ddd8e0f6ce402d9d2a94ed5e329a339": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "74803945a49beec8bd828edbdc23eff7164482232a6ade341fca2e30f25eb036": {
+  "firmware_version": "ArduPlane V4.4.0dev (cbb6ac0c)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "75a2881bbec319096c2ee9bd40881910f70fcfed759995dc39f8147656602699": {
+  "firmware_version": "ArduPlane V4.4.0-beta2 (602f7d13)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "790bee0891": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "7a097ffc0b3c0530967ce1c70de347178dbf460fa6055690231398fe7ba2c6d3": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "7b4e98a4d20fd3ec5325b0b6a964112b7a4cc8f5b3e6e1d6a4cd36a5f441a942": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "815f3bb04e": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "8265f254a7": {
+  "firmware_version": "ArduCopter V4.5.7 (2a3dc4b7)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "828ade24f2": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "860f591dfe": {
+  "firmware_version": "ArduCopter V4.5.0-dev (1b3de3ac)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "877e432d0d": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "87f863ad02": {
+  "firmware_version": "ArduCopter V4.5.3 (ee14ff38)",
+  "frame_class": "4",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "88dcf3ec88": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "8b7a2a3649": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "8dda19965da2a82b6a0303fbf2bf8f0ef79451f4a87d0b178bb203c8a7376ff2": {
+  "firmware_version": "ArduPlane V3.9.4 (7e37f2b6)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "8edac767be66c882f4374171331c5f6d90114d82757fb59bb15abb171918df9a": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "9468ec036a": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "968e44a1be": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "96fb229fb404f57bc4d1c4ed4b41da69a6d442a618fdae1d3208b5d9fe425b69": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "97845b23ea0075bc6da428f47e9ed4280924a8a9bb8c946ff8835a21eee5192b": {
+  "firmware_version": "ArduCopter V4.1.0-beta5 (98c73a0b)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "9ae5224970cc1340f99205a1ef807742470924352a68e606e13d0c249f6bef51": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "9b23f8991e": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "9e0eb8fbec": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "a004f350c296ae9f396c8756a95c8b0049913ccc8973c5faf0230eba013ec91d": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "a07f114aee": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "a4d4a24d39c3a028704f0cee08899d60c46ba43ed237662b2352fdf8d02fe0a4": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "a57de1ca3d": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "a7290a8733f121989317d53052b0c6eb58b643dd135938f0c3d3614dbb945d04": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "a9160b9d91": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "aac514db54f5aedc3af338ba5a94d3a5369ae4ecf33f96d0f4692b83f93fa253": {
+  "firmware_version": "ArduPlane V4.3.7 (2d1a8a28)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "abfdebaa9b": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "ae9785ab95": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "af2836cad8f18ca67758f6e45730a2756a37938dfc2f2e2dc6fbb27dca7e5641": {
+  "firmware_version": "ArduCopter V4.3.3 (34e8e02c)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b01481f355": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b04500964c0ed568e822010236c622e683a79a58bdd0b163b12e6881125491d4": {
+  "firmware_version": null,
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b0db91ee3d6a7f0af25dbc4cf97a65e1287a47d8b91fc4973fd5d555f8aab8c0": {
+  "firmware_version": null,
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b1e738ba05": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b2692957a1": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b40fb82a488257778b3e1ca7cc8a25cdfe11d897c90667ea6e88a5252dc8fbed": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "b62f057714": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b63f76e62f": {
+  "firmware_version": "ArduRover V3.3.0 (2e0a474a)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b6679181d1": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b729efbac030e6071c1725cc8a06d7dbf37b7728f6f2f20c9cb805e1b893eacc": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "b7b85d8b91": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b89fc87fea657312f90ca28f92e6108f42bc97cb5c27267df8fc82bdfae690c0": {
+  "firmware_version": "ArduCopter V4.3.6 (0c5e999c)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b8d168d2f71525654f6737a6b2b1ec719de7655ba70415bca7c0ca921d0940e4": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "b8e0f86117": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "b9daccd2634d195c9a9312b31e6aa43a5a0a775109a04b6eb57afa61d9c081ef": {
+  "firmware_version": "ArduCopter V3.2-Iris (b212c020)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "bc8cfca5a523f5dc54a09d627161afdb606af553e468bd300bde44f27f8bd2de": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "bf2380bfbf": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "bf8bb1c722": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "bffc80e1da7d30ad042d9b8a0cdb06e01b0f1dbccae3589f415b1874502cb256": {
+  "firmware_version": "ArduCopter V4.3.5 (02ff7ea3)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c145ca1c2a": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c1bcef192fec48c4eadf1da2a5c62215abc035330b9f56bc5b0e8ecd2a78236f": {
+  "firmware_version": "ArduCopter V3.6.11 (f0d59294)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c35318e6ce5ed8bc79c3173b15fe88b912c4a6bb4c288b64c6fe18243df729bd": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "c3ff64bba1": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c55006bd101fd1d9f634eb61a56add2b9f644e29e767fbd0d5af5e0051827ad6": {
+  "firmware_version": "ArduCopter V4.5.0-dev (2eca7224)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c55dea6f970ba670e48864a1596a182297ba7e4809e9f2693a49a7694d873a7c": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "c5640421c2": {
+  "firmware_version": "ArduCopter V3.6-dev (61da81a1)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "c648fe37de19bce0d6985ae04299af192287f9bd3009cbd5c69c56158cebc706": {
+  "firmware_version": "ArduCopter V4.0.0 (1)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c6d4e2f2539fc101acdfce3216d5cea54b9efa5e92303f7417d7f8aaa133865e": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "c6ec9e9f0006096351de6338a9384f19d0398fb101f1ebd722d6987b3c2196b6": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "c7194c9a83": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c80dae9e7b": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c8bfdfdd381ab1db9e3aba0eb966df96a656d32bad97b53e36162e074b20308d": {
+  "firmware_version": "ArduCopter V4.6.2 (1ebd4d99)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c928d46936": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "c9638b8336": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "ca2e821c6686411f14997b427dc7ebe286aa3fa41f6262d9ddd51a0f9f3cb65e": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "cbe1fbcaed7e8e7837cf79aaed08be21822433569edfc8334064d5490dd8ffb4": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "cdb6b1a5546b7f01c91fd16786e2cbda4d60a5f408ab1f3f7582628aa878498b": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "cec7e077eb": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "cf0c36dbab": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "cf337b4dde9a1f203b7ceb588c591241e2acac577124e89d88f2b8783efef043": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "d3ecd87205ba32a8effd9f2e78443bee25ffd0baa8be333c78bd404f641cf81f": {
+  "firmware_version": "ArduCopter V4.0.6 (13b6478d)",
+  "frame_class": "2",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "d5095b90be9440b7ef0528d2ddbdf945f3f3f774d3517335464974cdf37fcba8": {
+  "firmware_version": null,
+  "frame_class": "10",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "d74079b8cc2b19be02a15e8a2275b28279b50f3bc61056468ca6da3d1d5714e2": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "d882a7eec25135172fdf76e755e8d1b638acbb508ad818012898bc2a5385abdd": {
+  "firmware_version": "ArduCopter V4.4.0 (502702df)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "d9464b12aaed79a5ea7f7c626bd96d83037db37018deff5c2399d078a9d155fe": {
+  "firmware_version": null,
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "db9fa2016d4646c486498bcff3915ca121f85f4f0509a2e6b8e5f5dbf8d7ee6f": {
+  "firmware_version": null,
+  "frame_class": "0",
+  "note": null,
+  "vehicle_type": "ArduPilot-Plane/Rover"
+ },
+ "de9643c72dd4a59e965de0838dbfe37b1101cf27bc3a88483fbbea2321867023": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "e21ed44cd5684cc210eeb72c56815b551fe5488ea490dbd483f376803e4b78a5": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "e37a094bd36b9572806acfd0701214927028bffce22d8ab38877549ba95e87a5": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "e3c66d3ea3e373cb384166ef0f70ed27a2aad71ded3404d56f0681ef2f9cd962": {
+  "firmware_version": "ArduPlane V4.3.7 (2d1a8a28)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "eaf8dca555": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "eb67c9cb02": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "ee7870c8d0": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "f0a5a770b3": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "f121066e7e1c6eb2ce0be294f1ead978e6624eda78126de80d177cac784dd097": {
+  "firmware_version": "ArduPlane V4.3.0dev (e9fff5a2)",
+  "frame_class": null,
+  "note": null,
+  "vehicle_type": null
+ },
+ "f1a376e9cf": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "f34756e15d": {
+  "firmware_version": "ArduCopter V4.3.0-dev (b728b817)",
+  "frame_class": "1",
+  "note": null,
+  "vehicle_type": "ArduPilot-Copter"
+ },
+ "f3a6f273d60a326d8bbdff65c4bf582135ea787391d2330bbcd695b3526f0f0e": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "f7d7a771d1b12dda9e1b19c21d6e6941822d5c319beb930b89920f6bde54181e": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "fa2f67b19dcbb58b7b7ac1797f44d59957fafa1f932aa06218555e3f465df0ce": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "fb32889d51090b69f75118e7a543457993575a0a7d38e299e0e647cc3ec77040": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "fda6b2ec3b5fab004bd93bf70075fd4481ad8b748a757a430f62e3a6fd9fbcf6": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ },
+ "feba377ace4444b132ca77fb297f31771b8ae336885ed5a64389c048b0d23c2b": {
+  "firmware_version": null,
+  "frame_class": null,
+  "note": "file-not-found-on-disk",
+  "vehicle_type": null
+ }
+}
