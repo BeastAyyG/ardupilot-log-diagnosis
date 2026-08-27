@@ -53,6 +53,7 @@ LOGGING_CONTRACT = {
     "LOG_FILE_DSRMROT": 1.0,
     "LOG_FILE_RATEMAX": 0.0,
     "LOG_DISARMED": 0.0,
+    "BATT_MONITOR": 4.0,
 }
 FIXED_HOME = {
     "latitude": -35.363261,

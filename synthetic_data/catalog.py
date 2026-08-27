@@ -218,10 +218,15 @@ SCENARIOS: Mapping[str, ScenarioSpec] = MappingProxyType(
                 _variant(
                     "gps1_current",
                     injection={
-                        "SIM_GPS1_FIXTYPE": (1.0, 2.0),
                         "SIM_GPS1_NUMSATS": (0.0, 3.0, 5.0),
                     },
                     note="Current instance-specific GPS parameter group.",
+                ),
+                _variant(
+                    "gps1_enable",
+                    injection={"SIM_GPS1_ENABLE": (0.0, 1.0)},
+                    note="GPS enable severity variant.",
+                    control_startup_policy="schema_baseline",
                 ),
                 _variant(
                     "gps_legacy_numsats",
@@ -341,7 +346,7 @@ SCENARIOS: Mapping[str, ScenarioSpec] = MappingProxyType(
                 EvidenceRule("evt_failsafe_count", "increase", 1.0, 1.0),
             ),
             durations_sec=(75, 90, 120),
-            maturity="experimental",
+            maturity="candidate",
         ),
     }
 )
