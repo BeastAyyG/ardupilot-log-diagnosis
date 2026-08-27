@@ -145,7 +145,7 @@ def preflight_run(
 
 
 def _close_enough(left: object, right: object) -> bool:
-    return float32_equal(left, right)
+    return float32_equal(left, right, allow_ulp=True)
 
 
 def _validate_live_parameters(

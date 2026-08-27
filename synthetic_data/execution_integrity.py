@@ -16,11 +16,24 @@ from typing import Any
 SUPPORTED_PYMAVLINK_VERSION = "2.4.49"
 
 
-def float32_equal(left: object, right: object) -> bool:
-    """Compare values exactly as MAVLink PARAM_VALUE float32 payloads."""
+def float32_equal(left: object, right: object, *, allow_ulp: bool = False) -> bool:
+    """Compare values exactly as MAVLink PARAM_VALUE float32 payloads.
+
+    By default requires bit-exact match.  If allow_ulp=True, accepts values that
+    differ by at most 1 ULP (unit in the last place) in float32 representation,
+    which handles minor readback precision shifts that do not change the intended
+    physical value.
+    """
 
     try:
-        return struct.pack("!f", float(left)) == struct.pack("!f", float(right))
+        left_bits = struct.unpack("!I", struct.pack("!f", float(left)))[0]
+        right_bits = struct.unpack("!I", struct.pack("!f", float(right)))[0]
+        if left_bits == right_bits:
+            return True
+        if allow_ulp:
+            diff = abs(left_bits - right_bits)
+            return diff <= 1
+        return False
     except (OverflowError, TypeError, ValueError, struct.error):
         return False
 

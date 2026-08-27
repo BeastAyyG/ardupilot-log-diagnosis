@@ -326,34 +326,52 @@ class OwnedSITLProcess:
         }
         return dict(self.shutdown_result)
 
-    def _stable(self, path: Path, *, require_alive: bool) -> tuple[bool, int]:
-        sizes: list[int] = []
-        for _ in range(4):
-            if require_alive and (
-                self.process is None or self.process.poll() is not None
-            ):
-                return False, sizes[-1] if sizes else 0
-            sizes.append(path.stat().st_size)
-            time.sleep(0.75)
-        return len(set(sizes)) == 1 and sizes[0] > 0, sizes[-1]
-
     def _wait_stable(
         self, path: Path, *, timeout: float, require_alive: bool
     ) -> tuple[bool, int]:
-        # One stability window is three seconds. Logger flushing after disarm
-        # can legitimately cross that first window, so retry a bounded number
-        # of complete windows while still requiring the owned process to live.
-        attempts = max(1, int(float(timeout) / 3.0))
-        size = 0
-        for _ in range(attempts):
-            stable, size = self._stable(path, require_alive=require_alive)
-            if stable:
-                return True, size
+        # Event-driven stability detection replacing _stable polling.
+        # Wait for: process exit (if require_alive=False), log file stability.
+        # Returns True if log reaches stable size within timeout.
+        start_time = time.monotonic()
+        last_size = None
+        stable_window_start = None
+        WINDOW_SECONDS = 3.0
+        MAX_UNCHANGED_WINDOWS = 2
+        unchanged_windows = 0
+        
+        while time.monotonic() - start_time < timeout:
+            # Check if process is still alive (if we require it)
             if require_alive and (
                 self.process is None or self.process.poll() is not None
             ):
                 break
-        return False, size
+                
+            # Get current file size
+            try:
+                current_size = path.stat().st_size
+            except FileNotFoundError:
+                current_size = 0
+                
+            # If we have a previous size, check for stability
+            if last_size is not None and current_size > 0:
+                if current_size == last_size:
+                    if stable_window_start is None:
+                        stable_window_start = time.monotonic()
+                    elif time.monotonic() - stable_window_start >= WINDOW_SECONDS:
+                        unchanged_windows += 1
+                        stable_window_start = time.monotonic()
+                else:
+                    stable_window_start = None
+                    unchanged_windows = 0
+                    
+            # Success criteria: reached enough stable windows
+            if unchanged_windows >= MAX_UNCHANGED_WINDOWS:
+                return True, current_size
+                
+            last_size = current_size
+            time.sleep(0.1)
+            
+        return False, last_size or 0
 
     def finalize_log(self, timeout: float) -> tuple[Path, dict[str, Any]]:
         log_dir = self.run_dir / "logs"
@@ -382,7 +400,7 @@ class OwnedSITLProcess:
             and shutdown["process_tree_terminated"]
         ):
             raise RuntimeError("owned SITL process tree did not close cleanly")
-        stable, size = self._stable(logs[0], require_alive=False)
+        stable, size = self._wait_stable(logs[0], timeout=timeout, require_alive=False)
         if not stable:
             raise RuntimeError("owned DataFlash log did not reach a stable closed size")
         attestation = {

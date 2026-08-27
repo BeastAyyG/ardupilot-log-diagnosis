@@ -75,14 +75,30 @@ def test_logger_may_settle_after_the_first_stability_window(
     log.parent.mkdir()
     log.write_bytes(b"dataflash")
     owner = _owner(tmp_path, _Process())
-    observations = iter([(False, 8), (True, 12)])
-    monkeypatch.setattr(
-        owner,
-        "_stable",
-        lambda _path, require_alive: next(observations),
-    )
+
+    observed_sizes: list[int] = []
+    counter = {"calls": 0}
+
+    def fake_sleep(_seconds: float) -> None:
+        pass
+
+    def fake_poll(self=None):
+        return None
+
+    def fake_stat() -> object:
+        class Stat:
+            def __init__(self, size: int) -> None:
+                self.st_size = size
+        counter["calls"] += 1
+        size = 8 if counter["calls"] <= 1 else 12
+        observed_sizes.append(size)
+        return Stat(size)
+
+    monkeypatch.setattr(owned_runner.time, "sleep", fake_sleep)
+    monkeypatch.setattr(Path, "stat", lambda self: fake_stat())
 
     assert owner._wait_stable(log, timeout=6.0, require_alive=True) == (True, 12)
+    assert observed_sizes[-1] == 12
 
 
 def test_finalize_ignores_owned_eeprom_bin(tmp_path, monkeypatch) -> None:
@@ -91,7 +107,11 @@ def test_finalize_ignores_owned_eeprom_bin(tmp_path, monkeypatch) -> None:
     log.write_bytes(b"dataflash")
     (tmp_path / "eeprom.bin").write_bytes(b"persistent-parameters")
     owner = _owner(tmp_path, _Process())
-    monkeypatch.setattr(owner, "_stable", lambda _path, require_alive: (True, 9))
+    monkeypatch.setattr(
+        owner,
+        "_wait_stable",
+        lambda _path, *, timeout, require_alive: (True, 9),
+    )
     monkeypatch.setattr(
         owner,
         "_stop",
