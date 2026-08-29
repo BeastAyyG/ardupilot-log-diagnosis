@@ -1,13 +1,13 @@
 import os
 import json
 from .results import BenchmarkResults
+from .calibration import generate_calibration_report
 from src.contracts import DiagnosisDict
 from src.parser.bin_parser import LogParser
 from src.features.pipeline import FeaturePipeline
 from src.diagnosis.rule_engine import RuleEngine
 from src.diagnosis.ml_classifier import MLClassifier
 from src.diagnosis.hybrid_engine import HybridEngine
-
 
 class BenchmarkSuite:
     """Runs diagnosis engine against labeled dataset and produces accuracy metrics."""
@@ -85,5 +85,7 @@ class BenchmarkSuite:
                 results.add_result(filename, ground_truth, predictions, len(features))
             except Exception as e:
                 results.add_error(filename, str(e), "DIAGNOSIS_FAILED")
+
+        generate_calibration_report(results.log_results)
 
         return results
