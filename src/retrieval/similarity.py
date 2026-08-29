@@ -9,7 +9,7 @@ from src.runtime_paths import KNOWN_FAILURES_PATH, resolve_repo_path
 class FailureRetrieval:
     """Match new logs against database of known failures."""
 
-    def __init__(self, known_failures_path: str | os.PathLike[str] | None = None):
+    def __init__(self, known_failures_path: str | os.PathLike[str] | None = None) -> None:
         resolved_path = (
             resolve_repo_path(known_failures_path) if known_failures_path is not None else KNOWN_FAILURES_PATH
         )
@@ -17,7 +17,7 @@ class FailureRetrieval:
         self.known = self._load()
         self.scaler = None
 
-    def _load(self):
+    def _load(self) -> dict:
         if os.path.exists(self.known_failures_path):
             try:
                 with open(self.known_failures_path, "r") as f:
@@ -26,12 +26,12 @@ class FailureRetrieval:
                 return {"failures": []}
         return {"failures": []}
 
-    def _save(self):
+    def _save(self) -> None:
         os.makedirs(os.path.dirname(self.known_failures_path), exist_ok=True)
         with open(self.known_failures_path, "w") as f:
             json.dump(self.known, f, indent=2)
 
-    def find_similar(self, features: dict, top_k: int = 3) -> list:
+    def find_similar(self, features: dict, top_k: int = 3) -> list[dict]:
         if not self.known.get("failures"):
             return []
 
@@ -76,7 +76,7 @@ class FailureRetrieval:
         source_url: str = "",
         root_cause: str = "",
         fix: str = "",
-    ):
+    ) -> None:
         case = {
             "id": f"known_{len(self.known.get('failures', [])) + 1:03d}",
             "failure_type": failure_type,
