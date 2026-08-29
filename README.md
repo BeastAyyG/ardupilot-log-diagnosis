@@ -44,6 +44,7 @@ Drop a flight log → get evidence-backed diagnoses, quality/coverage status, ca
 - [Recent Audit & Fixes (March 2026)](#-recent-audit--fixes-march-2026)
 - [Project Structure](#-project-structure)
 - [GSoC 2026 Roadmap](#-gsoc-2026-the-12-week-roadmap)
+- [Data Integrity & Labeling Policy](#-data-integrity--labeling-policy)
 - [Key Documents](#-key-documents)
 - [Contributing](#-contributing)
 - [License](#-license)
