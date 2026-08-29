@@ -106,6 +106,8 @@ FILTERED (Post-Crash Noise):
 - **Python 3.10+**
 - **pip** (comes with Python)
 
+> **Note:** Verify your Python version with `python --version` before installing dependencies to ensure Python 3.10 or newer is being used.
+
 ### One-Line Install
 
 ```bash
