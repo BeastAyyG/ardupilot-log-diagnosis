@@ -1,9 +1,10 @@
 import builtins
 import sys
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+import json
 
 from src.cli.commands import ui
 from src.cli.main import main
@@ -205,3 +206,85 @@ def test_ui_command_reports_missing_optional_dependency(capsys):
     assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "Optional web UI dependencies are not installed." in captured.out
+
+def test_analyze_format_json(tmp_path, capsys):
+    f = tmp_path / "test.BIN"
+    f.write_text("dummy")
+    mock_features = {
+        "_metadata": {
+            "log_file": str(f),
+            "duration_sec": 100.0,
+            "vehicle_type": "Copter",
+            "firmware": "V4.3.0",
+            "extraction_success": True,
+        }
+    }
+    mock_engine = MagicMock()
+    mock_engine.diagnose.return_value = []
+    mock_engine.last_explain_data = None
+    test_args = ["main", "analyze", str(f), "--format", "json", "--no-ml"]
+    with patch("src.cli.commands.analyze.load_parsed_and_features",
+               return_value=({}, mock_features)), \
+         patch("src.cli.commands.analyze.RuleEngine",
+               return_value=mock_engine), \
+         patch("src.cli.commands.analyze.FailureRetrieval",
+               return_value=MagicMock(find_similar=MagicMock(return_value=[]))), \
+         patch("src.cli.commands.analyze.validate_parameters", return_value=[]), \
+         patch.object(sys, "argv", test_args):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code in (0, None)
+    captured = capsys.readouterr()
+    assert captured.out.strip(), "No output produced"
+    parsed = json.loads(captured.out)
+    for key in ("diagnoses", "metadata", "decision",
+                "similar_cases", "parameter_warnings", "features_summary"):
+        assert key in parsed, f"Missing key: {key}"
+    assert isinstance(parsed["diagnoses"], list)
+
+
+def test_analyze_format_json_to_file(tmp_path):
+    f = tmp_path / "test.BIN"
+    f.write_text("dummy")
+    out = tmp_path / "result.json"
+    mock_features = {
+        "_metadata": {
+            "log_file": str(f),
+            "duration_sec": 100.0,
+            "vehicle_type": "Copter",
+            "firmware": "V4.3.0",
+            "extraction_success": True,
+        }
+    }
+    mock_engine = MagicMock()
+    mock_engine.diagnose.return_value = []
+    mock_engine.last_explain_data = None
+    test_args = ["main", "analyze", str(f), "--format", "json",
+                 "--no-ml", "-o", str(out)]
+    with patch("src.cli.commands.analyze.load_parsed_and_features",
+               return_value=({}, mock_features)), \
+         patch("src.cli.commands.analyze.RuleEngine",
+               return_value=mock_engine), \
+         patch("src.cli.commands.analyze.FailureRetrieval",
+               return_value=MagicMock(find_similar=MagicMock(return_value=[]))), \
+         patch("src.cli.commands.analyze.validate_parameters", return_value=[]), \
+         patch.object(sys, "argv", test_args):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code in (0, None)
+    assert out.exists(), "Output file was not created"
+    content = json.loads(out.read_text(encoding="utf-8"))
+    assert "diagnoses" in content
+    assert "metadata" in content
+
+
+def test_analyze_invalid_format_rejected(tmp_path):
+    f = tmp_path / "test.BIN"
+    f.write_text("dummy")
+    test_args = ["main", "analyze", str(f), "--format", "xml"]
+    with patch.object(sys, "argv", test_args):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 2
