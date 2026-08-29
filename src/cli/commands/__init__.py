@@ -32,3 +32,5 @@ COMMAND_MODULES = [
     temporal,
     video,
 ]
+
+__all__ = ["COMMAND_MODULES"]
