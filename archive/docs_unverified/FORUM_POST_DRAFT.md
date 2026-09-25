@@ -1,3 +1,6 @@
+> **HISTORICAL — UNVERIFIED.** This document contains claims that were retracted
+> on 2026-09-25. Do not cite it. See [CORRECTIONS.md](../../CORRECTIONS.md).
+
 # ArduPilot AI Log Diagnosis — GSoC 2026 Pre-Application Introduction
 
 **Category:** GSoC 2026 / Development Tools

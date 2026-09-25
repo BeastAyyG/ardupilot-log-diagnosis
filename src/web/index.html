@@ -273,7 +273,7 @@
                                 </svg>
                                 <span id="conf-text" class="absolute text-lg font-bold code-font">--%</span>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-2 uppercase">Calibrated Conf</p>
+                            <p class="text-[10px] text-gray-500 mt-2 uppercase">Confidence (uncalibrated)</p>
                         </div>
                     </div>
                 </div>
@@ -831,7 +831,7 @@
                         <p class="text-sm font-bold text-cyan-400">${(window.lastData?.explain_data?.decision?.top_guess || "NOMINAL").toUpperCase()}</p>
                     </div>
                 </div>
-                <p class="text-[10px] text-gray-500 mt-4 italic">Comparison shows how the ML layer filters false positives and handles multi-factor failures better than legacy static rules.</p>
+                <p class="text-[10px] text-gray-500 mt-4 italic">Side-by-side view of the rule engine and hybrid decisions. Neither is a verified root cause; see the model card for measured accuracy.</p>
             `;
             container.appendChild(validationCard);
         }

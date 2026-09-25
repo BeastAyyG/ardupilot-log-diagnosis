@@ -1,3 +1,6 @@
+> **HISTORICAL — UNVERIFIED.** This document contains claims that were retracted
+> on 2026-09-25. Do not cite it. See [CORRECTIONS.md](../../CORRECTIONS.md).
+
 # Maintainer Triage Study & P4-02 Impact Claim
 
 ## 1. Executive Summary: P4-02 Impact

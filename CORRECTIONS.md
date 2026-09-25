@@ -1,0 +1,142 @@
+# Corrections and Retracted Claims
+
+This project previously published performance and impact claims that do not
+survive a careful audit. They are corrected here openly instead of being
+silently deleted, so anyone who saw an earlier number can see what changed and
+why.
+
+**Current honest baseline** (grouped by source incident, real logs only,
+candidate `v3_unambiguous`): log-level Macro F1 **0.500** on **23** held-out
+source incidents, incident-level ECE **0.153**. The release gates (F1 ≥ 0.70,
+≥ 50 incidents, ECE ≤ 0.08) **fail**, and no model is promoted. See
+[`docs/model_card.md`](docs/model_card.md).
+
+Reproducibility caveat: the committed repository does not yet contain the JSON
+artifacts or training matrices needed to regenerate the 0.500 / 0.153 figure
+with one command. Restoring that is tracked as open work in
+[`docs/EVIDENCE_LEDGER.md`](docs/EVIDENCE_LEDGER.md). Until it is done, treat
+that figure as the best available estimate, not a certified result.
+
+Audit date: 2026-09-25.
+
+---
+
+<a id="c1"></a>
+## C1. "1.0 Macro F1" and "ECE = 0.0001" (CHANGELOG 2.0.0, 2026-03-16)
+
+- **Original claim:** "breakthrough 1.0 Macro F1 score", "1.0 F1 score across
+  all 6 major failure families", "Isotonic Calibration v2 … ECE = 0.0001",
+  "9.5/10 Project Quality", "140+ high-fidelity flight logs".
+- **Why it is wrong:** the score came from the BASiC dataset
+  (Zenodo 8195068). BASiC contains **70 simulated** (SITL) flights, not 140+,
+  and not real incidents. A near-perfect score on scripted simulator faults
+  says nothing about real crash logs. The "9.5/10" rating was self-assigned.
+- **Correction:** withdrawn. The honest real-log figure is above.
+
+<a id="c2"></a>
+## C2. "Production sign-off" and "validated on a zero-leakage 45-log holdout" (CHANGELOG 1.0.0, 2026-02-28)
+
+- **Original claim:** "Production sign-off achieved. Hybrid Rule + XGBoost
+  engine validated on a SHA-deduplicated, zero-leakage unseen holdout set of 45
+  expert-labeled flight logs." Also "Hybrid engine now outperforms rule-only
+  baseline by confirmed margin."
+- **Why it is wrong:** the only committed 45-log hybrid benchmark report
+  ([`benchmark_results_hybrid.md`](benchmark_results_hybrid.md)) shows Macro
+  F1 **0.14** and Top-1 accuracy 0.18. No committed artifact supports a
+  rule-vs-hybrid margin. SHA256 deduplication removes identical files but not
+  different logs from the same incident, so "zero-leakage" was not established.
+- **Correction:** retitled "Initial release". No production sign-off exists.
+
+<a id="c3"></a>
+## C3. "84% / 98% reduction in triage time" (triage study)
+
+- **Original claim:** 84% median triage-time reduction (25.5 → 4.0 min)
+  in `TRIAGE_STUDY_2026-03-02.md` and `MAINTAINER_TRIAGE_REDUX.md` (now in `archive/docs_unverified/`),
+  the CHANGELOG, forum drafts and GSoC documents. The README cited the same
+  study as "98% time reduction".
+- **Why it is wrong:** there are no raw records: no participants, no timing
+  logs and no full thread URLs (slugs are abbreviated). The figures disagree
+  across documents: 84% vs 98%, and a 25.5-minute "average" that matches
+  neither the table's mean (25.9) nor its median (25). The study case
+  "potential-thrust-loss/142590" is the same log as the contaminated wild
+  holdout (C5).
+- **Correction:** withdrawn as unverifiable. The documents are kept in
+  `archive/` with a banner. Any future usability claim needs a timed study
+  with recorded sessions.
+
+<a id="c4"></a>
+## C4. "Macro F1 0.81, Top-1 1.00" (`release_benchmark_results.md`)
+
+- **Why it is wrong:** all 6 evaluated logs (root `ground_truth.json`) appear
+  in the training matrix `training/groups.csv`. This is a training-set score.
+- **Correction:** relabelled as a training-set smoke test. It is not a
+  performance estimate.
+
+<a id="c5"></a>
+## C5. "Wild holdout: never seen by the model" (now `archive/docs_unverified/WILD_HOLDOUT_TEST_2026-03-01.md`)
+
+- **Original claim:** a forum log (thread 142590) was "ZERO COLLISION — never
+  seen by the model" and correctly diagnosed `MOTOR_IMBALANCE 85% CONFIRMED`.
+- **Why it is wrong:** `archive/docs_unverified/CHANGELOG_2026-03-01.md` records rules and the
+  arbiter being re-tuned on this log to produce that diagnosis.
+  `docs/DATA_PROVENANCE.md` then lists it as training source #37. A log used
+  for tuning and training is not a holdout.
+- **Correction:** the result is withdrawn as evidence of generalisation.
+
+<a id="c6"></a>
+## C6. "114 usable source logs" and F1 0.723 / ECE 0.042 (`training/evaluation_report.md`)
+
+- **Why it is wrong:** 70 of the 114 source logs in `training/groups.csv`
+  are simulated BASiC flights (1,845 of 2,766 windows). The figure mixed
+  simulation into a number presented as real performance. `groups.csv` also
+  groups by filename only, which allowed windows from the same incident to
+  cross the split.
+- **Correction:** described as "44 real forum logs + 70 simulated BASiC
+  flights". The 0.723 figure is historical and not comparable.
+
+<a id="c7"></a>
+## C7. `v4_improved`: F1 0.691, ECE 0.086, 14/14 classes (`docs/PRODUCTION_READINESS.md`)
+
+- **Why it is wrong:** the cited report
+  (`training/candidates/v4_improved/experiment_report.md`) does not exist.
+  The candidate also used synthetic bootstrapping for missing classes.
+- **Correction:** withdrawn. There is no artifact to support it.
+
+<a id="c8"></a>
+## C8. Expert labels overwritten by the rule engine
+
+- **What happened:** `training/relabel_ground_truth.py` and
+  `training/relabel_holdout.py` rewrote ground-truth files in place. Any log
+  whose expert label was a "symptom" class (`mechanical_failure`,
+  `rc_failsafe`, `ekf_failure`, `crash_unknown`) was relabelled with the rule
+  engine's own strongest finding. The CHANGELOG 1.0.0 entry "historical EKF
+  Failure labels audited and relabeled" refers to this.
+- **Why it matters:** evaluating the rule engine against labels that it
+  produced itself is circular and inflates rule-engine and hybrid scores.
+- **Correction:** affected labels will be restored from the forum experts'
+  written diagnoses. The in-place write path will be removed. Until then,
+  metrics computed on `data/kaggle_backups/ardupilot-master-log-pool-v2` are
+  not independent.
+
+<a id="c9"></a>
+## C9. Contradictory labels within one incident
+
+At least five source threads carry different labels on different files:
+`/9269`, `/73859`, `/93719`, `/101055` and `/50267`. The earlier `v3_grouped`
+run (F1 0.559 / ECE 0.158) was rejected for this reason. These incidents will
+be resolved from the thread text or excluded, with the reason documented.
+
+<a id="c10"></a>
+## C10. Stale counts and marketing language
+
+- "338 passing tests", "162", "56", "106 passed" and "607 tests" were each
+  true at some point and are now stale. The README no longer hard-codes a
+  count; CI is authoritative.
+- "GSoC 2026 Ready", "premium", "the engine is proven", "first open-source
+  tool to diagnose during flight" and "Zero Leakage Enforced" were removed or
+  rewritten, because no artifact supports them.
+- The agent skill (`.agents/skills/ardupilot-diagnostics/SKILL.md`) described
+  the model as XGBoost with "F1 1.0". The runtime model is a RandomForest that
+  fails its release gates.
+- The dashboard labelled the legacy model's output "Calibrated Conf". That
+  model is not calibrated, so the label now reads "Confidence (uncalibrated)".

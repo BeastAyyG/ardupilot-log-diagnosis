@@ -1,3 +1,5 @@
+> **Archived.** A pasted AI chat draft, kept only for history. Not a project plan.
+
 # ✅ Here is your new, superior architecture for your Beast Log Diagnosis project.
 
 I read the current BeastAyyG architecture (hybrid rule + XGBoost + IsolationForest + CITA).  

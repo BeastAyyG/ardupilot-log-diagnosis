@@ -5,9 +5,8 @@
 [![CI](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml/badge.svg)](https://github.com/BeastAyyG/ardupilot-log-diagnosis/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests: 338 Passing](https://img.shields.io/badge/tests-338%20passing-brightgreen)](tests/)
-[![Honest Candidate Macro F1: 0.500](https://img.shields.io/badge/honest%20candidate%20Macro%20F1-0.500-orange)](#-production-benchmark-results)
-[![GSoC 2026](https://img.shields.io/badge/GSoC%202026-Ready-purple)](docs/GSOC_2026_Application.md)
+[![Honest Candidate Macro F1: 0.500](https://img.shields.io/badge/honest%20candidate%20Macro%20F1-0.500-orange)](#-benchmark-results)
+[![Corrections](https://img.shields.io/badge/corrections-published-blue)](CORRECTIONS.md)
 
 **An end-to-end, read-only diagnostic pipeline for ArduPilot DataFlash `.BIN/.LOG` logs, with optional PX4 ULog, MAVLink TLog, and Betaflight Blackbox adapters.**
 
@@ -37,7 +36,7 @@ Drop a flight log → get evidence-backed diagnoses, quality/coverage status, ca
 - [How It Works (Architecture)](#-how-it-works--architecture)
 - [CITA — Crash-Immune Temporal Arbitration](#-crash-immune-temporal-arbitration-cita)
 - [111 Features Extracted](#-111-features-extracted)
-- [Production Benchmark Results](#-production-benchmark-results)
+- [Benchmark Results](#-benchmark-results)
 - [All Usage Modes](#-all-usage-modes)
 - [Data Pipeline & Training](#-data-pipeline--training)
 - [Cloud Execution](#-cloud-execution)
@@ -155,7 +154,7 @@ python -m src.cli.main analyze flight.BIN
 
 ## 🌟 Interactive Dashboard
 
-Launch the premium web dashboard for visual analysis with 3D flight replay, subsystem radar, and crash causality timelines:
+Launch the web dashboard for visual analysis with 3D flight replay, subsystem radar, and crash causality timelines:
 
 ```bash
 python -m src.cli.main ui
@@ -258,7 +257,7 @@ All features are documented in [`models/feature_columns.json`](models/feature_co
 
 ---
 
-## 📊 Production Benchmark Results
+## 📊 Benchmark Results
 
 The benchmark below uses source-log-disjoint evaluation. Windowed samples from one flight never appear in both training and test partitions. Performance is intentionally lower than the old row-split estimate and should be treated as the current honest baseline.
 
@@ -273,7 +272,7 @@ below.
 | **Honest grouped holdout** | **23 source incidents** | ≥ 50 | ⚠️ RELEASE BLOCKED |
 | **Incident-level calibration (ECE)** | **0.153** | ≤ 0.08 | ⚠️ RELEASE BLOCKED |
 | **Runtime feature schema** | **111 finite features** | Exact match | ✅ PASS |
-| **Regression suite** | **338 passing, 0 skipped** | All green | ✅ PASS |
+| **Regression suite** | Run `python -m pytest` (count changes; CI is authoritative) | All green | See CI |
 | **Real-log integration** | **43/43 crash-free; 7/7 golden labels** | No crashes; expected labels present | ✅ PASS |
 
 ### CITA-Nexus Acceptance Certification
@@ -291,7 +290,7 @@ used when Docker was unavailable.
 | **Peak memory allocation** | < 200.0 MiB | **162.8 MiB** | ✅ PASS |
 | **Parallel batch throughput** | > 30.0 logs/s | **1,077.9 logs/s** | ✅ PASS |
 | **Local SITL fallback** | > 900 logs/h | **104,426 logs/h** | ✅ PASS |
-| **Comprehensive test suite** | All core tests passing | **106 passed, 1 skipped** | ✅ PASS |
+| **Acceptance-run test subset** | All core tests passing | **106 passed, 1 skipped** (acceptance subset only) | ✅ PASS |
 
 Windows host startup is variable: the observed repeat range was 243.6–252.4 ms, with 3/4 samples under the strict gate. This is a representative measurement rather than a percentile SLA.
 
@@ -324,7 +323,7 @@ does not require a CDN, external JavaScript host, or network access.
 |---|---|
 | **Selected candidate** | RandomForest (selected by grouped log-level metric) |
 | **Feature schema** | 111 runtime features |
-| **Training corpus** | 114 usable source logs / 9 ML labels |
+| **Training corpus** | 114 source logs = 44 real forum logs + 70 simulated BASiC flights / 9 ML labels (see [CORRECTIONS.md](CORRECTIONS.md#c6)) |
 | **Holdout** | 23 independent source incidents |
 | **Calibration** | Incident-level ECE 0.153; calibration gate fails and requires retraining |
 | **Rules-only labels** | `brownout`, `crash_unknown`, `mechanical_failure`, `setup_error`, `thrust_loss` |
@@ -667,7 +666,7 @@ A comprehensive forensic audit was performed across the entire codebase. Below a
 
 ```
 $ python -m pytest tests/ -q
-338 passed, 0 skipped ✅
+# all tests pass (March 2026 audit; current count: see CI)
 
 $ python /tmp/e2e_test.py
 Diagnoses: 1
@@ -715,7 +714,7 @@ ardupilot-log-diagnosis/
 │   ├── train_model.py       #   → grouped candidate training + artifact manifests
 │   ├── build_dataset.py     #   → feature extraction from labeled logs
 │   └── import_basic_direct.py # → BASiC Zenodo dataset importer
-├── tests/                   # 338 tests (parser, features, diagnosis, web, exports, contracts)
+├── tests/                   # regression tests (parser, features, diagnosis, web, exports, contracts)
 ├── docs/                    # Architecture, GSoC proposal, model card, policies
 │   └── assets/              #   → screenshots and diagrams
 ├── ops/                     # Expert label mining pipeline
@@ -729,13 +728,13 @@ ardupilot-log-diagnosis/
 
 ## 🚀 GSoC 2026: The 12-Week Roadmap
 
-The diagnostic engine is proven. **GSoC transforms it from a developer tool into a live-flight safety system.**
+This section is the original GSoC proposal roadmap, kept for reference. It is a plan, not a record of delivered results. The engine has **not** yet passed its own release gates (see below).
 
 | Phase | Weeks | Deliverable | Impact |
 |---|---|---|---|
 | **Upstream Integration** | W1–W3 | Refactor engine to ArduPilot MAVExplorer plugin standards; submit PR | Official tool in ArduPilot ecosystem |
 | **Dataset Scale-Up** | W3–W5 | Expert Label Mining: 140 → 500+ labeled logs | Statistically robust across all vehicle types |
-| **Live MAVLink Streaming** | W5–W7 | Real-time diagnostics from live telemetry streams | **First open-source tool to diagnose during flight** |
+| **Live MAVLink Streaming** | W5–W7 | Real-time diagnostics from live telemetry streams | Live telemetry diagnostics (rules only) |
 | **Edge Inference (C++)** | W8–W10 | Port to companion computer (Raspberry Pi, Jetson Nano) | On-board pre-flight safety checks in < 100ms |
 | **Community Platform** | W11–W12 | Web portal for crowdsourced log submission + labeling | Permanent, growing ecosystem resource |
 
@@ -750,7 +749,7 @@ Data integrity is a first-class constraint:
 1. **Earliest Onset Wins**: The feature with the earliest `t_anomaly` is the root cause — not whatever label the forum post used.
 2. **Sequential Causal Chains**: If A caused B, the label is A.
 3. **Temporal Tie-Break**: Within 5s, highest rule-confidence score wins.
-4. **Zero Leakage Enforced**: `validate_leakage.py` performs SHA256 cross-checks across all train/holdout splits.
+4. **Leakage checks**: `validate_leakage.py` performs SHA256 cross-checks across train/holdout splits. SHA256 checks catch duplicate files, not the same incident uploaded twice; incident-level grouping by source URL is required as well. Past leakage is documented in [CORRECTIONS.md](CORRECTIONS.md).
 
 See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) and [`docs/root_cause_policy.md`](docs/root_cause_policy.md).
 
@@ -764,7 +763,7 @@ See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITER
 | [`docs/model_card.md`](docs/model_card.md) | Technical ML specs and calibration report |
 | [`docs/root_cause_policy.md`](docs/root_cause_policy.md) | CITA temporal arbitration specification |
 | [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) | Release gates & labeling policy |
-| [`docs/MAINTAINER_TRIAGE_REDUX.md`](docs/MAINTAINER_TRIAGE_REDUX.md) | Triage impact study (98% time reduction) |
+| [`CORRECTIONS.md`](CORRECTIONS.md) | Retracted and corrected claims, with reasons |
 | [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) | Full dataset lineage and provenance tracking |
 | [`docs/SYNTHETIC_DATA_IMPLEMENTATION.md`](docs/SYNTHETIC_DATA_IMPLEMENTATION.md) | Research-backed SITL generation and real-only evaluation workflow |
 | [`docs/UPGRADE_ROADMAP.md`](docs/UPGRADE_ROADMAP.md) | Technical roadmap and future improvements |

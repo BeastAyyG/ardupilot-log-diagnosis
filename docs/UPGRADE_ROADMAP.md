@@ -75,7 +75,7 @@ real reverse-proxy configuration and TLS policy are supplied.
 ### Done when
 
 - [x] Fresh clone + `docker compose up` starts the core engine with no manual steps.
-- [x] The full local suite passes (338 tests; container execution remains a CI check).
+- [x] The full local suite passes (container execution remains a CI check).
 
 ---
 

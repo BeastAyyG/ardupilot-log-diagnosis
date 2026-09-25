@@ -1,4 +1,9 @@
-# Benchmark Results
+# Benchmark Results — training-set smoke test (not a performance estimate)
+
+> **Correction:** all 6 logs evaluated here are also in the training matrix
+> (`training/groups.csv`). These numbers show only that the pipeline runs
+> end to end. See [CORRECTIONS.md#c4](CORRECTIONS.md#c4) for the honest
+> grouped real-log baseline.
 
 ## Metric Definitions
 - Any-Match Accuracy: at least one predicted label matches ground truth.

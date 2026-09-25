@@ -1,3 +1,8 @@
+> **Correction notice (2026-09-25):** this is the application as originally written.
+> Some figures in it (triage-time reduction, calibration and test counts) were
+> later retracted or are out of date. See [CORRECTIONS.md](../CORRECTIONS.md)
+> for the current honest baseline.
+
 # GSoC Proposal — ArduPilot AI-Powered Flight-Log Diagnostic Analyzer
 
 ## 1. Problem Statement
@@ -50,7 +55,7 @@ detector. Every output is:
 | D3 | Provenance-safe benchmark | No fabricated labels; SHA-256 leakage detection CI-blocking (Gate C) |
 | D4 | Reproducible benchmark pipeline | Identical metrics on repeated clean runs (Gate D) |
 | D5 | Calibration + abstention report | ECE ≤ 0.08; abstention policy documented and tested (Gate E) |
-| D6 | Triage-time reduction study | Median reduction ≥ 40 % documented in `docs/MAINTAINER_TRIAGE_REDUX.md` |
+| D6 | Triage-time reduction study | Median reduction ≥ 40 % (study withdrawn as unverifiable; see `CORRECTIONS.md`, C3) |
 | D7 | False-critical audit | False-critical rate ≤ 10 % with engine-level mitigation guards |
 
 ### Stretch Deliverables
@@ -66,10 +71,10 @@ detector. Every output is:
 | Metric | Target | Status |
 |---|---|---|
 | Root-cause Top-1 (locked unseen) | ≥ 50–60 % | Rule-Baseline Complete (ML needs data) |
-| ECE | ≤ 0.08 | ✓ Isotonic calibration applied |
-| False-critical rate | ≤ 10 % | ✓ Engine-level guards in place |
-| Median triage-time reduction | ≥ 40 % | ✓ 84% reduction (measured) |
-| Parse reliability | ≥ 99 % | ✓ 100 % isolated parse tests |
+| ECE | ≤ 0.08 | ✗ Not met: incident ECE 0.153 (2026-09 correction) |
+| False-critical rate | ≤ 10 % | Guards in place; rate not measured on a committed artifact |
+| Median triage-time reduction | ≥ 40 % | ✗ Withdrawn: no raw records (CORRECTIONS.md, C3) |
+| Parse reliability | ≥ 99 % | Unit parse tests pass; no committed corpus-level measurement |
 
 ---
 
@@ -114,8 +119,8 @@ that:
   and event timestamps, so a maintainer can verify or override the output in seconds.
 - **Knows when to abstain** — low-confidence and close-gap cases are routed to human review
   rather than producing a wrong answer with false certainty.
-- **Reduces triage time** — measured at 84% reduction in controlled trials, with a ≥ 40 %
-  reduction goal on a representative pilot set.
+- **Aims to reduce triage time.** The goal is a ≥ 40 % reduction on a representative
+  pilot set. An earlier "84%" figure is withdrawn (CORRECTIONS.md, C3).
 - **Scales to batch workflows** — `batch-analyze` processes a full directory of logs in one
   command, clusters duplicate incidents, and writes a CSV summary for issue triage.
 - **Guards against regression** — the firmware regression sentinel detects rising failure

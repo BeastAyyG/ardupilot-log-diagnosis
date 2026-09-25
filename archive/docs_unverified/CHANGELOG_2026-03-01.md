@@ -1,3 +1,6 @@
+> **HISTORICAL — UNVERIFIED.** This document contains claims that were retracted
+> on 2026-09-25. Do not cite it. See [CORRECTIONS.md](../../CORRECTIONS.md).
+
 # ArduPilot Log Diagnosis — Session Changelog
 ## Date: 2026-03-01  |  Duration: ~7 hours  |  Author: Agastya Pandey
 

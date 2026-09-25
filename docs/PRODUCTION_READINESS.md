@@ -30,14 +30,7 @@ run the corresponding `verify` command. That receipt binds tracked, staged,
 deleted, and non-ignored untracked source state plus verification outputs; it
 does not authorize a model or demonstrate an accuracy gain.
 
-The improved candidate `v4_improved` (2026-08-06) incorporated mutual information
-feature selection (50 features), auto-label integration (+22 logs), synthetic data
-boostrapping for missing classes (156 incident groups total), soft-voting ensemble
-modeling, and post-hoc temperature scaling ($T = 1.4714$). It achieved a grouped
-log Macro F1 of **0.691** (nearing the 0.700 gate), reduced incident ECE to **0.086**
-(nearing the 0.080 gate), expanded trained label coverage to **14/14 classes**, and
-eliminated all 3 FastAPI lifespan deprecation warnings. These experiments are recorded
-in `training/candidates/v4_improved/experiment_report.md` for reproducibility.
+A `v4_improved` result (F1 0.691, ECE 0.086) was previously reported here. It is **withdrawn** because its cited report does not exist and it relied on synthetic bootstrapping for missing classes; see [CORRECTIONS.md#c7](../CORRECTIONS.md#c7).
 
 The 2026-08-05 forum acquisition pass is preserved in
 `data/raw_downloads/forum_all_filtered_2026_08_05/`. It found 31 manifest

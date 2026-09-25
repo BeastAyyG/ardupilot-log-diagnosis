@@ -1,6 +1,6 @@
 [project]
 name = "ardupilot-log-diagnosis"
-version = "1.0.1"
+version = "2.0.0"
 description = "AI-powered ArduPilot .BIN diagnostic analyzer for flight log failure detection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -44,6 +44,11 @@ dev = [
     "fastapi>=0.110.0",
     "uvicorn>=0.27.0",
     "python-multipart>=0.0.9",
+    "pyarrow>=14.0.0",
+    "pyulog",
+    "lightgbm",
+    "reportlab",
+    "pypdf",
 ]
 web = [
     "fastapi>=0.110.0",

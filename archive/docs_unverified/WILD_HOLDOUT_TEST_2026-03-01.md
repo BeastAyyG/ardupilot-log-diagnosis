@@ -1,3 +1,6 @@
+> **HISTORICAL — UNVERIFIED.** This document contains claims that were retracted
+> on 2026-09-25. Do not cite it. See [CORRECTIONS.md](../../CORRECTIONS.md).
+
 # Wild Holdout Test — Live Unseen Log Report
 **Date:** 2026-03-01 02:55 IST  
 **Analyst:** Agastya Pandey  

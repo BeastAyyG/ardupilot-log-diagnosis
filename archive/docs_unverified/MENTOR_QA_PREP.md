@@ -1,3 +1,6 @@
+> **HISTORICAL — UNVERIFIED.** This document contains claims that were retracted
+> on 2026-09-25. Do not cite it. See [CORRECTIONS.md](../../CORRECTIONS.md).
+
 # GSoC Mentor Questions — Exact Counter-Responses
 
 > This document exists so that when the mentor asks something hard, you already
