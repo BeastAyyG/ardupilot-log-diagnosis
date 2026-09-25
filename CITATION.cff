@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this benchmark or software, please cite it as below."
+title: "ArduPilot Real-Failure Log Benchmark and Diagnosis Toolkit"
+type: software
+authors:
+  - alias: BeastAyyG
+repository-code: "https://github.com/BeastAyyG/ardupilot-log-diagnosis"
+license: MIT
+version: "3.0"
+date-released: "2026-09-25"
+keywords:
+  - ArduPilot
+  - UAV
+  - flight logs
+  - fault diagnosis
+  - benchmark
+  - evaluation leakage
+abstract: >-
+  An incident-level benchmark of real ArduPilot crash logs whose root-cause
+  labels each cite a verbatim forum diagnosis, together with a pre-registered
+  evaluation showing that random window splits inflate macro-F1 from chance
+  level to about 0.97.
