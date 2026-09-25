@@ -1,6 +1,6 @@
 """Check every thread annotation quote against the forum post it cites.
 
-Each record in ``data/benchmark/thread_annotations.json`` that carries a
+Each record in ``data/benchmark/thread_annotations*.json`` that carries a
 quote must name a post whose author matches and whose text contains the
 quote verbatim (whitespace-normalised). By default the cached threads in
 ``data/raw/threads/`` are used (fetch them with ``training/fetch_threads.py``);
@@ -46,12 +46,25 @@ def check(record: dict, thread: dict) -> str | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--annotations", default="data/benchmark/thread_annotations.json")
+    parser.add_argument(
+        "--annotations",
+        action="append",
+        default=None,
+        help="annotation file(s); defaults to the benchmark and pool files",
+    )
     parser.add_argument("--threads-dir", default="data/raw/threads")
     parser.add_argument("--live", type=int, default=0, help="also re-fetch N random posts")
     args = parser.parse_args()
 
-    records = json.loads((ROOT / args.annotations).read_text(encoding="utf-8"))["records"]
+    paths = args.annotations or [
+        "data/benchmark/thread_annotations.json",
+        "data/benchmark/thread_annotations_pool.json",
+    ]
+    records = [
+        record
+        for path in paths
+        for record in json.loads((ROOT / path).read_text(encoding="utf-8"))["records"]
+    ]
     quoted = [r for r in records if r["quote"] and r["diagnosing_post"]]
     failures = 0
     for record in quoted:

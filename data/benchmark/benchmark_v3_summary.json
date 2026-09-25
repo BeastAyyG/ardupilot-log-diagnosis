@@ -1,0 +1,33 @@
+{
+  "dropped_conflicted_incidents": [],
+  "explicit": 14,
+  "from_pool": 12,
+  "from_v2": 22,
+  "incidents": 32,
+  "label_distribution": {
+    "brownout": 1,
+    "compass_interference": 4,
+    "ekf_failure": 1,
+    "gps_quality_poor": 1,
+    "mechanical_failure": 10,
+    "motor_imbalance": 1,
+    "pid_tuning_issue": 2,
+    "power_instability": 2,
+    "rc_failsafe": 3,
+    "setup_error": 5,
+    "thrust_loss": 1,
+    "vibration_high": 3
+  },
+  "logs": 34,
+  "pool_skipped": {
+    "not_a_failure": 9,
+    "out_of_taxonomy": 1,
+    "undiagnosed": 14
+  },
+  "pool_status_counts": {
+    "labelled": 12,
+    "not_a_failure": 9,
+    "out_of_taxonomy": 1,
+    "undiagnosed": 14
+  }
+}

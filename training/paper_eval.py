@@ -39,8 +39,10 @@ from typing import Any, Callable
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
+from sklearn.preprocessing import StandardScaler
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -135,7 +137,27 @@ def load_windows(derived: Path) -> tuple[np.ndarray, pd.DataFrame]:
     return matrix, groups
 
 
+class ScaledLogisticRegression:
+    """Standardised multinomial logistic regression that accepts sample_weight."""
+
+    def __init__(self, seed: int):
+        self.scaler = StandardScaler()
+        self.model = LogisticRegression(
+            class_weight="balanced", max_iter=5000, C=1.0, random_state=seed
+        )
+
+    def fit(self, matrix: np.ndarray, target: np.ndarray, sample_weight=None):
+        self.model.fit(self.scaler.fit_transform(matrix), target, sample_weight=sample_weight)
+        self.classes_ = self.model.classes_
+        return self
+
+    def predict_proba(self, matrix: np.ndarray) -> np.ndarray:
+        return self.model.predict_proba(self.scaler.transform(matrix))
+
+
 def make_model(kind: str, seed: int) -> Any:
+    if kind == "LogisticRegression":
+        return ScaledLogisticRegression(seed)
     cls = ExtraTreesClassifier if kind == "ExtraTrees" else RandomForestClassifier
     return cls(
         n_estimators=400,
@@ -176,7 +198,9 @@ def out_of_fold(
     return probabilities
 
 
-def split_study(derived: Path) -> dict[str, Any]:
+def split_study(
+    derived: Path, models: tuple[str, ...] = ("RandomForest", "ExtraTrees")
+) -> dict[str, Any]:
     matrix, groups = load_windows(derived)
     classes = sorted(groups["primary_label"].unique())
     target = np.asarray([classes.index(label) for label in groups["primary_label"]])
@@ -192,7 +216,7 @@ def split_study(derived: Path) -> dict[str, Any]:
     log_label = {log: groups["primary_label"][logs == log].iloc[0] for log in log_names}
 
     results: dict[str, Any] = {}
-    for kind in ("RandomForest", "ExtraTrees"):
+    for kind in models:
         for name, split_groups in protocols.items():
             per_seed = []
             for seed in SEEDS:
@@ -373,6 +397,11 @@ def main() -> None:
     parser.add_argument("--skip-engines", action="store_true")
     parser.add_argument("--skip-split", action="store_true", help="skip the model split study")
     parser.add_argument(
+        "--models",
+        default="RandomForest,ExtraTrees",
+        help="comma-separated: RandomForest, ExtraTrees, LogisticRegression",
+    )
+    parser.add_argument(
         "--certainty",
         choices=["explicit", "tentative"],
         default=None,
@@ -407,7 +436,7 @@ def main() -> None:
         "chance_baselines": chance_baselines(ground_truth),
     }
     if not args.skip_split:
-        report["split_study"] = split_study(derived)
+        report["split_study"] = split_study(derived, tuple(args.models.split(",")))
     if not args.skip_engines:
         features = extract_log_features(
             ground_truth, ROOT / args.dataset_dir, derived / "log_features.json"
