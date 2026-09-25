@@ -246,3 +246,37 @@ def test_benchmark_suite_builds_no_cita_ablation_engine(tmp_path):
     )
     assert isinstance(suite.engine, HybridEngine)
     assert suite.engine.temporal_arbitration is False
+
+
+def test_tied_diagnoses_resolve_identically_across_hash_seeds():
+    """Exact ties must not depend on Python's per-process set ordering."""
+    import os
+    import subprocess
+    import sys
+
+    script = (
+        "from typing import Any, cast\n"
+        "from src.diagnosis.hybrid_engine import HybridEngine\n"
+        "class R:\n"
+        "    def diagnose(self, _f):\n"
+        "        return [{'failure_type': t, 'confidence': 0.8, 'evidence': [],"
+        " 'severity': 'warning'} for t in ('power_instability', 'ekf_failure',"
+        " 'gps_quality_poor')]\n"
+        "class M:\n"
+        "    available = False\n"
+        "    def predict(self, _f):\n"
+        "        return []\n"
+        "e = HybridEngine(rule_engine=cast(Any, R()), ml_classifier=cast(Any, M()),"
+        " temporal_arbitration=False)\n"
+        "print([d['failure_type'] for d in e.diagnose({})])\n"
+    )
+    root = Path(__file__).resolve().parents[1]
+    outputs = set()
+    for seed in ("1", "2", "3", "4", "5"):
+        env = {**os.environ, "PYTHONHASHSEED": seed, "PYTHONPATH": str(root)}
+        result = subprocess.run(
+            [sys.executable, "-c", script], cwd=root, env=env, capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stderr
+        outputs.add(result.stdout.strip())
+    assert len(outputs) == 1, outputs

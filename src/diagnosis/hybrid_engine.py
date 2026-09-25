@@ -150,7 +150,10 @@ class HybridEngine:
         merged_diagnoses = []
         from .failure_types import FAILURE_RECOMMENDATIONS
 
-        for ftype in all_types:
+        # Iterate in a fixed order: set order varies with PYTHONHASHSEED, and
+        # the stable sort below would otherwise break exact ties differently
+        # from one process to the next.
+        for ftype in sorted(all_types):
             rule_conf = rule_dict[ftype]["confidence"] if ftype in rule_dict else 0.0
             ml_prob = ml_dict[ftype]["confidence"] if ftype in ml_dict else 0.0
 
