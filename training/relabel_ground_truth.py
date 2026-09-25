@@ -16,7 +16,10 @@ from src.diagnosis.rule_engine import RuleEngine
 def relabel():
     gt_path = "data/kaggle_backups/ardupilot-master-log-pool-v2/ground_truth.json"
     dataset_dir = "data/kaggle_backups/ardupilot-master-log-pool-v2"
-    out_path = "data/kaggle_backups/ardupilot-master-log-pool-v2/ground_truth.json"
+    # Suggestions are written beside the ground truth for human review. The
+    # rule engine must never overwrite labels it is later evaluated against
+    # (CORRECTIONS.md, C8).
+    out_path = "data/kaggle_backups/ardupilot-master-log-pool-v2/ground_truth.rule_suggestions.json"
 
     with open(gt_path, "r") as f:
         data = json.load(f)
@@ -25,6 +28,7 @@ def relabel():
     rules = RuleEngine()
 
     relabeled_count = 0
+    suggestions = []
     SYMPTOM_LABELS = {
         "mechanical_failure",
         "rc_failsafe",
@@ -70,16 +74,24 @@ def relabel():
                         strongest_cause = diag["failure_type"]
 
             if strongest_cause:
-                print(f"Relabeling {log_entry['filename']}")
-                print(f"  Old: {list(original_labels)}")
-                print(f"  New: {strongest_cause} (Confidence: {max_conf:.2f})")
-                data["logs"][i]["labels"] = [strongest_cause]
+                print(f"Rule suggestion for {log_entry['filename']}")
+                print(f"  Label: {list(original_labels)}")
+                print(f"  Rule suggests: {strongest_cause} (Confidence: {max_conf:.2f})")
+                suggestions.append(
+                    {
+                        "filename": log_entry["filename"],
+                        "labels": sorted(original_labels),
+                        "rule_suggestion": strongest_cause,
+                        "rule_confidence": round(max_conf, 4),
+                        "status": "needs_human_review",
+                    }
+                )
                 relabeled_count += 1
 
     with open(out_path, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump({"source": gt_path, "suggestions": suggestions}, f, indent=2)
 
-    print(f"\nSuccessfully relabeled {relabeled_count} logs.")
+    print(f"\nWrote {relabeled_count} rule suggestions (labels unchanged) for logs.")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,19 @@
+{
+  "schema": "logdiagnosis.quote-review/v1",
+  "created": "2026-09-25",
+  "reviewer": "LLM (automated) - secondary check only; every verdict needs human confirmation before it is cited",
+  "scope": "Only logs whose registry evidence tier is named_user_quote. The reviewer read the stored quote and the thread title in the URL slug; it did not read the full thread or the log.",
+  "policy": "A review may exclude a label only when its own source contradicts it (verdict 'contradicted'). It never assigns or changes a label.",
+  "verdicts": {
+    "01803ce998": {"verdict": "supported", "note": "Quote: large rear weight imbalance leaves motors 1/3 idle and 2/4 near maximum; consistent with motor_imbalance (arguably a setup/load cause)."},
+    "66bbaf3919": {"verdict": "supported", "note": "Advice to disable the internal compass and run MAGFIT implies compass interference."},
+    "c648fe37de": {"verdict": "supported", "note": "'Vibrations are very bad, you'll need to fix whatever is causing that first.'"},
+    "af2836cad8": {"verdict": "not_supported_by_quote", "note": "Thread title reports a radio failsafe, but the stored quote discusses MOT_SPIN/hover thrust and vibration, not RC loss."},
+    "b89fc87fea": {"verdict": "not_supported_by_quote", "note": "Same thread and quote as af2836cad8."},
+    "0818fe7e5c": {"verdict": "not_supported_by_quote", "note": "Raw category was BATTERY_FAILSAFE; quote covers firmware, battery-failsafe and radio-failsafe setup. rc_failsafe is not established."},
+    "405c8b855f": {"verdict": "contradicted", "note": "Thread 101680 is a plan to test dead reckoning; the quote is the original post, not a failure diagnosis. mechanical_failure is unsupported."},
+    "75a2881bbe": {"verdict": "contradicted", "note": "Same thread as 405c8b855f."},
+    "aac514db54": {"verdict": "contradicted", "note": "Same thread as 405c8b855f."},
+    "e3c66d3ea3": {"verdict": "contradicted", "note": "Same thread as 405c8b855f."}
+  }
+}

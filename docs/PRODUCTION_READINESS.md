@@ -9,9 +9,9 @@ operational, but no available ML artifact passes every release gate.
 |---|---:|---|
 | Runtime feature schema | 111/111 finite features | Pass |
 | Candidate model schema | 111/111 features, 9 trained labels | Pass with rules-only labels |
-| Honest grouped candidate log Macro F1 (`v3_unambiguous`) | 0.500 (target >= 0.700) | Fail |
-| Honest grouped holdout | 23 source incidents (target >= 50) | Fail |
-| Honest candidate incident-level ECE | 0.153 (target <= 0.080) | Fail |
+| Incident-grouped log macro F1, real-log benchmark v1 | RandomForest 0.092, ExtraTrees 0.078; chance 0.096 (target >= 0.700) | Fail |
+| Real incidents available | 37 (target >= 50) | Fail |
+| Incident-level ECE, real-log benchmark v1 | 0.082 (target <= 0.080) | Fail |
 | Candidate per-class ECE | Multiple classes > 0.08 | Investigate |
 | Full label coverage | 5 labels have no positive source logs | Fail |
 
@@ -30,14 +30,7 @@ run the corresponding `verify` command. That receipt binds tracked, staged,
 deleted, and non-ignored untracked source state plus verification outputs; it
 does not authorize a model or demonstrate an accuracy gain.
 
-The improved candidate `v4_improved` (2026-08-06) incorporated mutual information
-feature selection (50 features), auto-label integration (+22 logs), synthetic data
-boostrapping for missing classes (156 incident groups total), soft-voting ensemble
-modeling, and post-hoc temperature scaling ($T = 1.4714$). It achieved a grouped
-log Macro F1 of **0.691** (nearing the 0.700 gate), reduced incident ECE to **0.086**
-(nearing the 0.080 gate), expanded trained label coverage to **14/14 classes**, and
-eliminated all 3 FastAPI lifespan deprecation warnings. These experiments are recorded
-in `training/candidates/v4_improved/experiment_report.md` for reproducibility.
+A `v4_improved` result (F1 0.691, ECE 0.086) was previously reported here. It is **withdrawn** because its cited report does not exist and it relied on synthetic bootstrapping for missing classes; see [CORRECTIONS.md#c7](../CORRECTIONS.md#c7).
 
 The 2026-08-05 forum acquisition pass is preserved in
 `data/raw_downloads/forum_all_filtered_2026_08_05/`. It found 31 manifest
@@ -53,9 +46,10 @@ versioned window contract, and no input provenance. It is supported only as a
 **legacy compatibility model**, not a production-signed release. The earlier
 `v2_111` score of 0.670 used filename-only grouping and column-order
 primary-label fallback. `v3_grouped` also exposed two source-URL groups with
-contradictory labels and is rejected by the ambiguity gate. The safe
-`v3_unambiguous` rerun excludes those four files and is the authoritative
-honest baseline (F1 0.500, incident ECE 0.153).
+contradictory labels and is rejected by the ambiguity gate. The
+`v3_unambiguous` figure (F1 0.500, ECE 0.153) cannot be regenerated and is
+superseded by the reproducible real-log benchmark in
+[EVIDENCE_LEDGER.md](EVIDENCE_LEDGER.md).
 
 ## What is now production-hardened
 

@@ -24,6 +24,6 @@ To handle cascading failures (e.g., vibration leading to EKF failure), we adopt 
 - **Maintainer Benchmark**: Holdout ground truth is verified by at least two ArduPilot senior maintainers (simulated via expert forum quotes).
 
 ## 4. Production Bar for Sign-Off
-- All "Level P0" and "Level P1" tasks in `PLAN-gsoc-architecture.md` are complete.
+- All "Level P0" and "Level P1" tasks in `archive/docs_stale/PLAN-gsoc-architecture.md` are complete.
 - "Hybrid" engine logic outperforms "Rule-only" baseline by at least 15% Macro F1.
 - CLI output passes user-readability audit.

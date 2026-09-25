@@ -56,7 +56,30 @@ class HybridEngine:
         rule_engine: Optional[RuleEngine] = None,
         ml_classifier: Optional[MLClassifier] = None,
         anomaly_detector: Optional[AnomalyDetector] = None,
+        *,
+        temporal_arbitration: bool = True,
+        tie_window_s: float = 5.0,
+        proximity_window_s: float = 30.0,
+        extreme_confidence: float = 0.85,
+        ml_weight: float = 0.65,
+        single_source_discount: float = 0.85,
     ):
+        """Build the engine.
+
+        The keyword-only settings expose the fusion and CITA constants so
+        ablations can switch temporal arbitration off or vary its windows.
+        Defaults reproduce the production behaviour exactly.
+        """
+        if not 0.0 <= ml_weight <= 1.0:
+            raise ValueError("ml_weight must be within [0, 1]")
+        if tie_window_s < 0 or proximity_window_s < 0:
+            raise ValueError("arbitration windows must be non-negative")
+        self.temporal_arbitration = temporal_arbitration
+        self.tie_window_us = tie_window_s * 1_000_000
+        self.proximity_window_us = proximity_window_s * 1_000_000
+        self.extreme_confidence = extreme_confidence
+        self.ml_weight = ml_weight
+        self.single_source_discount = single_source_discount
         self.rules = rule_engine or RuleEngine()
         self.ml = ml_classifier or MLClassifier()
         if anomaly_detector is not None:
@@ -127,7 +150,10 @@ class HybridEngine:
         merged_diagnoses = []
         from .failure_types import FAILURE_RECOMMENDATIONS
 
-        for ftype in all_types:
+        # Iterate in a fixed order: set order varies with PYTHONHASHSEED, and
+        # the stable sort below would otherwise break exact ties differently
+        # from one process to the next.
+        for ftype in sorted(all_types):
             rule_conf = rule_dict[ftype]["confidence"] if ftype in rule_dict else 0.0
             ml_prob = ml_dict[ftype]["confidence"] if ftype in ml_dict else 0.0
 
@@ -138,13 +164,13 @@ class HybridEngine:
                 evidence.extend(ml_dict[ftype].get("evidence", []))
 
             if rule_conf > 0 and ml_prob > 0:
-                final = 0.65 * ml_prob + 0.35 * rule_conf
+                final = self.ml_weight * ml_prob + (1.0 - self.ml_weight) * rule_conf
                 method = "rule+ml"
             elif ml_prob > 0:
-                final = ml_prob * 0.85
+                final = ml_prob * self.single_source_discount
                 method = "ml"
             elif rule_conf > 0:
-                final = rule_conf * 0.85
+                final = rule_conf * self.single_source_discount
                 method = "rule"
             else:
                 continue
@@ -259,7 +285,7 @@ class HybridEngine:
                 "final": final_diagnoses,
             }
 
-        if merged_diagnoses and len(merged_diagnoses) > 1:
+        if self.temporal_arbitration and merged_diagnoses and len(merged_diagnoses) > 1:
             timed_candidates = []
             for diag in merged_diagnoses:
                 tanomaly = tanomaly_for(diag["failure_type"])
@@ -267,9 +293,9 @@ class HybridEngine:
                     timed_candidates.append((tanomaly, diag["confidence"], diag))
 
             if timed_candidates:
-                temporal_tie_window_us = 5_000_000
-                temporal_proximity_us = 30_000_000
-                extreme_confidence = 0.85
+                temporal_tie_window_us = self.tie_window_us
+                temporal_proximity_us = self.proximity_window_us
+                extreme_confidence = self.extreme_confidence
 
                 timed_candidates.sort(key=lambda item: (item[0], -item[1]))
                 best_time, best_conf, best_diag = timed_candidates[0]

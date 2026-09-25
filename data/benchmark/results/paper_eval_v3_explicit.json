@@ -1,0 +1,364 @@
+{
+  "certainty_filter": "explicit",
+  "chance_baselines": {
+    "frequency_random_macro_f1": {
+      "draws": 2000,
+      "mean": 0.09201671075837742,
+      "p95": 0.2222222222222222
+    },
+    "majority_class": {
+      "coverage": 1.0,
+      "label": "mechanical_failure",
+      "macro_f1": 0.0392156862745098,
+      "macro_f1_ci95": {
+        "high": 0.12,
+        "low": 0.0,
+        "reps": 2000
+      },
+      "n_incidents": 13,
+      "n_logs": 14,
+      "per_class": {
+        "compass_interference": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "gps_quality_poor": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "mechanical_failure": {
+          "n": 3,
+          "recall": 1.0
+        },
+        "motor_imbalance": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "pid_tuning_issue": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "power_instability": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "rc_failsafe": {
+          "n": 2,
+          "recall": 0.0
+        },
+        "setup_error": {
+          "n": 2,
+          "recall": 0.0
+        },
+        "vibration_high": {
+          "n": 2,
+          "recall": 0.0
+        }
+      },
+      "top1_accuracy": 0.21428571428571427
+    }
+  },
+  "engine_study": {
+    "cita_changed_top1_on_logs": [
+      "01803ce998__log_0064_flyaway.bin",
+      "0981e19b7d__batch2_motor_130060.bin",
+      "277840edde__batch2_crash_4_0_rc3.bin",
+      "335e9881ac__batch2_esc_81059.bin",
+      "c1bcef192f__log_0002_vibration_high.bin",
+      "d74079b8cc__log_0011_compass_interference.bin",
+      "396bc7ab60__0__log_0058_flyaway.bin",
+      "b40fb82a48__0__40.BIN",
+      "cdb6b1a554__0__log_0069_radio_failsafe.bin"
+    ],
+    "correct_top1_counts": {
+      "rules_fused_with_cita": 0,
+      "rules_fused_without_cita": 2,
+      "rules_only": 2,
+      "shipped_hybrid_CONTAMINATED": 1
+    },
+    "results": {
+      "rules_fused_with_cita": {
+        "coverage": 1.0,
+        "macro_f1": 0.0,
+        "macro_f1_ci95": {
+          "high": 0.0,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 13,
+        "n_logs": 14,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "gps_quality_poor": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 3,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "rc_failsafe": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "setup_error": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "vibration_high": {
+            "n": 2,
+            "recall": 0.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "compass_interference",
+          "0981e19b7d__batch2_motor_130060.bin": "motor_imbalance",
+          "15deab3649__0__log_0033_hardware_failure.bin": "mechanical_failure",
+          "277840edde__batch2_crash_4_0_rc3.bin": "compass_interference",
+          "335e9881ac__batch2_esc_81059.bin": "motor_imbalance",
+          "396bc7ab60__0__log_0058_flyaway.bin": "motor_imbalance",
+          "476a5e4c28__0__log_0032_hardware_failure.bin": "mechanical_failure",
+          "6c5448a716__0__log_05_ESC_DESYNC_1.bin": "motor_imbalance",
+          "b40fb82a48__0__40.BIN": "motor_imbalance",
+          "c1bcef192f__log_0002_vibration_high.bin": "motor_imbalance",
+          "c55006bd10__0__log_0002_thrust_loss.bin": "power_instability",
+          "cdb6b1a554__0__log_0069_radio_failsafe.bin": "compass_interference",
+          "d74079b8cc__log_0011_compass_interference.bin": "motor_imbalance",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.0
+      },
+      "rules_fused_without_cita": {
+        "coverage": 1.0,
+        "macro_f1": 0.1,
+        "macro_f1_ci95": {
+          "high": 0.2619642857142854,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 13,
+        "n_logs": 14,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "gps_quality_poor": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 3,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 1.0
+          },
+          "rc_failsafe": {
+            "n": 2,
+            "recall": 0.5
+          },
+          "setup_error": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "vibration_high": {
+            "n": 2,
+            "recall": 0.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "vibration_high",
+          "0981e19b7d__batch2_motor_130060.bin": "power_instability",
+          "15deab3649__0__log_0033_hardware_failure.bin": "mechanical_failure",
+          "277840edde__batch2_crash_4_0_rc3.bin": "power_instability",
+          "335e9881ac__batch2_esc_81059.bin": "power_instability",
+          "396bc7ab60__0__log_0058_flyaway.bin": "rc_failsafe",
+          "476a5e4c28__0__log_0032_hardware_failure.bin": "mechanical_failure",
+          "6c5448a716__0__log_05_ESC_DESYNC_1.bin": "motor_imbalance",
+          "b40fb82a48__0__40.BIN": "vibration_high",
+          "c1bcef192f__log_0002_vibration_high.bin": "ekf_failure",
+          "c55006bd10__0__log_0002_thrust_loss.bin": "power_instability",
+          "cdb6b1a554__0__log_0069_radio_failsafe.bin": "rc_failsafe",
+          "d74079b8cc__log_0011_compass_interference.bin": "ekf_failure",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.14285714285714285
+      },
+      "rules_only": {
+        "coverage": 1.0,
+        "macro_f1": 0.09259259259259259,
+        "macro_f1_ci95": {
+          "high": 0.25,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 13,
+        "n_logs": 14,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "gps_quality_poor": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 3,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 1.0
+          },
+          "rc_failsafe": {
+            "n": 2,
+            "recall": 0.5
+          },
+          "setup_error": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "vibration_high": {
+            "n": 2,
+            "recall": 0.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "vibration_high",
+          "0981e19b7d__batch2_motor_130060.bin": "power_instability",
+          "15deab3649__0__log_0033_hardware_failure.bin": "mechanical_failure",
+          "277840edde__batch2_crash_4_0_rc3.bin": "power_instability",
+          "335e9881ac__batch2_esc_81059.bin": "power_instability",
+          "396bc7ab60__0__log_0058_flyaway.bin": "rc_failsafe",
+          "476a5e4c28__0__log_0032_hardware_failure.bin": "mechanical_failure",
+          "6c5448a716__0__log_05_ESC_DESYNC_1.bin": "power_instability",
+          "b40fb82a48__0__40.BIN": "vibration_high",
+          "c1bcef192f__log_0002_vibration_high.bin": "ekf_failure",
+          "c55006bd10__0__log_0002_thrust_loss.bin": "power_instability",
+          "cdb6b1a554__0__log_0069_radio_failsafe.bin": "rc_failsafe",
+          "d74079b8cc__log_0011_compass_interference.bin": "ekf_failure",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.14285714285714285
+      },
+      "shipped_hybrid_CONTAMINATED": {
+        "coverage": 1.0,
+        "macro_f1": 0.05555555555555555,
+        "macro_f1_ci95": {
+          "high": 0.16666666666666666,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 13,
+        "n_logs": 14,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "gps_quality_poor": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 3,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "rc_failsafe": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "setup_error": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "vibration_high": {
+            "n": 2,
+            "recall": 0.5
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "compass_interference",
+          "0981e19b7d__batch2_motor_130060.bin": "motor_imbalance",
+          "15deab3649__0__log_0033_hardware_failure.bin": "mechanical_failure",
+          "277840edde__batch2_crash_4_0_rc3.bin": "compass_interference",
+          "335e9881ac__batch2_esc_81059.bin": "motor_imbalance",
+          "396bc7ab60__0__log_0058_flyaway.bin": "motor_imbalance",
+          "476a5e4c28__0__log_0032_hardware_failure.bin": "mechanical_failure",
+          "6c5448a716__0__log_05_ESC_DESYNC_1.bin": "motor_imbalance",
+          "b40fb82a48__0__40.BIN": "motor_imbalance",
+          "c1bcef192f__log_0002_vibration_high.bin": "vibration_high",
+          "c55006bd10__0__log_0002_thrust_loss.bin": "power_instability",
+          "cdb6b1a554__0__log_0069_radio_failsafe.bin": "compass_interference",
+          "d74079b8cc__log_0011_compass_interference.bin": "motor_imbalance",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.07142857142857142,
+        "warning": "The shipped classifier was trained on logs in this benchmark. This is a training-set score and must not be cited as performance."
+      }
+    }
+  },
+  "git": {
+    "commit": "cd635e66ab69d57d664bd98e29022d5cdacb311d",
+    "dirty": false
+  },
+  "inputs_sha256": {
+    "data/benchmark/derived_v3/features.csv": "ee5d7333d2cf80059ba9ca4617ef66d7099c26f431ece481f25738f235bf4c70",
+    "data/benchmark/derived_v3/groups.csv": "b4d471db04ef48d7e6e3e67f0b92fb2923b7da996ca34095b9c5d8a52d58b29b",
+    "data/benchmark/derived_v3/labels.csv": "de728ca56f65754c2c32cc3128e411d9963fbe2785859aba7e678d8bc30c7dcc",
+    "data/benchmark/ground_truth_real_v3.json": "1429aa8cf7bda0492d29bee18f91e8d4d1c03176125a1a35d1098926b5d4700b"
+  },
+  "metric_notes": {
+    "ci": "95% percentile, incident-cluster bootstrap",
+    "ece": "macro per-class ECE, 10 bins, on normalised log probabilities",
+    "log_aggregation": "max window probability per log (deployed contract)",
+    "macro_f1": "over classes present in the evaluated labels"
+  },
+  "schema": "logdiagnosis.paper-eval/v1"
+}

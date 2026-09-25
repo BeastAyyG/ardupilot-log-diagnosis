@@ -61,7 +61,7 @@ python training/validate_project_boundaries.py
 ## 3. 🧪 Running the Test Suite
 
 ```bash
-# Full suite (56 tests)
+# Full suite
 pytest -q
 
 # Only diagnosis tests
@@ -71,7 +71,7 @@ pytest tests/test_diagnosis.py -v
 pytest tests/test_parser.py -v
 ```
 
-All 56 tests must pass. The CI workflow enforces this on every push and pull request.
+All tests must pass. The CI workflow enforces this on every push and pull request.
 
 ---
 

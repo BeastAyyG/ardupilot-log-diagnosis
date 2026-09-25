@@ -1,4 +1,9 @@
-# ML Evaluation Report
+# ML Evaluation Report (historical — not comparable)
+
+> **Correction (2026-09-25):** this evaluation pool mixed 70 simulated BASiC
+> flights with 44 real logs and grouped windows by filename rather than by
+> incident. The 0.723 / 0.0418 figures are therefore not real-log performance.
+> See [CORRECTIONS.md#c6](../CORRECTIONS.md#c6).
 
 > **Artifact status (2026-08-04):** This report describes the checked-in legacy
 > classifier artifact (94 features and 9 trained labels). The current runtime

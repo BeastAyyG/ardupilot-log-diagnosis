@@ -93,3 +93,6 @@ Thumbs.db
 .claude-flow/swarm/swarm-state.json
 .swarm/
 .claude/
+
+# Raw flight logs are restored locally and never committed (see docs/EVIDENCE_LEDGER.md)
+data/raw/

@@ -1,0 +1,581 @@
+{
+  "schema": "logdiagnosis.real-benchmark-ground-truth/v1",
+  "cohort_manifest_seal": "e68b962a157c4beb929d7614eab641872123118815738f3f379b3437ea44ba2e",
+  "label_policy": "Labels must come from the original human/forum label, never from this project's rule engine. Every change here names the evidence commit that shows the original and the rule-derived value.",
+  "logs": [
+    {
+      "filename": "00afa36e54__log_0007_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:43780",
+      "source_url": "https://discuss.ardupilot.org/t/unstable-drone-after-takeoff-crashes/43780",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "00afa36e545470c4379352efc54c3dffdd81381ae3bae19890a1cfa1c96dec40",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "01803ce998__log_0064_flyaway.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:53951",
+      "source_url": "https://discuss.ardupilot.org/t/rtl-flyaway-bad-pos-among-others/53951",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "01803ce998a260eb56293a2e805ce3350a9b3d1fe00fb0a90bedc149849e611e",
+      "cohort_split": "training_pool",
+      "evidence_tier": "named_user_quote",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "07124add06__batch2_motor_140246_b.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:140246",
+      "source_url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+      "source_type": "forum_linked",
+      "sha256": "07124add06c5b1bdb5c810acce710e20787b806bd6c9f02cd70d6c51bd3011d4",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "0818fe7e5c__log_0010_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "incident_id": "discuss:93719",
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-clone-2-4-8-motors-not-running-in-the-same-speed/93719",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "0818fe7e5ce3cda47fdf3fef42cb2d02963f354b8b18750fa59edb3d0e035719",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "named_user_quote",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "0981e19b7d__batch2_motor_130060.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:130060",
+      "source_url": "https://discuss.ardupilot.org/t/yaw-instability-and-crash-in-loiter-mode-high-vibrations-motor-imbalance-issues/130060",
+      "source_type": "forum_linked",
+      "sha256": "0981e19b7dc74b0c6e8c55779b4a339b2c4619c632d585e2f96e29ef5931d1a1",
+      "cohort_split": "training_pool",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "12ee853194__log_0009_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "incident_id": "discuss:33345",
+      "source_url": "https://discuss.ardupilot.org/t/crash-analysis-strange-flight-behavior/33345",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "12ee853194f5dd8c499850d524eb385c25e34f36e5d39e41a2db716781576a9c",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "14f3d25271__log_0010_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "incident_id": "discuss:73859",
+      "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "14f3d252710e50340ce0ccf873d76b405d1cc49e03ddc3826f63d81d3c1f7a3c",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "16c0fe0044__log_0010_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "incident_id": "discuss:19650",
+      "source_url": "https://discuss.ardupilot.org/t/major-ek2-fail-and-big-crash/19650",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "16c0fe0044cff1cc632979a2355a9869b1911f445f96766d8bb997a3df653ded",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "1796486e9a__log_0041_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "incident_id": "discuss:39722",
+      "source_url": "https://discuss.ardupilot.org/t/3-6-7-installed-and-tested-drone-crashed-firmware-issue-or-battery-or-something-else-unable-to-find-out/39722",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "1796486e9ac43407765587df16a6d0fb6577cd7bee4c76b8c82ce0196075413a",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "1820618f38__log_0004_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:15264",
+      "source_url": "https://discuss.ardupilot.org/t/is-there-a-vibration-issue-here/15264",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "1820618f38d81507a1e95ef22f743fbc50817348046d542d9db765ccace2a9d3",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "1de0bcaf77__log_0039_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "incident_id": "discuss:18093",
+      "source_url": "https://discuss.ardupilot.org/t/esc-failure-or-signal-lost-thank-s-for-help/18093",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "1de0bcaf777b20c7f69c2948472c1ad5e87eb34dfe40c5bbce29d77f969acdf8",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "209cfffee6__log_0001_thrust_loss.bin",
+      "labels": [
+        "thrust_loss"
+      ],
+      "incident_id": "discuss:56407",
+      "source_url": "https://discuss.ardupilot.org/t/potential-thrust-loss/56407",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "209cfffee66a6ba18e54a1b31c8df48d2b63c63423bf4821da0b38b4e1cfb69d",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "23941a01aa__batch1_midair_reboot_17918.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "incident_id": "discuss:17918",
+      "source_url": "https://discuss.ardupilot.org/t/pixhawk-1-midair-reboot/17918",
+      "source_type": "forum_linked",
+      "sha256": "23941a01aa9b9f2659173a64fb674185b9e3d717ebb53169e899f42f3257e274",
+      "cohort_split": "training_pool",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "335e9881ac__batch2_esc_81059.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:81059",
+      "source_url": "https://discuss.ardupilot.org/t/esc-desync-issue-hobbywing-xrotor-pro-60a-tmotor-p60/81059",
+      "source_type": "forum_linked",
+      "sha256": "335e9881ac2934b49da7a13c9d093cf2b2a909957338e66fa9566c4ca179c37d",
+      "cohort_split": "training_pool",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "33c535f6f0__log_0001_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:42329",
+      "source_url": "https://discuss.ardupilot.org/t/crash-help-with-bin-analysis/42329",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "33c535f6f0edb143bb85909901be52bd73542206e3116ae9ddf22b1c42606cfb",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "36c9f718b1__batch2_ekf_8931_b.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "incident_id": "github:issues:8931",
+      "source_url": "https://github.com/ArduPilot/ardupilot/issues/8931",
+      "source_type": "github",
+      "sha256": "36c9f718b16d9c6f59d18343ecc62940e8cf27a79980383602454ff4e7de44f0",
+      "cohort_split": "training_pool",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "4dbb9b5fad__log_0009_pid_tuning_issue.bin",
+      "labels": [
+        "pid_tuning_issue"
+      ],
+      "incident_id": "discuss:64483",
+      "source_url": "https://discuss.ardupilot.org/t/how-to-make-yaw-roll-and-pitch-smoother/64483",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "4dbb9b5fad2e1da945dd1969dc1632091869e3980391666a75106b47015b5e92",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "58f3f3b631__log_0040_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "incident_id": "discuss:77323",
+      "source_url": "https://discuss.ardupilot.org/t/engine-failure-bug-mechanical-or-other/77323",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "58f3f3b631233a6dc4c20f6d42ed47252d0c05788bd45fd57fc87074bad68778",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "5c454779ec__log_0013_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "incident_id": "discuss:18364",
+      "source_url": "https://discuss.ardupilot.org/t/loiter-issue-no-mag-data-bad-motor-balance/18364",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "5c454779ece1c78ef0423b23b252d00b17983b2de7c621f8f8706350002e55f1",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "66bbaf3919__log_10_MAG_INTERFERENCE_1.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "incident_id": "discuss:107273",
+      "source_url": "https://discuss.ardupilot.org/t/ekf-yaw-reset-crash/107273",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "66bbaf391960e4f5244e723b4aa7c4bd5cabc9b38a3957d781dd1d99192ca5b3",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "named_user_quote",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "694da9f46e__log_0012_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "incident_id": "discuss:37800",
+      "source_url": "https://discuss.ardupilot.org/t/ac-copter-3-7-dev-fell-from-the-sky-crash-log/37800",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "694da9f46e9da78a4bae2a418de89a4955d971ba36425d6f88c6136e3bd66f2e",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "7065a3cd0f__log_0003_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:83521",
+      "source_url": "https://discuss.ardupilot.org/t/crash-hexacopter-suddenly-crashed-while-auto/83521",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "7065a3cd0fbd3c5ce178964dcbb64979fc878d0900fc5f5cb6f30d60d3d9d794",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "8265f254a7__batch2_two_motors_132001.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:132001",
+      "source_url": "https://discuss.ardupilot.org/t/crash-after-two-motors-suddenly-stopped/132001",
+      "source_type": "forum_linked",
+      "sha256": "8265f254a7f6a7d99f3de7463be7249b6d0bb2bf781068c999462cc2f49724dd",
+      "cohort_split": "training_pool",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "8dda19965d__log_0011_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "incident_id": "discuss:45811",
+      "source_url": "https://discuss.ardupilot.org/t/no-rc-receiver-lockup-between-flight-controller-and-receiver/45811",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "8dda19965da2a82b6a0303fbf2bf8f0ef79451f4a87d0b178bb203c8a7376ff2",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "a004f350c2__log_0005_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:7594",
+      "source_url": "https://discuss.ardupilot.org/t/loiter-mode-climb-drift-and-crash/7594",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "a004f350c296ae9f396c8756a95c8b0049913ccc8973c5faf0230eba013ec91d",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "a7290a8733__log_0006_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:19146",
+      "source_url": "https://discuss.ardupilot.org/t/automission-misses-wp2-flyaway-crash/19146",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "a7290a8733f121989317d53052b0c6eb58b643dd135938f0c3d3614dbb945d04",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "af2836cad8__log_0009_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "incident_id": "discuss:101055",
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "af2836cad8f18ca67758f6e45730a2756a37938dfc2f2e2dc6fbb27dca7e5641",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "named_user_quote",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "b0db91ee3d__log_0008_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "incident_id": "discuss:26675",
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-drifting-away-crash-log-video/26675",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "b0db91ee3d6a7f0af25dbc4cf97a65e1287a47d8b91fc4973fd5d555f8aab8c0",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "b89fc87fea__log_0008_rc_failsafe.bin",
+      "labels": [
+        "rc_failsafe"
+      ],
+      "incident_id": "discuss:101055",
+      "source_url": "https://discuss.ardupilot.org/t/radio-failsafe-during-operation/101055",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "b89fc87fea657312f90ca28f92e6108f42bc97cb5c27267df8fc82bdfae690c0",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "named_user_quote",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "b9daccd263__log_0012_gps_quality_poor.bin",
+      "labels": [
+        "gps_quality_poor"
+      ],
+      "incident_id": "discuss:9269",
+      "source_url": "https://discuss.ardupilot.org/t/3dr-iris-crashed-after-3-successful-waypoints-mission/9269",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "b9daccd2634d195c9a9312b31e6aa43a5a0a775109a04b6eb57afa61d9c081ef",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "bffc80e1da__log_0049_oscillation_crash.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:99897",
+      "source_url": "https://discuss.ardupilot.org/t/quadcopter-crash-log-analysis-request/99897",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "bffc80e1da7d30ad042d9b8a0cdb06e01b0f1dbccae3589f415b1874502cb256",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "c1bcef192f__log_0002_vibration_high.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:60815",
+      "source_url": "https://discuss.ardupilot.org/t/copter-crash-althold/60815",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "c1bcef192fec48c4eadf1da2a5c62215abc035330b9f56bc5b0e8ecd2a78236f",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "c5640421c2__batch2_ekf_8931_a.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "incident_id": "github:issues:8931",
+      "source_url": "https://github.com/ArduPilot/ardupilot/issues/8931",
+      "source_type": "github",
+      "sha256": "c5640421c2230ec25d4113914acb414e2e2929fdf76c802114e2717799da5844",
+      "cohort_split": "training_pool",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "c648fe37de__log_01_VIBE_HIGH.bin",
+      "labels": [
+        "vibration_high"
+      ],
+      "incident_id": "discuss:56863",
+      "source_url": "https://discuss.ardupilot.org/t/a-problem-about-ekf-variance-and-crash/56863",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "c648fe37de19bce0d6985ae04299af192287f9bd3009cbd5c69c56158cebc706",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "named_user_quote",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "c8bfdfdd38__batch2_motor_140246_a.bin",
+      "labels": [
+        "motor_imbalance"
+      ],
+      "incident_id": "discuss:140246",
+      "source_url": "https://discuss.ardupilot.org/t/3d-printed-10-inch-quad-sudden-unrecoverable-yaw/140246",
+      "source_type": "forum_linked",
+      "sha256": "c8bfdfdd381ab1db9e3aba0eb966df96a656d32bad97b53e36162e074b20308d",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "author_summary",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "cf337b4dde__log_0038_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "incident_id": "discuss:18093",
+      "source_url": "https://discuss.ardupilot.org/t/esc-failure-or-signal-lost-thank-s-for-help/18093",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "cf337b4dde9a1f203b7ceb588c591241e2acac577124e89d88f2b8783efef043",
+      "cohort_split": "evaluation_holdout",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "d3ecd87205__log_0037_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "incident_id": "discuss:72447",
+      "source_url": "https://discuss.ardupilot.org/t/hexacopter-redundancy/72447",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "d3ecd87205ba32a8effd9f2e78443bee25ffd0baa8be333c78bd404f641cf81f",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "d74079b8cc__log_0011_compass_interference.bin",
+      "labels": [
+        "compass_interference"
+      ],
+      "incident_id": "discuss:11636",
+      "source_url": "https://discuss.ardupilot.org/t/copter-3-4-rc5-possible-imu-or-compass-issues/11636",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "d74079b8cc2b19be02a15e8a2275b28279b50f3bc61056468ca6da3d1d5714e2",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "d9464b12aa__log_0036_mechanical_failure.bin",
+      "labels": [
+        "mechanical_failure"
+      ],
+      "incident_id": "discuss:13645",
+      "source_url": "https://discuss.ardupilot.org/t/copter-3-4-4-rc1-available-for-beta-testing/13645",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "d9464b12aaed79a5ea7f7c626bd96d83037db37018deff5c2399d078a9d155fe",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "db9fa2016d__log_0011_power_instability.bin",
+      "labels": [
+        "power_instability"
+      ],
+      "incident_id": "discuss:11083",
+      "source_url": "https://discuss.ardupilot.org/t/large-10kg-payload-drone-crash-on-take-off-please-help/11083",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "db9fa2016d4646c486498bcff3915ca121f85f4f0509a2e6b8e5f5dbf8d7ee6f",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    },
+    {
+      "filename": "f121066e7e__log_0008_ekf_failure.bin",
+      "labels": [
+        "ekf_failure"
+      ],
+      "incident_id": "discuss:77702",
+      "source_url": "https://discuss.ardupilot.org/t/stil-fw-4-2-0dev-crashes-the-plane-with-ahrs-ekf3-lane-switch-0-message/77702",
+      "source_type": "ArduPilot_Discuss",
+      "sha256": "f121066e7e1c6eb2ce0be294f1ead978e6624eda78126de80d177cac784dd097",
+      "cohort_split": "training_pool",
+      "evidence_tier": "none",
+      "confidence": "medium",
+      "trainable": true
+    }
+  ]
+}

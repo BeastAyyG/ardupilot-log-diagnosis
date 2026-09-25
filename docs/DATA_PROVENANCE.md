@@ -16,8 +16,12 @@ back to its original ArduPilot Discourse thread or GitHub issue, providing:
    from the ArduPilot community, not synthetic or random data.
 3. **Mentor verification** — mentors can click any link below and confirm the
    label matches what the community diagnosed.
-4. **Legal clarity** — all posts on discuss.ardupilot.org are CC BY-NC-SA 4.0.
-   GitHub issues are under their respective project licenses.
+4. **Licensing — unverified.** An earlier version stated that all
+   discuss.ardupilot.org posts are CC BY-NC-SA 4.0. That has not been verified
+   against the forum's terms. Even where post text is licensed, attached logs
+   are often hosted elsewhere (Dropbox, Google Drive) and belong to the person
+   who uploaded them. Until permission is recorded per log, publish links,
+   SHA256 hashes and derived labels, not the raw logs.
 
 ---
 
@@ -86,8 +90,9 @@ back to its original ArduPilot Discourse thread or GitHub issue, providing:
 | 40 | [GitHub attachment — bug_report_1.zip](https://github.com/ArduPilot/ardupilot/files/12009217/bug_report_1.zip) | 1 | `ekf_failure` |
 | 41 | [GitHub attachment — bin_and_telemetry_logs.zip](https://github.com/ArduPilot/ardupilot/files/12101758/bin_and_telemetry_logs.zip) | 1 | `ekf_failure` |
 
-> ⭐ = Wild holdout log (SHA-verified never seen in training, correct
-> diagnosis: `MOTOR_IMBALANCE 85% CONFIRMED` vs forum user report "Motor 2 runs hot")
+> ⭐ = Former "wild holdout" log. It is **not** a holdout: rules were re-tuned
+> on it and it is listed here as a training source. See
+> [CORRECTIONS.md#c5](../CORRECTIONS.md#c5).
 
 ---
 
@@ -174,7 +179,8 @@ If using this dataset in any publication or project:
 ```
 Pandey, A. (2026). ArduPilot Log Diagnosis Training Dataset.
 Curated from ArduPilot Community Forum (discuss.ardupilot.org),
-41 threads, 111 unique BIN logs, 9 failure classes.
+41 threads, 9 failure classes. (Log counts differ across data files;
+see docs/DATA_INVENTORY.md. Raw-log redistribution rights are unverified.)
 Kaggle: https://www.kaggle.com/datasets/beastayyg/ardupilot-master-log-pool-v2
 ```
 

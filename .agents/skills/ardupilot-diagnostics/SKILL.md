@@ -9,7 +9,9 @@ date_added: "2026-03-30"
 # ArduPilot Log Diagnostics Skill
 
 ## Overview
-This skill grants an AI agent the ability to autonomously diagnose ArduPilot `.BIN` flight telemetry logs. Instead of manually inspecting graphs or MAVLink messages, the agent can feed the log into the **Hybrid Causal Arbiter** (Rule Engine + XGBoost ML) to extract the primary failure reason, 3D trajectory evidence, and actionable maintenance recommendations.
+This skill grants an AI agent the ability to autonomously diagnose ArduPilot `.BIN` flight telemetry logs. Instead of manually inspecting graphs or MAVLink messages, the agent can feed the log into the **Hybrid Causal Arbiter** (rule engine + RandomForest ML) to get a ranked triage hypothesis with evidence and maintenance recommendations.
+
+**Honest limits (tell the user):** on the reproducible real-log benchmark, the ML candidate does not beat chance (incident-grouped macro-F1 about 0.09 vs 0.10 chance), and it fails its release gates (see `docs/model_card.md` and `CORRECTIONS.md`). Its output is a triage hypothesis for a human to check, not a verified root cause.
 
 ## When to Use This Skill
 - When a user provides a `.BIN` file and asks "Why did my drone crash?"
@@ -32,15 +34,16 @@ python -m src.cli.main analyze /path/to/flight.bin
 Read the resulting JSON or terminal output carefully. You must extract:
 - **Decision:** (Healthy, Warning, or Critical Crash)
 - **Top Root Cause:** (e.g., Compass Interference, Motor Imbalance, EKF Failsafe)
-- **Confidence/ECE:** State the ML calibration confidence mathematically (e.g., F1 1.0, 99.8% confident).
+- **Confidence:** Report the tool's confidence and decision status (`confirmed` / `uncertain`) exactly as given. Say that confidence scores are not calibrated (incident ECE 0.153). Never state an accuracy or F1 figure beyond the model card's.
 - **Evidence:** Which specific parameters/thresholds were violated?
 - **Recommendations:** What physical repairs or tuning steps should the pilot take?
 
 ### 3. Present the Findings
-Do not dump raw JSON logic to the user. Synthesize a professional Drone Mechanic Report:
+Do not dump raw JSON logic to the user. Write a concise report:
 1.  **Summary:** Briefly explain what happened to the vehicle.
 2.  **Causal Chain:** Detail the timeline of the failure (if available).
-3.  **Prescription:** Give the user the exact steps to prevent this in the future.
+3.  **Next checks:** Give the tool's recommended checks, framed as things to inspect, not certain fixes.
+4.  **Uncertainty:** If the status is `uncertain` or requires human review, say so first.
 
 ## Failure Shields (Important)
 - If the tool reports an unknown file parsing error, inform the user that their `.BIN` file may be corrupted or truncated mid-air.

@@ -1,3 +1,8 @@
+> **Correction notice (2026-09-25):** this is the application as originally written.
+> Some figures in it (triage-time reduction, calibration and test counts) were
+> later retracted or are out of date. See [CORRECTIONS.md](../CORRECTIONS.md)
+> for the current honest baseline.
+
 # ArduPilot GSoC 2026 Application: AI Log Diagnosis System
 
 **Full Legal Name:** Agastya Pandey (B.Tech Student)  

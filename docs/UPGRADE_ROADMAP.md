@@ -10,10 +10,11 @@
 
 The current engine provides an offline rule + ML prototype, an Isolation Forest
 anomaly detector, and a 3D replay. Its safe 111-feature candidate has not
-passed the release gates (grouped log-level macro F1 0.500 on 23 holdout
-incidents; incident-level ECE 0.153; minimum gates are F1 0.70, ECE 0.10,
-and 50 independent holdout incidents). The earlier v3_grouped candidate is
-invalid because two URL groups contain contradictory primary labels. The v2.0 goal is to
+passed the release gates. On the reproducible real-log benchmark (41 logs,
+37 incidents), incident-grouped log-level macro F1 is 0.08–0.09, against a
+random-guess baseline of 0.10. The minimum gates are F1 0.70, ECE 0.10 and
+50 independent holdout incidents. See docs/EVIDENCE_LEDGER.md. The earlier
+0.500 figure is superseded (CORRECTIONS.md, C12). The v2.0 goal is to
 evolve it into a containerized, explainable, modular diagnostic platform with
 honest model promotion criteria.
 
@@ -75,7 +76,7 @@ real reverse-proxy configuration and TLS policy are supplied.
 ### Done when
 
 - [x] Fresh clone + `docker compose up` starts the core engine with no manual steps.
-- [x] The full local suite passes (338 tests; container execution remains a CI check).
+- [x] The full local suite passes (container execution remains a CI check).
 
 ---
 
@@ -286,7 +287,7 @@ Before starting v2.0, use the following as the honest baseline:
 | FastAPI web endpoint | ✅ Working |
 | CLI | ✅ Working |
 | Test suite | ✅ Regression suite required before every release |
-| Candidate macro F1 | ⚠️ 0.500 on 23 grouped holdout incidents; release gate is 0.70 on 50+ |
+| Candidate macro F1 | ❌ 0.08–0.09 incident-grouped on 37 real incidents (chance 0.10); release gate is 0.70 on 50+ |
 | Incident calibration (ECE) | ⚠️ 0.153; release gate is ≤0.10 |
 | Label coverage | ⚠️ Rules cover 14 types; ML is trained for 9 |
 | Compass rule | ✅ Deterministic evidence plus ML where supported |

@@ -170,11 +170,11 @@ flights:
 
 | Metric | Target | Status |
 |---|---|---|
-| ECE | ≤ 0.08 | Incident-level ECE 0.1577; gate fails and retraining is required |
+| ECE | ≤ 0.08 | Incident-level ECE 0.153 (`v3_unambiguous`; the rejected `v3_grouped` run was 0.1577); gate fails and retraining is required |
 | FCR | ≤ 10% | Mitigation guards in place; audited via `measure_fcr.py` |
 | Abstention coverage | 100% of uncertain cases flagged | `evaluate_decision` policy enforced in all CLI and benchmark paths |
 | Report availability | Gate E requirement | ✅ This document |
 
 ---
 
-*Last updated: 2026-03-02 — Gate E sign-off.*
+*Last updated: 2026-09-25 — Gate E **fails**; no sign-off exists.*

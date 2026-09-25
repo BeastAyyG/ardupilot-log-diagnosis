@@ -4,28 +4,56 @@ All notable changes to ArduPilot AI Log Diagnosis are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+> **Corrections notice (2026-09-25):** several performance and impact claims in
+> the entries below were retracted after an audit. Retracted figures are marked
+> inline and explained in [CORRECTIONS.md](CORRECTIONS.md). The current honest
+> baseline is the reproducible real-log benchmark in docs/EVIDENCE_LEDGER.md.
+> Incident-grouped macro-F1 is 0.08–0.09 against a random-guess baseline of
+> 0.10, and release gates fail.
+
 ---
 
-## [2.0.0] — 2026-03-16 — GSoC Final Breakthrough
+## [Unreleased]
 
-### Summary
-Final GSoC milestone achieved. The project has reached **9.5/10 Project Quality** with the integration of the **BASiC (Biomisa Arducopter Sensory Critique) Dataset**, achieving a breakthrough **1.0 Macro F1 score**. A premium **Interactive 3D Mission Replay** dashboard was implemented, providing industry-standard telemetry visualization.
+### Fixed
+- Published [CORRECTIONS.md](CORRECTIONS.md), which retracts inflated metrics
+  (C1–C10), and removed the corresponding claims from the README, docs, agent
+  skill and dashboard.
+- Moved unverifiable studies and stale planning documents to `archive/`.
+- Hybrid engine tie-breaking no longer depends on `PYTHONHASHSEED`. The same
+  log could previously receive a different top diagnosis in different runs.
 
 ### Added
-- **BASiC Dataset Integration**: Ingested and normalized 140+ high-fidelity flight logs from Zenodo (8195068).
-- **Interactive 3D Mission Replay:** Added an immersive 3D Plotly dashboard that renders the flight path and drops causal event markers for physical insight.
-- **Autonomous Agent Skill (SKILL.md):** The project is now an officially documented AI "Skill," allowing external agents (like Claude or Cursor) to natively diagnose `.BIN` files over CLI.
-- **AI Integrity Output:** A side-by-side validation report was added to prove the ML model's decisions against legacy heuristics.
+- Real-log benchmark v1 (`data/benchmark/`). It has an incident registry
+  built from the sealed cohort manifest, with the rule-engine relabels
+  reverted and label evidence graded.
+- `training/build_incident_registry.py` and `training/paper_eval.py`: the
+  leakage study, a rule-engine and CITA comparison, chance baselines and
+  bootstrap CIs.
+- `HybridEngine` settings for switching CITA off (`--engine hybrid_no_cita`).
+
+---
+
+## [2.0.0] — 2026-03-16 — BASiC import and dashboard
+
+### Summary
+**Retracted metrics: see [CORRECTIONS.md#c1](CORRECTIONS.md#c1).** Integrated the simulated **BASiC (Biomisa Arducopter Sensory Critique) Dataset** (70 SITL flights). The originally reported score on this simulated data is withdrawn. Added an interactive 3D mission-replay dashboard.
+
+### Added
+- **BASiC Dataset Integration**: Ingested and normalized the 70 simulated BASiC flights from Zenodo (8195068).
+- **Interactive 3D Mission Replay:** Added a 3D Plotly dashboard that renders the flight path and drops causal event markers for physical insight.
+- **Autonomous Agent Skill (SKILL.md):** Added an agent skill file allowing external AI coding agents to natively diagnose `.BIN` files over CLI.
+- **AI Integrity Output:** A side-by-side validation report was added to compare the ML model's decisions with the rule engine.
 - **Subsystem Radar Blame**: Dynamic radar chart for multi-factor "Blame Ranking."
 - **Crash Causality Timeline**: Visual swimlane reconstructing the exact sequence of failure onset.
 - **Formal Model Card**: Comprehensive documentation of architecture, feature engineering, and calibration.
 - **Mentor Scrutiny Report**: GSoC evaluation report and project impact summary.
-- **Isotonic Calibration v2**: Improved probability reliability (ECE = 0.0001).
+- **Isotonic Calibration v2**: ~~reported ECE on simulated data~~ [retracted — CORRECTIONS.md#c1](CORRECTIONS.md#c1). Real-incident ECE is 0.153.
 
 ### Changed
-- **ML Training Pool**: Expanded training set to 140+ unique flights using a custom BASiC importer.
-- **Hybrid Performance**: Achieved **1.0 F1 score** across all 6 major failure families.
-- **UI Aesthetic**: Upgraded to a premium neon dark-mode interface.
+- **ML Training Pool**: Added the 70 simulated BASiC flights to the training pool (not real incidents; see [CORRECTIONS.md#c6](CORRECTIONS.md#c6)).
+- **Hybrid Performance**: [retracted — CORRECTIONS.md#c1](CORRECTIONS.md#c1).
+- **UI Aesthetic**: Added a dark-mode interface.
 - **Windows UTF-8 Compliance**: Fixed emoji and encoding issues on Windows platforms.
 
 ### Fixed
@@ -68,10 +96,10 @@ final exported benchmark report for the release candidate.
 
 ---
 
-## [1.0.0] — 2026-02-28 — Production Sign-Off
+## [1.0.0] — 2026-02-28 — Initial release
 
 ### Summary
-Production sign-off achieved. Hybrid Rule + XGBoost engine validated on a SHA-deduplicated, zero-leakage unseen holdout set of 45 expert-labeled flight logs. Triage study completed: **84% reduction** in per-log analysis time vs. manual maintainer review (~4.0 min vs 25.5 min average).
+First tagged release of the hybrid rule + XGBoost engine. **The original "production sign-off", "zero-leakage 45-log holdout" and triage-time claims are retracted; see [CORRECTIONS.md#c2](CORRECTIONS.md#c2) and [#c3](CORRECTIONS.md#c3).**
 
 ### Added
 - **Root-cause arbitration engine** (`src/diagnosis/decision_policy.py`): implements Root-Cause Precedence policy — earliest telemetry anomaly suppresses downstream symptoms.
@@ -82,13 +110,13 @@ Production sign-off achieved. Hybrid Rule + XGBoost engine validated on a SHA-de
 - **Progress showcase generator** (`training/generate_progress_showcase.py`): produces mentor-ready benchmark reports with integrity attestation.
 - **56 passing tests** covering parser, features, diagnosis, CLI, and integration contracts.
 - **Production Acceptance Criteria doc** (`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`): formalises release gates, labeling policy, and holdout strategy.
-- **Maintainer Triage Study** (`docs/MAINTAINER_TRIAGE_REDUX.md`): documents P4-02 impact claim with before/after triage measurements.
+- **Maintainer Triage Study** (now in `archive/`): withdrawn as unverifiable, see [CORRECTIONS.md#c3](CORRECTIONS.md#c3).
 
 ### Changed
 - Benchmark results updated to reflect 45-log holdout run (from 10-log v0.1.0 pilot).
-- Hybrid engine now outperforms rule-only baseline by confirmed margin.
+- ~~Hybrid engine now outperforms rule-only baseline by confirmed margin.~~ Retracted: no committed evidence ([CORRECTIONS.md#c2](CORRECTIONS.md#c2)).
 - CI workflow (`ci.yml`) extended to run `validate_project_boundaries.py` before pytest.
-- Ground-truth metadata schema aligned to Root-Cause Precedence policy — historical "EKF Failure" labels audited and relabeled where vibration data showed prior 80 m/s² peaks.
+- Ground-truth metadata schema aligned to Root-Cause Precedence policy — historical "EKF Failure" labels audited and relabeled where vibration data showed prior 80 m/s² peaks. **This relabelling used the rule engine's own output and made later evaluation circular; see [CORRECTIONS.md#c8](CORRECTIONS.md#c8).**
 
 ### Fixed
 - Parser message retention for `IMU`, `POWR`, `RCIN` messages required by advanced extractors.

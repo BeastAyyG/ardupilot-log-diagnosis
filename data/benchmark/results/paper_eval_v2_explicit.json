@@ -1,0 +1,273 @@
+{
+  "certainty_filter": "explicit",
+  "chance_baselines": {
+    "frequency_random_macro_f1": {
+      "draws": 2000,
+      "mean": 0.13250251322751322,
+      "p95": 0.3444444444444444
+    },
+    "majority_class": {
+      "coverage": 1.0,
+      "label": "mechanical_failure",
+      "macro_f1": 0.07407407407407407,
+      "macro_f1_ci95": {
+        "high": 0.2777777777777778,
+        "low": 0.0,
+        "reps": 2000
+      },
+      "n_incidents": 7,
+      "n_logs": 7,
+      "per_class": {
+        "compass_interference": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "mechanical_failure": {
+          "n": 2,
+          "recall": 1.0
+        },
+        "motor_imbalance": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "pid_tuning_issue": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "power_instability": {
+          "n": 1,
+          "recall": 0.0
+        },
+        "vibration_high": {
+          "n": 1,
+          "recall": 0.0
+        }
+      },
+      "top1_accuracy": 0.2857142857142857
+    }
+  },
+  "engine_study": {
+    "cita_changed_top1_on_logs": [
+      "01803ce998__log_0064_flyaway.bin",
+      "0981e19b7d__batch2_motor_130060.bin",
+      "277840edde__batch2_crash_4_0_rc3.bin",
+      "335e9881ac__batch2_esc_81059.bin",
+      "c1bcef192f__log_0002_vibration_high.bin",
+      "d74079b8cc__log_0011_compass_interference.bin"
+    ],
+    "correct_top1_counts": {
+      "rules_fused_with_cita": 0,
+      "rules_fused_without_cita": 1,
+      "rules_only": 1,
+      "shipped_hybrid_CONTAMINATED": 1
+    },
+    "results": {
+      "rules_fused_with_cita": {
+        "coverage": 1.0,
+        "macro_f1": 0.0,
+        "macro_f1_ci95": {
+          "high": 0.0,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 7,
+        "n_logs": 7,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "vibration_high": {
+            "n": 1,
+            "recall": 0.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "compass_interference",
+          "0981e19b7d__batch2_motor_130060.bin": "motor_imbalance",
+          "277840edde__batch2_crash_4_0_rc3.bin": "compass_interference",
+          "335e9881ac__batch2_esc_81059.bin": "motor_imbalance",
+          "c1bcef192f__log_0002_vibration_high.bin": "motor_imbalance",
+          "d74079b8cc__log_0011_compass_interference.bin": "motor_imbalance",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.0
+      },
+      "rules_fused_without_cita": {
+        "coverage": 1.0,
+        "macro_f1": 0.08333333333333333,
+        "macro_f1_ci95": {
+          "high": 0.2671428571428545,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 7,
+        "n_logs": 7,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 1.0
+          },
+          "vibration_high": {
+            "n": 1,
+            "recall": 0.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "vibration_high",
+          "0981e19b7d__batch2_motor_130060.bin": "power_instability",
+          "277840edde__batch2_crash_4_0_rc3.bin": "power_instability",
+          "335e9881ac__batch2_esc_81059.bin": "power_instability",
+          "c1bcef192f__log_0002_vibration_high.bin": "ekf_failure",
+          "d74079b8cc__log_0011_compass_interference.bin": "ekf_failure",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.14285714285714285
+      },
+      "rules_only": {
+        "coverage": 1.0,
+        "macro_f1": 0.08333333333333333,
+        "macro_f1_ci95": {
+          "high": 0.2671428571428545,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 7,
+        "n_logs": 7,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 1.0
+          },
+          "vibration_high": {
+            "n": 1,
+            "recall": 0.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "vibration_high",
+          "0981e19b7d__batch2_motor_130060.bin": "power_instability",
+          "277840edde__batch2_crash_4_0_rc3.bin": "power_instability",
+          "335e9881ac__batch2_esc_81059.bin": "power_instability",
+          "c1bcef192f__log_0002_vibration_high.bin": "ekf_failure",
+          "d74079b8cc__log_0011_compass_interference.bin": "ekf_failure",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.14285714285714285
+      },
+      "shipped_hybrid_CONTAMINATED": {
+        "coverage": 1.0,
+        "macro_f1": 0.1111111111111111,
+        "macro_f1_ci95": {
+          "high": 0.3333333333333333,
+          "low": 0.0,
+          "reps": 2000
+        },
+        "n_incidents": 7,
+        "n_logs": 7,
+        "per_class": {
+          "compass_interference": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "mechanical_failure": {
+            "n": 2,
+            "recall": 0.0
+          },
+          "motor_imbalance": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "pid_tuning_issue": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "power_instability": {
+            "n": 1,
+            "recall": 0.0
+          },
+          "vibration_high": {
+            "n": 1,
+            "recall": 1.0
+          }
+        },
+        "predictions": {
+          "01803ce998__log_0064_flyaway.bin": "compass_interference",
+          "0981e19b7d__batch2_motor_130060.bin": "motor_imbalance",
+          "277840edde__batch2_crash_4_0_rc3.bin": "compass_interference",
+          "335e9881ac__batch2_esc_81059.bin": "motor_imbalance",
+          "c1bcef192f__log_0002_vibration_high.bin": "vibration_high",
+          "d74079b8cc__log_0011_compass_interference.bin": "motor_imbalance",
+          "d9464b12aa__log_0036_mechanical_failure.bin": "vibration_high"
+        },
+        "top1_accuracy": 0.14285714285714285,
+        "warning": "The shipped classifier was trained on logs in this benchmark. This is a training-set score and must not be cited as performance."
+      }
+    }
+  },
+  "git": {
+    "commit": "6c36046393d0c5d1be1d0eac61194c00a851f54d",
+    "dirty": false
+  },
+  "inputs_sha256": {
+    "data/benchmark/derived_v2/features.csv": "f376f2ff077329cf623cc2a2e0e6fbec10e7a4eb42635e5f24fd448345d84841",
+    "data/benchmark/derived_v2/groups.csv": "b0035e6a3fe49a7faf8c0ef572cafa39d833c53c03cbaf1b80b807d455298692",
+    "data/benchmark/derived_v2/labels.csv": "b0fe2912a201b613d462b282be5e1385691cf747db030f159c4f3c24b7463452",
+    "data/benchmark/ground_truth_real_v2.json": "449fdbe40cb6282f5020adaa837df9e5960d37b4b4cfc73939957ea9e8033a86"
+  },
+  "metric_notes": {
+    "ci": "95% percentile, incident-cluster bootstrap",
+    "ece": "macro per-class ECE, 10 bins, on normalised log probabilities",
+    "log_aggregation": "max window probability per log (deployed contract)",
+    "macro_f1": "over classes present in the evaluated labels"
+  },
+  "schema": "logdiagnosis.paper-eval/v1"
+}
