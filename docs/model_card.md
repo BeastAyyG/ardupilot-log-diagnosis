@@ -33,6 +33,8 @@ alone (0.159) stays within the chance range. The same RandomForest scores
 0.890 when windows are split at random. That gap is the leakage effect that
 inflated earlier reports.
 
+**Thread-verified labels (benchmark v2):** 22 logs, 21 incidents, labels cited to forum posts, LLM-annotated. Incident-grouped macro-F1 is 0.05 for the tree models and 0.05 for the rule engine, against chance 0.10. See `docs/EVIDENCE_LEDGER.md`.
+
 **Historical figures, not reproducible (see `docs/EVIDENCE_LEDGER.md`):**
 - `v3_unambiguous`: 0.500 / ECE 0.153. Its pool must have included
   simulated BASiC flights, and F1 was scored over all classes.
