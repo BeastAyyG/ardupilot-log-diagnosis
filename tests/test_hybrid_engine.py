@@ -160,3 +160,89 @@ def test_hybrid_engine_loads_anomaly_artifact_from_ml_model_directory(
     )
 
     assert captured["model_path"] == tmp_path / "candidate" / "anomaly_detector.joblib"
+
+
+class _TimedRuleEngine:
+    """Early low-confidence motor signal, late high-confidence compass signal."""
+
+    def diagnose(self, _features):
+        return [
+            {"failure_type": "motor_imbalance", "confidence": 0.70, "evidence": [], "severity": "warning"},
+            {"failure_type": "compass_interference", "confidence": 0.95, "evidence": [], "severity": "warning"},
+        ]
+
+
+class _NoML:
+    available = False
+
+    def predict(self, _features):
+        return []
+
+
+_TIMED_FEATURES = {"motor_spread_tanomaly": 10_000_000.0, "mag_tanomaly": 100_000_000.0}
+
+
+def _timed_engine(**kwargs):
+    return HybridEngine(
+        rule_engine=cast(Any, _TimedRuleEngine()),
+        ml_classifier=cast(Any, _NoML()),
+        **kwargs,
+    )
+
+
+def test_temporal_arbitration_selects_earliest_onset_by_default():
+    result = _timed_engine().diagnose(cast(Any, dict(_TIMED_FEATURES)))
+    assert result[0]["failure_type"] == "motor_imbalance"
+    assert result[0]["recommendation"].startswith("[ARB]")
+
+
+def test_temporal_arbitration_can_be_disabled_for_ablation():
+    engine = _timed_engine(temporal_arbitration=False)
+    result = engine.diagnose(cast(Any, dict(_TIMED_FEATURES)))
+    assert result[0]["failure_type"] == "compass_interference"
+    assert engine.last_explain_data["causal_arbiter"]["reason"].startswith("selected by merged")
+
+
+def test_explicit_defaults_match_production_behaviour():
+    features = cast(Any, dict(_TIMED_FEATURES))
+    default = _timed_engine().diagnose(features)
+    explicit = _timed_engine(
+        temporal_arbitration=True,
+        tie_window_s=5.0,
+        proximity_window_s=30.0,
+        extreme_confidence=0.85,
+        ml_weight=0.65,
+        single_source_discount=0.85,
+    ).diagnose(features)
+    assert default == explicit
+
+
+def test_wide_proximity_window_lets_extreme_confidence_override_onset():
+    # rule-only merged confidences are 0.595 and 0.8075; lower the extreme
+    # threshold and widen the window so the later, much stronger signal wins.
+    engine = _timed_engine(proximity_window_s=120.0, extreme_confidence=0.8)
+    result = engine.diagnose(cast(Any, dict(_TIMED_FEATURES)))
+    assert result[0]["failure_type"] == "compass_interference"
+
+
+def test_invalid_fusion_settings_are_rejected():
+    import pytest
+
+    with pytest.raises(ValueError):
+        _timed_engine(ml_weight=1.5)
+    with pytest.raises(ValueError):
+        _timed_engine(tie_window_s=-1.0)
+
+
+def test_benchmark_suite_builds_no_cita_ablation_engine(tmp_path):
+    import json
+
+    from src.benchmark.suite import BenchmarkSuite
+
+    gt = tmp_path / "ground_truth.json"
+    gt.write_text(json.dumps({"logs": []}))
+    suite = BenchmarkSuite(
+        dataset_dir=str(tmp_path), ground_truth_path=str(gt), engine="hybrid_no_cita"
+    )
+    assert isinstance(suite.engine, HybridEngine)
+    assert suite.engine.temporal_arbitration is False

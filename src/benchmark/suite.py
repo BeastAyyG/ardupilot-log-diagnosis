@@ -28,6 +28,9 @@ class BenchmarkSuite:
             self.engine = RuleEngine()
         elif self.engine_type == "ml":
             self.engine = MLClassifier()
+        elif self.engine_type == "hybrid_no_cita":
+            # Ablation: identical fusion, temporal arbitration switched off.
+            self.engine = HybridEngine(temporal_arbitration=False)
         else:
             self.engine = HybridEngine()
 

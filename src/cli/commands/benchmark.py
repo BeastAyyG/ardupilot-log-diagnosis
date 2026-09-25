@@ -12,7 +12,7 @@ from .common import find_latest_clean_benchmark
 
 def register(subparsers: _SubParsersAction) -> None:
     parser = subparsers.add_parser("benchmark", help="Run benchmark suite")
-    parser.add_argument("--engine", choices=["rule", "ml", "hybrid"], default="hybrid", help="Engine to benchmark")
+    parser.add_argument("--engine", choices=["rule", "ml", "hybrid", "hybrid_no_cita"], default="hybrid", help="Engine to benchmark (hybrid_no_cita disables temporal arbitration for ablation)")
     parser.add_argument("--dataset-dir", default="dataset/", help="Directory containing benchmark .BIN files")
     parser.add_argument("--ground-truth", default="ground_truth.json", help="Ground truth JSON path")
     parser.add_argument("--output-prefix", default="benchmark_results", help="Output filename prefix (without extension)")
