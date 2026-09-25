@@ -62,6 +62,12 @@ See [`docs/EVIDENCE_LEDGER.md`](../../docs/EVIDENCE_LEDGER.md) and
 - **Results:** `results/paper_eval_v3*.json`.
 - **Labels:** pool labels are in `thread_annotations_pool.json`.
 
+### Release and raw logs
+
+- **Datasheet:** see [`DATASHEET.md`](DATASHEET.md).
+- **Raw logs:** `python training/hydrate_benchmark.py` downloads the v3 logs from their public sources into `data/raw/hydrated_v3/` and checks each SHA256. On 2026-09-25, 33 of the 34 logs verified.
+- **Release bundle:** `python training/make_release_bundle.py --version 3.0` writes `dist/ardupilot-log-benchmark-v3.0.zip`, with a SHA256 manifest, for upload to Zenodo. Raw logs are not included.
+
 ## Files
 
 | File | Content |

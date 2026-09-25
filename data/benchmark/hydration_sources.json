@@ -1,0 +1,20 @@
+{
+ "description": "Public download URLs, found in each log's source thread, for benchmark logs whose registry row has no download_url. Each URL was fetched on 2026-09-25 and its payload matched the SHA256.",
+ "sources": [
+  {
+   "sha256": "0981e19b7dc74b0c6e8c55779b4a339b2c4619c632d585e2f96e29ef5931d1a1",
+   "download_url": "https://drive.google.com/uc?export=download&id=1grz8d02AzWTtsYJoPn-UGpxD-iNmO_Ub",
+   "found_in": "https://discuss.ardupilot.org/t/130060/1"
+  },
+  {
+   "sha256": "277840edde442974dd42fbc53bd285f9a61987da1ebba086d7012fb182be5b10",
+   "download_url": "https://discuss.ardupilot.org/uploads/short-url/wM4ncKgv0dW44ssiB9efBs97hgs.bin",
+   "found_in": "https://discuss.ardupilot.org/t/50267"
+  },
+  {
+   "sha256": "8265f254a7f6a7d99f3de7463be7249b6d0bb2bf781068c999462cc2f49724dd",
+   "download_url": "https://drive.google.com/uc?export=download&id=1jWTBYKBQAuTxujTi2NfpX1ykl8bynSJb",
+   "found_in": "https://discuss.ardupilot.org/t/132001"
+  }
+ ]
+}

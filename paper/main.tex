@@ -78,6 +78,12 @@ cause of irreproducible ML results across science \citep{kapoor2023leakage}.
 Label errors in test sets can reorder method rankings
 \citep{northcutt2021labelerrors}. We document both effects in a new domain.
 
+Tooling in the ArduPilot ecosystem mostly targets prevention rather than
+post-crash diagnosis. The ArduPilot Methodic Configurator \citep{amc}, for
+example, walks users through a fixed configuration and tuning sequence so that
+many setup errors never reach flight. It does not classify the root cause of a
+crash from a flight log, which is the task benchmarked here.
+
 \section{The audited system and its reporting history}
 The tool parses DataFlash logs and extracts 111 features in 5\,s windows
 with 50\% overlap. It combines a threshold rule engine, a tree classifier and

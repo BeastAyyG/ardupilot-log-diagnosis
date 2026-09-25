@@ -147,3 +147,39 @@ def test_v3_adds_only_verified_pool_logs():
     for entry in ground_truth["logs"]:
         labels_by_incident.setdefault(entry["incident_id"], set()).add(entry["labels"][0])
     assert all(len(labels) == 1 for labels in labels_by_incident.values())
+
+
+def test_hydration_extracts_the_log_matching_its_hash(tmp_path):
+    import hashlib
+    import io
+    import zipfile
+
+    from training.hydrate_benchmark import extract_matching
+
+    log = b"\xa3\x95fake dataflash"
+    sha = hashlib.sha256(log).hexdigest()
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("other.bin", b"not it")
+        archive.writestr("crash.bin", log)
+    assert extract_matching(log, sha) == log
+    assert extract_matching(buffer.getvalue(), sha) == log
+    assert extract_matching(b"different", sha) is None
+
+
+def test_every_v3_log_has_a_hydration_source():
+    from training.hydrate_benchmark import download_urls
+
+    urls = download_urls()
+    ground_truth = json.loads((ROOT / "data/benchmark/ground_truth_real_v3.json").read_text())
+    missing = [e["filename"] for e in ground_truth["logs"] if e["sha256"] not in urls]
+    # 335e9881ac: its only public link (Google Drive) returns 404; see DATASHEET.md.
+    assert [name[:10] for name in missing] == ["335e9881ac"]
+
+
+def test_release_bundle_lists_only_existing_files():
+    from training.make_release_bundle import release_paths
+
+    paths = release_paths()
+    assert "data/benchmark/ground_truth_real_v3.json" in paths
+    assert not any(path.startswith("data/raw/") for path in paths)

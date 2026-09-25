@@ -16,9 +16,9 @@ Overleaf also works: upload `main.tex`, `references.bib` and `figures/`.
 ## Before submitting
 
 1. **Author block:** replace `AUTHOR NAME`, `AFFILIATION` and `EMAIL`.
-2. **References:** verify every entry in `references.bib` against the
-   publisher, and add the missing authors for RflyMAD and BASiC. The entries
-   were written from memory.
+2. **References:** every entry in `references.bib` was checked against
+   Crossref or arXiv metadata on 2026-09-25, and each entry now has a DOI
+   where one exists. Re-check any reference added after that date.
 3. **Human spot-check:** complete `data/benchmark/SPOT_CHECK.md` and add the
    agreement rate to Section 4. Without it, the paper must keep saying the
    labels are not human-reviewed.
