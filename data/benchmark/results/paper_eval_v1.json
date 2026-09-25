@@ -1,4 +1,5 @@
 {
+  "certainty_filter": null,
   "chance_baselines": {
     "frequency_random_macro_f1": {
       "draws": 2000,
@@ -483,7 +484,7 @@
     }
   },
   "git": {
-    "commit": "38d342e31dadb2a595363e98dc56960900f5f82b",
+    "commit": "3a5268cd121b74c9c6badb27283ac44cbf86f9c1",
     "dirty": false
   },
   "inputs_sha256": {
@@ -1425,7 +1426,7 @@
               },
               "top1_accuracy": 0.975609756097561
             },
-            "log_ece": 0.08014368579078372,
+            "log_ece": 0.08014368579078374,
             "seed": 99,
             "window_macro_f1": 0.8949650431213282
           }
