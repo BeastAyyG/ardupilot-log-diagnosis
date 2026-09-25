@@ -55,6 +55,46 @@ produced at commit `3a5268c` (clean tree).
 - CITA shows no measurable benefit on these labels.
 - Every one of these conclusions is limited by 41 logs and provisional labels.
 
+## Reproducible results (benchmark v3: pre-registered, primary)
+
+**Sources:**
+- Protocol: [`docs/PREREGISTRATION.md`](PREREGISTRATION.md), committed before
+  any v3 result existed.
+- Data: [`ground_truth_real_v3.json`](../data/benchmark/ground_truth_real_v3.json).
+  It holds the 22 v2 logs plus 12 previously unlabelled pool logs, labelled
+  from their threads ([`thread_annotations_pool.json`](../data/benchmark/thread_annotations_pool.json)).
+  Labels are AI-annotated and not human-reviewed.
+- Results: [`paper_eval_v3.json`](../data/benchmark/results/paper_eval_v3.json)
+  and [`paper_eval_v3_explicit.json`](../data/benchmark/results/paper_eval_v3_explicit.json),
+  produced at commit `cd635e6` (clean tree).
+- Command: `python training/paper_eval.py --ground-truth data/benchmark/ground_truth_real_v3.json --derived-dir data/benchmark/derived_v3 --models RandomForest,ExtraTrees,LogisticRegression`.
+
+**Evaluation set:** 34 logs from 32 incidents, 12 classes; 14 labels are
+explicit.
+
+**Unlabelled pool:** of 49 unlabelled logs, 36 were downloadable and
+hash-verified. Of those:
+- 12 now have a thread-verified label;
+- 14 are undiagnosed;
+- 9 are not failures;
+- 1 is outside the label set (an IMU hardware failure).
+
+| Claim | Value | Status |
+|---|---|---|
+| Chance: majority class / random guess by frequency | 0.038 / mean 0.076 (95th percentile 0.152) | Reproducible |
+| RandomForest: random windows → by log → by incident | 0.971 → 0.088 → **0.056 ± 0.009** | Reproducible |
+| ExtraTrees: random windows → by log → by incident | 0.971 → 0.074 → **0.069 ± 0.002** | Reproducible |
+| LogisticRegression: random windows → by log → by incident | 0.777 → 0.078 → **0.069 ± 0.001** | Reproducible |
+| Rule engine alone | 0.062 [0.014, 0.139]; 4/34 correct | Reproducible |
+| Rules + fusion, CITA off / on | 0.054 (3/34) / 0.000 (0/34); CITA changed 19 top-1 predictions | Reproducible |
+| Explicit-label subset (14 logs) | rules 2/14 correct; CITA on 0/14 | Reproducible |
+
+**Pre-registered hypotheses:**
+- H1 (leakage): supported for all three models.
+- H2 (no method beats chance): supported.
+- H3 (CITA does not help): supported. CITA reduced the number of correct
+  top-1 diagnoses from 3 to 0.
+
 ## Reproducible results (benchmark v2: thread-verified labels)
 
 **Sources:**
@@ -151,7 +191,7 @@ remain unrecoverable from this environment; they are listed in
 
 ## Next steps
 
-1. Done for v2 (LLM-annotated, verifiable). Next, a human spot-check (`data/benchmark/SPOT_CHECK.md`) and the 8 unreviewed logs.
+1. Done for v2 and v3 (AI-annotated, verifiable). Next: a human spot-check (`data/benchmark/SPOT_CHECK.md`) and the 8 unreviewed logs.
 2. Recover the eight missing logs and add new incidents, aiming for 100 or
    more.
 3. Freeze the protocol in `docs/PREREGISTRATION.md` before scoring a new

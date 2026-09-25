@@ -126,3 +126,24 @@ def test_v2_ground_truth_contains_only_verified_labels():
         assert entry["diagnosing_post"] == record["diagnosing_post"]
     excluded = {"00afa36e54", "5563ebf18d", "33c535f6f0", "14f3d25271"}  # sim / not failures
     assert not excluded & {entry["filename"][:10] for entry in ground_truth["logs"]}
+
+
+def test_v3_adds_only_verified_pool_logs():
+    pool = json.loads((ROOT / "data/benchmark/thread_annotations_pool.json").read_text())
+    labelled = {
+        record["files"][0]["file"]: record
+        for record in pool["records"]
+        if record["status"] == "labelled" and len(record["files"]) == 1
+    }
+    ground_truth = json.loads((ROOT / "data/benchmark/ground_truth_real_v3.json").read_text())
+    pool_logs = [entry for entry in ground_truth["logs"] if entry["origin"] == "pool"]
+    assert pool_logs
+    for entry in pool_logs:
+        record = labelled[entry["filename"]]
+        assert entry["labels"] == [record["label"]]
+        assert entry["sha256"] == record["files"][0]["sha256"]
+        assert record["annotator"] == "LLM (automated)"
+    labels_by_incident = {}
+    for entry in ground_truth["logs"]:
+        labels_by_incident.setdefault(entry["incident_id"], set()).add(entry["labels"][0])
+    assert all(len(labels) == 1 for labels in labels_by_incident.values())

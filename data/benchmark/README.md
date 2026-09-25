@@ -52,6 +52,16 @@ See [`docs/EVIDENCE_LEDGER.md`](../../docs/EVIDENCE_LEDGER.md) and
 - **Status:** labels are LLM-annotated and not yet human-reviewed. See
   `SPOT_CHECK.md`.
 
+### v3: v2 plus labelled pool logs (primary, pre-registered)
+
+- **Build:**
+  1. `python training/fetch_adaptation_pool.py` downloads and hash-checks the
+     unlabelled logs.
+  2. `python training/build_benchmark_v3.py` writes `ground_truth_real_v3.json`.
+  3. Build `derived_v3/` with `training/build_dataset.py`.
+- **Results:** `results/paper_eval_v3*.json`.
+- **Labels:** pool labels are in `thread_annotations_pool.json`.
+
 ## Files
 
 | File | Content |
