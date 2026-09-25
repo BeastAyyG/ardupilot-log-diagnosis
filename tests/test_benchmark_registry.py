@@ -87,3 +87,42 @@ def test_summarise_reports_coverage_and_per_class_recall():
     assert result["coverage"] == 0.5
     assert result["per_class"]["a"]["recall"] == 1.0
     assert result["per_class"]["b"]["recall"] == 0.0
+
+
+def _annotations():
+    return json.loads((ROOT / "data/benchmark/thread_annotations.json").read_text())
+
+
+def test_every_registry_log_has_a_thread_annotation():
+    rows = (ROOT / "data/benchmark/incidents.csv").read_text().splitlines()[1:]
+    registry_keys = {row.split(",", 1)[0] for row in rows}
+    annotated = {record["log_key"] for record in _annotations()["records"]}
+    assert registry_keys == annotated
+
+
+def test_llm_annotations_are_disclosed_and_cite_a_post():
+    doc = _annotations()
+    assert "LLM" in doc["annotator_disclosure"]
+    for record in doc["records"]:
+        assert record["annotator"] == "Claude (LLM)"
+        if record["label"]:
+            assert record["status"] in {"confirmed", "relabelled"}
+            assert record["diagnosing_post"].startswith("https://discuss.ardupilot.org/t/")
+            assert record["quote"] and record["author"]
+            assert record["certainty"] in {"explicit", "tentative"}
+
+
+def test_v2_ground_truth_contains_only_verified_labels():
+    verified = {
+        record["log_key"]: record
+        for record in _annotations()["records"]
+        if record["status"] in {"confirmed", "relabelled"}
+    }
+    ground_truth = json.loads((ROOT / "data/benchmark/ground_truth_real_v2.json").read_text())
+    assert ground_truth["logs"]
+    for entry in ground_truth["logs"]:
+        record = verified[entry["filename"][:10]]
+        assert entry["labels"] == [record["label"]]
+        assert entry["diagnosing_post"] == record["diagnosing_post"]
+    excluded = {"00afa36e54", "5563ebf18d", "33c535f6f0", "14f3d25271"}  # sim / not failures
+    assert not excluded & {entry["filename"][:10] for entry in ground_truth["logs"]}

@@ -78,5 +78,53 @@
     "not_supported_by_quote": 3,
     "supported": 3,
     "unreviewed": 35
+  },
+  "v2_thread_verified": {
+    "annotation_status_all_logs": {
+      "confirmed": 11,
+      "not_a_failure": 7,
+      "not_real_flight": 1,
+      "not_reviewed": 8,
+      "relabelled": 13,
+      "undiagnosed": 15
+    },
+    "cohen_kappa_previous_vs_verified": 0.3906250000000001,
+    "label_changes": {
+      "compass_interference -> ekf_failure": 1,
+      "gps_quality_poor -> mechanical_failure": 1,
+      "motor_imbalance -> mechanical_failure": 4,
+      "motor_imbalance -> pid_tuning_issue": 1,
+      "motor_imbalance -> power_instability": 1,
+      "power_instability -> brownout": 1,
+      "rc_failsafe -> setup_error": 3,
+      "vibration_high -> mechanical_failure": 1
+    },
+    "label_distribution_usable_incidents": {
+      "brownout": 1,
+      "compass_interference": 2,
+      "ekf_failure": 1,
+      "mechanical_failure": 9,
+      "motor_imbalance": 1,
+      "pid_tuning_issue": 2,
+      "power_instability": 1,
+      "setup_error": 2,
+      "vibration_high": 2
+    },
+    "label_distribution_usable_logs": {
+      "brownout": 1,
+      "compass_interference": 2,
+      "ekf_failure": 1,
+      "mechanical_failure": 9,
+      "motor_imbalance": 1,
+      "pid_tuning_issue": 2,
+      "power_instability": 1,
+      "setup_error": 3,
+      "vibration_high": 2
+    },
+    "logs_with_verified_label": 24,
+    "previous_label_agrees": 11,
+    "usable_explicit_logs": 7,
+    "usable_incidents": 21,
+    "usable_logs": 22
   }
 }

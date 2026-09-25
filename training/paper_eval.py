@@ -371,12 +371,23 @@ def main() -> None:
     parser.add_argument("--dataset-dir", default="data/raw/benchmark_v1")
     parser.add_argument("--output", default="data/benchmark/results/paper_eval_v1.json")
     parser.add_argument("--skip-engines", action="store_true")
+    parser.add_argument("--skip-split", action="store_true", help="skip the model split study")
+    parser.add_argument(
+        "--certainty",
+        choices=["explicit", "tentative"],
+        default=None,
+        help="only score logs whose thread-verified label has this certainty (v2 ground truth)",
+    )
     args = parser.parse_args()
 
     gt_path = ROOT / args.ground_truth
     derived = ROOT / args.derived_dir
     ground_truth = json.loads(gt_path.read_text(encoding="utf-8"))
     ground_truth["_sha256"] = sha256_file(gt_path)
+    if args.certainty:
+        ground_truth["logs"] = [
+            entry for entry in ground_truth["logs"] if entry.get("certainty") == args.certainty
+        ]
     inputs = {
         str(path.relative_to(ROOT)): sha256_file(path)
         for path in [gt_path, *sorted(derived.glob("*.csv"))]
@@ -392,9 +403,11 @@ def main() -> None:
             "log_aggregation": "max window probability per log (deployed contract)",
             "ece": "macro per-class ECE, 10 bins, on normalised log probabilities",
         },
+        "certainty_filter": args.certainty,
         "chance_baselines": chance_baselines(ground_truth),
-        "split_study": split_study(derived),
     }
+    if not args.skip_split:
+        report["split_study"] = split_study(derived)
     if not args.skip_engines:
         features = extract_log_features(
             ground_truth, ROOT / args.dataset_dir, derived / "log_features.json"
@@ -404,7 +417,7 @@ def main() -> None:
     output = ROOT / args.output
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    brief = {
+    brief = {} if args.skip_split else {
         key: {
             "log_f1": round(value["log_macro_f1_mean"], 3),
             "sd": round(value["log_macro_f1_std"], 3),

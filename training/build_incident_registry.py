@@ -163,6 +163,33 @@ def evidence_for(prefix: str, notes: dict[str, list[dict[str, str]]]) -> tuple[s
     return "none", "", ""
 
 
+def v2_summary(rows: list[dict[str, Any]], usable: list[dict[str, Any]]) -> dict[str, Any]:
+    """Counts and label-agreement statistics for the thread-verified labels."""
+    from sklearn.metrics import cohen_kappa_score
+
+    labelled = [row for row in rows if row["thread_label"]]
+    previous = [row["labels"] or "none" for row in labelled]
+    verified = [row["thread_label"] for row in labelled]
+    return {
+        "annotation_status_all_logs": dict(Counter(row["annotation_status"] for row in rows)),
+        "logs_with_verified_label": len(labelled),
+        "previous_label_agrees": int(sum(a == b for a, b in zip(previous, verified))),
+        "cohen_kappa_previous_vs_verified": float(cohen_kappa_score(previous, verified))
+        if labelled
+        else None,
+        "label_changes": dict(
+            Counter(f"{a} -> {b}" for a, b in zip(previous, verified) if a != b)
+        ),
+        "usable_logs": len(usable),
+        "usable_incidents": len({row["incident_id"] for row in usable}),
+        "usable_explicit_logs": sum(row["certainty"] == "explicit" for row in usable),
+        "label_distribution_usable_logs": dict(Counter(row["thread_label"] for row in usable)),
+        "label_distribution_usable_incidents": dict(
+            Counter(label for label, _ in {(r["thread_label"], r["incident_id"]) for r in usable})
+        ),
+    }
+
+
 def build(args: argparse.Namespace) -> dict[str, Any]:
     manifest = json.loads(Path(args.cohort_manifest).read_text(encoding="utf-8"))
     seal = verify_seal(manifest)
@@ -176,6 +203,14 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     review = {}
     if args.quote_review and Path(args.quote_review).exists():
         review = json.loads(Path(args.quote_review).read_text(encoding="utf-8"))["verdicts"]
+    annotations: dict[str, dict[str, Any]] = {}
+    if args.thread_annotations and Path(args.thread_annotations).exists():
+        annotations = {
+            item["log_key"]: item
+            for item in json.loads(Path(args.thread_annotations).read_text(encoding="utf-8"))[
+                "records"
+            ]
+        }
     notes = load_notes(NOTE_SOURCES)
     local = index_local_logs(list(args.log_root), skip_dir=args.stage_dir)
 
@@ -246,6 +281,30 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             name = f"{row['log_key']}__{name}"
         row["staged_filename"] = name if row["local_available"] else ""
 
+    # v2: labels verified against the forum thread (thread_annotations.json).
+    # Only confirmed/relabelled records carry a label; everything else is
+    # excluded with its annotation status as the reason.
+    for row in rows:
+        note = annotations.get(row["log_key"], {})
+        row["annotation_status"] = note.get("status", "not_annotated")
+        row["thread_label"] = note.get("label", "")
+        row["certainty"] = note.get("certainty", "")
+        row["diagnosing_post"] = note.get("diagnosing_post", "")
+    thread_labels: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        if row["thread_label"]:
+            thread_labels[row["incident_id"]].add(row["thread_label"])
+    for row in rows:
+        reasons = []
+        if row["annotation_status"] not in ("confirmed", "relabelled"):
+            reasons.append(row["annotation_status"])
+        elif len(thread_labels[row["incident_id"]]) > 1:
+            reasons.append("incident_label_conflict")
+        if row["incident_id"] in excluded_incidents:
+            reasons.append("contaminated_incident")
+        row["v2_exclusion_reason"] = "|".join(reasons)
+        row["v2_evaluable"] = not reasons
+
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     fields = list(rows[0].keys())
@@ -278,6 +337,34 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     (out_dir / "ground_truth_real_v1.json").write_text(
         json.dumps(ground_truth, indent=2) + "\n", encoding="utf-8"
     )
+
+    usable_v2 = [row for row in rows if row["v2_evaluable"] and row["local_available"]]
+    if annotations:
+        ground_truth_v2 = {
+            "schema": "logdiagnosis.real-benchmark-ground-truth/v2",
+            "cohort_manifest_seal": seal,
+            "label_policy": "Labels verified against a cited forum post "
+            "(data/benchmark/thread_annotations.json); LLM-annotated, not yet human-reviewed.",
+            "logs": [
+                {
+                    "filename": row["staged_filename"],
+                    "labels": [row["thread_label"]],
+                    "incident_id": row["incident_id"],
+                    "source_url": row["source_url"],
+                    "source_type": row["source_type"],
+                    "sha256": row["sha256"],
+                    "certainty": row["certainty"],
+                    "diagnosing_post": row["diagnosing_post"],
+                    "evidence_tier": f"thread_post_{row['certainty']}",
+                    "confidence": "high" if row["certainty"] == "explicit" else "medium",
+                    "trainable": True,
+                }
+                for row in usable_v2
+            ],
+        }
+        (out_dir / "ground_truth_real_v2.json").write_text(
+            json.dumps(ground_truth_v2, indent=2) + "\n", encoding="utf-8"
+        )
 
     if args.stage_dir:
         stage = Path(args.stage_dir)
@@ -325,6 +412,8 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
             if not row["local_available"]
         ],
     }
+    if annotations:
+        summary["v2_thread_verified"] = v2_summary(rows, usable_v2)
     (out_dir / "registry_summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
@@ -336,6 +425,9 @@ def main() -> None:
     parser.add_argument("--cohort-manifest", default="data/cohorts/cohort_manifest.json")
     parser.add_argument("--corrections", default="data/benchmark/label_corrections.json")
     parser.add_argument("--quote-review", default="data/benchmark/llm_quote_review.json")
+    parser.add_argument(
+        "--thread-annotations", default="data/benchmark/thread_annotations.json"
+    )
     parser.add_argument("--log-root", action="append", default=None)
     parser.add_argument("--output-dir", default="data/benchmark")
     parser.add_argument("--stage-dir", default="")
