@@ -1,0 +1,82 @@
+{
+  "cohort_manifest_seal": "e68b962a157c4beb929d7614eab641872123118815738f3f379b3437ea44ba2e",
+  "evaluable_and_available_incidents": 37,
+  "evaluable_and_available_logs": 41,
+  "evaluable_logs": 49,
+  "evidence_tiers_usable": {
+    "author_summary": 8,
+    "named_user_quote": 6,
+    "none": 27
+  },
+  "exclusions": {
+    "incident_label_conflict": 2,
+    "label_contradicted_by_source": 4
+  },
+  "label_distribution_usable_incidents": {
+    "compass_interference": 5,
+    "ekf_failure": 3,
+    "gps_quality_poor": 1,
+    "mechanical_failure": 5,
+    "motor_imbalance": 6,
+    "pid_tuning_issue": 1,
+    "power_instability": 4,
+    "rc_failsafe": 3,
+    "thrust_loss": 1,
+    "vibration_high": 8
+  },
+  "label_distribution_usable_logs": {
+    "compass_interference": 5,
+    "ekf_failure": 4,
+    "gps_quality_poor": 1,
+    "mechanical_failure": 6,
+    "motor_imbalance": 7,
+    "pid_tuning_issue": 1,
+    "power_instability": 4,
+    "rc_failsafe": 4,
+    "thrust_loss": 1,
+    "vibration_high": 8
+  },
+  "labelled_real_incidents": 44,
+  "labelled_real_logs": 55,
+  "labels_corrected": 3,
+  "locally_available_logs": 47,
+  "missing_logs": [
+    {
+      "log_key": "1c18aa3c93",
+      "source_url": "https://github.com/ArduPilot/ardupilot/issues/7119"
+    },
+    {
+      "log_key": "255373228d",
+      "source_url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+    },
+    {
+      "log_key": "5b811aef3b",
+      "source_url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+    },
+    {
+      "log_key": "7351969082",
+      "source_url": "https://github.com/ArduPilot/ardupilot/files/12009217/bug_report_1.zip"
+    },
+    {
+      "log_key": "860f591dfe",
+      "source_url": "https://github.com/ArduPilot/ardupilot/files/12101758/bin_and_telemetry_logs.zip"
+    },
+    {
+      "log_key": "87f863ad02",
+      "source_url": "https://discuss.ardupilot.org/t/motor-turned-off-in-mid-flight/121845"
+    },
+    {
+      "log_key": "97845b23ea",
+      "source_url": "https://discuss.ardupilot.org/t/ekf3-position-still-going-mad-in-beta5-drone-crashed/73859"
+    },
+    {
+      "log_key": "b63f76e62f",
+      "source_url": "https://drive.google.com/drive/folders/152GnHaxxZVOlLG433Oc9FgpRFOVJPzE3?usp=sharing"
+    }
+  ],
+  "quote_review_usable": {
+    "not_supported_by_quote": 3,
+    "supported": 3,
+    "unreviewed": 35
+  }
+}

@@ -113,18 +113,48 @@ Audit date: 2026-09-25.
   Failure labels audited and relabeled" refers to this.
 - **Why it matters:** evaluating the rule engine against labels that it
   produced itself is circular and inflates rule-engine and hybrid scores.
-- **Correction:** affected labels will be restored from the forum experts'
-  written diagnoses. The in-place write path will be removed. Until then,
-  metrics computed on `data/kaggle_backups/ardupilot-master-log-pool-v2` are
-  not independent.
+- **Scope (verified 2026-09-25):** comparing the file at `de611e4` with
+  `b7c7294` shows exactly three labels overwritten:
+  - `0818fe7e5c`: rc_failsafe → vibration_high.
+  - `b89fc87fea`: rc_failsafe → compass_interference.
+  - `97845b23ea`: ekf_failure → compass_interference.
+- **Correction:** the original labels are restored in the benchmark registry
+  (`data/benchmark/label_corrections.json`). The in-place write path in the
+  relabel scripts is disabled. Metrics computed on
+  `data/kaggle_backups/ardupilot-master-log-pool-v2/ground_truth.json` as
+  committed remain non-independent.
 
 <a id="c9"></a>
 ## C9. Contradictory labels within one incident
 
-At least five source threads carry different labels on different files:
+At least five source threads carried different labels on different files:
 `/9269`, `/73859`, `/93719`, `/101055` and `/50267`. The earlier `v3_grouped`
-run (F1 0.559 / ECE 0.158) was rejected for this reason. These incidents will
-be resolved from the thread text or excluded, with the reason documented.
+run (F1 0.559 / ECE 0.158) was rejected for this reason.
+
+**Finding (2026-09-25):** in the sealed cohort manifest, three of the four
+remaining conflicts (`/73859`, `/93719`, `/101055`) were created by the
+rule-engine overwrites in C8. After reverting them, only `/50267` (motor vs
+power) still conflicts. It is excluded from evaluation.
+
+A related problem: thread `/101680` supplied four `mechanical_failure` logs.
+Its stored "expert quote" is the original post describing a plan to test dead
+reckoning, not a failure diagnosis. Those four logs are excluded
+(`data/benchmark/llm_quote_review.json`).
+
+<a id="c11"></a>
+## C11. Most labels are not tied to a written diagnosis
+
+Of the 41 real logs usable for evaluation:
+- 27 have no stored supporting text. Their labels likely came from the forum
+  search term used to find them (e.g. files named
+  `log_0007_vibration_high.bin`).
+- 8 have only this project's own paraphrase.
+- 6 have a quoted post, and a machine review found that only 3 of those 6
+  support the label.
+
+Earlier documents described these labels as "expert-labeled". That
+description is withdrawn. They are provisional labels until each is tied to
+a diagnosing post; see `data/benchmark/README.md`.
 
 <a id="c10"></a>
 ## C10. Stale counts and marketing language

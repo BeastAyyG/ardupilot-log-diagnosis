@@ -1,0 +1,38 @@
+{
+  "schema": "logdiagnosis.label-corrections/v1",
+  "created": "2026-09-25",
+  "applies_to": "data/cohorts/cohort_manifest.json (seal e68b962a157c4beb929d7614eab641872123118815738f3f379b3437ea44ba2e)",
+  "policy": "Labels must come from the original human/forum label, never from this project's rule engine. Every change here names the evidence commit that shows the original and the rule-derived value.",
+  "remove_rule_derived_labels": [
+    {
+      "sha256_prefix": "0818fe7e5c",
+      "remove": "vibration_high",
+      "keep": "rc_failsafe",
+      "reason": "training/relabel_ground_truth.py replaced the original rc_failsafe label with the rule engine's strongest finding (CORRECTIONS.md C8).",
+      "original_label_commit": "de611e4",
+      "rule_label_commit": "b7c7294"
+    },
+    {
+      "sha256_prefix": "b89fc87fea",
+      "remove": "compass_interference",
+      "keep": "rc_failsafe",
+      "reason": "Rule-engine relabel (CORRECTIONS.md C8).",
+      "original_label_commit": "de611e4",
+      "rule_label_commit": "b7c7294"
+    },
+    {
+      "sha256_prefix": "97845b23ea",
+      "remove": "compass_interference",
+      "keep": "ekf_failure",
+      "reason": "Rule-engine relabel (CORRECTIONS.md C8).",
+      "original_label_commit": "de611e4",
+      "rule_label_commit": "b7c7294"
+    }
+  ],
+  "exclude_incidents_from_evaluation": [
+    {
+      "incident_id": "discuss:142590",
+      "reason": "Former 'wild holdout'; rules were re-tuned on it (CORRECTIONS.md C5). Not present in the labelled cohort records; listed so it can never enter an evaluation split."
+    }
+  ]
+}
