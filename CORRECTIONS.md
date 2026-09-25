@@ -191,3 +191,31 @@ a diagnosing post; see `data/benchmark/README.md`.
 - **Correction:** replaced by the reproducible real-log benchmark above.
   On that benchmark, the model does not beat chance.
 
+<a id="c13"></a>
+## C13. Thread audit of every labelled log (2026-09-25)
+
+Each labelled real log was checked against its forum thread. Details and a
+verbatim quote for every decision are in
+`data/benchmark/thread_annotations.json`. The annotator is an LLM and no
+human has reviewed the labels yet.
+
+- **Only 24 of 55 have a cause stated in the thread.** 11 agree with the
+  previous label and 13 do not (Cohen's kappa 0.39). Most changes are
+  `motor_imbalance` → `mechanical_failure`, meaning a sudden motor or ESC
+  loss.
+- **Thread 43780 is a Gazebo simulation**, not a real flight, but was listed
+  as a real `vibration_high` crash.
+- **Thread 50267's two labels were swapped.** The crash log is
+  `power_instability`, from a loose battery connector confirmed by the
+  owner. The other file is an uneventful flight after the crash.
+- **Thread 9269's `gps_quality_poor` label came from post-impact errors.**
+  The reviewer notes the errors "occured after it hit the ground", and the
+  cause was a motor issue.
+- **Thread 56407's log is a different user's aircraft** that nobody
+  analysed.
+- **Thread 101680 (4 logs) and threads 42329 and 73859 (on-ground log)**
+  are not failures.
+
+Consequence: v1 metrics use unverified labels. The v2 benchmark uses only
+the 22 thread-verified, locally available logs.
+

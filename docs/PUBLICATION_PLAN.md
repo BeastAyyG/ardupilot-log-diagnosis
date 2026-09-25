@@ -14,7 +14,7 @@ evaluation leakage inflates reported accuracy in this field (B).
 |---|---|---|
 | 0. Credibility | Corrections published; unsupported claims removed; evidence ledger | **Done** (2026-09-25) |
 | 1. Reproducibility | Full history fetched; 47/55 labelled real logs recovered and hash-verified; incident registry; CITA ablation switch; `training/paper_eval.py`; baseline regenerated from one command (the old 0.500 is superseded) | **Done** (2026-09-25) |
-| 2. Dataset v1 | ≥ 100 real incidents with expert quote, SHA256, onset time, licence status; agreement study | **Started.** Registry has 41 usable logs / 37 incidents with evidence tiers; 27 of 41 labels have no stored diagnosis, so a labelling pass is next |
+| 2. Dataset v1 | ≥ 100 real incidents with expert quote, SHA256, onset time, licence status; agreement study | **Labelling pass done (LLM, cited):** 24/55 logs verified, kappa 0.39 vs old labels; v2 = 22 logs / 21 incidents. Next: human spot-check, onset times, more incidents |
 | 3. Experiments | Leakage "staircase"; baselines incl. hybrid with and without CITA; onset-ordering accuracy; calibration and abstention | **Pilot run on v1:** split-protocol staircase (0.89 → 0.17 → 0.09), CITA on/off, chance baselines. Label-contamination steps and onset accuracy still to do |
 | 4. Paper | Preprint and dataset DOI, then journal submission | Not started |
 

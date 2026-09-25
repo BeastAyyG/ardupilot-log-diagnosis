@@ -41,6 +41,17 @@ See [`docs/EVIDENCE_LEDGER.md`](../../docs/EVIDENCE_LEDGER.md) and
 - **Rule engine:** 0.16.
 - **CITA:** no measurable benefit.
 
+### v2: thread-verified labels
+
+- **Labels:** `thread_annotations.json` records, for every log, the post that
+  diagnosed it (permalink, author, verbatim quote) or why none exists.
+- **Checking:** `python training/fetch_threads.py`, then
+  `python training/verify_thread_annotations.py --live 5`.
+- **Outputs:** the evaluable subset is `ground_truth_real_v2.json`, with
+  features in `derived_v2/` and results in `results/paper_eval_v2*.json`.
+- **Status:** labels are LLM-annotated and not yet human-reviewed. See
+  `SPOT_CHECK.md`.
+
 ## Files
 
 | File | Content |

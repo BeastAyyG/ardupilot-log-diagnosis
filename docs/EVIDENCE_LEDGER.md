@@ -55,6 +55,53 @@ produced at commit `38d342e` (clean tree).
 - CITA shows no measurable benefit on these labels.
 - Every one of these conclusions is limited by 41 logs and provisional labels.
 
+## Reproducible results (benchmark v2: thread-verified labels)
+
+**Sources:**
+- Labels: [`data/benchmark/thread_annotations.json`](../data/benchmark/thread_annotations.json).
+  Each label cites the diagnosing forum post with a verbatim quote. They
+  were assigned by an LLM (Claude) and have **not yet been reviewed by a
+  human**; see `data/benchmark/SPOT_CHECK.md`.
+- Results: [`paper_eval_v2.json`](../data/benchmark/results/paper_eval_v2.json)
+  and [`paper_eval_v2_explicit.json`](../data/benchmark/results/paper_eval_v2_explicit.json),
+  both produced at commit `528f945` (clean tree).
+- Command: `python training/paper_eval.py --ground-truth data/benchmark/ground_truth_real_v2.json --derived-dir data/benchmark/derived_v2`.
+
+**Label audit**, from `registry_summary.json` → `v2_thread_verified`:
+- Of the 55 logs previously called labelled, 24 have a cause stated in their
+  thread: 11 confirm the old label and 13 change it.
+- Cohen's kappa between the old and verified labels is **0.39**.
+- 15 threads have no agreed cause.
+- 7 logs are not failures (test flights, on-ground and post-crash logs), and
+  1 is a Gazebo simulation.
+- 8 logs could not be reviewed from the annotation environment.
+
+**Evaluation set:** 22 logs from 21 incidents, 9 classes. Nine logs are
+`mechanical_failure`. 7 labels are explicit and 15 tentative.
+
+| Claim | Value | Status |
+|---|---|---|
+| Chance: random guess by label frequency | mean 0.100 (95th percentile 0.211) | Reproducible |
+| Chance: always predict the majority class | 0.065 | Reproducible |
+| RandomForest, windows split at random (leaky) | 0.991 ± 0.011 | Reproducible |
+| RandomForest, grouped by log file | 0.106 ± 0.007 | Reproducible |
+| **RandomForest, grouped by incident** | **0.052 ± 0.003**; ECE 0.100 | Reproducible |
+| ExtraTrees, windows split at random (leaky) | 1.000 ± 0.000 | Reproducible |
+| **ExtraTrees, grouped by incident** | **0.050 ± 0.001**; ECE 0.093 | Reproducible |
+| Rule engine alone | 0.046 [0.000, 0.129]; 2/22 correct | Reproducible |
+| Rules + fusion, CITA on / off | 0.000 (0/22 correct) / 0.028 (1/22) | Reproducible |
+| Explicit-label subset (7 logs), rule engine | 1/7 correct; CITA on 0/7 | Reproducible |
+
+**Reading these numbers:**
+- **Leakage is larger with cleaner labels.** A random window split gives
+  0.99–1.00, while incident grouping gives 0.05.
+- **The rule engine names symptoms, not causes.** Of 9 verified sudden
+  motor/ESC failures, it labels 4 as `power_instability` (current drops when
+  a motor stops) and 2 as `motor_imbalance` (the controller compensates).
+  With CITA on, 5 of 9 become `motor_imbalance`. So the engine labels the
+  downstream symptom, not the failure.
+- **No method beats chance** on the verified labels.
+
 ## Historical and retracted claims
 
 | Claim | Value | Artifact | Command | Commit | Status |
@@ -104,7 +151,7 @@ remain unrecoverable from this environment; they are listed in
 
 ## Next steps
 
-1. Raise label evidence: tie each log to its diagnosing post (Phase 2).
+1. Done for v2 (LLM-annotated, verifiable). Next, a human spot-check (`data/benchmark/SPOT_CHECK.md`) and the 8 unreviewed logs.
 2. Recover the eight missing logs and add new incidents, aiming for 100 or
    more.
 3. Freeze the protocol in `docs/PREREGISTRATION.md` before scoring a new
