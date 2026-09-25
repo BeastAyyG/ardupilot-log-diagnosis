@@ -108,3 +108,62 @@ Order of release:
 
 **Acceptance bar before submitting:** one command regenerates every table and
 figure from the frozen data, and the numbers match the manuscript.
+
+## Next steps (as of 2026-09-25)
+
+Current state:
+- Benchmark v3 is merged: 34 real logs from 32 incidents.
+- The pre-registered results support H1–H3.
+- References are verified.
+- A datasheet, `CITATION.cff`, log hydration (33/34 logs verified), and a release bundle are in place.
+
+What a Q1 reviewer would still reject:
+- The dataset is small.
+- The labels are machine-only.
+- There is no confirmatory holdout.
+- There are no onset times.
+- Two baselines are missing.
+- The paper is 5 pages.
+
+### Step 1: Preprint and DOI (week 1). Maintainer only.
+
+1. Complete `data/benchmark/SPOT_CHECK.md` and add the agreement rate to `docs/EVIDENCE_LEDGER.md` and to Section 4 of the paper.
+2. Replace the author placeholders in `paper/main.tex` and `CITATION.cff`.
+3. Connect Zenodo to GitHub and publish the GitHub release `benchmark-v3.0`. Attach the zip from `python training/make_release_bundle.py --version 3.0`.
+4. Cite the DOI in the paper's Availability section, then post the preprint to arXiv (cs.LG, cross-listed to cs.RO).
+
+### Step 2: Scale to at least 100 incidents (weeks 1–4)
+
+1. **Pre-register first.** Commit `docs/PREREGISTRATION_V4.md` before any new label. It must freeze v3's models, features and metrics, and state that v4 is scored only on new incidents. This makes v4 a confirmatory holdout.
+2. **Find candidates.** Search the forum for crash threads with a `.bin` attachment, using `_search_topics` in `src/data/expert_label_miner.py`. Use about 5 queries per class in `training/queries.json`, with priority on the rare classes: ekf_failure, gps_quality_poor, brownout, thrust_loss and motor_imbalance. Discard the miner's regex labels (see CORRECTIONS.md, C8 and C11).
+3. **Download.** Fetch and hash-check each log with the logic in `training/fetch_adaptation_pool.py`.
+4. **Label.** Follow the existing protocol: diagnosing post, permalink, verbatim quote and certainty. Store the labels in `data/benchmark/thread_annotations_v4.json`. Verify them with `training/verify_thread_annotations.py`.
+5. **Build.** Write `training/build_benchmark_v4.py`, keeping one label per incident. Add tests that follow the v3 tests.
+6. **Human check.** The maintainer checks a random 20% of the new labels. Report Cohen's kappa.
+
+**Gate:** at least 100 incidents, and at least 5 incidents per class that is scored. Smaller classes are merged, or reported as unreliable.
+
+### Step 3: Onset times (weeks 3–5)
+
+- `training/propose_onsets.py` plots the channels relevant to each label and proposes an onset time.
+- The maintainer confirms about 30 of these proposals.
+- Report onset-ordering accuracy. This is the direct test of CITA (H3).
+
+### Step 4: Missing baselines (weeks 4–5)
+
+- **ArduPilot's own log checks.** `Tools/LogAnalyzer` is no longer at its old path in the ArduPilot repository. First confirm whether it was moved or removed, and what replaced it. Then map its verdicts to our labels in a documented table.
+- **LLM baseline.** An LLM reads the structured report, with a fixed prompt and temperature 0. This needs an API key stored as an environment secret. If no key is available, the paper says this baseline was not run.
+- Add both baselines to `training/paper_eval.py` behind `--models`.
+
+### Step 5: Confirmatory evaluation and full paper (weeks 5–7)
+
+- Run the v4 evaluation exactly as pre-registered, and report every hypothesis whatever the outcome.
+- If v4 is still at chance, publish as benchmark + leakage study + negative result.
+- Expand the paper to 10–14 pages. Add related work, dataset construction, the annotation protocol and agreement, per-class and error analysis, calibration, and threats to validity.
+- Check every number against `docs/EVIDENCE_LEDGER.md`.
+
+### Step 6: Submission (week 8)
+
+- **Venue.** Candidates are *Engineering Applications of Artificial Intelligence* and *Reliability Engineering & System Safety*. Check the quartile on Scimago on the day you submit. Avoid *Scientific Data*: it requires open raw data, and the log licences are unverified.
+- **Package.** Port the paper to the venue template, then write the cover letter.
+- **Licensing.** Ask the log owners on the forum for permission to redistribute their logs.
