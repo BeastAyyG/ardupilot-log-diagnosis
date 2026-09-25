@@ -764,6 +764,8 @@ See [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITER
 | [`docs/root_cause_policy.md`](docs/root_cause_policy.md) | CITA temporal arbitration specification |
 | [`docs/PRODUCTION_ACCEPTANCE_CRITERIA.md`](docs/PRODUCTION_ACCEPTANCE_CRITERIA.md) | Release gates & labeling policy |
 | [`CORRECTIONS.md`](CORRECTIONS.md) | Retracted and corrected claims, with reasons |
+| [`docs/EVIDENCE_LEDGER.md`](docs/EVIDENCE_LEDGER.md) | Every published number, its artifact and reproduction status |
+| [`docs/PUBLICATION_PLAN.md`](docs/PUBLICATION_PLAN.md) | Roadmap to a reproducible benchmark and paper |
 | [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) | Full dataset lineage and provenance tracking |
 | [`docs/SYNTHETIC_DATA_IMPLEMENTATION.md`](docs/SYNTHETIC_DATA_IMPLEMENTATION.md) | Research-backed SITL generation and real-only evaluation workflow |
 | [`docs/UPGRADE_ROADMAP.md`](docs/UPGRADE_ROADMAP.md) | Technical roadmap and future improvements |
