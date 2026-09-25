@@ -20,7 +20,7 @@ Status values:
 
 All rows come from
 [`data/benchmark/results/paper_eval_v1.json`](../data/benchmark/results/paper_eval_v1.json),
-produced at commit `38d342e` (clean tree).
+produced at commit `3a5268c` (clean tree).
 - **Command:** `python training/paper_eval.py`. The rebuild steps are in
   [`data/benchmark/README.md`](../data/benchmark/README.md).
 - **Data:** 41 real logs from 37 incidents, 10 classes. Labels are
@@ -64,7 +64,7 @@ produced at commit `38d342e` (clean tree).
   human**; see `data/benchmark/SPOT_CHECK.md`.
 - Results: [`paper_eval_v2.json`](../data/benchmark/results/paper_eval_v2.json)
   and [`paper_eval_v2_explicit.json`](../data/benchmark/results/paper_eval_v2_explicit.json),
-  both produced at commit `528f945` (clean tree).
+  both produced at commit `6c36046` (clean tree).
 - Command: `python training/paper_eval.py --ground-truth data/benchmark/ground_truth_real_v2.json --derived-dir data/benchmark/derived_v2`.
 
 **Label audit**, from `registry_summary.json` → `v2_thread_verified`:

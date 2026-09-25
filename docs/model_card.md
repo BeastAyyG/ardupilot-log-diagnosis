@@ -16,7 +16,7 @@ The dashboard's default model is a legacy RandomForest artifact with a
 The benchmark covers 41 real logs from 37 incidents. Models are trained and
 tested out-of-fold with every incident grouped: 5 folds × 5 seeds. Labels are
 provisional ([CORRECTIONS.md, C11](../CORRECTIONS.md#c11)). Source:
-`data/benchmark/results/paper_eval_v1.json`, commit `38d342e`, reproduced by
+`data/benchmark/results/paper_eval_v1.json`, commit `3a5268c`, reproduced by
 `python training/paper_eval.py`.
 
 | Gate | Result | Required | Status |
