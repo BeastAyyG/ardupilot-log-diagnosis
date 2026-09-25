@@ -9,32 +9,39 @@ maintenance decisions**.
 
 The dashboard's default model is a legacy RandomForest artifact with a
 94-feature compatibility schema and nine trained labels. The runtime extracts
-111 finite features. The safe `v3_unambiguous` candidate has not passed the
-release gates and is not promoted; `v3_grouped` is rejected because two source
-URL groups contain contradictory labels.
+111 finite features. No candidate has passed the release gates, and none is promoted.
 
-## Release evidence (honest candidate `v3_unambiguous`, 2026-08-05)
+## Release evidence (real-log benchmark v1, 2026-09-25)
+
+The benchmark covers 41 real logs from 37 incidents. Models are trained and
+tested out-of-fold with every incident grouped: 5 folds × 5 seeds. Labels are
+provisional ([CORRECTIONS.md, C11](../CORRECTIONS.md#c11)). Source:
+`data/benchmark/results/paper_eval_v1.json`, commit `38d342e`, reproduced by
+`python training/paper_eval.py`.
 
 | Gate | Result | Required | Status |
 | --- | ---: | ---: | --- |
-| Grouped log-level macro F1 | 0.500 | >= 0.700 | Fail |
-| Independent holdout source incidents | 23 | >= 50 | Fail |
-| Incident-level expected calibration error | 0.153 | <= 0.080 | Fail |
+| Incident-grouped log macro F1 (RandomForest) | 0.092 ± 0.007 | >= 0.700 | Fail |
+| Incident-grouped log macro F1 (ExtraTrees) | 0.078 ± 0.007 | >= 0.700 | Fail |
+| Chance baseline (frequency-random) | 0.096 (95th percentile 0.175) | — | reference |
+| Incident-level ECE (RandomForest) | 0.082 | <= 0.080 | Fail |
+| Real incidents available | 37 | >= 50 | Fail |
 | Runtime feature schema | 111 | exact match | Pass |
 
-Because the release gates fail, the candidate remains quarantined. The
-earlier `v2_111` score of 0.670 is not comparable: it used filename-only
-grouping and a column-order primary-label fallback that allowed incident
-cross-split leakage. The intermediate `v3_grouped` run scored F1 0.559/ECE
-0.158 but is invalid because two source URL groups contain contradictory
-labels; those four files are excluded from `v3_unambiguous`. See
-[production readiness](PRODUCTION_READINESS.md) for the
-complete promotion checklist.
+On current data the tree models do not beat chance, and the rule engine
+alone (0.159) stays within the chance range. The same RandomForest scores
+0.890 when windows are split at random. That gap is the leakage effect that
+inflated earlier reports.
 
-Exploratory ExtraTrees retraining reached 0.596 Macro F1 on the fixed grouped
-holdout, but incident ECE was 0.170 (five-split mean F1 0.584 and ECE 0.167).
-Temperature scaling remained above the 0.08 calibration gate, so no exploratory
-artifact is promoted.
+**Historical figures, not reproducible (see `docs/EVIDENCE_LEDGER.md`):**
+- `v3_unambiguous`: 0.500 / ECE 0.153. Its pool must have included
+  simulated BASiC flights, and F1 was scored over all classes.
+- `v3_grouped`: 0.559 / 0.158. Rejected because of contradictory labels,
+  most of them created by rule-engine relabelling (C8/C9).
+- `v2_111`: 0.670. Filename-only grouping allowed incident leakage.
+- ExtraTrees exploratory run: 0.584–0.596.
+
+All of these are superseded, and no artifact is promoted.
 
 ## Label coverage
 

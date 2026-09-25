@@ -7,8 +7,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 > **Corrections notice (2026-09-25):** several performance and impact claims in
 > the entries below were retracted after an audit. Retracted figures are marked
 > inline and explained in [CORRECTIONS.md](CORRECTIONS.md). The current honest
-> baseline is grouped log-level Macro F1 0.500 on 23 real source incidents
-> (ECE 0.153), and release gates fail.
+> baseline is the reproducible real-log benchmark in docs/EVIDENCE_LEDGER.md.
+> Incident-grouped macro-F1 is 0.08–0.09 against a random-guess baseline of
+> 0.10, and release gates fail.
 
 ---
 
@@ -19,6 +20,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   (C1–C10), and removed the corresponding claims from the README, docs, agent
   skill and dashboard.
 - Moved unverifiable studies and stale planning documents to `archive/`.
+- Hybrid engine tie-breaking no longer depends on `PYTHONHASHSEED`. The same
+  log could previously receive a different top diagnosis in different runs.
+
+### Added
+- Real-log benchmark v1 (`data/benchmark/`). It has an incident registry
+  built from the sealed cohort manifest, with the rule-engine relabels
+  reverted and label evidence graded.
+- `training/build_incident_registry.py` and `training/paper_eval.py`: the
+  leakage study, a rule-engine and CITA comparison, chance baselines and
+  bootstrap CIs.
+- `HybridEngine` settings for switching CITA off (`--engine hybrid_no_cita`).
 
 ---
 

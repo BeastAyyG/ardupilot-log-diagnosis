@@ -9,9 +9,9 @@ operational, but no available ML artifact passes every release gate.
 |---|---:|---|
 | Runtime feature schema | 111/111 finite features | Pass |
 | Candidate model schema | 111/111 features, 9 trained labels | Pass with rules-only labels |
-| Honest grouped candidate log Macro F1 (`v3_unambiguous`) | 0.500 (target >= 0.700) | Fail |
-| Honest grouped holdout | 23 source incidents (target >= 50) | Fail |
-| Honest candidate incident-level ECE | 0.153 (target <= 0.080) | Fail |
+| Incident-grouped log macro F1, real-log benchmark v1 | RandomForest 0.092, ExtraTrees 0.078; chance 0.096 (target >= 0.700) | Fail |
+| Real incidents available | 37 (target >= 50) | Fail |
+| Incident-level ECE, real-log benchmark v1 | 0.082 (target <= 0.080) | Fail |
 | Candidate per-class ECE | Multiple classes > 0.08 | Investigate |
 | Full label coverage | 5 labels have no positive source logs | Fail |
 
@@ -46,9 +46,10 @@ versioned window contract, and no input provenance. It is supported only as a
 **legacy compatibility model**, not a production-signed release. The earlier
 `v2_111` score of 0.670 used filename-only grouping and column-order
 primary-label fallback. `v3_grouped` also exposed two source-URL groups with
-contradictory labels and is rejected by the ambiguity gate. The safe
-`v3_unambiguous` rerun excludes those four files and is the authoritative
-honest baseline (F1 0.500, incident ECE 0.153).
+contradictory labels and is rejected by the ambiguity gate. The
+`v3_unambiguous` figure (F1 0.500, ECE 0.153) cannot be regenerated and is
+superseded by the reproducible real-log benchmark in
+[EVIDENCE_LEDGER.md](EVIDENCE_LEDGER.md).
 
 ## What is now production-hardened
 

@@ -13,9 +13,9 @@ evaluation leakage inflates reported accuracy in this field (B).
 | Phase | Deliverable | Status |
 |---|---|---|
 | 0. Credibility | Corrections published; unsupported claims removed; evidence ledger | **Done** (2026-09-25) |
-| 1. Reproducibility | Full history fetched; CITA ablation switch; lineage-aware matrices; `training/paper_eval.py`; honest baseline regenerated from one command | In progress |
-| 2. Dataset v1 | ≥ 100 real incidents with expert quote, SHA256, onset time, licence status; agreement study | Not started |
-| 3. Experiments | Leakage "staircase"; baselines incl. hybrid with and without CITA; onset-ordering accuracy; calibration and abstention | Not started |
+| 1. Reproducibility | Full history fetched; 47/55 labelled real logs recovered and hash-verified; incident registry; CITA ablation switch; `training/paper_eval.py`; baseline regenerated from one command (the old 0.500 is superseded) | **Done** (2026-09-25) |
+| 2. Dataset v1 | ≥ 100 real incidents with expert quote, SHA256, onset time, licence status; agreement study | **Started.** Registry has 41 usable logs / 37 incidents with evidence tiers; 27 of 41 labels have no stored diagnosis, so a labelling pass is next |
+| 3. Experiments | Leakage "staircase"; baselines incl. hybrid with and without CITA; onset-ordering accuracy; calibration and abstention | **Pilot run on v1:** split-protocol staircase (0.89 → 0.17 → 0.09), CITA on/off, chance baselines. Label-contamination steps and onset accuracy still to do |
 | 4. Paper | Preprint and dataset DOI, then journal submission | Not started |
 
 ## Phase 1: Reproducibility
@@ -34,6 +34,9 @@ evaluation leakage inflates reported accuracy in this field (B).
    the bootstrap from `synthetic_data/ablation_core.py`. It writes one JSON
    per run containing the commit, data hash, seed, metrics and 95% CIs.
 6. **Gate:** the 0.500 / 0.153 baseline is regenerated, or retracted.
+   **Outcome:** it could not be regenerated and is superseded (C12). The
+   reproducible benchmark is at chance level for ML (0.08–0.09 vs 0.10).
+   It shows a large leakage effect: 0.89 with random window splits.
 
 ## Phase 2: Dataset v1 (paper A)
 

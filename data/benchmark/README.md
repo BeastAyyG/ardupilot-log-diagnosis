@@ -31,6 +31,16 @@ them as follows, then check each file's SHA256 against `incidents.csv`:
 - **History-recovered:** `git show b7c7294^:data/clean_imports/background_expert_01/benchmark_ready/dataset/log_00NN_mechanical_failure.bin`, for NN = 37–41.
 - **Re-downloaded:** fetch from each row's `download_url`.
 
+## Current results
+
+See [`docs/EVIDENCE_LEDGER.md`](../../docs/EVIDENCE_LEDGER.md) and
+`results/paper_eval_v1.json` (commit `38d342e`).
+- **ML at chance:** incident-grouped log macro-F1 is 0.08–0.09, against a
+  random-guess baseline of 0.10.
+- **Leakage:** the same models score 0.89 when windows are split at random.
+- **Rule engine:** 0.16.
+- **CITA:** no measurable benefit.
+
 ## Files
 
 | File | Content |

@@ -11,7 +11,7 @@ date_added: "2026-03-30"
 ## Overview
 This skill grants an AI agent the ability to autonomously diagnose ArduPilot `.BIN` flight telemetry logs. Instead of manually inspecting graphs or MAVLink messages, the agent can feed the log into the **Hybrid Causal Arbiter** (rule engine + RandomForest ML) to get a ranked triage hypothesis with evidence and maintenance recommendations.
 
-**Honest limits (tell the user):** the ML candidate scores grouped real-incident Macro F1 0.500 and fails its release gates (see `docs/model_card.md` and `CORRECTIONS.md`). Its output is a triage hypothesis for a human to check, not a verified root cause.
+**Honest limits (tell the user):** on the reproducible real-log benchmark, the ML candidate does not beat chance (incident-grouped macro-F1 about 0.09 vs 0.10 chance), and it fails its release gates (see `docs/model_card.md` and `CORRECTIONS.md`). Its output is a triage hypothesis for a human to check, not a verified root cause.
 
 ## When to Use This Skill
 - When a user provides a `.BIN` file and asks "Why did my drone crash?"
