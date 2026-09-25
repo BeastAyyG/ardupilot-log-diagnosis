@@ -31,8 +31,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-          pip install pyarrow pyulog lightgbm reportlab pypdf
+          # Constrain to the pymavlink version the SITL runner is tested with
+          # (synthetic_data.execution_integrity.SUPPORTED_PYMAVLINK_VERSION),
+          # as the image-publishing workflows already do.
+          pip install -e ".[dev]" -c synthetic_data/constraints.txt
+          pip install pyarrow pyulog lightgbm reportlab pypdf -c synthetic_data/constraints.txt
           pip check
 
       - name: Lint with ruff
