@@ -60,7 +60,7 @@ produced at commit `38d342e` (clean tree).
 **Sources:**
 - Labels: [`data/benchmark/thread_annotations.json`](../data/benchmark/thread_annotations.json).
   Each label cites the diagnosing forum post with a verbatim quote. They
-  were assigned by an LLM (Claude) and have **not yet been reviewed by a
+  were assigned by an AI language model and have **not yet been reviewed by a
   human**; see `data/benchmark/SPOT_CHECK.md`.
 - Results: [`paper_eval_v2.json`](../data/benchmark/results/paper_eval_v2.json)
   and [`paper_eval_v2_explicit.json`](../data/benchmark/results/paper_eval_v2_explicit.json),

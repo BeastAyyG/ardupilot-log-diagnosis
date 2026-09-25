@@ -42,7 +42,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **BASiC Dataset Integration**: Ingested and normalized the 70 simulated BASiC flights from Zenodo (8195068).
 - **Interactive 3D Mission Replay:** Added a 3D Plotly dashboard that renders the flight path and drops causal event markers for physical insight.
-- **Autonomous Agent Skill (SKILL.md):** Added an agent skill file allowing external agents (like Claude or Cursor) to natively diagnose `.BIN` files over CLI.
+- **Autonomous Agent Skill (SKILL.md):** Added an agent skill file allowing external AI coding agents to natively diagnose `.BIN` files over CLI.
 - **AI Integrity Output:** A side-by-side validation report was added to compare the ML model's decisions with the rule engine.
 - **Subsystem Radar Blame**: Dynamic radar chart for multi-factor "Blame Ranking."
 - **Crash Causality Timeline**: Visual swimlane reconstructing the exact sequence of failure onset.

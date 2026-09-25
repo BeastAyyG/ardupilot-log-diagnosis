@@ -1,6 +1,6 @@
 # Human spot-check of LLM thread labels
 
-All labels in `thread_annotations.json` were assigned by an LLM (Claude) reading the forum thread. Checking this random sample of 10 (seed 20260925) lets the paper report how often a human agrees. Each check takes about 2 minutes.
+All labels in `thread_annotations.json` were assigned by an AI language model reading the forum thread. Checking this random sample of 10 (seed 20260925) lets the paper report how often a human agrees. Each check takes about 2 minutes.
 
 **For each row:**
 1. Open the link. It jumps to the post that was cited.

@@ -1,7 +1,7 @@
 {
   "schema": "logdiagnosis.quote-review/v1",
   "created": "2026-09-25",
-  "reviewer": "LLM (Claude) - secondary check only; every verdict needs human confirmation before it is cited",
+  "reviewer": "LLM (automated) - secondary check only; every verdict needs human confirmation before it is cited",
   "scope": "Only logs whose registry evidence tier is named_user_quote. The reviewer read the stored quote and the thread title in the URL slug; it did not read the full thread or the log.",
   "policy": "A review may exclude a label only when its own source contradicts it (verdict 'contradicted'). It never assigns or changes a label.",
   "verdicts": {

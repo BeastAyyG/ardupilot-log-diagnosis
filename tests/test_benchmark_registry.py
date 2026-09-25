@@ -104,7 +104,7 @@ def test_llm_annotations_are_disclosed_and_cite_a_post():
     doc = _annotations()
     assert "LLM" in doc["annotator_disclosure"]
     for record in doc["records"]:
-        assert record["annotator"] == "Claude (LLM)"
+        assert record["annotator"] == "LLM (automated)"
         if record["label"]:
             assert record["status"] in {"confirmed", "relabelled"}
             assert record["diagnosing_post"].startswith("https://discuss.ardupilot.org/t/")
