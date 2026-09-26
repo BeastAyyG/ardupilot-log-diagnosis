@@ -143,25 +143,38 @@ then ask follow-up questions in plain English.
 
 **Goal:** Merge the core engine + temporal layer + causal arbitrator into a single, coherent pipeline.
 
-**Status:** ⬜ Not started
+**Status:** 🟨 Rule-engine split, dead-label remediation and scaler decision done;
+temporal merge and ML-artifact manifest still open
 
 ### Tasks
 
 **Rule Engine Refactoring (from open issues):**
-- [ ] Break `src/diagnosis/rule_engine.py` into `src/diagnosis/rules/` modules:
-  - `vibration.py`, `compass.py`, `power.py`, `gps.py`, `motors.py`
-  - `ekf.py`, `mechanical_failure.py`, `pid_tuning.py`
-  - `rc_failsafe.py`, `thrust_loss.py`, `brownout.py`, `crash_unknown.py`
-- [ ] Add `tests/test_diagnosis_rules.py` with threshold boundary tests for every rule.
+- [x] Break `src/diagnosis/rule_engine.py` into `src/diagnosis/rules/` modules:
+  one module per rule (`vibration.py`, `compass.py`, `power.py`, `gps.py`,
+  `motors.py`, `ekf.py`, `mechanical_failure.py`, `pid_tuning.py`,
+  `rc_failsafe.py`, `thrust_loss.py`, `crash_unknown.py`, plus `setup_error.py`
+  and `system.py`). There is no separate `brownout.py`; `power.py` emits both
+  `power_instability` and `brownout`. Longest module is 181 lines; the
+  200-line ceiling holds.
+- [x] Add `tests/test_diagnosis_rules.py` with threshold boundary tests for every rule
+  (each boundary tested just-below / exactly-at / just-above, which pins the
+  comparison operator).
 
 **Dead Label Remediation:**
-- [ ] Add ML + rule coverage for: `power_instability`, `pid_tuning_issue`, `motor_imbalance`,
-  `thrust_loss`, `gps_glitch`, `battery_failsafe`, `rc_failsafe`, `brownout`.
-- [ ] Verify and fix `check_compass` rule — reduce reliance on ML fallback.
+- [x] Add rule coverage for: `power_instability`, `pid_tuning_issue`,
+  `motor_imbalance`, `thrust_loss`, `rc_failsafe`, `brownout`, `crash_unknown`,
+  `setup_error`. All 14 `VALID_LABELS` now have at least one reachable path,
+  asserted by `tests/test_label_coverage.py`. Note `gps_glitch` and
+  `battery_failsafe` are not in `VALID_LABELS`; they map to `gps_quality_poor`
+  and `power_instability`/`brownout`.
+- [ ] Give the 8 rules-only labels an ML path (currently no ML path can raise
+  them; their confidences are uncalibrated by the ML layer).
+- [x] Verify and fix `check_compass` rule — reduce reliance on ML fallback.
 
 **Scaler Alignment:**
-- [ ] Align the IsolationForest "healthy-only" scaler with the XGBoost "full-dataset" scaler.
-  Document the decision or unify them.
+- [x] Document the decision **not** to unify them, with the reason: the anomaly
+  scaler is fitted on healthy flights only, and unifying would contaminate the
+  reference distribution. Locked in by `tests/test_scaler_alignment.py`.
 
 **ML Artifacts:**
 - [ ] Write `models/manifest.json` with: model version, feature schema hash, label schema hash,
@@ -175,8 +188,8 @@ and full 14-label coverage. All results traceable to physics evidence.
 
 ### Done when
 
-- [ ] All 14 `VALID_LABELS` have at least one rule or ML path that can trigger them.
-- [ ] No rule change requires editing a file longer than 200 lines.
+- [x] All 14 `VALID_LABELS` have at least one rule or ML path that can trigger them.
+- [x] No rule change requires editing a file longer than 200 lines.
 
 ---
 
@@ -286,11 +299,14 @@ Before starting v2.0, use the following as the honest baseline:
 | Pre-flight parameter validation | ✅ Working |
 | FastAPI web endpoint | ✅ Working |
 | CLI | ✅ Working |
-| Test suite | ✅ Regression suite required before every release |
+| Test suite | ✅ Regression suite required before every release; 826 total, 816 pass, 10 skip, 0 product failures (see docs/TESTING.md) |
 | Candidate macro F1 | ❌ 0.08–0.09 incident-grouped on 37 real incidents (chance 0.10); release gate is 0.70 on 50+ |
 | Incident calibration (ECE) | ⚠️ 0.153; release gate is ≤0.10 |
-| Label coverage | ⚠️ Rules cover 14 types; ML is trained for 9 |
+| Label coverage | ⚠️ Rules can raise all 14 types; ML is trained for 6, so 8 labels are rules-only (docs/ML_ARTIFACTS.md) |
+| Rule engine layout | ✅ One module per rule, longest 181 lines; boundaries pinned by tests/test_diagnosis_rules.py |
 | Compass rule | ✅ Deterministic evidence plus ML where supported |
+| Scaler alignment | ✅ Kept separate by decision; locked in by tests/test_scaler_alignment.py |
+| Analyze latency | ⚠️ 445 ms median on sample.bin (0.99 MB), 900 ms on test_cascade.BIN (2.16 MB); 500 ms gate only met on the smaller log |
 | Docker / containerization | ✅ Core image hardened; optional services are profile-gated |
 | LLM explanation layer | 🟨 Grounded deterministic explanation service; optional/review-only |
 | Temporal HMM layer | 🟨 Optional service; requires a trained artifact |

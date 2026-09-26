@@ -4,6 +4,16 @@
 
 venv/
 
+# Local tooling artifacts (matplotlib font cache, pytest temp dirs)
+
+.mplconfig/
+
+.pytest_tmp/
+
+output/
+
+.workbuddy-ai/
+
 __pycache__/
 
 *.pyc

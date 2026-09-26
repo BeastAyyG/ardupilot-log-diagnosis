@@ -151,6 +151,15 @@ def analyze_flight_context(parsed: dict[str, Any]) -> dict[str, Any]:
 
 
 def raw_message_explorer(parsed: dict[str, Any], *, sample_limit: int = 3) -> dict[str, Any]:
+    """Summarise every message stream without re-emitting it.
+
+    ``samples`` is deliberately capped by ``sample_limit``.  A DataFlash log
+    parsed into Python lists is far larger than the file on disk (a 0.99 MB
+    ``sample.bin`` expands to ~3.9 MB of JSON), and this report is embedded in
+    the ``/api/analyze`` response.  Echoing the full stream here would multiply
+    the response payload and defeat the latency gate in Milestone 5, so only
+    ``count``/``fields``/``field_frequency`` describe the stream in full.
+    """
     messages = parsed.get("messages", {}) or {}
     streams: dict[str, Any] = {}
     for name, values in sorted(messages.items()):
