@@ -14,9 +14,9 @@ evaluation leakage inflates reported accuracy in this field (B).
 |---|---|---|
 | 0. Credibility | Corrections published; unsupported claims removed; evidence ledger | **Done** (2026-09-25) |
 | 1. Reproducibility | Full history fetched; 47/55 labelled real logs recovered and hash-verified; incident registry; CITA ablation switch; `training/paper_eval.py`; baseline regenerated from one command (the old 0.500 is superseded) | **Done** (2026-09-25) |
-| 2. Dataset v1 | ≥ 100 real incidents with expert quote, SHA256, onset time, licence status; agreement study | **v3:** 34 logs / 32 incidents with cited, verified labels; kappa 0.39 vs old labels. Next: human spot-check, onset times, more incidents |
-| 3. Experiments | Leakage "staircase"; baselines incl. hybrid with and without CITA; onset-ordering accuracy; calibration and abstention | **Done for v3 (pre-registered):** H1–H3 supported. Still to do: onset-time annotation and a fully confirmatory holdout |
-| 4. Paper | Preprint and dataset DOI, then journal submission | **Draft compiled** (`paper/main.pdf`). Author details, reference checks, spot-check and venue template are pending |
+| 2. Dataset v1 | ≥ 100 real incidents with expert quote, SHA256, onset time, licence status; agreement study | **v3:** 34 logs / 32 incidents with cited, AI-annotated labels; kappa 0.39 vs old labels. **v4 build/label toolchain implemented** (`training/build_benchmark_v4.py`, `training/propose_onsets.py`, `training/baselines/`; 14 tests pass). Still maintainer-only: real forum labels, ≥100 incidents, human spot-check, onset times |
+| 3. Experiments | Leakage "staircase"; baselines incl. hybrid with and without CITA; onset-ordering accuracy; calibration and abstention | **Done for v3 (pre-registered):** H1–H3 supported. **v4 missing-baseline toolchain implemented** (LogAnalyzer + LLM baselines in `paper_eval.py --baselines-input`; onset proposer). Still maintainer-only: human onset confirmation + confirmatory holdout evaluation |
+| 4. Paper | Preprint and dataset DOI, then journal submission | **Draft compiled** (`paper/main.pdf`). arXiv/Zenodo preprint and journal submission are **maintainer-only external actions**. Toolchain for Steps 2–5 implemented; author details, reference checks, spot-check and venue template pending |
 
 ## Phase 1: Reproducibility
 
@@ -74,7 +74,10 @@ annotated from the log with a saved plot. This is what makes CITA testable.
 ## Phase 3: Experiments
 
 **Preregistration.** `docs/PREREGISTRATION.md` is committed before anything
-is run on the frozen holdout.
+is run on the frozen holdout. v4 extends this in
+[`docs/PREREGISTRATION_V4.md`](PREREGISTRATION_V4.md): it freezes v3's
+models, features and metrics and scores v4 only on new incidents, making v4 a
+confirmatory holdout (not a tuning set).
 
 **Leakage study (B).** The same models are evaluated under progressively
 stricter protocols:
@@ -125,7 +128,7 @@ What a Q1 reviewer would still reject:
 - Two baselines are missing.
 - The paper is 5 pages.
 
-### Step 1: Preprint and DOI (week 1). Maintainer only.
+### Step 1: Preprint and DOI (week 1). Maintainer only — external.
 
 1. Complete `data/benchmark/SPOT_CHECK.md` and add the agreement rate to `docs/EVIDENCE_LEDGER.md` and to Section 4 of the paper.
 2. Replace the author placeholders in `paper/main.tex` and `CITATION.cff`.
@@ -155,6 +158,13 @@ What a Q1 reviewer would still reject:
 - **LLM baseline.** An LLM reads the structured report, with a fixed prompt and temperature 0. This needs an API key stored as an environment secret. If no key is available, the paper says this baseline was not run.
 - Add both baselines to `training/paper_eval.py` behind `--models`.
 
+  **Implemented (2026-09-26):** the LogAnalyzer and LLM baselines live in
+  `training/baselines/` (`loganalyzer_map.py`, `llm_baseline.py`) and are wired
+  into `training/paper_eval.py` behind the `--baselines-input` flag (default:
+  not scored, so the default run is unchanged). The LogAnalyzer path is a
+  static, conservative map from its checks to our labels; the LLM baseline is
+  gated on `ARDUPILOT_LLM_API_KEY` and reports "not run" when the key is unset.
+
 ### Step 5: Confirmatory evaluation and full paper (weeks 5–7)
 
 - Run the v4 evaluation exactly as pre-registered, and report every hypothesis whatever the outcome.
@@ -162,8 +172,52 @@ What a Q1 reviewer would still reject:
 - Expand the paper to 10–14 pages. Add related work, dataset construction, the annotation protocol and agreement, per-class and error analysis, calibration, and threats to validity.
 - Check every number against `docs/EVIDENCE_LEDGER.md`.
 
-### Step 6: Submission (week 8)
+### Step 6: Submission (week 8). Maintainer only — external.
 
 - **Venue.** Candidates are *Engineering Applications of Artificial Intelligence* and *Reliability Engineering & System Safety*. Check the quartile on Scimago on the day you submit. Avoid *Scientific Data*: it requires open raw data, and the log licences are unverified.
 - **Package.** Port the paper to the venue template, then write the cover letter.
 - **Licensing.** Ask the log owners on the forum for permission to redistribute their logs.
+
+## Scope and assumptions (as of 2026-09-26)
+
+The publication toolchain for Steps 2–5 is implemented in code. What was and
+was not done:
+
+**Implemented (code + tests, no fabricated data):**
+- `docs/PREREGISTRATION_V4.md` — pre-registration for the confirmatory holdout.
+  Freezes v3's models, features and metrics; v4 is scored only on new
+  incidents. No number is predicted in advance beyond "report every hypothesis
+  whatever the outcome".
+- `training/build_benchmark_v4.py` — mirrors the v3 builder; consumes
+  `data/benchmark/thread_annotations_v4.json` + `ground_truth_real_v3.json`,
+  drops conflicted incidents, and exits with code 2 (a clear error, no
+  fabrication) if the v4 annotations file is absent. Flag `--allow-missing-logs`
+  supports the maintainer phase when logs cannot yet be downloaded.
+- `training/propose_onsets.py` — plots label-relevant channels and proposes an
+  onset time from domain thresholds. Unmapped labels (setup_error,
+  crash_unknown, rc_failsafe, pid_tuning_issue, healthy) return `None` and are
+  maintainer-confirmed only.
+- `training/baselines/` (`loganalyzer_map.py`, `llm_baseline.py`) — LogAnalyzer
+  and LLM baselines; wired into `training/paper_eval.py` behind `--baselines-input`.
+- 14 new tests (`test_build_benchmark_v4.py`, `test_propose_onsets.py`,
+  `test_baselines.py`) pass (`python -m pytest -q`).
+
+**Not done (require maintainer-only external actions):**
+- Real forum labels for new incidents, the ≥100-incident gate, and the human
+  spot-check / kappa (Step 2.6, Step 3).
+- Human confirmation of ~30 onset proposals (Step 3).
+- The confirmatory v4 evaluation run and the full 10–14 page paper (Step 5).
+- arXiv preprint, Zenodo DOI, and journal submission (Steps 1, 6).
+
+**Assumptions made:**
+1. No incident label, onset time, or evaluation number was invented. Every
+   runnable artifact follows the evidence-ledger rule: a number is published
+   only when a single command regenerates it from committed code and data.
+   Where real inputs are missing, the code errors clearly instead of fabricating.
+2. The LogAnalyzer baseline is a static map from its documented checks to our
+   label set; it is conservative and may report "cannot score" for logs whose
+   checks do not map.
+3. The LLM baseline is opt-in (API key) and reports "not run" otherwise, so the
+   paper's negative-result framing is preserved even without a key.
+4. v4 is treated strictly as a confirmatory holdout. Its models/features/metrics
+   are frozen at v3; new incidents are scored, never used to retune.

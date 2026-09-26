@@ -49,6 +49,71 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from training.run_model_experiments import _ece  # noqa: E402
+from training.baselines import (  # noqa: E402
+    loganalyzer_predict_label,
+    llm_predict_label,
+)
+
+
+def baselines_study(ground_truth: dict, input_dir: Path) -> dict[str, Any]:
+    """Score the LogAnalyzer and LLM external baselines (plan Step 4).
+
+    ``input_dir`` holds one JSON per log keyed by ``sha256[:10]`` (or by
+    ``filename``), each carrying the structured diagnosis report under
+    ``report`` and, for LogAnalyzer, a ``loganalyzer`` verdict dict. The true
+    label comes from the ground-truth ``logs`` list (matched by ``sha256[:10]``
+    or ``filename``). A baseline is reported as ``not_run`` if its input or
+    configuration is missing, rather than failing the whole run.
+
+    Returns a dict with one entry per baseline that was actually computable.
+    """
+    if not input_dir.exists():
+        return {"_status": f"skipped: {input_dir} not found"}
+    true_by_key: dict[str, str] = {}
+    for entry in ground_truth["logs"]:
+        true_by_key.setdefault(entry["sha256"][:10], entry["labels"][0])
+        true_by_key.setdefault(entry["filename"], entry["labels"][0])
+
+    def _load_report(entry: dict) -> dict | None:
+        for key in (entry["sha256"][:10], entry["filename"]):
+            path = input_dir / f"{key}.json"
+            if path.exists():
+                return json.loads(path.read_text(encoding="utf-8"))
+        return None
+
+    results: dict[str, Any] = {}
+    for entry in ground_truth["logs"]:
+        raw = _load_report(entry)
+        if raw is None:
+            continue
+        true = true_by_key.get(entry["sha256"][:10], entry["labels"][0])
+        report = raw.get("report", raw)
+        la = loganalyzer_predict_label(report)
+        results.setdefault("LogAnalyzer", {"correct": 0, "n": 0, "labels": []})
+        results["LogAnalyzer"]["n"] += 1
+        if la == true:
+            results["LogAnalyzer"]["correct"] += 1
+        results["LogAnalyzer"]["labels"].append(la)
+        try:
+            ll = llm_predict_label(report)
+        except RuntimeError as exc:
+            results.setdefault("LLM", {"status": "not_run", "reason": str(exc)})
+            continue
+        results.setdefault("LLM", {"correct": 0, "n": 0, "labels": []})
+        if isinstance(results.get("LLM"), dict) and "n" in results["LLM"]:
+            results["LLM"]["n"] += 1
+            if ll == true:
+                results["LLM"]["correct"] += 1
+            results["LLM"]["labels"].append(ll)
+
+    for name in ("LogAnalyzer", "LLM"):
+        block = results.get(name)
+        if isinstance(block, dict) and block.get("n"):
+            block["accuracy"] = block["correct"] / block["n"]
+            block.pop("labels", None)
+    return results
+
+
 
 SEEDS = (1, 7, 21, 42, 99)
 N_SPLITS = 5
@@ -407,6 +472,12 @@ def main() -> None:
         default=None,
         help="only score logs whose thread-verified label has this certainty (v2 ground truth)",
     )
+    parser.add_argument(
+        "--baselines-input",
+        default=None,
+        help="directory of per-log structured reports for the LogAnalyzer/LLM "
+        "baselines (plan Step 4). If omitted, those baselines are not scored.",
+    )
     args = parser.parse_args()
 
     gt_path = ROOT / args.ground_truth
@@ -442,6 +513,8 @@ def main() -> None:
             ground_truth, ROOT / args.dataset_dir, derived / "log_features.json"
         )
         report["engine_study"] = engine_study(ground_truth, features)
+    if args.baselines_input:
+        report["baselines_study"] = baselines_study(ground_truth, ROOT / args.baselines_input)
 
     output = ROOT / args.output
     output.parent.mkdir(parents=True, exist_ok=True)
